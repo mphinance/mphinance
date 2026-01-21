@@ -13,6 +13,8 @@ STRATEGY_REGISTRY = {
     'Gamma Scan': 'strategies.gamma_scan.GammaScanStrategy',
     'Volatility Squeeze': 'strategies.volatility_squeeze.VolatilitySqueezeStrategy',
     'MEME Screen': 'strategies.meme_scanner.MemeScannerStrategy',
+    'EMA Cross Momentum': 'strategies.ema_cross.EmaCrossStrategy',
+    'Bearish EMA Cross (Down)': 'strategies.ema_cross_down.EmaCrossDownStrategy',
 }
 
 

@@ -41,6 +41,37 @@ def get_live_data(ticker):
     data['stoch_k_raw'] = (data['Close'] - low_8) / (high_8 - low_8) * 100
     data['Stoch'] = data['stoch_k_raw'].rolling(window=3).mean()
     
+    # ADX Calculation (14 period)
+    plus_dm = data['High'].diff()
+    minus_dm = data['Low'].diff() * -1
+    plus_dm[plus_dm < 0] = 0
+    minus_dm[minus_dm < 0] = 0
+    
+    # +DM should be > -DM for it to be a +DM move, otherwise 0
+    # The standard Wilder implementation is slightly different:
+    # UpMove = H - H_prev
+    # DownMove = L_prev - L
+    # if UpMove > DownMove and UpMove > 0: +DM = UpMove, else 0
+    # if DownMove > UpMove and DownMove > 0: -DM = DownMove, else 0
+    
+    up_move = data['High'] - data['High'].shift(1)
+    down_move = data['Low'].shift(1) - data['Low']
+    
+    plus_dm = np.where((up_move > down_move) & (up_move > 0), up_move, 0.0)
+    minus_dm = np.where((down_move > up_move) & (down_move > 0), down_move, 0.0)
+    
+    # Smoothing using RMA (Wilder's Smoothing) - effectively ewm(alpha=1/14)
+    # Pandas doesn't have a direct RMA, but ewm(adjust=False, alpha=1/N) is equivalent to EMA(alpha=1/N)
+    # Wilder's MMA is ewm(alpha=1/N, adjust=False) which is same as span=2N-1
+    # For N=14, alpha=1/14. span = 2*14 - 1 = 27.
+    
+    tr_s = pd.Series(tr).ewm(alpha=1/14, adjust=False).mean()
+    plus_di = pd.Series(plus_dm, index=data.index).ewm(alpha=1/14, adjust=False).mean() / tr_s * 100
+    minus_di = pd.Series(minus_dm, index=data.index).ewm(alpha=1/14, adjust=False).mean() / tr_s * 100
+    
+    dx = (abs(plus_di - minus_di) / (plus_di + minus_di)) * 100
+    data['ADX'] = dx.ewm(alpha=1/14, adjust=False).mean()
+    
     return data
 
 def run_tradingview_screen(adx_range, mcap_range, stoch_range):

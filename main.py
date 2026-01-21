@@ -648,20 +648,32 @@ async def run_audit_async(ticker, container=None):
             else:
                 ui.label(insight).classes('text-gray-300 mb-2')
 
-        # === FUNDAMENTAL HEALTH SECTION ===
+        # === KEY TECHNICALS SECTION (Replaces Fundamentals) ===
         ui.separator().classes('bg-gray-700 my-6')
-        ui.label('💰 Fundamental Health').classes('text-xl font-bold text-white mb-4')
+        ui.label('📊 Key Technicals').classes('text-xl font-bold text-white mb-4')
         
-        fundamentals = fundamental_metrics.get_key_metrics_summary(ticker)
+        # Get values from the last row of data
+        e8, e21, e34 = float(last['EMA8']), float(last['EMA21']), float(last['EMA34'])
+        e55, e89 = float(last['EMA55']), float(last['EMA89'])
+        adx_val = float(last.get('ADX', 0))
+        stoch_val = float(last.get('Stoch', 0))
         
-        if fundamentals.get('error'):
-            ui.label(f"Could not load fundamentals: {fundamentals['error']}").classes('text-yellow-400')
-        else:
-            with ui.row().classes('w-full gap-4 flex-wrap'):
-                for card in fundamentals['cards']:
-                    with ui.column().classes('metric-card flex-1 min-w-[140px]'):
-                        ui.label(card['label']).classes('metric-label')
-                        ui.label(str(card['value'])).classes('text-xl font-bold text-cyan-400')
+        tech_cards = [
+            {'label': 'EMA 8', 'value': f"${e8:.2f}", 'color': 'text-cyan-400'},
+            {'label': 'EMA 21', 'value': f"${e21:.2f}", 'color': 'text-cyan-400'},
+            {'label': 'EMA 34', 'value': f"${e34:.2f}", 'color': 'text-cyan-400'},
+            {'label': 'EMA 55', 'value': f"${e55:.2f}", 'color': 'text-cyan-400'},
+            {'label': 'EMA 89', 'value': f"${e89:.2f}", 'color': 'text-cyan-400'},
+            {'label': 'ADX (14)', 'value': f"{adx_val:.1f}", 'color': 'text-yellow-400' if adx_val > 25 else 'text-gray-400'},
+            {'label': 'Stoch (8,3,3)', 'value': f"{stoch_val:.1f}", 'color': 'text-purple-400'},
+            {'label': 'ATR (14)', 'value': f"${atr:.2f}", 'color': 'text-gray-300'},
+        ]
+        
+        with ui.row().classes('w-full gap-4 flex-wrap'):
+            for card in tech_cards:
+                with ui.column().classes('metric-card flex-1 min-w-[140px]'):
+                    ui.label(card['label']).classes('metric-label')
+                    ui.label(card['value']).classes(f"text-xl font-bold {card.get('color', 'text-white')}")
         
         # === OPTIONS FLOW SECTION ===
         ui.separator().classes('bg-gray-700 my-6')
@@ -1284,9 +1296,11 @@ def render_scanner_view():
                 ])
             elif state.selected_strategy == 'Volatility Squeeze':
                 columns.extend([
-                    {'name': 'Spark', 'label': 'Spark Trigger', 'field': 'Spark', 'sortable': True, 'align': 'left'},
-                    {'name': 'SqueezeRatio', 'label': 'Squeeze Ratio', 'field': 'SqueezeRatio', 'sortable': True, 'align': 'right'},
-                    {'name': 'ADX', 'label': 'ADX (Coil)', 'field': 'ADX', 'sortable': True, 'align': 'right'},
+                    {'name': 'SqueezeRatio', 'label': 'Squeeze', 'field': 'SqueezeRatio', 'sortable': True, 'align': 'right'},
+                    {'name': 'ADX', 'label': 'ADX', 'field': 'ADX', 'sortable': True, 'align': 'right'},
+                    {'name': 'RSI', 'label': 'RSI', 'field': 'RSI', 'sortable': True, 'align': 'right'},
+                    {'name': 'RelVol', 'label': 'RelVol', 'field': 'RelVol', 'sortable': True, 'align': 'right'},
+                    {'name': 'Signals', 'label': 'Signals', 'field': 'Signals', 'sortable': True, 'align': 'left'},
                 ])
             elif state.selected_strategy == 'Trend Exhaustion Reversals':
                 columns.extend([
@@ -1335,10 +1349,19 @@ def render_scanner_view():
                     else:
                         formatted_row['SqueezeRatio'] = f"{squeeze:.2f}"
                 elif state.selected_strategy == 'Volatility Squeeze':
-                    formatted_row['ADX'] = f"{row.get('ADX', 0):.1f}"
-                    formatted_row['Spark'] = row.get('Spark', '')
                     squeeze = row.get('SqueezeRatio', 1.0)
-                    formatted_row['SqueezeRatio'] = f"{squeeze:.2f}"
+                    # Visual indicator for squeeze intensity
+                    if squeeze < 0.7:
+                        formatted_row['SqueezeRatio'] = f"🔋 {squeeze:.2f}"
+                    elif squeeze < 0.85:
+                        formatted_row['SqueezeRatio'] = f"⚡ {squeeze:.2f}"
+                    else:
+                        formatted_row['SqueezeRatio'] = f"{squeeze:.2f}"
+                    formatted_row['ADX'] = f"{row.get('ADX', 0):.1f}"
+                    formatted_row['RSI'] = f"{row.get('RSI', 0):.1f}"
+                    rel_vol = row.get('relative_volume_10d_calc', 0)
+                    formatted_row['RelVol'] = f"{rel_vol:.1f}x" if rel_vol else "—"
+                    formatted_row['Signals'] = row.get('Signals', '—')
                 elif state.selected_strategy == 'Trend Exhaustion Reversals':
                     formatted_row['Signal'] = row.get('Signal', '-')
                     formatted_row['SignalDate'] = row.get('SignalDate', '-')
