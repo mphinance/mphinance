@@ -430,13 +430,22 @@ async def run_audit_async(ticker, container=None):
                 ui.separator().classes('bg-gray-700 my-4')
                 
                 ui.label("📝 Tactical Execution").classes('text-xl font-bold mb-2 text-white')
-                stop_loss = price - (atr * 1.5)
-                tp1 = price + (atr * 1.2)
-                tp2 = price + (atr * 2.5)
                 
-                ui.label(f"Stop Loss: ${stop_loss:.2f}").classes('text-red-400')
-                ui.label(f"Take Profit 1: ${tp1:.2f}").classes('text-green-400')
-                ui.label(f"Take Profit 2: ${tp2:.2f}").classes('text-green-400')
+                # Use dynamic ATR-IV formula for trading levels
+                levels = scanner_logic.calculate_trading_levels(
+                    price=price,
+                    atr14=atr,
+                    atr55=atr55,
+                    ticker=ticker
+                )
+                
+                # Show ATR being used
+                atr_label = "ATR(55)" if levels['is_squeezed'] else "ATR(14)"
+                ui.label(f"📊 Using {atr_label}: ${levels['atr_used']:.2f}").classes('text-cyan-400 text-sm mb-2')
+                
+                ui.label(f"Stop Loss ({levels['sl_mult']}x): ${levels['stop_loss']:.2f}").classes('text-red-400')
+                ui.label(f"Take Profit 1 ({levels['tp1_mult']}x): ${levels['tp1']:.2f}").classes('text-green-400')
+                ui.label(f"Take Profit 2 ({levels['tp2_mult']}x): ${levels['tp2']:.2f}").classes('text-green-400')
 
         # === QUICK COPY SECTION - Available immediately ===
         ui.separator().classes('bg-gray-700 my-4')
@@ -470,10 +479,11 @@ async def run_audit_async(ticker, container=None):
             f"ATR14/ATR55 Ratio: {squeeze_ratio:.2f}",
             f"Squeeze Status: {'SQUEEZED' if is_squeezed else 'Normal'}",
             "",
-            "## Calculated Levels",
-            f"Stop Loss (1.5 ATR): ${stop_loss:.2f}",
-            f"Target 1 (1.2 ATR): ${tp1:.2f}",
-            f"Target 2 (2.5 ATR): ${tp2:.2f}",
+            "## Calculated Levels (ATR-IV Formula)",
+            f"Using: {'ATR(55)' if levels['is_squeezed'] else 'ATR(14)'} = ${levels['atr_used']:.2f}",
+            f"Stop Loss ({levels['sl_mult']}x): ${levels['stop_loss']:.2f}",
+            f"Take Profit 1 ({levels['tp1_mult']}x): ${levels['tp1']:.2f}",
+            f"Take Profit 2 ({levels['tp2_mult']}x): ${levels['tp2']:.2f}",
         ]
         quick_export = '\n'.join(quick_lines)
         ui.textarea(value=quick_export).props('dark outlined readonly').classes('w-full').style('height: 180px; font-family: monospace;')
@@ -520,8 +530,8 @@ async def run_audit_async(ticker, container=None):
                                 "inline": False
                             },
                             {
-                                "name": "🎯 Levels",
-                                "value": f"SL: ${stop_loss:.2f} | TP1: ${tp1:.2f} | TP2: ${tp2:.2f}",
+                                "name": "🎯 Levels (ATR-IV)",
+                                "value": f"Using: {'ATR55' if levels['is_squeezed'] else 'ATR14'} | SL: ${levels['stop_loss']:.2f} | TP1: ${levels['tp1']:.2f} | TP2: ${levels['tp2']:.2f}",
                                 "inline": False
                             }
                         ],
@@ -900,11 +910,12 @@ async def run_audit_async(ticker, container=None):
         export_lines.append(f"Above SMA 200: {'Yes' if price > sma200 else 'No'}")
         export_lines.append("")
         
-        # Calculated Levels
-        export_lines.append("## Calculated Levels")
-        export_lines.append(f"Stop Loss (1.5 ATR): {stop_loss:.2f}")
-        export_lines.append(f"Target 1 (1.2 ATR): {tp1:.2f}")
-        export_lines.append(f"Target 2 (2.5 ATR): {tp2:.2f}")
+        # Calculated Levels (ATR-IV Formula)
+        export_lines.append("## Calculated Levels (ATR-IV Formula)")
+        export_lines.append(f"Using: {'ATR(55)' if levels['is_squeezed'] else 'ATR(14)'} = {levels['atr_used']:.2f}")
+        export_lines.append(f"Stop Loss ({levels['sl_mult']}x): {levels['stop_loss']:.2f}")
+        export_lines.append(f"Take Profit 1 ({levels['tp1_mult']}x): {levels['tp1']:.2f}")
+        export_lines.append(f"Take Profit 2 ({levels['tp2_mult']}x): {levels['tp2']:.2f}")
         export_lines.append("")
         
         # Comprehensive Fundamentals
@@ -1316,6 +1327,14 @@ def render_scanner_view():
                     {'name': 'volume', 'label': 'Volume', 'field': 'volume', 'sortable': True, 'align': 'right'},
                     {'name': 'sector', 'label': 'Sector', 'field': 'sector', 'sortable': True, 'align': 'left'},
                 ])
+            elif state.selected_strategy == 'Cash Secured Puts':
+                columns.extend([
+                    {'name': 'Trade_Exp', 'label': 'Exp', 'field': 'Trade_Exp', 'sortable': True, 'align': 'right'},
+                    {'name': 'Trade_Strike', 'label': 'Strike', 'field': 'Trade_Strike', 'sortable': True, 'align': 'right'},
+                    {'name': 'Trade_Prem', 'label': 'Prem', 'field': 'Trade_Prem', 'sortable': True, 'align': 'right'},
+                    {'name': 'Trade_ROC_W', 'label': 'Weekly ROC', 'field': 'Trade_ROC_W', 'sortable': True, 'align': 'right'},
+                    {'name': 'dist_to_ema20', 'label': 'Vs EMA20', 'field': 'dist_to_ema20', 'sortable': True, 'align': 'right'},
+                ])
             else:  # Small Cap Multibaggers
                 columns.extend([
                     {'name': 'gross_margin', 'label': 'Gross Margin', 'field': 'gross_margin', 'sortable': True, 'align': 'right'},
@@ -1372,6 +1391,12 @@ def render_scanner_view():
                     formatted_row['IV'] = str(row.get('IV', '-'))
                     formatted_row['volume'] = f"{row.get('volume', 0):,.0f}"
                     formatted_row['sector'] = str(row.get('sector', '-'))
+                elif state.selected_strategy == 'Cash Secured Puts':
+                    formatted_row['Trade_Exp'] = f"{row.get('Trade_Exp', '-')}"
+                    formatted_row['Trade_Strike'] = f"${row.get('Trade_Strike', 0):.1f}"
+                    formatted_row['Trade_Prem'] = f"${row.get('Trade_Prem', 0):.2f}"
+                    formatted_row['Trade_ROC_W'] = f"🚀 {row.get('Trade_ROC_W', 0):.1f}%" if row.get('Trade_ROC_W', 0) > 2.0 else f"{row.get('Trade_ROC_W', 0):.1f}%"
+                    formatted_row['dist_to_ema20'] = f"${row.get('dist_to_ema20', 0):.2f}"
                 else:
                     formatted_row['gross_margin'] = f"{row.get('gross_margin', 0):.1f}%"
                     formatted_row['revenue_growth'] = f"{row.get('revenue_growth_3y', 0):.1f}%"
@@ -1567,6 +1592,44 @@ with ui.left_drawer(value=True).classes('bg-gray-900/90 backdrop-blur-md q-pa-md
                 ui.label("Confirmation").classes('text-white text-xs font-bold mt-2 mb-1')
                 te_hull = ui.switch('Require Hull MA Trend', value=True).props('dark dense size=sm')
 
+            # Cash Secured Puts Params
+            with ui.column().bind_visibility_from(state, 'selected_strategy', lambda s: s == 'Cash Secured Puts'):
+                ui.label("Trade Type").classes('text-white text-xs font-bold mb-1')
+                csp_trade_type = ui.select(['CSP', 'Spread'], value='CSP', label='Mode').props('dark dense outlined options-dense').classes('w-full')
+                
+                ui.label("Price Range ($)").classes('text-white text-xs font-bold mt-2 mb-1')
+                with ui.row().classes('w-full gap-2'):
+                    csp_min_price = ui.number('Min', value=5.0).props('dark dense outlined step=1.0').classes('flex-1')
+                    csp_max_price = ui.number('Max', value=200.0).props('dark dense outlined step=5.0').classes('flex-1')
+
+                ui.label("Min Weekly ROC (%)").classes('text-white text-xs font-bold mt-2 mb-1')
+                csp_min_roc = ui.number('Min ROC %', value=1.0).props('dark dense outlined step=0.1').classes('w-full')
+
+                ui.label("Technical Filters").classes('text-white text-md font-bold mt-4 mb-2')
+                
+                ui.label("Max ADX").classes('text-gray-500 text-xs mb-1')
+                csp_max_adx = ui.number('Max ADX', value=45.0).props('dark dense outlined step=1.0').classes('w-full mb-2')
+
+                ui.label("Min Stock Volume").classes('text-gray-500 text-xs mb-1')
+                csp_min_vol = ui.number('Min Stock Vol', value=150000).props('dark dense outlined step=10000').classes('w-full mb-2')
+
+                ui.label("Min Option Volume").classes('text-gray-500 text-xs mb-1')
+                csp_min_opt_vol = ui.number('Min Option Vol', value=100).props('dark dense outlined step=10').classes('w-full mb-2')
+
+                ui.separator().classes('bg-gray-700 my-4')
+                
+                ui.label("Strategy Filters").classes('text-white text-md font-bold mb-2')
+                
+                csp_weekly_only = ui.switch('Weekly Options Only', value=False).props('dark dense size=sm')
+                csp_golden_cross = ui.switch('Golden Cross (SMA50 > SMA200)', value=False).props('dark dense size=sm')
+                csp_near_ema = ui.switch('Price Near EMA20 (within 1 ATR)', value=False).props('dark dense size=sm')
+
+                with ui.expansion('Advanced Settings', icon='tune').classes('w-full mt-2'):
+                    ui.label("Strike Distance (OTM %)").classes('text-gray-400 text-xs')
+                    csp_otm_pct = ui.number('OTM %', value=0.10).props('dark dense outlined step=0.01').classes('w-full')
+                
+                ui.label("⚠️ Warning: Deep Dive stage takes 2-3 mins!").classes('text-yellow-400 text-[10px] mt-2 italic')
+
         
         # Run Button Logic (Re-implementing simplified logic)
         async def run_scanner():
@@ -1604,6 +1667,20 @@ with ui.left_drawer(value=True).classes('bg-gray-900/90 backdrop-blur-md q-pa-md
                     'signal_mode': te_mode.value,
                     'signal_type': te_type.value
                 }
+            elif state.selected_strategy == 'Cash Secured Puts':
+                params = {
+                    'min_price': csp_min_price.value,
+                    'max_price': csp_max_price.value,
+                    'min_vol': csp_min_vol.value,
+                    'max_adx': csp_max_adx.value,
+                    'min_roc': csp_min_roc.value,
+                    'strike_otm_pct': csp_otm_pct.value,
+                    'trade_type': csp_trade_type.value,
+                    'min_opt_vol': csp_min_opt_vol.value,
+                    'check_golden_cross': csp_golden_cross.value,
+                    'check_near_ema': csp_near_ema.value,
+                    'weekly_options_only': csp_weekly_only.value
+                }
             else:
                 params = {
                     'mcap_min_m': min_mcap_m.value,
@@ -1619,7 +1696,15 @@ with ui.left_drawer(value=True).classes('bg-gray-900/90 backdrop-blur-md q-pa-md
                 
                 if count > 0:
                     df = strategy.post_process(df, params)
+                    
+                    # Stage 3: Deep Dive (if applicable)
+                    if hasattr(strategy, 'deep_dive') and callable(getattr(strategy, 'deep_dive')):
+                        ui.notify(f'Runing Deep Dive on {len(df)} candidates... (This takes time)', type='info', timeout=5000)
+                        # Run deep dive in thread to avoid blocking UI
+                        df = await asyncio.to_thread(strategy.deep_dive, df, params)
+
                     state.scanner_results = df
+
                     ui.notify(f'Found {len(df)} matches.', type='positive')
                 else:
                     state.scanner_results = pd.DataFrame()

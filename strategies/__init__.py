@@ -15,6 +15,7 @@ STRATEGY_REGISTRY = {
     'MEME Screen': 'strategies.meme_scanner.MemeScannerStrategy',
     'EMA Cross Momentum': 'strategies.ema_cross.EmaCrossStrategy',
     'Bearish EMA Cross (Down)': 'strategies.ema_cross_down.EmaCrossDownStrategy',
+    'Cash Secured Puts': 'strategies.cash_secured_puts.CashSecuredPutsStrategy',
 }
 
 

@@ -4,6 +4,76 @@ import numpy as np
 from tradingview_screener import Query, col
 from datetime import datetime
 
+def get_recommended_multiplier(ticker):
+    """
+    Returns a recommended multiplier based on ticker 'personality'.
+    """
+    high_beta = ['NVDA', 'TSLA', 'COIN', 'AMD', 'PLTR', 'MSTR']
+    stable_etf = ['GLD', 'SPY', 'QQQ', 'DIA']
+    
+    if ticker in high_beta:
+        return 2.0
+    elif ticker in stable_etf:
+        return 1.5
+    else:
+        return 1.75 # Default for standard stocks like AAPL
+
+
+def calculate_trading_levels(price, atr14, atr55, ticker=None, sl_mult=None, tp1_mult=1.5, tp2_mult=3.0):
+    """
+    Calculate stop loss and take profit levels using the ATR IV formula.
+    
+    When a stock is in a volatility squeeze (ATR14 < 85% of ATR55/2), 
+    we use ATR55 for calculations to account for potential expansion.
+    Otherwise, we use ATR14 for standard volatility.
+    
+    Args:
+        price: Current stock price
+        atr14: ATR(14) - short-term volatility
+        atr55: ATR(55) - long-term volatility (or ATR_1W / 2 as proxy)
+        ticker: Optional ticker for personality-based SL multiplier
+        sl_mult: Optional override for stop loss multiplier
+        tp1_mult: Take profit 1 multiplier (default 1.5)
+        tp2_mult: Take profit 2 multiplier (default 3.0)
+    
+    Returns:
+        dict with keys: atr_used, is_squeezed, squeeze_ratio, stop_loss, tp1, tp2
+    """
+    # Calculate squeeze ratio: ATR14 / (ATR55 / 2)
+    squeeze_ratio = atr14 / (atr55 / 2.0) if atr55 > 0 else 1.0
+    is_squeezed = squeeze_ratio < 0.85
+    
+    # Use ATR55 when squeezed (expecting expansion), ATR14 otherwise
+    atr_for_levels = atr55 if is_squeezed else atr14
+    
+    # Get stop loss multiplier (from ticker personality or override)
+    if sl_mult is None:
+        sl_mult = get_recommended_multiplier(ticker) if ticker else 1.5
+    
+    # Calculate levels
+    if atr_for_levels > 0:
+        stop_loss = price - (atr_for_levels * sl_mult)
+        tp1 = price + (atr_for_levels * tp1_mult)
+        tp2 = price + (atr_for_levels * tp2_mult)
+    else:
+        # Fallback to percentage-based if no ATR
+        stop_loss = price * 0.95
+        tp1 = price * 1.05
+        tp2 = price * 1.10
+    
+    return {
+        'atr_used': atr_for_levels,
+        'is_squeezed': is_squeezed,
+        'squeeze_ratio': squeeze_ratio,
+        'stop_loss': stop_loss,
+        'tp1': tp1,
+        'tp2': tp2,
+        'sl_mult': sl_mult,
+        'tp1_mult': tp1_mult,
+        'tp2_mult': tp2_mult
+    }
+
+
 def convert_df_to_txt(df):
     """Converts the dataframe to a tab-separated text format for easy reading"""
     return df.to_csv(index=False, sep='\t').encode('utf-8')
