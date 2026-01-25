@@ -1582,6 +1582,16 @@ def render_wheel_scanner_view():
                                     results = state.wheel_results
                                     config = state.wheel_config
                                     
+                                    # Assign buckets if not present
+                                    if 'bucket' not in results.columns:
+                                        def get_bucket(price):
+                                            for name, (low, high) in WHEEL_PRICE_BUCKETS.items():
+                                                if low <= price < high:
+                                                    return name
+                                            return "Other"
+                                        results = results.copy()
+                                        results['bucket'] = results['price'].apply(get_bucket)
+                                    
                                     header_embed = {
                                         "title": "🎯 Wheel Scanner Results",
                                         "description": f"Found **{len(results)}** CSP opportunities",
@@ -1590,9 +1600,19 @@ def render_wheel_scanner_view():
                                             {
                                                 "name": "⚙️ Scan Settings",
                                                 "value": (
-                                                    f"Max Capital: **${config.get('max_capital', 'N/A')}** | "
+                                                    f"Capital: **${config.get('max_capital', 'N/A')}** | "
+                                                    f"Min Price: **${config.get('min_price', 'N/A')}** | "
                                                     f"Min ROC: **{config.get('min_roc_weekly', 'N/A')}%** | "
                                                     f"Max ADX: **{config.get('max_adx', 'N/A')}**"
+                                                ),
+                                                "inline": False
+                                            },
+                                            {
+                                                "name": "🔧 Filters",
+                                                "value": (
+                                                    f"Weekly Only: {'✅' if config.get('weekly_only') else '❌'} | "
+                                                    f"Golden Cross: {'✅' if config.get('golden_cross') else '❌'} | "
+                                                    f"EMA/ATR: {'✅' if config.get('ema_atr_filter') else '❌'}"
                                                 ),
                                                 "inline": False
                                             }
@@ -1602,20 +1622,21 @@ def render_wheel_scanner_view():
                                     }
                                     
                                     # Build table by bucket
+                                    bucket_order = ["$1-5", "$5-10", "$10-15", "$15-20", "$20-25", "$25-30", "$30-40", "$40-50", "$50-60", "$60-80", "$80-100"]
                                     for bucket in bucket_order:
-                                        bucket_data = results[results['bucket'] == bucket] if 'bucket' in results.columns else pd.DataFrame()
+                                        bucket_data = results[results['bucket'] == bucket]
                                         if bucket_data.empty:
                                             continue
                                         
                                         table_lines = ["```"]
-                                        table_lines.append(f"{'SYM':<6} {'NAME':<15} {'STRIKE':>6} {'ROC':>6} {'DTE':>3} {'EXP':<8}")
-                                        table_lines.append("-" * 50)
+                                        table_lines.append(f"{'SYM':<8}{'NAME':<15}{'STRIKE':>8}{'ROC':>8} {'DTE':>3} {'EXP':<10}")
+                                        table_lines.append("-" * 55)
                                         
                                         for _, row in bucket_data.head(8).iterrows():
                                             name = str(row.get('name', ''))[:13]
-                                            expiry_short = row['expiry'][2:] if len(row['expiry']) == 10 else row['expiry']
+                                            expiry_short = row['expiry'][5:] if len(row['expiry']) == 10 else row['expiry']
                                             table_lines.append(
-                                                f"{row['symbol']:<6} {name:<15} ${row['strike']:>4.0f} {row['roc_weekly']:>5.2f}% {row['dte']:>3} {expiry_short:<8}"
+                                                f"{row['symbol']:<8}{name:<15}${row['strike']:>5.0f}  {row['roc_weekly']:>5.2f}% {row['dte']:>3} {expiry_short:<10}"
                                             )
                                         table_lines.append("```")
                                         
@@ -1624,6 +1645,7 @@ def render_wheel_scanner_view():
                                             "value": "\n".join(table_lines),
                                             "inline": False
                                         })
+
                                     
                                     discord_payload = {"embeds": [header_embed]}
                                     
