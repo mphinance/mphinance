@@ -4,8 +4,10 @@ import strategies
 import asbury_metrics
 import fundamental_metrics
 import options_flow
+import wheel_scanner_service
 import plotly.graph_objects as go
 import pandas as pd
+import yfinance as yf
 from datetime import datetime, timedelta
 import asyncio
 import os
@@ -110,6 +112,11 @@ class AppState:
         self.selected_strategy = 'Momentum with Pullback'
         self.strategy_params = {}
         self.selected_webhooks = []
+        # Wheel Scanner State
+        self.wheel_results = pd.DataFrame()
+        self.wheel_selected_symbol = None
+        self.wheel_scan_logs = []
+        self.wheel_config = {}
 
 state = AppState()
 
@@ -169,6 +176,8 @@ def update_ui():
             render_scanner_view()
         elif state.mode == 'Single Ticker Audit':
             render_audit_view()
+        elif state.mode == 'Wheel Scanner':
+            render_wheel_scanner_view()
 
 def render_market_header():
     """Render a compact Asbury 6 Market Health Header."""
@@ -1462,6 +1471,319 @@ def render_scanner_view():
                 ui.label('No results found. Adjust filters and run screen.').classes('text-gray-500 mt-4')
 
 
+# --- WHEEL SCANNER VIEW ---
+
+# Sector colors for visual grouping
+WHEEL_SECTOR_COLORS = {
+    'Technology': '#8b5cf6',
+    'Healthcare': '#22c55e', 
+    'Financial Services': '#3b82f6',
+    'Consumer Cyclical': '#f59e0b',
+    'Consumer Defensive': '#84cc16',
+    'Energy': '#ef4444',
+    'Industrials': '#6366f1',
+    'Basic Materials': '#14b8a6',
+    'Communication Services': '#ec4899',
+    'Real Estate': '#f97316',
+    'Utilities': '#06b6d4',
+}
+
+def get_wheel_sector_color(sector):
+    if not sector or pd.isna(sector):
+        return '#64748b'
+    for key, color in WHEEL_SECTOR_COLORS.items():
+        if key.lower() in str(sector).lower():
+            return color
+    return '#64748b'
+
+# Price buckets for wheel scanner
+WHEEL_PRICE_BUCKETS = {
+    "$1-5": (1, 5),
+    "$5-10": (5, 10),
+    "$10-15": (10, 15),
+    "$15-20": (15, 20),
+    "$20-25": (20, 25),
+    "$25-30": (25, 30),
+    "$30-40": (30, 40),
+    "$40-50": (40, 50),
+    "$50-60": (50, 60),
+    "$60-80": (60, 80),
+    "$80-100": (80, 100),
+}
+
+def render_wheel_scanner_view():
+    """Render the Wheel Scanner view for Cash Secured Put opportunities."""
+    
+    with ui.card().classes('w-full bg-gray-900/50 border border-gray-800 p-6 backdrop-blur-md'):
+        with ui.row().classes('w-full items-center justify-between mb-4'):
+            ui.label('🎯 Wheel Scanner').classes('text-xl font-bold text-white')
+            if not state.wheel_results.empty:
+                ui.label(f"Found {len(state.wheel_results)} CSP opportunities").classes('text-xs text-green-400')
+        
+        # Results Display
+        if not state.wheel_results.empty:
+            results = state.wheel_results
+            
+            # Assign buckets to results
+            def get_bucket(price):
+                for name, (low, high) in WHEEL_PRICE_BUCKETS.items():
+                    if low <= price < high:
+                        return name
+                return "Other"
+            
+            results = results.copy()
+            results['bucket'] = results['price'].apply(get_bucket)
+            
+            with ui.row().classes('w-full gap-4'):
+                # Left side: Results table
+                with ui.column().classes('flex-1'):
+                    # Tab structure by bucket
+                    bucket_order = ["$1-5", "$5-10", "$10-15", "$15-20", "$20-25", "$25-30", "$30-40", "$40-50", "$50-60", "$60-80", "$80-100"]
+                    available_buckets = [b for b in bucket_order if b in results['bucket'].values]
+                    
+                    if len(available_buckets) > 1:
+                        with ui.tabs().classes('w-full') as tabs:
+                            all_tab = ui.tab('All', label=f"All ({len(results)})")
+                            bucket_tabs = {b: ui.tab(b, label=f"{b} ({len(results[results['bucket'] == b])})") for b in available_buckets}
+                        
+                        with ui.tab_panels(tabs, value=all_tab).classes('w-full'):
+                            with ui.tab_panel(all_tab):
+                                render_wheel_results_table(results)
+                            for b, tab in bucket_tabs.items():
+                                with ui.tab_panel(tab):
+                                    render_wheel_results_table(results[results['bucket'] == b])
+                    else:
+                        render_wheel_results_table(results)
+                    
+                    # Export section
+                    with ui.expansion('📤 Export', icon='download').props('dense header-class="text-cyan-400"').classes('mt-4'):
+                        with ui.row().classes('gap-2'):
+                            def download_wheel_csv():
+                                csv_data = state.wheel_results[['symbol', 'name', 'sector', 'price', 'strike', 'capital', 'dte', 'roc_weekly', 'expiry']].to_csv(index=False)
+                                filename = f"wheel_results_{datetime.now().strftime('%Y%m%d_%H%M')}.csv"
+                                ui.download(csv_data.encode('utf-8'), filename)
+                            ui.button('CSV', icon='table_chart', on_click=download_wheel_csv).props('outline size=sm')
+                            
+                            def download_wheel_tv():
+                                tv_text = ",".join(state.wheel_results['symbol'].unique())
+                                filename = f"wheel_tv_{datetime.now().strftime('%Y%m%d_%H%M')}.txt"
+                                ui.download(tv_text.encode('utf-8'), filename)
+                            ui.button('TV List', icon='show_chart', on_click=download_wheel_tv).props('outline size=sm')
+                            
+                            # Discord export
+                            webhooks = get_configured_webhooks()
+                            if webhooks:
+                                async def send_wheel_discord():
+                                    selected = state.selected_webhooks
+                                    if not selected:
+                                        ui.notify('⚠️ No webhooks selected', type='warning')
+                                        return
+                                    
+                                    results = state.wheel_results
+                                    config = state.wheel_config
+                                    
+                                    header_embed = {
+                                        "title": "🎯 Wheel Scanner Results",
+                                        "description": f"Found **{len(results)}** CSP opportunities",
+                                        "color": 0x8b5cf6,
+                                        "fields": [
+                                            {
+                                                "name": "⚙️ Scan Settings",
+                                                "value": (
+                                                    f"Max Capital: **${config.get('max_capital', 'N/A')}** | "
+                                                    f"Min ROC: **{config.get('min_roc_weekly', 'N/A')}%** | "
+                                                    f"Max ADX: **{config.get('max_adx', 'N/A')}**"
+                                                ),
+                                                "inline": False
+                                            }
+                                        ],
+                                        "footer": {"text": "Momentum Phinance Wheel Scanner"},
+                                        "timestamp": datetime.now().isoformat()
+                                    }
+                                    
+                                    # Build table by bucket
+                                    for bucket in bucket_order:
+                                        bucket_data = results[results['bucket'] == bucket] if 'bucket' in results.columns else pd.DataFrame()
+                                        if bucket_data.empty:
+                                            continue
+                                        
+                                        table_lines = ["```"]
+                                        table_lines.append(f"{'SYM':<6} {'NAME':<15} {'STRIKE':>6} {'ROC':>6} {'DTE':>3} {'EXP':<8}")
+                                        table_lines.append("-" * 50)
+                                        
+                                        for _, row in bucket_data.head(8).iterrows():
+                                            name = str(row.get('name', ''))[:13]
+                                            expiry_short = row['expiry'][2:] if len(row['expiry']) == 10 else row['expiry']
+                                            table_lines.append(
+                                                f"{row['symbol']:<6} {name:<15} ${row['strike']:>4.0f} {row['roc_weekly']:>5.2f}% {row['dte']:>3} {expiry_short:<8}"
+                                            )
+                                        table_lines.append("```")
+                                        
+                                        header_embed["fields"].append({
+                                            "name": f"💰 {bucket} ({len(bucket_data)} stocks)",
+                                            "value": "\n".join(table_lines),
+                                            "inline": False
+                                        })
+                                    
+                                    discord_payload = {"embeds": [header_embed]}
+                                    
+                                    success = 0
+                                    for name in selected:
+                                        url = webhooks.get(name)
+                                        if url:
+                                            try:
+                                                resp = requests.post(url, json=discord_payload)
+                                                if resp.status_code in (200, 204):
+                                                    success += 1
+                                            except Exception as e:
+                                                print(f"Discord error: {e}")
+                                    
+                                    if success > 0:
+                                        ui.notify(f'✅ Sent to {success} webhook(s)!', type='positive')
+                                    else:
+                                        ui.notify('❌ Failed to send', type='negative')
+                                
+                                ui.button('Discord', icon='send', on_click=send_wheel_discord).props('outline size=sm color=purple')
+                
+                # Right side: Stock detail panel
+                with ui.column().classes('w-80'):
+                    if state.wheel_selected_symbol:
+                        symbol = state.wheel_selected_symbol
+                        row_data = state.wheel_results[state.wheel_results['symbol'] == symbol]
+                        
+                        if not row_data.empty:
+                            row_data = row_data.iloc[0]
+                            
+                            with ui.card().classes('w-full bg-gray-800/50 border border-gray-700 p-4'):
+                                ui.label(f"📈 {symbol}").classes('text-lg font-bold text-white')
+                                ui.label(row_data.get('name', symbol)).classes('text-gray-400 text-sm mb-4')
+                                
+                                # Metrics
+                                with ui.row().classes('gap-4 mb-4'):
+                                    with ui.column().classes('items-center'):
+                                        ui.label('Strike').classes('text-gray-500 text-xs')
+                                        ui.label(f"${row_data['strike']:.0f}").classes('text-green-400 text-xl font-bold')
+                                    with ui.column().classes('items-center'):
+                                        ui.label('Weekly ROC').classes('text-gray-500 text-xs')
+                                        ui.label(f"{row_data['roc_weekly']:.2f}%").classes('text-cyan-400 text-xl font-bold')
+                                    with ui.column().classes('items-center'):
+                                        ui.label('Premium').classes('text-gray-500 text-xs')
+                                        ui.label(f"${row_data['premium']:.0f}").classes('text-yellow-400 text-xl font-bold')
+                                
+                                # Load chart
+                                try:
+                                    stock = yf.Ticker(symbol)
+                                    df = stock.history(period="3mo", interval="1d")
+                                    
+                                    if not df.empty:
+                                        fig = go.Figure(data=[go.Candlestick(
+                                            x=df.index,
+                                            open=df['Open'],
+                                            high=df['High'],
+                                            low=df['Low'],
+                                            close=df['Close'],
+                                            increasing_line_color='#22c55e',
+                                            decreasing_line_color='#facc15'
+                                        )])
+                                        
+                                        fig.update_layout(
+                                            height=250,
+                                            margin=dict(l=0, r=0, t=0, b=0),
+                                            paper_bgcolor='rgba(0,0,0,0)',
+                                            plot_bgcolor='rgba(0,0,0,0)',
+                                            xaxis=dict(showgrid=False, showticklabels=False, rangeslider_visible=False),
+                                            yaxis=dict(showgrid=True, gridcolor='#1f2937', side='right'),
+                                            font=dict(color='#9ca3af')
+                                        )
+                                        
+                                        ui.plotly(fig).classes('w-full')
+                                except Exception as e:
+                                    ui.label(f"Chart error: {e}").classes('text-red-400 text-xs')
+                                
+                                # Strike info
+                                with ui.row().classes('w-full justify-between mt-4 text-sm'):
+                                    ui.label(f"DTE: {row_data['dte']}d").classes('text-gray-400')
+                                    ui.label(f"IV: {row_data['iv']:.0f}%").classes('text-gray-400')
+                                    ui.label(f"Exp: {row_data['expiry']}").classes('text-gray-400')
+                                
+                                if row_data.get('earnings'):
+                                    ui.label(f"📅 Earnings: {row_data['earnings']}").classes('text-yellow-400 text-xs mt-2')
+                                
+                                # Audit button
+                                def go_to_audit():
+                                    state.target_ticker = symbol
+                                    state.mode = 'Single Ticker Audit'
+                                    update_ui()
+                                ui.button('Full Analysis →', on_click=go_to_audit).props('flat dense color=cyan').classes('mt-4 w-full')
+                    else:
+                        with ui.card().classes('w-full bg-gray-800/30 border border-gray-700 p-6'):
+                            ui.icon('touch_app', size='2rem', color='gray').classes('opacity-50')
+                            ui.label('Click a row to see details').classes('text-gray-500 text-sm mt-2')
+            
+            # Scan log viewer
+            if state.wheel_scan_logs:
+                with ui.expansion('📟 Scan Log', icon='terminal').props('dense header-class="text-gray-500"').classes('mt-4'):
+                    log_text = "\n".join(state.wheel_scan_logs[-50:])  # Last 50 lines
+                    ui.code(log_text, language='bash').classes('text-xs')
+        else:
+            with ui.column().classes('w-full items-center justify-center py-12'):
+                ui.icon('search', size='4rem', color='gray').classes('opacity-50')
+                ui.label('Configure filters in sidebar and click "🔍 Scan" to find wheel opportunities').classes('text-gray-500 mt-4')
+                
+                with ui.row().classes('gap-6 mt-6'):
+                    with ui.column().classes('items-center'):
+                        ui.label('Strategy').classes('text-gray-500 text-xs')
+                        ui.label('Cash Secured Puts').classes('text-cyan-400 font-bold')
+                    with ui.column().classes('items-center'):
+                        ui.label('Target').classes('text-gray-500 text-xs')
+                        ui.label('Weekly Options').classes('text-cyan-400 font-bold')
+                    with ui.column().classes('items-center'):
+                        ui.label('Goal').classes('text-gray-500 text-xs')
+                        ui.label('>1% Weekly ROC').classes('text-cyan-400 font-bold')
+
+
+def render_wheel_results_table(results_df):
+    """Render the wheel scanner results as a clickable table."""
+    if results_df.empty:
+        ui.label('No results in this bucket').classes('text-gray-500 text-sm')
+        return
+    
+    columns = [
+        {'name': 'symbol', 'label': 'Symbol', 'field': 'symbol', 'sortable': True, 'align': 'left'},
+        {'name': 'name', 'label': 'Name', 'field': 'name', 'sortable': True, 'align': 'left'},
+        {'name': 'sector', 'label': 'Sector', 'field': 'sector', 'sortable': True, 'align': 'left'},
+        {'name': 'price', 'label': 'Price', 'field': 'price', 'sortable': True, 'align': 'right'},
+        {'name': 'strike', 'label': 'Strike', 'field': 'strike', 'sortable': True, 'align': 'right'},
+        {'name': 'dte', 'label': 'DTE', 'field': 'dte', 'sortable': True, 'align': 'right'},
+        {'name': 'roc_weekly', 'label': 'Wkly ROC', 'field': 'roc_weekly', 'sortable': True, 'align': 'right'},
+        {'name': 'iv', 'label': 'IV', 'field': 'iv', 'sortable': True, 'align': 'right'},
+        {'name': 'expiry', 'label': 'Expiry', 'field': 'expiry', 'sortable': True, 'align': 'left'},
+    ]
+    
+    rows = []
+    for _, row in results_df.iterrows():
+        sector = row.get('sector', 'Unknown')
+        sector_short = str(sector)[:12] if sector else 'N/A'
+        rows.append({
+            'symbol': row['symbol'],
+            'name': str(row.get('name', row['symbol']))[:25],
+            'sector': sector_short,
+            'price': f"${row['price']:.2f}",
+            'strike': f"${row['strike']:.0f}",
+            'dte': f"{row['dte']}d",
+            'roc_weekly': f"{row['roc_weekly']:.2f}%",
+            'iv': f"{row['iv']:.0f}%",
+            'expiry': row['expiry'],
+        })
+    
+    def on_row_click(e):
+        state.wheel_selected_symbol = e.args[1]['symbol']
+        update_ui()
+    
+    table = ui.table(columns=columns, rows=rows, pagination={'rowsPerPage': 15}).classes('w-full text-gray-300').props('flat dense square')
+    table.on('rowClick', on_row_click)
+
+
 # --- UPDATED LAYOUT & SIDEBAR ---
 
 with ui.left_drawer(value=True).classes('bg-gray-900/90 backdrop-blur-md q-pa-md border-r border-gray-800'):
@@ -1486,9 +1808,27 @@ with ui.left_drawer(value=True).classes('bg-gray-900/90 backdrop-blur-md q-pa-md
              update_ui()
          ui.button('← Back to Scanner', on_click=go_home).props('flat dense color=cyan no-caps').classes('w-full mb-4')
 
+    # Mode Toggle Buttons
+    ui.label("MODE").classes('text-[10px] font-bold text-gray-500 tracking-wider mb-2')
+    with ui.row().classes('w-full gap-2 mb-4'):
+        def set_screen_mode():
+            state.mode = 'Market Screens'
+            update_ui()
+        def set_wheel_mode():
+            state.mode = 'Wheel Scanner'
+            update_ui()
+        
+        ui.button('📊 Screens', on_click=set_screen_mode).props(
+            f"{'color=cyan' if state.mode == 'Market Screens' else 'flat'} dense no-caps"
+        ).classes('flex-1')
+        ui.button('🎯 Wheel', on_click=set_wheel_mode).props(
+            f"{'color=purple' if state.mode == 'Wheel Scanner' else 'flat'} dense no-caps"
+        ).classes('flex-1')
+
     ui.separator().classes('bg-gray-800 mb-4')
     
     # Strategy Controls (Only show in Scanner mode)
+
     with ui.column().bind_visibility_from(state, 'mode', lambda m: m == 'Market Screens'):
         ui.label("STRATEGY CONTROLS").classes('text-[10px] font-bold text-gray-500 tracking-wider mb-2')
         
@@ -1717,6 +2057,133 @@ with ui.left_drawer(value=True).classes('bg-gray-900/90 backdrop-blur-md q-pa-md
             update_ui()
             
         ui.button('🚀 Run Screen', on_click=run_scanner).props('color=green').classes('mt-4 w-full shadow-lg shadow-green-500/20') 
+
+    # --- WHEEL SCANNER CONTROLS (Only show in Wheel Scanner mode) ---
+    with ui.column().bind_visibility_from(state, 'mode', lambda m: m == 'Wheel Scanner'):
+        ui.label("WHEEL SCANNER").classes('text-[10px] font-bold text-gray-500 tracking-wider mb-2')
+        
+        # Price Buckets
+        ui.label("Price Buckets").classes('text-white text-xs font-bold mb-1')
+        wheel_buckets = ui.select(
+            list(WHEEL_PRICE_BUCKETS.keys()),
+            value=["$5-10", "$10-15", "$15-20"],
+            multiple=True
+        ).props('dark outlined dense options-dense use-chips').classes('w-full mb-3')
+        
+        # Min ROC
+        ui.label("Min Weekly ROC (%)").classes('text-white text-xs font-bold mb-1')
+        wheel_min_roc = ui.number('Min ROC', value=1.0).props('dark dense outlined step=0.1').classes('w-full mb-3')
+        
+        # Technical Filters
+        ui.label("Technical Filters").classes('text-white text-xs font-bold mt-2 mb-1')
+        
+        wheel_max_adx = ui.number('Max ADX', value=45).props('dark dense outlined step=5').classes('w-full mb-2')
+        wheel_min_volume = ui.number('Min Stock Volume', value=150000).props('dark dense outlined step=10000').classes('w-full mb-2')
+        wheel_min_opt_vol = ui.number('Min Option Volume', value=100).props('dark dense outlined step=50').classes('w-full mb-3')
+        
+        # Strategy Toggles
+        ui.separator().classes('bg-gray-700 my-3')
+        ui.label("Strategy Filters").classes('text-cyan-400 text-xs font-bold mb-2')
+        
+        wheel_weekly_only = ui.switch('Weekly Options Only', value=True).props('dark dense size=sm')
+        wheel_golden_cross = ui.switch('Golden Cross (SMA50 > SMA200)', value=True).props('dark dense size=sm')
+        wheel_ema_atr = ui.switch('Price Near EMA20 (within 1 ATR)', value=True).props('dark dense size=sm')
+        
+        ui.label("⚠️ Scan takes 2-3 mins (API calls)").classes('text-yellow-400 text-[10px] mt-3 italic')
+        
+        # Wheel Scan Button
+        async def run_wheel_scan():
+            ui.notify('🎯 Starting Wheel Scanner...', type='info')
+            
+            selected_buckets = wheel_buckets.value or ["$5-10", "$10-15", "$15-20"]
+            
+            # Calculate price range from selected buckets
+            if selected_buckets:
+                min_price = min(WHEEL_PRICE_BUCKETS[b][0] for b in selected_buckets)
+                max_price = max(WHEEL_PRICE_BUCKETS[b][1] for b in selected_buckets)
+            else:
+                min_price, max_price = 5, 20
+            
+            config = {
+                'max_capital': max_price * 100,
+                'min_price': min_price,
+                'max_price': max_price,
+                'min_volume': wheel_min_volume.value,
+                'min_roc_weekly': wheel_min_roc.value,
+                'max_adx': wheel_max_adx.value,
+                'min_option_volume': wheel_min_opt_vol.value,
+                'weekly_only': wheel_weekly_only.value,
+                'golden_cross': wheel_golden_cross.value,
+                'ema_atr_filter': wheel_ema_atr.value,
+                'max_results': 100,
+                'selected_buckets': selected_buckets
+            }
+            
+            state.wheel_config = config
+            state.wheel_scan_logs = []
+            
+            # Scanner instance with log capture
+            scanner = wheel_scanner_service.WheelScanner()
+            
+            def capture_log(msg):
+                state.wheel_scan_logs.append(msg)
+                print(msg)
+            
+            scanner.log_callback = capture_log
+            
+            try:
+                # Always use chunked scanning for better results across price ranges
+                all_results = []
+                bucket_mins = [WHEEL_PRICE_BUCKETS[b][0] for b in selected_buckets]
+                bucket_maxs = [WHEEL_PRICE_BUCKETS[b][1] for b in selected_buckets]
+                
+                current_min = min(bucket_mins)
+                overall_max = max(bucket_maxs)
+                
+                # Create scan ranges - smaller chunks for better coverage
+                scan_ranges = []
+                while current_min < overall_max:
+                    range_max = min(current_min + 20, overall_max)  # Smaller chunks of $20
+                    scan_ranges.append((current_min, range_max))
+                    current_min = range_max
+                
+                for range_min, range_max in scan_ranges:
+                    ui.notify(f'Scanning ${range_min}-${range_max}...', type='info', timeout=2000)
+                    
+                    range_config = config.copy()
+                    range_config['min_price'] = range_min
+                    range_config['max_price'] = range_max
+                    range_config['max_capital'] = range_max * 100
+                    range_config['tv_limit'] = 300  # Higher limit for more candidates
+                    range_config['process_limit'] = 100  # Process more stocks per range
+                    range_config['max_results'] = 50  # More results per chunk
+                    
+                    range_results = await asyncio.to_thread(scanner.scan, range_config)
+                    if range_results is not None and not range_results.empty:
+                        all_results.append(range_results)
+                
+                if all_results:
+                    results = pd.concat(all_results, ignore_index=True)
+                    results = results.drop_duplicates(subset=['symbol'])
+                    results = results.sort_values('roc_weekly', ascending=False)
+                else:
+                    results = pd.DataFrame()
+                
+                state.wheel_results = results if results is not None else pd.DataFrame()
+                state.wheel_selected_symbol = None
+                
+                if not state.wheel_results.empty:
+                    ui.notify(f'✅ Found {len(state.wheel_results)} CSP opportunities!', type='positive')
+                else:
+                    ui.notify('No opportunities found matching criteria.', type='warning')
+                    
+            except Exception as e:
+                ui.notify(f'❌ Scan error: {e}', type='negative')
+                print(f"Wheel Scan Error: {e}")
+            
+            update_ui()
+        
+        ui.button('🔍 Scan Market', on_click=run_wheel_scan).props('color=purple').classes('mt-4 w-full shadow-lg shadow-purple-500/20')
 
     # --- WEBHOOK CONFIGURATION ---
     ui.separator().classes('bg-gray-700 my-4')
