@@ -1197,97 +1197,61 @@ def render_scanner_view():
                     if sheets_url:
                         async def send_sheets():
                             try:
-                                # Prepare comprehensive data for Sheets (matching CSV structure)
-                                sheets_data = []
-                                for _, row in state.scanner_results.iterrows():
-                                    close_val = float(row['close'])
-                                    atr14 = float(row.get('ATR', 0))
-                                    atr55 = float(row.get('ATR_1W', atr14))
-                                    squeeze_ratio = atr14 / (atr55 / 2.0) if atr55 > 0 else 1.0
-                                    is_squeezed = squeeze_ratio < 0.85
-                                    
-                                    # Calculate week ending (Sunday) for filtering
-                                    from datetime import timedelta
-                                    today = datetime.now()
-                                    days_until_sunday = (6 - today.weekday()) % 7
-                                    if days_until_sunday == 0:  # If today is Sunday, use today
-                                        week_ending = today
-                                    else:
-                                        week_ending = today + timedelta(days=days_until_sunday)
-                                    week_ending_str = week_ending.strftime('%Y-%m-%d')
-                                    
-                                    sheets_data.append({
-                                        'Symbol': row['name'],
-                                        'Company': str(row.get('description', ''))[:50],
-                                        'Sector': str(row.get('sector', '')),
-                                        'WeekEnding': week_ending_str,
-                                        'PriceWhenScanned': close_val,
-                                        'Change%': float(row['change']),
-                                        'MktCap': float(row.get('market_cap_basic', 0)),
-                                        'RelVol': float(row.get('relative_volume_10d_calc', 0)),
-                                        
-                                        # Trend Exhaustion Specific
-                                        'Signal': row.get('Signal', ''),
-                                        'SignalDate': row.get('SignalDate', ''),
-                                        'WR21': float(row.get('WR21', 0)),
-                                        'WR112': float(row.get('WR112', 0)),
-                                        'HMA55': float(row.get('HMA55', 0)),
-                                        'PriceVsHMA': row.get('PriceVsHMA', ''),
-
-                                        # Momentum
-                                        'ADX': float(row.get('ADX', 0)),
-                                        'Stoch_K': float(row.get('Stoch_K', 0)),
-                                        'Stoch_D': float(row.get('Stoch_D', 0)),
-                                        'RSI': float(row.get('RSI', 0)),
-                                        
-                                        # Volatility
-                                        'ATR14': atr14,
-                                        'ATR55': atr55,
-                                        'SqueezeRatio': float(f"{squeeze_ratio:.2f}"),
-                                        'Squeezed': "Yes" if is_squeezed else "No",
-
-                                        # Moving Averages (Daily)
-                                        'EMA8': float(row.get('EMA8', 0)),
-                                        'EMA21': float(row.get('EMA21', 0)),
-                                        'EMA34': float(row.get('EMA34', 0)),
-                                        'EMA55': float(row.get('EMA55', 0)),
-                                        'EMA89': float(row.get('EMA89', 0)),
-                                        'SMA50': float(row.get('SMA50', 0)),
-                                        'SMA200': float(row.get('SMA200', 0)),
-
-                                        # Moving Averages (Weekly)
-                                        'EMA8_W': float(row.get('EMA8|1W', 0)),
-                                        'EMA21_W': float(row.get('EMA21|1W', 0)),
-                                        'EMA34_W': float(row.get('EMA34|1W', 0)),
-                                        'EMA55_W': float(row.get('EMA55|1W', 0)),
-                                        'EMA89_W': float(row.get('EMA89|1W', 0)),
-                                        
-                                        # Moving Averages (Monthly)
-                                        'EMA8_M': float(row.get('EMA8|1M', 0)),
-                                        'EMA21_M': float(row.get('EMA21|1M', 0)),
-                                        'EMA34_M': float(row.get('EMA34|1M', 0)),
-                                        'EMA55_M': float(row.get('EMA55|1M', 0)),
-                                        'EMA89_M': float(row.get('EMA8|1M', 0)),
-
-                                        # Strategy Specific
-                                        'IV': row.get('IV', ''),
-                                    })
+                                # Dynamic: Send ALL columns from scanner_results
+                                df = state.scanner_results.copy()
                                 
-                                # Send strategy name to route to correct tab
+                                if df.empty:
+                                    ui.notify('No data to send', type='warning')
+                                    return
+                                
+                                # Calculate week ending for tracking
+                                today = datetime.now()
+                                days_until_sunday = (6 - today.weekday()) % 7
+                                week_ending = today + timedelta(days=days_until_sunday) if days_until_sunday > 0 else today
+                                week_ending_str = week_ending.strftime('%Y-%m-%d')
+                                
+                                # Build sheets_data from ALL columns dynamically
+                                sheets_data = []
+                                for _, row in df.iterrows():
+                                    record = {
+                                        'Symbol': str(row.get('name', '')),
+                                        'Company': str(row.get('description', ''))[:50],
+                                        'WeekEnding': week_ending_str,
+                                    }
+                                    
+                                    # Add all other columns dynamically
+                                    for col in df.columns:
+                                        if col in ['name', 'description']:
+                                            continue  # Already added as Symbol/Company
+                                        
+                                        val = row[col]
+                                        
+                                        # Handle different types
+                                        if pd.isna(val):
+                                            record[col] = ''
+                                        elif isinstance(val, float):
+                                            record[col] = round(val, 4) if abs(val) < 1000000 else f"{val:.0f}"
+                                        else:
+                                            record[col] = str(val)
+                                    
+                                    sheets_data.append(record)
+                                
                                 payload = {
-                                    "data": sheets_data, 
+                                    "data": sheets_data,
                                     "timestamp": datetime.now().isoformat(),
                                     "strategy": state.selected_strategy
                                 }
-                                print(f"Sending to Sheets URL: {sheets_url}")
+                                
+                                print(f"Sending {len(sheets_data)} rows to Sheets ({state.selected_strategy})")
+                                print(f"Columns: {list(sheets_data[0].keys()) if sheets_data else 'none'}")
                                 
                                 resp = requests.post(sheets_url, json=payload)
-                                print(f"Sheets Response: {resp.status_code} - {resp.text}")
+                                print(f"Sheets Response: {resp.status_code} - {resp.text[:200]}")
                                 
                                 if resp.status_code == 200:
-                                    ui.notify(f'✅ Sent to Sheets ({state.selected_strategy})', type='positive')
+                                    ui.notify(f'✅ Sent {len(sheets_data)} rows to Sheets ({state.selected_strategy})', type='positive')
                                 elif resp.status_code == 302:
-                                    ui.notify('⚠️ Sheets Redirect (Check Permissions)', type='warning')
+                                    ui.notify('⚠️ Sheets Redirect (Redeploy Apps Script as "Anyone")', type='warning')
                                 else:
                                     ui.notify(f'❌ Sheets Error {resp.status_code}', type='negative')
                                     
@@ -1295,6 +1259,7 @@ def render_scanner_view():
                                 print(f"Sheets Exception: {e}")
                                 ui.notify(f'❌ Sheets Exception: {str(e)}', type='negative')
                         ui.button(icon='table_view', color='green', on_click=send_sheets).props('outline round size=sm').tooltip('Send to Sheets')
+
         
         # Table Logic (Compact)
         if not state.scanner_results.empty:
