@@ -78,7 +78,7 @@ class SmallCapMultibaggersStrategy(BaseStrategy):
         )
         return query
     
-    def post_process(self, df: pd.DataFrame) -> pd.DataFrame:
+    def post_process(self, df: pd.DataFrame, params: Dict[str, Any] = None) -> pd.DataFrame:
         if df.empty:
             return df
         

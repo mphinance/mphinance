@@ -1197,7 +1197,7 @@ def render_scanner_view():
                     if sheets_url:
                         async def send_sheets():
                             try:
-                                # Dynamic: Send ALL columns from scanner_results
+                                # Dynamic: Send columns from scanner_results with strategy-specific ordering
                                 df = state.scanner_results.copy()
                                 
                                 if df.empty:
@@ -1210,7 +1210,34 @@ def render_scanner_view():
                                 week_ending = today + timedelta(days=days_until_sunday) if days_until_sunday > 0 else today
                                 week_ending_str = week_ending.strftime('%Y-%m-%d')
                                 
-                                # Build sheets_data from ALL columns dynamically
+                                # Strategy-specific priority columns (these appear first)
+                                priority_cols = {
+                                    'Gamma Scan': ['close', 'sector', 'Expiration', 'TopWallStrike', 'TopWallOI', 'TopWallType', 'PctAway', 'WallPosition', 'WallSummary', 'TotalNearbyOI', 'ADX', 'change'],
+                                    'MEME Screen': ['close', 'IV', 'volume', 'sector', 'change', 'market_cap_basic'],
+                                    'Cash Secured Puts': ['close', 'sector', 'Trade_Exp', 'Trade_Strike', 'Trade_Prem', 'Trade_ROC_W', 'Trade_Capital', 'ADX', 'IV'],
+                                    'Volatility Squeeze': ['close', 'sector', 'SqueezeRatio', 'Signals', 'ADX', 'RSI', 'relative_volume_10d_calc', 'change'],
+                                    'Momentum with Pullback': ['close', 'sector', 'ADX', 'Stoch_K', 'RSI', 'SqueezeRatio', 'change'],
+                                }
+                                
+                                # Columns to exclude (noise for most strategies)
+                                exclude_cols = ['gross_margin', 'revenue_growth', 'earnings_per_share', 
+                                               'total_revenue', 'net_income', 'type', 'is_primary',
+                                               'EMA8|1W', 'EMA21|1W', 'EMA34|1W', 'EMA55|1W', 'EMA89|1W',
+                                               'EMA8|1M', 'EMA21|1M', 'EMA34|1M', 'EMA55|1M', 'EMA89|1M',
+                                               'SMA50|1W', 'EMA200|1W', 'SMA50|1M', 'EMA200|1M']
+                                
+                                # Build ordered column list
+                                strat = state.selected_strategy
+                                priority = priority_cols.get(strat, [])
+                                
+                                # Start with priority columns that exist in df
+                                ordered_cols = [c for c in priority if c in df.columns]
+                                # Add remaining columns (excluding noise)
+                                for c in df.columns:
+                                    if c not in ordered_cols and c not in ['name', 'description'] and c not in exclude_cols:
+                                        ordered_cols.append(c)
+                                
+                                # Build sheets_data with ordered columns
                                 sheets_data = []
                                 for _, row in df.iterrows():
                                     record = {
@@ -1219,14 +1246,8 @@ def render_scanner_view():
                                         'WeekEnding': week_ending_str,
                                     }
                                     
-                                    # Add all other columns dynamically
-                                    for col in df.columns:
-                                        if col in ['name', 'description']:
-                                            continue  # Already added as Symbol/Company
-                                        
+                                    for col in ordered_cols:
                                         val = row[col]
-                                        
-                                        # Handle different types
                                         if pd.isna(val):
                                             record[col] = ''
                                         elif isinstance(val, float):
@@ -1235,6 +1256,7 @@ def render_scanner_view():
                                             record[col] = str(val)
                                     
                                     sheets_data.append(record)
+
                                 
                                 payload = {
                                     "data": sheets_data,

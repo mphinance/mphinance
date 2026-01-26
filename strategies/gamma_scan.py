@@ -144,12 +144,12 @@ class GammaScanStrategy(BaseStrategy):
             print(f"  [{ticker}] Error: {e}")
             return None
     
-    def post_process(self, df: pd.DataFrame) -> pd.DataFrame:
+    def post_process(self, df: pd.DataFrame, params: Dict[str, Any] = None) -> pd.DataFrame:
         """Filter candidates by gamma proximity."""
         if df.empty:
             return df
         
-        params = getattr(self, 'params', self.get_default_params())
+        params = params or getattr(self, 'params', self.get_default_params())
         proximity_pct = params.get('proximity_pct', 2.0)
         min_oi = params.get('min_oi', 1000)
         signal_type = params.get('signal_type', 'All')
