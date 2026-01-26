@@ -29,38 +29,90 @@ load_dotenv()
 SHEETS_WEBHOOK = os.getenv("GOOGLE_SHEETS_WEBHOOK", "")
 
 # =============================================================================
-# CUSTOMIZE: Define your strategies here
+# STRATEGIES - Add your own or use the MEME Screen example
 # =============================================================================
 # Each strategy should be a dict with:
 #   - name: Display name
 #   - query_fn: Function that returns a pandas DataFrame of results
 #   - priority_cols: List of columns to show first in Sheets (optional)
 
-def example_strategy_a():
-    """Example: Replace with your own screening logic."""
-    # Your screening logic here - return a DataFrame
-    # Example using tradingview-screener:
-    # from tradingview_screener import Query, col
-    # query = Query().select('name', 'close', 'volume').where(col('volume') > 1000000).limit(50)
-    # count, df = query.get_scanner_data()
-    # return df
-    return pd.DataFrame()  # Placeholder
+def meme_screen():
+    """
+    MEME Screen - Top 30 stocks by Implied Volatility from top 200 by volume.
+    Mimics the MEME ETF methodology.
+    """
+    from tradingview_screener import Query, col
+    import yfinance as yf
+    import concurrent.futures
+    
+    print("  → Fetching top 200 by volume...")
+    
+    # Step 1: Get top 200 stocks by volume
+    query = (
+        Query()
+        .select('name', 'description', 'close', 'change', 'volume', 'market_cap_basic', 'sector')
+        .where(
+            col('exchange').isin(['NASDAQ', 'NYSE', 'AMEX']),
+            col('type') == 'stock',
+            col('is_primary') == True,
+            col('close') > 1.0,
+            col('volume') > 1_000_000
+        )
+        .order_by('volume', ascending=False)
+        .limit(200)
+    )
+    count, df = query.get_scanner_data()
+    
+    if df.empty:
+        return df
+    
+    print(f"  → Got {len(df)} candidates, fetching IV...")
+    
+    # Step 2: Fetch IV for each ticker
+    def get_iv(ticker):
+        try:
+            tk = yf.Ticker(ticker.replace('.', '-'))
+            exps = tk.options
+            if not exps:
+                return 0.0
+            chain = tk.option_chain(exps[0])
+            opts = pd.concat([chain.calls, chain.puts])
+            price = tk.fast_info.last_price
+            atm = opts[(opts['strike'] >= price * 0.95) & (opts['strike'] <= price * 1.05)]
+            return atm['impliedVolatility'].mean() if not atm.empty else 0.0
+        except:
+            return 0.0
+    
+    tickers = df['name'].tolist()
+    iv_map = {}
+    
+    with concurrent.futures.ThreadPoolExecutor(max_workers=20) as executor:
+        futures = {executor.submit(get_iv, t): t for t in tickers}
+        for i, f in enumerate(concurrent.futures.as_completed(futures)):
+            iv_map[futures[f]] = f.result()
+            if (i + 1) % 50 == 0:
+                print(f"  → Processed {i+1}/{len(tickers)}")
+    
+    df['IV'] = df['name'].map(iv_map)
+    df = df.sort_values('IV', ascending=False).head(30)
+    df['IV'] = df['IV'].apply(lambda x: f"{x:.2%}")
+    
+    print(f"  → Top 30 by IV selected")
+    return df
 
-def example_strategy_b():
-    """Example: Another strategy."""
-    return pd.DataFrame()  # Placeholder
 
 STRATEGIES = [
     {
-        "name": "Strategy A",
-        "query_fn": example_strategy_a,
-        "priority_cols": ["close", "volume", "change"],
+        "name": "MEME Screen",
+        "query_fn": meme_screen,
+        "priority_cols": ["close", "IV", "volume", "sector", "change", "market_cap_basic"],
     },
-    {
-        "name": "Strategy B", 
-        "query_fn": example_strategy_b,
-        "priority_cols": ["close", "sector"],
-    },
+    # Add more strategies here:
+    # {
+    #     "name": "My Custom Strategy",
+    #     "query_fn": my_custom_function,
+    #     "priority_cols": ["close", "volume"],
+    # },
 ]
 
 # Columns to exclude from Sheets output (noise)
