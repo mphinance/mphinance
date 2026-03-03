@@ -33,7 +33,9 @@ def build_report(
     )
     template = env.get_template("template.html")
 
-    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    from zoneinfo import ZoneInfo
+    est = ZoneInfo("America/New_York")
+    generated_at = datetime.now(est).strftime("%Y-%m-%d %I:%M %p EST")
 
     content = template.render(
         title=REPORT_TITLE,
