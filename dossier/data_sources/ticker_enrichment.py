@@ -210,10 +210,18 @@ def enrich_ticker(ticker: str) -> dict | None:
     # ── Technicals ──
     ema_8 = _ema(close, 8)
     ema_21 = _ema(close, 21)
+    ema_34 = _ema(close, 34)
+    ema_55 = _ema(close, 55)
+    ema_89 = _ema(close, 89)
     sma_50 = _sma(close, 50)
     sma_200 = _sma(close, 200)
     rsi = _rsi(close)
     macd_line, signal_line, macd_hist = _macd(close)
+
+    # TRAMA (34)
+    trama_ema1 = _ema(close, 34)
+    trama_ema2 = _ema(trama_ema1, 34)
+    trama_34 = 2 * trama_ema1 - trama_ema2
 
     # ATR
     tr = pd.concat([
@@ -223,6 +231,27 @@ def enrich_ticker(ticker: str) -> dict | None:
     ], axis=1).max(axis=1)
     atr = tr.rolling(14).mean()
 
+    # Stochastic %K
+    lowest_low = low.rolling(14).min()
+    highest_high = high.rolling(14).max()
+    stoch_k = 100 * ((close - lowest_low) / (highest_high - lowest_low))
+
+    # ADX
+    plus_dm = high.diff()
+    minus_dm = -low.diff()
+    plus_dm = plus_dm.where((plus_dm > minus_dm) & (plus_dm > 0), 0)
+    minus_dm = minus_dm.where((minus_dm > plus_dm) & (minus_dm > 0), 0)
+    tr_smooth = tr.rolling(14).sum()
+    plus_di = 100 * (plus_dm.rolling(14).sum() / tr_smooth)
+    minus_di = 100 * (minus_dm.rolling(14).sum() / tr_smooth)
+    dx = 100 * abs(plus_di - minus_di) / (plus_di + minus_di)
+    adx = dx.rolling(14).mean()
+
+    # Squeeze Ratio
+    atr_val = float(atr.iloc[-1])
+    atr_5d = float(tr.rolling(5).mean().iloc[-1])
+    squeeze_ratio = round(atr_val / (atr_5d * 2), 3) if atr_5d > 0 else 1.0
+
     # Historical Volatility
     log_ret = np.log(close / close.shift(1))
     hv_30 = float(log_ret.rolling(30).std().iloc[-1] * np.sqrt(252) * 100)
@@ -230,6 +259,45 @@ def enrich_ticker(ticker: str) -> dict | None:
     # Relative Volume
     vol_avg = df["Volume"].rolling(20).mean()
     rel_vol = float(df["Volume"].iloc[-1] / vol_avg.iloc[-1]) if vol_avg.iloc[-1] > 0 else 1.0
+    vol_avg_20 = int(vol_avg.iloc[-1]) if vol_avg.iloc[-1] > 0 else 0
+
+    # ── EMA Stack Status ──
+    e8 = _safe(ema_8.iloc[-1])
+    e21 = _safe(ema_21.iloc[-1])
+    e34 = _safe(ema_34.iloc[-1])
+    e55 = _safe(ema_55.iloc[-1])
+    e89 = _safe(ema_89.iloc[-1])
+    if e8 and e21 and e34 and e55 and e89:
+        if e8 > e21 > e34 > e55 > e89:
+            ema_stack = "FULL BULLISH"
+        elif e8 > e21 > e34:
+            ema_stack = "PARTIAL BULLISH"
+        elif e89 > e55 > e34 > e21 > e8:
+            ema_stack = "FULL BEARISH"
+        elif e34 > e21 > e8:
+            ema_stack = "PARTIAL BEARISH"
+        else:
+            ema_stack = "TANGLED"
+    else:
+        ema_stack = "UNKNOWN"
+
+    # ── Pivot Points (Classic) ──
+    prev_h = float(high.iloc[-2]) if len(high) >= 2 else float(high.iloc[-1])
+    prev_l = float(low.iloc[-2]) if len(low) >= 2 else float(low.iloc[-1])
+    prev_c = float(close.iloc[-2]) if len(close) >= 2 else price
+    pivot = (prev_h + prev_l + prev_c) / 3
+    r1 = 2 * pivot - prev_l
+    r2 = pivot + (prev_h - prev_l)
+    s1 = 2 * pivot - prev_h
+    s2 = pivot - (prev_h - prev_l)
+
+    # ── Fibonacci Retracement (using 52-week range) ──
+    high_52w = float(high.max())
+    low_52w = float(low.min())
+    fib_range = high_52w - low_52w
+    fib_618 = high_52w - fib_range * 0.618
+    fib_500 = high_52w - fib_range * 0.500
+    fib_382 = high_52w - fib_range * 0.382
 
     # ── Options IV ──
     iv = 0
@@ -358,14 +426,33 @@ def enrich_ticker(ticker: str) -> dict | None:
         "technicals": {
             "trend": trend,
             "crossover": crossover,
-            "ema_8": _safe(ema_8.iloc[-1]),
-            "ema_21": _safe(ema_21.iloc[-1]),
+            "ema_stack": ema_stack,
+            "ema_8": e8,
+            "ema_21": e21,
+            "ema_34": e34,
+            "ema_55": e55,
+            "ema_89": e89,
             "sma_50": _safe(sma_50.iloc[-1]),
             "sma_200": _safe(sma_200.iloc[-1]),
+            "trama_34": _safe(trama_34.iloc[-1]),
             "rsi_14": rsi_val,
             "macd_hist": _safe(macd_hist.iloc[-1]),
+            "stoch_k": _safe(stoch_k.iloc[-1]),
+            "adx": _safe(adx.iloc[-1]),
             "atr": _safe(atr.iloc[-1]),
+            "squeeze_ratio": squeeze_ratio,
             "rel_vol": round(rel_vol, 2),
+            "vol_avg_20": f"{vol_avg_20:,}",
+            # Pivot Points
+            "pivot": _safe(pivot),
+            "r1": _safe(r1),
+            "r2": _safe(r2),
+            "s1": _safe(s1),
+            "s2": _safe(s2),
+            # Fibonacci
+            "fib_618": _safe(fib_618),
+            "fib_500": _safe(fib_500),
+            "fib_382": _safe(fib_382),
         },
         "volatility": {
             "hv_30d": round(hv_30, 2) if not np.isnan(hv_30) else None,
