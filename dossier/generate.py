@@ -323,8 +323,25 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     print(f"  High Conviction: {persistence['summary']['high_conviction']}")
     print(f"  New Signals: {persistence['summary']['new_signals']}")
 
-    # ── Stage 6: Ticker Enrichment ──
-    print(f"\n[6/9] TICKER ENRICHMENT (top {MAX_DOSSIER_TICKERS})")
+    # ── Stage 6: Technical Setups ──
+    print("\n[6/11] TECHNICAL SETUPS (Tao of Trading)")
+    from dossier.data_sources.technical_setups import generate_setups
+    # Analyze top strategy picks for setup quality
+    setup_tickers = [s["symbol"] for s in scanner_signals if s["strategy"] != "Core Watchlist"][:8]
+    # Fill with institutional buying tickers
+    inst_buy_tickers = [s["ticker"] for s in institutional.get("top_buying", [])[:4]]
+    setup_tickers = list(dict.fromkeys(setup_tickers + inst_buy_tickers))[:10]
+    technical_setups = generate_setups(setup_tickers, max_setups=6)
+    print(f"  {len(technical_setups)} setups analyzed")
+
+    # ── Stage 7: CSP Setups ──
+    print("\n[7/11] CSP SETUPS")
+    from dossier.data_sources.csp_setups import fetch_csp_setups
+    csp_setups = fetch_csp_setups(max_results=8)
+    print(f"  {len(csp_setups)} CSP candidates")
+
+    # ── Stage 8: Ticker Enrichment ──
+    print(f"\n[8/11] TICKER ENRICHMENT (top {MAX_DOSSIER_TICKERS})")
     from dossier.data_sources.ticker_enrichment import enrich_ticker
 
     # Prioritize strategy-found tickers + institutional buying
@@ -341,13 +358,13 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             dossiers.append(data)
     print(f"  {len(dossiers)} dossiers enriched")
 
-    # ── Stage 7: AI Narrative ──
-    print("\n[7/9] AI NARRATIVE")
+    # ── Stage 9: AI Narrative ──
+    print("\n[9/11] AI NARRATIVE")
     from dossier.report.ai_narrative import generate_narrative
     ai_narrative = generate_narrative(market, institutional, scanner_signals, persistence, dossiers)
 
-    # ── Stage 8: Report Generation ──
-    print("\n[8/9] REPORT GENERATION")
+    # ── Stage 10: Report Generation ──
+    print("\n[10/11] REPORT GENERATION")
     from dossier.report.builder import build_report, build_pdf
 
     report_path = build_report(
@@ -359,14 +376,16 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         persistence=persistence,
         dossiers=dossiers,
         ai_narrative=ai_narrative,
+        technical_setups=technical_setups,
+        csp_setups=csp_setups,
     )
 
     pdf_path = None
     if generate_pdf:
         pdf_path = build_pdf(report_path)
 
-    # ── Stage 9: Update Index ──
-    print("\n[9/9] INDEX UPDATE")
+    # ── Stage 11: Update Index ──
+    print("\n[11/11] INDEX UPDATE")
     _update_index_page()
 
     # ── Git Push ──
