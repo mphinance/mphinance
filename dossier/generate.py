@@ -373,7 +373,7 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     if not dry_run:
         print("\n[PUSH] Committing to Git...")
         try:
-            subprocess.run(["git", "add", "docs/", "dossier/persistence/data/"],
+            subprocess.run(["git", "add", "docs/", "dossier/persistence/"],
                            cwd=str(PROJECT_ROOT), check=True)
             subprocess.run(
                 ["git", "commit", "-m", f"📊 Alpha Dossier {date}"],
