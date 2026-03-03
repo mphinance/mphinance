@@ -4,8 +4,38 @@ TickerTrace API client — institutional ETF activity data.
 Calls the deployed TickerTrace API to get what institutions are buying/selling.
 """
 
+import re
 import httpx
 from dossier.config import TICKERTRACE_API_BASE
+
+
+# ── Junk ticker filter ──
+# CUSIPs (e.g. "912797RS8"), money-market funds (FGXXX, SPAXX), and "OTHER"
+_JUNK_RE = re.compile(
+    r"^\d{3,}"          # starts with 3+ digits  → CUSIP
+    r"|XXX$"            # ends in XXX            → money market (FGXXX, SPAXX)
+    r"|^OTHER$"         # literal OTHER
+    r"|^CASH$"          # literal CASH
+    r"|^N/?A$",         # N/A
+    re.IGNORECASE,
+)
+
+
+def _is_junk(ticker: str) -> bool:
+    """Return True if the ticker is a CUSIP, money-market fund, or garbage."""
+    if not ticker or not isinstance(ticker, str):
+        return True
+    return bool(_JUNK_RE.search(ticker.strip()))
+
+
+def _filter_signals(items: list) -> list:
+    """Remove junk tickers from a list of signal dicts (key: 'ticker')."""
+    return [s for s in items if not _is_junk(s.get("ticker", ""))]
+
+
+def _filter_divergences(items: list) -> list:
+    """Remove junk tickers from divergence dicts."""
+    return [d for d in items if not _is_junk(d.get("ticker", ""))]
 
 
 def _get(endpoint: str, params: dict = None) -> dict:
@@ -69,13 +99,28 @@ def fetch_institutional_data() -> dict:
     signals = payload.get("signals", {})
     sector_flow = payload.get("sectorFlow", {})
 
+    # Filter out CUSIPs, money-market tickers, and garbage from all lists
+    buying = _filter_signals(signals.get("buying", []))
+    selling = _filter_signals(signals.get("selling", []))
+    divergences = _filter_divergences(payload.get("divergences", []))
+    changes = _filter_signals(payload.get("changes", [])[:50])
+
+    filtered_count = (
+        len(signals.get("buying", [])) - len(buying)
+        + len(signals.get("selling", [])) - len(selling)
+        + len(payload.get("divergences", [])) - len(divergences)
+    )
+    if filtered_count:
+        print(f"  Filtered {filtered_count} non-equity entries (CUSIPs, money markets)")
+
     return {
         "as_of_date": payload.get("asOfDate", "unknown"),
         "stats": payload.get("stats", {}),
-        "top_buying": signals.get("buying", []),
-        "top_selling": signals.get("selling", []),
+        "top_buying": buying,
+        "top_selling": selling,
         "sector_inflows": sector_flow.get("inflows", []),
         "sector_outflows": sector_flow.get("outflows", []),
-        "divergences": payload.get("divergences", []),
-        "recent_changes": payload.get("changes", [])[:25],
+        "divergences": divergences,
+        "recent_changes": changes[:25],
     }
+

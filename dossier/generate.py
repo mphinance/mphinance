@@ -36,6 +36,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from dossier.config import CORE_WATCHLIST, MAX_DOSSIER_TICKERS, OUTPUT_DIR, SCANNER_STRATEGIES
+from dossier.data_sources.tickertrace import _is_junk
 
 
 def _run_mphinance_strategies() -> list[dict]:
@@ -330,7 +331,7 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     setup_tickers = [s["symbol"] for s in scanner_signals if s["strategy"] != "Core Watchlist"][:8]
     # Fill with institutional buying tickers
     inst_buy_tickers = [s["ticker"] for s in institutional.get("top_buying", [])[:4]]
-    setup_tickers = list(dict.fromkeys(setup_tickers + inst_buy_tickers))[:10]
+    setup_tickers = [t for t in dict.fromkeys(setup_tickers + inst_buy_tickers) if not _is_junk(t)][:10]
     technical_setups = generate_setups(setup_tickers, max_setups=6)
     print(f"  {len(technical_setups)} setups analyzed")
 
@@ -347,9 +348,9 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     # Prioritize strategy-found tickers + institutional buying
     strategy_tickers = [s["symbol"] for s in scanner_signals if s["strategy"] != "Core Watchlist"][:5]
     inst_tickers = [s["ticker"] for s in institutional.get("top_buying", [])[:3]]
-    enrichment_order = list(dict.fromkeys(
+    enrichment_order = [t for t in dict.fromkeys(
         strategy_tickers + inst_tickers + scanned_tickers[:MAX_DOSSIER_TICKERS]
-    ))
+    ) if not _is_junk(t)]
 
     dossiers = []
     for ticker in enrichment_order[:MAX_DOSSIER_TICKERS]:
