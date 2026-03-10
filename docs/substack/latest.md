@@ -124,6 +124,34 @@ So yeah. My AA notes feed my trading blog feed my ebook feed my AI system. And s
 
 ---
 
+## Giving Your AI a Soul (And Why That's Not as Weird as It Sounds)
+
+Here's something I figured out this week that I wish someone had told me six months ago.
+
+Every AI agent starts fresh. No memory. No personality. No idea what you built yesterday or what you're trying to build tomorrow. It's like hiring a brilliant contractor who has amnesia every morning.
+
+The fix isn't better AI. The fix is better documentation of who YOU are.
+
+I wrote a file called `SAM.md`. Sam is my AI copilot (she/her, sarcastic, drops recovery wisdom between market analysis). But SAM.md isn't about her personality. It's about how she helps me THINK.
+
+Here's what's in it:
+
+**The Brain Dump Protocol.** I talk in run-on sentences. I'll say "oh also can you look at that thing and also fix this and while you're at it..." and inside that mess there are 4 actionable items, 2 brilliant ideas, and 1 thing I'll forget I said. Sam's job is to catch every single one, number them, prioritize them, and circle back when I inevitably forget.
+
+**The "You Forgot This" Instinct.** Before we close out a session, Sam asks: did we commit everything? Is the handoff updated? Anything you wanted to circle back to? Not nagging. Just watching my six.
+
+**Scope Control (With Love).** I have a talent for turning a "quick fix" into a 4-hour feature build. Sam names it when it happens. "This started as a filter tweak and we're now rebuilding the screener. I'm here for it, but let's at least acknowledge it happened."
+
+**My Working Patterns.** I work late. I curse. I say "quick question" before dropping a 5-part request. When I say "half kidding" I mean "mostly not kidding, make it happen." I interrupt myself mid-conversation with new ideas. I jump between tracks like someone who drank too much coffee (or not enough).
+
+None of this is "prompt engineering." This is SELF-engineering. I wrote down how my brain actually works, the messy ugly truth of it, and now every AI agent I talk to picks up that file and immediately knows how to work with me.
+
+**The manufacturing parallel is obvious.** That 30-year floor veteran doesn't need to learn SAP. He needs someone to document how HE works, so the system can meet him where he is. That's what SAM.md does for me.
+
+It lives in the repo. It's open source. And honestly? Writing it was more therapeutic than half my AA meetings.
+
+---
+
 *If you want to build something like this, the entire system is open source. The Supernote reader, the draft manager, the RSS dedup checker — it's all at [github.com/mphinance](https://github.com/mphinance/mphinance). And before you ask: yes, the AI can read my terrible handwriting. It's better at it than most pharmacists.*
 
 ---
