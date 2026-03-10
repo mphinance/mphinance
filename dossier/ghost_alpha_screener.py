@@ -93,6 +93,16 @@ TV_COLUMNS = [
     "BB.upper",                 # 17 Bollinger upper
     "BB.lower",                 # 18 Bollinger lower
     "Perf.3M",                  # 19 3-month performance %
+    # ── NEW: Ghost Grade Axis Columns ──────────────────────
+    "W.R",                      # 20 Williams %R (Axis 5: Exhaustion)
+    "ADX+DI",                   # 21 +DI (Axis 4: Trend direction)
+    "ADX-DI",                   # 22 -DI (Axis 4: Trend direction)
+    "EMA50",                    # 23 EMA 50 (Axis 1: Golden cross)
+    "EMA200",                   # 24 EMA 200 (Axis 1: Golden cross)
+    "Recommend.MA",             # 25 MA recommendation -1 to +1 (Axis 1)
+    "relative_volume_10d_calc", # 26 Relative volume 10d (Axis 2)
+    "Stoch.RSI.K",              # 27 Stoch RSI K (Axis 5: Momentum)
+    "MACD.macd",                # 28 MACD line (trend confirmation)
 ]
 
 
@@ -155,6 +165,16 @@ def _tv_fetch_all_stocks() -> list[dict]:
             "bb_upper": d[17],
             "bb_lower": d[18],
             "perf_3m": d[19],
+            # Ghost Grade axis columns
+            "williams_r": d[20],
+            "adx_plus_di": d[21],
+            "adx_minus_di": d[22],
+            "ema_50": d[23],
+            "ema_200": d[24],
+            "recommend_ma": d[25],
+            "rvol_10d": d[26],
+            "stoch_rsi_k": d[27],
+            "macd": d[28],
         })
 
     return results
@@ -189,24 +209,41 @@ def funnel_filter(stocks: list[dict], verbose: bool = True) -> list[dict]:
     if verbose:
         print(f"  ├─ Price ≥$5 + Vol ≥500K + Cap ≥$300M → {len(survivors)} survive ({cut} cut)")
 
-    # ── STAGE 2B: Trend Direction — SMA 200 & 50 ─────────────────
-    # If price is below SMA 200, the weekly trend is almost certainly
-    # not bullish → Axis 1 will fail on weekly. Kill it now.
-    # Also require SMA 50 > SMA 200 (golden cross) for strongest filter.
+    # ── STAGE 2B: Trend Direction — SMA 200 ───────────────────────
+    # Ax1 proxy: If price below SMA 200, weekly trend fails.
     prev = len(survivors)
     survivors = [s for s in survivors if (
         s["sma_200"] is not None
         and s["price"] > s["sma_200"]
-        # Allow bearish setups: price < SMA200 AND SMA50 < SMA200
-        # For now: focus on bullish A+ setups only
     )]
     if verbose:
-        print(f"  ├─ Price > SMA 200 (bull regime) ────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+        print(f"  ├─ Ax1: Price > SMA 200 (bull) ─────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
-    # ── STAGE 2C: Keltner / Extension Filter ─────────────────────
-    # If price is >8% above EMA 20, the stock is way extended.
-    # Axis 5 (exhaustion/mean reversion) will score 0.
-    # This is the Keltner-equivalent cut Michael mentioned.
+    # ── STAGE 2C: Golden Cross — EMA 50 > EMA 200 ────────────────
+    # Ax1 proxy: Strongest trend confirmation. Eliminates stocks
+    # that are above SMA200 but losing momentum.
+    prev = len(survivors)
+    survivors = [s for s in survivors if (
+        s.get("ema_50") is not None
+        and s.get("ema_200") is not None
+        and s["ema_50"] > s["ema_200"]
+    )]
+    if verbose:
+        print(f"  ├─ Ax1: Golden Cross (EMA50>200) ──→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+
+    # ── STAGE 2D: MA Recommendation ──────────────────────────────
+    # Ax1 proxy: TV's composite MA signal. Negative = MAs are
+    # bearish. Anything < -0.3 means most MAs say SELL.
+    prev = len(survivors)
+    survivors = [s for s in survivors if (
+        s.get("recommend_ma") is None  # keep if no data
+        or s["recommend_ma"] > -0.3
+    )]
+    if verbose:
+        print(f"  ├─ Ax1: MA Recommend > -0.3 ───────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+
+    # ── STAGE 2E: Keltner / Extension Filter ─────────────────────
+    # Ax5 proxy: If price >8% above EMA 20, way extended.
     prev = len(survivors)
     survivors = [s for s in survivors if (
         s["ema_20"] is not None
@@ -215,53 +252,74 @@ def funnel_filter(stocks: list[dict], verbose: bool = True) -> list[dict]:
         and ((s["price"] - s["ema_20"]) / s["ema_20"] * 100) >= -8.0
     )]
     if verbose:
-        print(f"  ├─ Within ±8% of EMA 20 (Keltner) ─→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+        print(f"  ├─ Ax5: Within ±8% EMA 20 (Kelt) ─→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
-    # ── STAGE 2D: RSI Exhaustion Pre-Filter ──────────────────────
-    # RSI > 80 = overbought → Axis 5 will fail (score 0)
-    # RSI < 15 = deeply oversold → likely broken, not a setup
+    # ── STAGE 2F: Williams %R Zone ───────────────────────────────
+    # Ax5 proxy: Williams %R from TV. Kill overbought (> -20)
+    # and deeply oversold (< -80) — Axis 5 will score 0.
+    prev = len(survivors)
+    survivors = [s for s in survivors if (
+        s.get("williams_r") is None  # keep if no data
+        or (-80 <= s["williams_r"] <= -20)
+    )]
+    if verbose:
+        print(f"  ├─ Ax5: W%R -80 to -20 (no exh) ──→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+
+    # ── STAGE 2G: Stoch RSI Overbought ───────────────────────────
+    # Ax5 proxy: Stoch RSI K > 85 = very overbought momentum.
+    prev = len(survivors)
+    survivors = [s for s in survivors if (
+        s.get("stoch_rsi_k") is None
+        or s["stoch_rsi_k"] <= 85
+    )]
+    if verbose:
+        print(f"  ├─ Ax5: Stoch.RSI.K ≤85 ──────────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+
+    # ── STAGE 2H: RSI Exhaustion Pre-Filter ──────────────────────
+    # RSI > 75 = overbought, RSI < 20 = deeply oversold
     prev = len(survivors)
     survivors = [s for s in survivors if (
         s["rsi"] is not None
-        and 15 <= s["rsi"] <= 80
+        and 20 <= s["rsi"] <= 75
     )]
     if verbose:
-        print(f"  ├─ RSI 15-80 (no extremes) ─────────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+        print(f"  ├─ Ax5: RSI 20-75 (no extremes) ──→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
-    # ── STAGE 2E: ADX Trend Strength ─────────────────────────────
-    # ADX < 12 = no trend at all → Axis 1 (HMA) will be noisy,
-    # Axis 4 (trend age) will score 0. Not worth deep scanning.
+    # ── STAGE 2I: ADX Trend Strength + Direction ─────────────────
+    # Ax4 proxy: ADX < 15 = no trend. Also require +DI > -DI
+    # for bullish directional confirmation.
     prev = len(survivors)
     survivors = [s for s in survivors if (
         s["adx"] is not None
-        and s["adx"] >= 12
+        and s["adx"] >= 15
+        and (s.get("adx_plus_di") is None or s.get("adx_minus_di") is None
+             or s["adx_plus_di"] > s["adx_minus_di"])
     )]
     if verbose:
-        print(f"  ├─ ADX ≥12 (some trend) ───────────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+        print(f"  ├─ Ax4: ADX ≥15 + DI bull ────────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
-    # ── STAGE 2F: Volume Life Check ──────────────────────────────
-    # If today's volume is basically dead (< 30% of 30d avg),
-    # CMF (Axis 2) will be unreliable and RVOL is garbage
+    # ── STAGE 2J: Volume Life Check ──────────────────────────────
+    # Ax2 proxy: Use TV's relative_volume_10d if available,
+    # fall back to raw volume ratio.
     prev = len(survivors)
     survivors = [s for s in survivors if (
-        s["volume"] > 0
-        and s["avg_vol_30d"] > 0
-        and (s["volume"] / s["avg_vol_30d"]) >= 0.3
+        (s.get("rvol_10d") is not None and s["rvol_10d"] >= 0.3)
+        or (s.get("rvol_10d") is None
+            and s["volume"] > 0 and s["avg_vol_30d"] > 0
+            and (s["volume"] / s["avg_vol_30d"]) >= 0.3)
     )]
     if verbose:
-        print(f"  ├─ RVOL ≥0.3 (not dead) ───────────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+        print(f"  ├─ Ax2: RVOL ≥0.3 (not dead) ─────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
-    # ── STAGE 2G: Weekly Performance Sanity ──────────────────────
-    # If a stock is +20% in a week, it's in blow-off territory.
-    # Axis 3 (volatility) and Axis 5 (exhaustion) will both fail.
-    # Similarly, if -20% in a week, it's in freefall.
+    # ── STAGE 2K: Weekly Performance Sanity ──────────────────────
+    # Ax3+5: Blow-off territory kills volatility + exhaustion axes.
     prev = len(survivors)
     survivors = [s for s in survivors if (
-        s["perf_1w"] is None  # keep if no data
-        or (-20 <= s["perf_1w"] <= 20)
+        s["perf_1w"] is None
+        or (-15 <= s["perf_1w"] <= 15)
     )]
     if verbose:
-        print(f"  ├─ Weekly move ±20% (no blow-offs) → {len(survivors)} survive ({prev - len(survivors)} cut)")
+        print(f"  ├─ Ax3: Weekly ±15% (no blow-off) → {len(survivors)} survive ({prev - len(survivors)} cut)")
 
     if verbose:
         pct = (1 - len(survivors) / total) * 100 if total > 0 else 0
