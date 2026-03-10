@@ -152,6 +152,22 @@ It lives in the repo. It's open source. And honestly? Writing it was more therap
 
 ---
 
+## Session Notes — March 10, 2026
+
+Today I backtested my own tools against each other. Turns out the stocks my daily dossier pipeline has been scoring every morning at 5 AM... aren't even the best stocks for it.
+
+I built a new screener called Ghost Alpha. It scans 7,600+ stocks through a 17-filter funnel looking for momentum setups with aligned EMA stacks, strong volume, and institutional money flow. The old screener I'd been running from a spreadsheet found 408 stocks over 7 weeks with a 40% win rate. Coin flip territory.
+
+Ghost Alpha's top 8 picks scored an average of **68 out of 100** on my own pipeline's momentum scoring system. The 8 stocks the pipeline actually runs on every morning? **37 out of 100.** Five of eight Ghost Alpha picks had textbook pullback setups. Zero from the core watchlist.
+
+The kicker: only 2 of the Ghost Alpha top 8 had ever appeared in any of my old screeners. MCD, PCG, PPL, CP. These are boring, defensive names that my momentum-obsessed old filters completely ignored. But they're sitting in perfect Bounce 2.0 setups with stochastic readings under 20. That's the entry zone I've been preaching about in every dossier.
+
+So now the screener feeds into the pipeline. The pipeline scores what the screener finds. And I stopped pretending that NVDA and TSLA are momentum setups right now (they're not — full bearish EMA stacks both of them).
+
+**Recovery parallel:** we take a fearless moral inventory. I took a fearless technical inventory. Found out my best tool was pointed at the wrong stocks. Humbling. Also: fixable.
+
+---
+
 *If you want to build something like this, the entire system is open source. The Supernote reader, the draft manager, the RSS dedup checker — it's all at [github.com/mphinance](https://github.com/mphinance/mphinance). And before you ask: yes, the AI can read my terrible handwriting. It's better at it than most pharmacists.*
 
 ---
