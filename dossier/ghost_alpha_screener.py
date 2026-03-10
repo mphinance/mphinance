@@ -952,6 +952,109 @@ def main():
     _save_api_output(results, funnel_stats)
 
 
+def run_screener(save_history: bool = True) -> dict:
+    """
+    Importable entry point for the pipeline.
+    Runs the full market scan, saves results, returns summary.
+
+    Returns:
+        {
+            "results": [...],
+            "funnel_stats": {...},
+            "a_plus": [...],   # daily A+ with weekly A+
+            "top_6": [...],    # 5.0 daily + A+ weekly
+        }
+    """
+    t0 = time.time()
+
+    # Stage 1: TradingView bulk fetch
+    raw_stocks = _tv_fetch_all_stocks()
+
+    # Stage 2: Funnel
+    survivors = funnel_filter(raw_stocks, verbose=False)
+    tv_lookup = {s["ticker"]: s for s in survivors}
+    tickers = [s["ticker"] for s in survivors]
+
+    # Stage 3: Batch deep scan
+    results = batch_deep_scan(tickers, tv_lookup, batch_size=100)
+    results.sort(key=lambda x: x["combined_score"], reverse=True)
+
+    elapsed = time.time() - t0
+
+    funnel_stats = {
+        "total": len(raw_stocks),
+        "survivors": len(survivors),
+        "deep_scanned": len(results),
+        "elapsed_sec": round(elapsed, 1),
+        "mode": "market",
+    }
+
+    # Categorize
+    a_plus = [r for r in results
+              if r["daily"].get("score", 0) >= 4.5
+              and r["weekly"].get("score", 0) >= 4.0]
+
+    top_6 = [r for r in results
+             if r["daily"].get("score", 0) >= 5.0
+             and r["weekly"].get("score", 0) >= 4.5]
+
+    # Save current + historical
+    _save_api_output(results, funnel_stats)
+
+    if save_history:
+        _save_history(results, funnel_stats)
+
+    return {
+        "results": results,
+        "funnel_stats": funnel_stats,
+        "a_plus": a_plus,
+        "top_6": top_6,
+    }
+
+
+def _save_history(results: list[dict], funnel_stats: dict):
+    """Save date-stamped results for backtesting history."""
+    try:
+        history_dir = PROJECT_ROOT / "docs" / "api" / "screener-history"
+        history_dir.mkdir(parents=True, exist_ok=True)
+        date_str = datetime.now().strftime("%Y-%m-%d")
+
+        # Save all graded results (compact format for backtesting)
+        rows = []
+        for r in results:
+            d, w = r["daily"], r["weekly"]
+            rows.append({
+                "ticker": r["ticker"],
+                "daily_grade": d.get("grade"),
+                "daily_score": d.get("score"),
+                "weekly_grade": w.get("grade"),
+                "weekly_score": w.get("score"),
+                "combined": r.get("combined_score"),
+                "price": d.get("price"),
+                "cmf": round(d.get("cmf", 0), 3),
+                "hull_bull": d.get("hull_bull"),
+                "trend_phase": d.get("trend_phase"),
+                "sqz_ratio": round(d.get("sqz_ratio", 0), 3),
+                "rvol": round(d.get("rvol", 0), 2),
+            })
+
+        output = {
+            "date": date_str,
+            "scan_time": datetime.now().isoformat(),
+            "funnel_stats": funnel_stats,
+            "total_graded": len(rows),
+            "a_plus_count": len([r for r in rows if r["daily_score"] and r["daily_score"] >= 4.5
+                                 and r["weekly_score"] and r["weekly_score"] >= 4.0]),
+            "results": rows,
+        }
+
+        filepath = history_dir / f"{date_str}.json"
+        with open(filepath, "w") as f:
+            json.dump(output, f, indent=2)
+    except Exception:
+        pass
+
+
 def _save_csv(results: list[dict], filepath: str):
     """Save flat CSV."""
     import csv

@@ -696,6 +696,25 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
 
     scanned_tickers = [s["symbol"] for s in scanner_signals]
 
+    # ── Stage 2b: Ghost Alpha Screener (standalone — saves for backtesting) ──
+    print("\n[2b/16] GHOST ALPHA SCREENER")
+    ghost_screener_results = {}
+    try:
+        from dossier.ghost_alpha_screener import run_screener
+        with timer.stage("Ghost Alpha Screener"):
+            ghost_screener_results = run_screener(save_history=True)
+            n_total = len(ghost_screener_results.get("results", []))
+            n_aplus = len(ghost_screener_results.get("a_plus", []))
+            n_top = len(ghost_screener_results.get("top_6", []))
+            elapsed = ghost_screener_results.get("funnel_stats", {}).get("elapsed_sec", 0)
+            print(f"  ✅ Screener: {n_total} graded, {n_aplus} multi-TF A+, {n_top} god-tier ({elapsed}s)")
+            if ghost_screener_results.get("top_6"):
+                top_tickers = [r["ticker"] for r in ghost_screener_results["top_6"]]
+                print(f"  🏆 Top picks: {', '.join(top_tickers)}")
+    except Exception as e:
+        print(f"  [WARN] Ghost screener failed: {e}")
+        timer.skip("Ghost Alpha Screener")
+
     # ── Stage 3: Institutional Data ──
     print("\n[3/16] TICKERTRACE INSTITUTIONAL DATA")
     from dossier.data_sources.tickertrace import fetch_institutional_data
