@@ -82,7 +82,7 @@ TV_COLUMNS = [
     "market_cap_basic",         # 6  market cap
     "SMA200",                   # 7  SMA 200
     "SMA50",                    # 8  SMA 50
-    "EMA20",                    # 9  EMA 20
+    "EMA21",                    # 9  EMA 21 (exact Tao stack)
     "RSI",                      # 10 RSI(14)
     "ADX",                      # 11 ADX(14)
     "ATR",                      # 12 ATR(14)
@@ -93,19 +93,22 @@ TV_COLUMNS = [
     "BB.upper",                 # 17 Bollinger upper
     "BB.lower",                 # 18 Bollinger lower
     "Perf.3M",                  # 19 3-month performance %
-    # ── NEW: Ghost Grade Axis Columns ──────────────────────
+    # ── Ghost Grade Axis Columns ──────────────────────
     "W.R",                      # 20 Williams %R (Axis 5: Exhaustion)
     "ADX+DI",                   # 21 +DI (Axis 4: Trend direction)
     "ADX-DI",                   # 22 -DI (Axis 4: Trend direction)
-    "EMA50",                    # 23 EMA 50 (Axis 1: Golden cross)
-    "EMA200",                   # 24 EMA 200 (Axis 1: Golden cross)
+    "EMA50",                    # 23 EMA 50 (golden cross)
+    "EMA200",                   # 24 EMA 200 (golden cross)
     "Recommend.MA",             # 25 MA recommendation -1 to +1 (Axis 1)
     "relative_volume_10d_calc", # 26 Relative volume 10d (Axis 2)
     "Stoch.RSI.K",              # 27 Stoch RSI K (Axis 5: Momentum)
     "MACD.macd",                # 28 MACD line (trend confirmation)
-    "EMA30",                    # 29 EMA 30 (stacking proxy for EMA 34)
-    "EMA100",                   # 30 EMA 100 (stacking proxy for EMA 89)
+    "EMA34",                    # 29 EMA 34 (exact Tao stack)
+    "EMA55",                    # 30 EMA 55 (exact Tao stack)
     "CCI20",                    # 31 CCI 20 (mean reversion filter)
+    "ChaikinMoneyFlow",         # 32 CMF (Axis 2: direct! No yfinance needed)
+    "HullMA9",                  # 33 Hull MA 9 (Axis 1: trend proxy)
+    "EMA89",                    # 34 EMA 89 (exact Tao stack)
 ]
 
 
@@ -167,7 +170,7 @@ def _tv_fetch_all_stocks() -> list[dict]:
             "market_cap": d[6] or 0,
             "sma_200": d[7],
             "sma_50": d[8],
-            "ema_20": d[9],
+            "ema_21": d[9],
             "rsi": d[10],
             "adx": d[11],
             "atr": d[12],
@@ -188,9 +191,12 @@ def _tv_fetch_all_stocks() -> list[dict]:
             "rvol_10d": d[26],
             "stoch_rsi_k": d[27],
             "macd": d[28],
-            "ema_30": d[29],
-            "ema_100": d[30],
+            "ema_34": d[29],
+            "ema_55": d[30],
             "cci20": d[31],
+            "cmf": d[32],
+            "hull_ma9": d[33],
+            "ema_89": d[34],
         })
 
     return results
@@ -249,19 +255,18 @@ def funnel_filter(stocks: list[dict], verbose: bool = True) -> list[dict]:
     if verbose:
         print(f"  ├─ Ax1: Golden Cross (EMA50>200) ──→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
-    # ── STAGE 2D: EMA Stacking (21>34>55>89 proxy) ───────────────
-    # Ax1+4: TV gives EMA20/30/50/100 — close proxies for 21/34/55/89.
-    # If EMAs aren't stacked bullish, the setup is tangled.
+    # ── STAGE 2D: EMA Stacking (Tao: 21>34>55>89 EXACT) ───────
+    # Ax1+4: TV has all 4 Tao EMAs natively. No proxies.
     prev = len(survivors)
     survivors = [s for s in survivors if (
-        s.get("ema_20") is not None
-        and s.get("ema_30") is not None
-        and s.get("ema_50") is not None
-        and s.get("ema_100") is not None
-        and s["ema_20"] > s["ema_30"] > s["ema_50"] > s["ema_100"]
+        s.get("ema_21") is not None
+        and s.get("ema_34") is not None
+        and s.get("ema_55") is not None
+        and s.get("ema_89") is not None
+        and s["ema_21"] > s["ema_34"] > s["ema_55"] > s["ema_89"]
     )]
     if verbose:
-        print(f"  ├─ Ax1: EMA Stack 20>30>50>100 ───→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+        print(f"  ├─ Ax1: EMA Stack 21>34>55>89 ────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
     # ── STAGE 2E: MACD Momentum Confirmation ─────────────────────
     # Ax1: MACD line > 0 = short-term momentum still accelerating.
@@ -296,16 +301,16 @@ def funnel_filter(stocks: list[dict], verbose: bool = True) -> list[dict]:
         print(f"  ├─ Ax1: MA Recommend > -0.3 ──────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
     # ── STAGE 2H: Keltner / Extension Filter ─────────────────────
-    # Ax5 proxy: If price >8% above EMA 20, way extended.
+    # Ax5 proxy: If price >8% above EMA 21, way extended.
     prev = len(survivors)
     survivors = [s for s in survivors if (
-        s["ema_20"] is not None
-        and s["ema_20"] > 0
-        and ((s["price"] - s["ema_20"]) / s["ema_20"] * 100) <= 8.0
-        and ((s["price"] - s["ema_20"]) / s["ema_20"] * 100) >= -8.0
+        s["ema_21"] is not None
+        and s["ema_21"] > 0
+        and ((s["price"] - s["ema_21"]) / s["ema_21"] * 100) <= 8.0
+        and ((s["price"] - s["ema_21"]) / s["ema_21"] * 100) >= -8.0
     )]
     if verbose:
-        print(f"  ├─ Ax5: Within ±8% EMA 20 (Kelt) ─→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+        print(f"  ├─ Ax5: Within ±8% EMA 21 (Kelt) ─→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
     # ── STAGE 2F: Williams %R Zone ───────────────────────────────
     # Ax5 proxy: Williams %R from TV. Kill overbought (> -20)
