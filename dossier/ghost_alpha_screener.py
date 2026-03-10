@@ -105,6 +105,7 @@ TV_COLUMNS = [
     "MACD.macd",                # 28 MACD line (trend confirmation)
     "EMA30",                    # 29 EMA 30 (stacking proxy for EMA 34)
     "EMA100",                   # 30 EMA 100 (stacking proxy for EMA 89)
+    "CCI20",                    # 31 CCI 20 (mean reversion filter)
 ]
 
 
@@ -132,6 +133,8 @@ def _tv_fetch_all_stocks() -> list[dict]:
             # ── Ax5: RSI not extreme (20-75) ──
             {"left": "RSI", "operation": "greater", "right": 20},
             {"left": "RSI", "operation": "less", "right": 75},
+            # ── Ax1: MACD > 0 (momentum confirmation) ──
+            {"left": "MACD.macd", "operation": "greater", "right": 0},
         ],
         "options": {"lang": "en"},
         "symbols": {"query": {"types": []}, "tickers": []},
@@ -187,6 +190,7 @@ def _tv_fetch_all_stocks() -> list[dict]:
             "macd": d[28],
             "ema_30": d[29],
             "ema_100": d[30],
+            "cci20": d[31],
         })
 
     return results
@@ -259,7 +263,29 @@ def funnel_filter(stocks: list[dict], verbose: bool = True) -> list[dict]:
     if verbose:
         print(f"  ├─ Ax1: EMA Stack 20>30>50>100 ───→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
-    # ── STAGE 2E: MA Recommendation ──────────────────────────────
+    # ── STAGE 2E: MACD Momentum Confirmation ─────────────────────
+    # Ax1: MACD line > 0 = short-term momentum still accelerating.
+    # Stacked EMAs + negative MACD = coasting on a dying move.
+    prev = len(survivors)
+    survivors = [s for s in survivors if (
+        s.get("macd") is None
+        or s["macd"] > 0
+    )]
+    if verbose:
+        print(f"  ├─ Ax1: MACD > 0 (momentum) ──────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+
+    # ── STAGE 2F: Monthly Performance > 0 ────────────────────────
+    # Ax4: If 30-day return is negative, the trend is unwinding
+    # even if EMAs haven't crossed yet. Demand recent confirmation.
+    prev = len(survivors)
+    survivors = [s for s in survivors if (
+        s.get("perf_1m") is None
+        or s["perf_1m"] > 0
+    )]
+    if verbose:
+        print(f"  ├─ Ax4: Perf.1M > 0% (recent) ───→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+
+    # ── STAGE 2G: MA Recommendation ──────────────────────────────
     # Ax1 proxy: TV's composite MA signal. Anything < -0.3 = SELL.
     prev = len(survivors)
     survivors = [s for s in survivors if (
@@ -267,9 +293,9 @@ def funnel_filter(stocks: list[dict], verbose: bool = True) -> list[dict]:
         or s["recommend_ma"] > -0.3
     )]
     if verbose:
-        print(f"  ├─ Ax1: MA Recommend > -0.3 ───────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+        print(f"  ├─ Ax1: MA Recommend > -0.3 ──────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
-    # ── STAGE 2F: Keltner / Extension Filter ─────────────────────
+    # ── STAGE 2H: Keltner / Extension Filter ─────────────────────
     # Ax5 proxy: If price >8% above EMA 20, way extended.
     prev = len(survivors)
     survivors = [s for s in survivors if (
@@ -300,9 +326,31 @@ def funnel_filter(stocks: list[dict], verbose: bool = True) -> list[dict]:
         or s["stoch_rsi_k"] <= 85
     )]
     if verbose:
-        print(f"  ├─ Ax5: Stoch.RSI.K ≤85 ──────────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+        print(f"  ├─ Ax5: Stoch.RSI.K ≤85 ─────────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
-    # ── STAGE 2H: RSI Exhaustion Pre-Filter ──────────────────────
+    # ── STAGE 2K: Stochastic K < 80 ─────────────────────────────
+    # Ax5: Classic overbought filter. Stoch.K > 80 = extended.
+    # Bounce 2.0 wants ≤40, but ≤80 catches the worst offenders.
+    prev = len(survivors)
+    survivors = [s for s in survivors if (
+        s.get("stoch_k") is None
+        or s["stoch_k"] < 80
+    )]
+    if verbose:
+        print(f"  ├─ Ax5: Stoch.K < 80 ────────────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+
+    # ── STAGE 2L: CCI20 Goldilocks Zone ─────────────────────────
+    # Ax5: CCI > 100 = statistically overbought,
+    # CCI < -100 = oversold. Sweet spot is -100 to +100.
+    prev = len(survivors)
+    survivors = [s for s in survivors if (
+        s.get("cci20") is None
+        or (-100 <= s["cci20"] <= 100)
+    )]
+    if verbose:
+        print(f"  ├─ Ax5: CCI20 ±100 (goldilocks) ─→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+
+    # ── STAGE 2M: RSI Exhaustion Pre-Filter ─────────────────────
     # RSI > 75 = overbought, RSI < 20 = deeply oversold
     prev = len(survivors)
     survivors = [s for s in survivors if (
@@ -312,7 +360,7 @@ def funnel_filter(stocks: list[dict], verbose: bool = True) -> list[dict]:
     if verbose:
         print(f"  ├─ Ax5: RSI 20-75 (no extremes) ──→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
-    # ── STAGE 2I: ADX Trend Strength + Direction ─────────────────
+    # ── STAGE 2N: ADX Trend Strength + Direction ────────────────
     # Ax4 proxy: ADX < 15 = no trend. Also require +DI > -DI
     # for bullish directional confirmation.
     prev = len(survivors)
@@ -325,7 +373,7 @@ def funnel_filter(stocks: list[dict], verbose: bool = True) -> list[dict]:
     if verbose:
         print(f"  ├─ Ax4: ADX ≥15 + DI bull ────────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
-    # ── STAGE 2J: Volume Life Check ──────────────────────────────
+    # ── STAGE 2O: Volume Life Check ─────────────────────────────
     # Ax2 proxy: Use TV's relative_volume_10d if available,
     # fall back to raw volume ratio.
     prev = len(survivors)
@@ -338,7 +386,7 @@ def funnel_filter(stocks: list[dict], verbose: bool = True) -> list[dict]:
     if verbose:
         print(f"  ├─ Ax2: RVOL ≥0.3 (not dead) ─────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
-    # ── STAGE 2K: Weekly Performance Sanity ──────────────────────
+    # ── STAGE 2P: Weekly Performance Sanity ─────────────────────
     # Ax3+5: Blow-off territory kills volatility + exhaustion axes.
     prev = len(survivors)
     survivors = [s for s in survivors if (
