@@ -103,6 +103,8 @@ TV_COLUMNS = [
     "relative_volume_10d_calc", # 26 Relative volume 10d (Axis 2)
     "Stoch.RSI.K",              # 27 Stoch RSI K (Axis 5: Momentum)
     "MACD.macd",                # 28 MACD line (trend confirmation)
+    "EMA30",                    # 29 EMA 30 (stacking proxy for EMA 34)
+    "EMA100",                   # 30 EMA 100 (stacking proxy for EMA 89)
 ]
 
 
@@ -110,6 +112,8 @@ def _tv_fetch_all_stocks() -> list[dict]:
     """
     Fetch the entire US equity universe from TradingView's scanner API.
     Returns list of dicts with pre-computed technicals.
+    Server-side filters do the heavy lifting — we get ~1500 stocks
+    instead of ~3100+ by pushing axis filters into the API payload.
     One request. ~2 seconds. Beautiful.
     """
     payload = {
@@ -119,9 +123,15 @@ def _tv_fetch_all_stocks() -> list[dict]:
              "right": ["common", "foreign-issuer"]},
             {"left": "exchange", "operation": "in_range",
              "right": ["NYSE", "NASDAQ", "AMEX"]},
-            # Hard floor: price > $2, avg vol > 100K — keeps API response manageable
-            {"left": "average_volume_30d_calc", "operation": "greater", "right": 100_000},
-            {"left": "close", "operation": "greater", "right": 2},
+            # ── Hard floors (always applied) ──
+            {"left": "close", "operation": "greater", "right": 5},
+            {"left": "average_volume_30d_calc", "operation": "greater", "right": 500_000},
+            {"left": "market_cap_basic", "operation": "greater", "right": 300_000_000},
+            # ── Ax4: ADX ≥ 15 (some trend) ──
+            {"left": "ADX", "operation": "greater", "right": 15},
+            # ── Ax5: RSI not extreme (20-75) ──
+            {"left": "RSI", "operation": "greater", "right": 20},
+            {"left": "RSI", "operation": "less", "right": 75},
         ],
         "options": {"lang": "en"},
         "symbols": {"query": {"types": []}, "tickers": []},
@@ -175,6 +185,8 @@ def _tv_fetch_all_stocks() -> list[dict]:
             "rvol_10d": d[26],
             "stoch_rsi_k": d[27],
             "macd": d[28],
+            "ema_30": d[29],
+            "ema_100": d[30],
         })
 
     return results
@@ -193,9 +205,11 @@ def funnel_filter(stocks: list[dict], verbose: bool = True) -> list[dict]:
 
     Returns only the survivors worth deep-scanning.
     """
+    import time as _t
+    _t0 = _t.time()
     total = len(stocks)
     if verbose:
-        print(f"\n  ┌─ FUNNEL: {total} stocks loaded from TradingView")
+        print(f"\n  ┌─ FUNNEL: {total} stocks loaded (server pre-filtered: $5+, Vol 500K+, Cap $300M+, ADX≥15, RSI 20-75)")
 
     # ── STAGE 2A: Price & Liquidity Floor ─────────────────────────
     # Eliminates penny stocks, illiquid, micro-caps
@@ -231,18 +245,31 @@ def funnel_filter(stocks: list[dict], verbose: bool = True) -> list[dict]:
     if verbose:
         print(f"  ├─ Ax1: Golden Cross (EMA50>200) ──→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
-    # ── STAGE 2D: MA Recommendation ──────────────────────────────
-    # Ax1 proxy: TV's composite MA signal. Negative = MAs are
-    # bearish. Anything < -0.3 means most MAs say SELL.
+    # ── STAGE 2D: EMA Stacking (21>34>55>89 proxy) ───────────────
+    # Ax1+4: TV gives EMA20/30/50/100 — close proxies for 21/34/55/89.
+    # If EMAs aren't stacked bullish, the setup is tangled.
     prev = len(survivors)
     survivors = [s for s in survivors if (
-        s.get("recommend_ma") is None  # keep if no data
+        s.get("ema_20") is not None
+        and s.get("ema_30") is not None
+        and s.get("ema_50") is not None
+        and s.get("ema_100") is not None
+        and s["ema_20"] > s["ema_30"] > s["ema_50"] > s["ema_100"]
+    )]
+    if verbose:
+        print(f"  ├─ Ax1: EMA Stack 20>30>50>100 ───→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+
+    # ── STAGE 2E: MA Recommendation ──────────────────────────────
+    # Ax1 proxy: TV's composite MA signal. Anything < -0.3 = SELL.
+    prev = len(survivors)
+    survivors = [s for s in survivors if (
+        s.get("recommend_ma") is None
         or s["recommend_ma"] > -0.3
     )]
     if verbose:
         print(f"  ├─ Ax1: MA Recommend > -0.3 ───────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
-    # ── STAGE 2E: Keltner / Extension Filter ─────────────────────
+    # ── STAGE 2F: Keltner / Extension Filter ─────────────────────
     # Ax5 proxy: If price >8% above EMA 20, way extended.
     prev = len(survivors)
     survivors = [s for s in survivors if (
@@ -323,7 +350,8 @@ def funnel_filter(stocks: list[dict], verbose: bool = True) -> list[dict]:
 
     if verbose:
         pct = (1 - len(survivors) / total) * 100 if total > 0 else 0
-        print(f"  └─ FUNNEL COMPLETE: {len(survivors)} survivors ({pct:.0f}% eliminated)")
+        elapsed = _t.time() - _t0
+        print(f"  └─ FUNNEL COMPLETE: {len(survivors)} survivors ({pct:.0f}% eliminated) [{elapsed:.1f}s]")
         print()
 
     return survivors
@@ -565,14 +593,17 @@ def resample_to_weekly(df: pd.DataFrame) -> pd.DataFrame:
     }).dropna()
 
 
-def deep_scan_ticker(ticker: str, tv_data: dict | None = None) -> dict | None:
+def deep_scan_ticker(ticker: str, df: pd.DataFrame = None,
+                     tv_data: dict | None = None) -> dict | None:
     """
     Full Ghost Alpha V2 deep scan on daily + weekly timeframes.
-    Only called for funnel survivors.
+    Accepts a pre-downloaded DataFrame (from batch download)
+    or fetches its own if df is None.
     """
     try:
-        stock = yf.Ticker(ticker)
-        df = stock.history(period="5y")
+        if df is None:
+            stock = yf.Ticker(ticker)
+            df = stock.history(period="2y")
         if df is None or len(df) < 200:
             return None
 
@@ -581,12 +612,9 @@ def deep_scan_ticker(ticker: str, tv_data: dict | None = None) -> dict | None:
 
         # Weekly grade (higher-TF adapted params)
         weekly_df = resample_to_weekly(df)
-        if len(weekly_df) < 80:
+        if len(weekly_df) < 50:
             weekly_grade = {"grade": "?", "score": 0, "error": "Insufficient weekly data"}
         else:
-            # Weekly params: Pine auto-adapt lerps toward longer periods,
-            # but exh_slow must fit within available bars. 55 is the sweet
-            # spot — still captures slow exhaustion on weekly scale.
             weekly_grade = compute_ghost_grade(weekly_df, hull_len=89, trama_len=55, exh_fast=14, exh_slow=55)
 
         d_score = daily_grade.get("score", 0)
@@ -603,14 +631,78 @@ def deep_scan_ticker(ticker: str, tv_data: dict | None = None) -> dict | None:
             "combined_score": round(d_score + w_score, 1),
         }
 
-        # Attach TV pre-screen data if available
         if tv_data:
             result["name"] = tv_data.get("name", ticker)
             result["market_cap"] = tv_data.get("market_cap")
 
         return result
-    except Exception as e:
+    except Exception:
         return None
+
+
+def batch_deep_scan(tickers: list[str], tv_lookup: dict,
+                    batch_size: int = 100) -> list[dict]:
+    """
+    Batch download OHLCV data via yf.download() with threading,
+    then run Ghost Grade on each ticker. ~3-5x faster than sequential.
+    """
+    results = []
+    errors = 0
+    total = len(tickers)
+
+    for batch_start in range(0, total, batch_size):
+        batch = tickers[batch_start:batch_start + batch_size]
+        batch_num = batch_start // batch_size + 1
+        total_batches = (total + batch_size - 1) // batch_size
+        print(f"\r     📦 Batch {batch_num}/{total_batches}: "
+              f"downloading {len(batch)} tickers...", end="", flush=True)
+
+        try:
+            # yf.download with threads=True parallelizes HTTP requests
+            raw = yf.download(
+                batch, period="2y", group_by="ticker",
+                threads=True, progress=False,
+            )
+        except Exception as e:
+            print(f"\n     ⚠ Batch download error: {e}")
+            # Fall back to individual downloads for this batch
+            for ticker in batch:
+                result = deep_scan_ticker(ticker, tv_data=tv_lookup.get(ticker))
+                if result:
+                    results.append(result)
+                else:
+                    errors += 1
+            continue
+
+        # Process each ticker from the batch DataFrame
+        for ticker in batch:
+            try:
+                if len(batch) == 1:
+                    # Single ticker: no multi-level columns
+                    df = raw.copy()
+                else:
+                    df = raw[ticker].copy()
+                df = df.dropna(how="all")
+                if df.empty or len(df) < 200:
+                    errors += 1
+                    continue
+                result = deep_scan_ticker(ticker, df=df,
+                                          tv_data=tv_lookup.get(ticker))
+                if result:
+                    results.append(result)
+                else:
+                    errors += 1
+            except (KeyError, Exception):
+                errors += 1
+
+        pct = min((batch_start + len(batch)) / total * 100, 100)
+        print(f"\r     📦 Batch {batch_num}/{total_batches}: "
+              f"{len(results)} graded, {errors} errors ({pct:.0f}%)"
+              + " " * 10, end="", flush=True)
+
+    print(f"\r     ✅ Scanned {len(results)} tickers ({errors} errors)"
+          + " " * 30)
+    return results
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -781,24 +873,9 @@ def main():
         tickers_to_scan = [s["ticker"] for s in survivors]
         tv_lookup = {s["ticker"]: s for s in survivors}
 
-    # ── Stage 3+4: Deep scan survivors ──
-    print(f"  🧪 Stage 3: Deep scanning {len(tickers_to_scan)} tickers (daily + weekly)...")
-    results = []
-    errors = 0
-    batch_size = 50
-    for i, ticker in enumerate(tickers_to_scan):
-        pct = (i + 1) / len(tickers_to_scan) * 100
-        print(f"\r     [{i+1}/{len(tickers_to_scan)}] {ticker:<6} ({pct:.0f}%)", end="", flush=True)
-        result = deep_scan_ticker(ticker, tv_lookup.get(ticker))
-        if result:
-            results.append(result)
-        else:
-            errors += 1
-        # Small delay every batch to be nice to yfinance
-        if (i + 1) % batch_size == 0 and i + 1 < len(tickers_to_scan):
-            time.sleep(0.5)
-
-    print(f"\r     ✅ Scanned {len(results)} tickers ({errors} errors)" + " " * 20)
+    # ── Stage 3+4: Batch deep scan survivors ──
+    print(f"  🧪 Stage 3: Batch deep scanning {len(tickers_to_scan)} tickers (daily + weekly)...")
+    results = batch_deep_scan(tickers_to_scan, tv_lookup, batch_size=100)
 
     elapsed = time.time() - t0
     funnel_stats["elapsed_sec"] = round(elapsed, 1)
