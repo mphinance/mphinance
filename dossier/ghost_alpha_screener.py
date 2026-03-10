@@ -651,7 +651,7 @@ def deep_scan_ticker(ticker: str, df: pd.DataFrame = None,
     try:
         if df is None:
             stock = yf.Ticker(ticker)
-            df = stock.history(period="2y")
+            df = stock.history(period="3y")
         if df is None or len(df) < 200:
             return None
 
@@ -708,7 +708,7 @@ def batch_deep_scan(tickers: list[str], tv_lookup: dict,
         try:
             # yf.download with threads=True parallelizes HTTP requests
             raw = yf.download(
-                batch, period="2y", group_by="ticker",
+                batch, period="3y", group_by="ticker",
                 threads=True, progress=False,
             )
         except Exception as e:
