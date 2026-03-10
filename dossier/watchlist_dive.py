@@ -122,6 +122,94 @@ Sign off: "— Ghost out. 👻"
         return ""
 
 
+def _calculate_trade_plan(
+    price, s1, s2, r1, r2, kelt_lower, kelt_upper,
+    fib_618, fib_500, fib_382, ema_55, atr,
+    ema_stack, adx, stoch_k, rsi,
+    gex_support=None, gex_resistance=None,
+) -> dict:
+    """Calculate algorithmic trade plan using composite support/resistance levels.
+
+    Stop loss = nearest floor from pivots, Keltner, Fib, EMA, GEX walls.
+    Take profit = tiered targets from pivots, Keltner, Fib, GEX walls.
+    Position sizing = 1% account risk (user configurable).
+    """
+    # Gather all potential support levels (stop loss candidates)
+    support_levels = []
+    if s2 and s2 > 0: support_levels.append(("S2 Pivot", round(s2, 2)))
+    if kelt_lower and kelt_lower > 0: support_levels.append(("Keltner Lower", round(kelt_lower, 2)))
+    if fib_618 and fib_618 > 0: support_levels.append(("Fib 0.618", round(fib_618, 2)))
+    if ema_55 and ema_55 > 0: support_levels.append(("EMA 55", round(ema_55, 2)))
+    if s1 and s1 > 0: support_levels.append(("S1 Pivot", round(s1, 2)))
+    if gex_support and gex_support > 0: support_levels.append(("GEX Wall 🛡", round(gex_support, 2)))
+
+    # Gather resistance levels (take profit candidates)
+    resist_levels = []
+    if r1 and r1 > 0: resist_levels.append(("R1 Pivot", round(r1, 2)))
+    if fib_382 and fib_382 > 0 and fib_382 > price:
+        resist_levels.append(("Fib 0.382", round(fib_382, 2)))
+    if kelt_upper and kelt_upper > 0: resist_levels.append(("Keltner Upper", round(kelt_upper, 2)))
+    if r2 and r2 > 0: resist_levels.append(("R2 Pivot", round(r2, 2)))
+    if gex_resistance and gex_resistance > 0: resist_levels.append(("GEX Wall ⚡", round(gex_resistance, 2)))
+
+    # Sort supports ascending (lowest = tightest stop)
+    support_levels.sort(key=lambda x: x[1])
+    # Sort resistance ascending
+    resist_levels.sort(key=lambda x: x[1])
+
+    # Pick levels
+    # Stop: use the highest support level that's still BELOW price (nearest floor)
+    valid_stops = [(n, v) for n, v in support_levels if v < price]
+    stop_name, stop_price = valid_stops[-1] if valid_stops else ("ATR 2x", round(price - 2 * (atr or price * 0.02), 2))
+
+    # Take profits: up to 3 tiers
+    valid_targets = [(n, v) for n, v in resist_levels if v > price]
+    tp_zones = valid_targets[:3]
+
+    # Risk calculation
+    risk_per_share = round(price - stop_price, 2) if stop_price else round(price * 0.03, 2)
+    risk_pct = round((risk_per_share / price) * 100, 1) if price > 0 else 0
+
+    # Reward:risk ratios for each TP
+    rr_ratios = []
+    for name, target in tp_zones:
+        reward = target - price
+        rr = round(reward / risk_per_share, 1) if risk_per_share > 0 else 0
+        rr_ratios.append({"name": name, "target": target, "reward": round(reward, 2), "rr": rr})
+
+    # Position sizing: 1% risk on $25K account
+    for acct_size in [10000, 25000, 50000]:
+        risk_budget = acct_size * 0.01
+        if risk_per_share > 0:
+            shares = int(risk_budget / risk_per_share)
+            position_value = round(shares * price, 2)
+
+    shares_25k = int(250 / risk_per_share) if risk_per_share > 0 else 0
+    position_25k = round(shares_25k * price, 2)
+
+    # Trailing stop: 1.5x ATR
+    trailing_stop = round(1.5 * atr, 2) if atr else round(price * 0.02, 2)
+
+    # Setup quality
+    quality = "A+" if (ema_stack == "FULL BULLISH" and adx and adx >= 25
+                       and stoch_k and stoch_k <= 40) else \
+              "A" if ema_stack == "FULL BULLISH" and adx and adx >= 20 else \
+              "B" if ema_stack in ("FULL BULLISH", "PARTIAL BULLISH") else "C"
+
+    return {
+        "stop_loss": stop_price,
+        "stop_name": stop_name,
+        "risk_per_share": risk_per_share,
+        "risk_pct": risk_pct,
+        "tp_zones": rr_ratios,
+        "trailing_stop": trailing_stop,
+        "position_size_25k": {"shares": shares_25k, "value": position_25k},
+        "support_levels": support_levels,
+        "resist_levels": resist_levels,
+        "setup_quality": quality,
+    }
+
+
 def generate_deep_dive(ticker: str) -> str:
     """Generate a full deep-dive markdown for a single ticker."""
     print(f"  📊 {ticker}...")
@@ -244,24 +332,75 @@ def generate_deep_dive(ticker: str) -> str:
     iv_current = None
     iv_rank = None
     iv_percentile = None
+    gex_walls = {"support": None, "resistance": None, "max_gamma_strike": None}
     try:
         opts = stock.options
         if opts:
             nearest_exp = opts[0]
             chain_data = stock.option_chain(nearest_exp)
             calls = chain_data.calls
+            puts = chain_data.puts
             # ATM IV: closest strike to current price
             if not calls.empty and "impliedVolatility" in calls.columns:
                 atm_idx = (calls["strike"] - price).abs().idxmin()
                 iv_current = round(float(calls.loc[atm_idx, "impliedVolatility"]) * 100, 2)
 
             # IV Rank/Percentile: compare to range of IVs across all strikes
-            all_ivs = pd.concat([calls.get("impliedVolatility", pd.Series()), chain_data.puts.get("impliedVolatility", pd.Series())]).dropna()
+            all_ivs = pd.concat([calls.get("impliedVolatility", pd.Series()), puts.get("impliedVolatility", pd.Series())]).dropna()
             if len(all_ivs) > 5 and iv_current:
                 iv_min = float(all_ivs.min()) * 100
                 iv_max = float(all_ivs.max()) * 100
                 iv_rank = round((iv_current - iv_min) / (iv_max - iv_min) * 100, 1) if iv_max > iv_min else 50.0
                 iv_percentile = round(float((all_ivs * 100 <= iv_current / 100).sum() / len(all_ivs) * 100), 1)
+
+            # ── GEX Wall Calculation ──
+            # GEX = Gamma × OI × 100 × Spot²  (per strike)
+            # Calls have positive gamma, puts have negative → net GEX at each strike
+            # Highest positive GEX = resistance wall, highest negative = support wall
+            try:
+                gex_data = []
+                for _, row in calls.iterrows():
+                    if pd.notna(row.get("openInterest")) and row.get("openInterest", 0) > 0:
+                        gamma = row.get("gamma", 0) or 0
+                        oi = row.get("openInterest", 0) or 0
+                        strike = row["strike"]
+                        gex = gamma * oi * 100 * price * price / 1e6  # normalize to millions
+                        gex_data.append({"strike": strike, "gex": gex, "type": "call"})
+                for _, row in puts.iterrows():
+                    if pd.notna(row.get("openInterest")) and row.get("openInterest", 0) > 0:
+                        gamma = row.get("gamma", 0) or 0
+                        oi = row.get("openInterest", 0) or 0
+                        strike = row["strike"]
+                        gex = -gamma * oi * 100 * price * price / 1e6  # puts = negative gamma
+                        gex_data.append({"strike": strike, "gex": gex, "type": "put"})
+
+                if gex_data:
+                    # Aggregate by strike
+                    strike_gex = {}
+                    for g in gex_data:
+                        s = g["strike"]
+                        strike_gex[s] = strike_gex.get(s, 0) + g["gex"]
+
+                    # Max positive GEX = resistance (dealers sell to hedge)
+                    # Max negative GEX = support (dealers buy to hedge)
+                    positive_strikes = [(s, g) for s, g in strike_gex.items() if g > 0 and s > price]
+                    negative_strikes = [(s, g) for s, g in strike_gex.items() if g < 0 and s < price]
+
+                    if positive_strikes:
+                        max_resist = max(positive_strikes, key=lambda x: x[1])
+                        gex_walls["resistance"] = round(max_resist[0], 2)
+                    if negative_strikes:
+                        max_support = min(negative_strikes, key=lambda x: x[1])
+                        gex_walls["support"] = round(max_support[0], 2)
+
+                    # Overall max gamma strike (dealer flip zone)
+                    max_gex = max(strike_gex.items(), key=lambda x: abs(x[1]))
+                    gex_walls["max_gamma_strike"] = round(max_gex[0], 2)
+
+                    if gex_walls["support"] or gex_walls["resistance"]:
+                        print(f"    ✓ GEX walls: support=${gex_walls.get('support','N/A')}, resist=${gex_walls.get('resistance','N/A')}")
+            except Exception:
+                pass  # GEX is bonus data, don't fail the dive
     except Exception:
         pass
 
@@ -459,6 +598,14 @@ def generate_deep_dive(ticker: str) -> str:
         "val_gap": valuation.get("gap_pct", 0),
         "val_target": valuation.get("target_price", "N/A"),
         "vopr": vopr_data,
+        # ── Algorithmic Trade Plan ──
+        "trade_plan": _calculate_trade_plan(
+            price, s1, s2, r1, r2, kelt_lower, kelt_upper,
+            fib_618, fib_500, fib_382, ema_55, atr_val,
+            ema_stack, adx, stoch_k, rsi_val,
+            gex_support=gex_walls.get("support"),
+            gex_resistance=gex_walls.get("resistance"),
+        ),
         # ── Stock Rover-style fundamentals ──
         "company_name": company_name,
         "description": description_short,
@@ -553,6 +700,41 @@ def generate_deep_dive(ticker: str) -> str:
 
     print(f"    ✓ {md_path.name} + {html_path.name}")
     return str(md_path)
+
+
+def _trade_plan_html(tp: dict) -> str:
+    """Render the Algorithmic Trade Plan as an HTML panel."""
+    if not tp or not tp.get("stop_loss"):
+        return ""
+
+    stop = tp["stop_loss"]
+    stop_name = tp.get("stop_name", "Composite")
+    risk = tp.get("risk_per_share", 0)
+    risk_pct = tp.get("risk_pct", 0)
+    trail = tp.get("trailing_stop", 0)
+    quality = tp.get("setup_quality", "?")
+    pos = tp.get("position_size_25k", {})
+
+    q_cls = "pos" if quality in ("A+", "A") else "neutral" if quality == "B" else "neg"
+
+    # TP rows
+    tp_rows = ""
+    for z in tp.get("tp_zones", []):
+        rr_cls = "pos" if z["rr"] >= 2.0 else "neutral" if z["rr"] >= 1.0 else "neg"
+        tp_rows += f'<tr><td>{z["name"]}</td><td>${z["target"]:.2f}</td><td>+${z["reward"]:.2f}</td><td class="{rr_cls}">{z["rr"]:.1f}:1</td></tr>'
+
+    return f'''
+    <div class="gb-panel gb-full">
+        <div class="gb-title">&#x1F3AF; ALGORITHMIC TRADE PLAN</div>
+        <div class="osc-row">
+            <div class="gb-card"><div class="label">Setup Quality</div><div class="val {q_cls}">{quality}</div></div>
+            <div class="gb-card"><div class="label">Stop Loss</div><div class="val neg">${stop:.2f}</div></div>
+            <div class="gb-card"><div class="label">Risk/Share</div><div class="val">${risk:.2f} ({risk_pct}%)</div></div>
+            <div class="gb-card"><div class="label">Trailing Stop</div><div class="val">${trail:.2f}</div></div>
+        </div>
+        <div class="gb-sub">Stop: {stop_name} | Position ($25K @ 1% risk): {pos.get("shares", 0)} shares (${pos.get("value", 0):,.0f})</div>
+        {"<table class='stk-tbl'><tr><th>Target</th><th>Price</th><th>Reward</th><th>R:R</th></tr>" + tp_rows + "</table>" if tp_rows else ""}
+    </div>'''
 
 
 def _render_html(ticker: str, md_content: str, data: dict, output_path: Path):
@@ -921,6 +1103,8 @@ a{{color:inherit;text-decoration:none}}
     </div>
 
     {vopr_html}
+
+    {_trade_plan_html(data.get("trade_plan", {{}}))}
 
   </div>
 </div>
