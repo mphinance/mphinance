@@ -373,23 +373,23 @@ def funnel_filter(stocks: list[dict], verbose: bool = True) -> list[dict]:
         s["adx"] is not None
         and s["adx"] >= 15
         and (s.get("adx_plus_di") is None or s.get("adx_minus_di") is None
-             or s["adx_plus_di"] > s["adx_minus_di"])
+             or s["adx_plus_di"] > s["adx_minus_di"] + 5)  # DI+ must lead by 5+
     )]
     if verbose:
-        print(f"  ├─ Ax4: ADX ≥15 + DI bull ────────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+        print(f"  ├─ Ax4: ADX ≥15 + DI+ > DI- +5 ──→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
     # ── STAGE 2O: Volume Life Check ─────────────────────────────
     # Ax2 proxy: Use TV's relative_volume_10d if available,
     # fall back to raw volume ratio.
     prev = len(survivors)
     survivors = [s for s in survivors if (
-        (s.get("rvol_10d") is not None and s["rvol_10d"] >= 0.3)
+        (s.get("rvol_10d") is not None and s["rvol_10d"] >= 1.2)
         or (s.get("rvol_10d") is None
             and s["volume"] > 0 and s["avg_vol_30d"] > 0
-            and (s["volume"] / s["avg_vol_30d"]) >= 0.3)
+            and (s["volume"] / s["avg_vol_30d"]) >= 1.2)
     )]
     if verbose:
-        print(f"  ├─ Ax2: RVOL ≥0.3 (not dead) ─────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
+        print(f"  ├─ Ax2: RVOL ≥1.2 (active) ───────→ {len(survivors)} survive ({prev - len(survivors)} cut)")
 
     # ── STAGE 2P: Weekly Performance Sanity ─────────────────────
     # Ax3+5: Blow-off territory kills volatility + exhaustion axes.
@@ -583,7 +583,7 @@ def compute_ghost_grade(df: pd.DataFrame, hull_len: int = 55, trama_len: int = 3
     # ═══════════════════════════════════════════════════════════
 
     ax1 = 1.0 if hull_bull else 0.0
-    ax2 = 1.0 if cmf_val > 0.10 else 0.5 if cmf_val > 0.0 else 0.0
+    ax2 = 1.0 if cmf_val > 0.10 else 0.5 if cmf_val > 0.05 else 0.0
     ax3 = 1.0 if (0.75 <= sqz_ratio <= 1.5) or sqz_fire else 0.0
     ax4 = 1.0 if 5 <= trend_age <= 30 else 0.5 if 30 < trend_age <= 50 else 0.0
     no_exh = not exh_ob and not exh_os
