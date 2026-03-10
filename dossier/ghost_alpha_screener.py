@@ -546,6 +546,20 @@ def compute_ghost_grade(df: pd.DataFrame, hull_len: int = 55, trama_len: int = 3
     ) else sqz_ratio
     sqz_fire = sqz_ratio >= 0.75 and sqz_ratio_prev < 0.75
 
+    # ── Consecutive Squeeze Days (from old Volatility Squeeze strategy) ──
+    # Count how many bars the ATR has been below 0.75x baseline
+    sqz_days = 0
+    if len(atr) >= 5 and len(atr_baseline) >= 5:
+        for i in range(len(atr) - 1, max(len(atr) - 60, -1), -1):  # look back 60 bars max
+            if not np.isnan(atr_baseline.iloc[i]) and atr_baseline.iloc[i] > 0:
+                ratio_i = float(atr.iloc[i] / atr_baseline.iloc[i])
+                if ratio_i < 0.75:
+                    sqz_days += 1
+                else:
+                    break
+            else:
+                break
+
     # ── Williams %R Exhaustion ──
     s_pctR = calculate_williams_r(df, exh_fast)
     l_pctR = calculate_williams_r(df, exh_slow)
@@ -589,16 +603,23 @@ def compute_ghost_grade(df: pd.DataFrame, hull_len: int = 55, trama_len: int = 3
     no_exh = not exh_ob and not exh_os
     ax5 = 1.0 if (no_exh and abs(trama_dist) < 3.0) else 0.5 if no_exh else 0.0
 
-    g_score = ax1 + ax2 + ax3 + ax4 + ax5
-    if g_score >= 4.5:
+    # ── Bonus axes (from old strategy audit) ──
+    # RVOL Gold-tier bonus: stocks with RVOL >= 1.2 get a boost
+    # This is what separated the old EMA Cross strategy's best picks
+    ax6_rvol = 0.5 if rvol_val >= 1.2 else 0.25 if rvol_val >= 0.8 else 0.0
+    # Squeeze duration bonus: 5+ consecutive days squeezed (old Vol Squeeze strategy)
+    ax7_sqz_days = 0.5 if sqz_days >= 5 else 0.25 if sqz_days >= 3 else 0.0
+
+    g_score = ax1 + ax2 + ax3 + ax4 + ax5 + ax6_rvol + ax7_sqz_days
+    if g_score >= 5.5:
         grade = "A+"
-    elif g_score >= 4.0:
+    elif g_score >= 4.5:
         grade = "A"
-    elif g_score >= 3.0:
+    elif g_score >= 3.5:
         grade = "B"
-    elif g_score >= 2.0:
+    elif g_score >= 2.5:
         grade = "C"
-    elif g_score >= 1.0:
+    elif g_score >= 1.5:
         grade = "D"
     else:
         grade = "F"
@@ -613,12 +634,14 @@ def compute_ghost_grade(df: pd.DataFrame, hull_len: int = 55, trama_len: int = 3
     return {
         "grade": grade,
         "score": round(g_score, 1),
-        "axes": {"trend": ax1, "volume": ax2, "volatility": ax3, "maturity": ax4, "exhaustion": ax5},
+        "axes": {"trend": ax1, "volume": ax2, "volatility": ax3, "maturity": ax4, "exhaustion": ax5,
+                 "rvol_bonus": ax6_rvol, "squeeze_bonus": ax7_sqz_days},
         "hull_bull": hull_bull,
         "cmf": round(cmf_val, 3),
         "sqz_ratio": round(sqz_ratio, 2),
         "sqz_coiled": sqz_coiled,
         "sqz_fire": sqz_fire,
+        "sqz_days": sqz_days,
         "trend_age": trend_age,
         "trend_phase": trend_phase,
         "pctR_fast": round(s_pctR_val, 1),

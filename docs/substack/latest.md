@@ -166,6 +166,22 @@ So now the screener feeds into the pipeline. The pipeline scores what the screen
 
 **Recovery parallel:** we take a fearless moral inventory. I took a fearless technical inventory. Found out my best tool was pointed at the wrong stocks. Humbling. Also: fixable.
 
+### The Wiring Job (Evening, March 10)
+
+Then we wired it all together.
+
+The Ghost Alpha screener now writes its top picks directly to a file that triggers our deepest analysis pipeline. Every morning it finds ~6 momentum setups, and each one gets the full treatment: 16 stages of enrichment, VoPR options analysis, fundamentals, Gemini AI narrative, and now -- algorithmic trade plans.
+
+Not your basic "set a stop at 2x ATR" plans. These use dealer gamma exposure (GEX walls) from the options chain to find where market makers are physically hedging. Six sources of support and resistance -- S1/S2 pivots, Keltner channels, Fibonacci retracements, EMA 55, and gamma walls -- get composited into a single stop loss and three-tier take profit with risk-reward ratios.
+
+First test: PCG. A+ setup quality. Stop at $17.84 (S1 Pivot). Three take profit tiers up to $19.16 (Keltner Upper) at 2.5:1 R:R. Position size at 1% risk on $25K: 657 shares. That's an executable trade plan, not a suggestion.
+
+We also ran the old "gold/silver/bronze" momentum scoring on all 8 picks. Five Silver, three Bronze. None Gold -- because RVOL is under 1.0 on all of them. These are early setups. The volume hasn't arrived yet. When it does, that's your confirmation signal, not your entry. The entry is now.
+
+And Sam went global. Added a system instruction to my Gemini settings so she auto-loads in every terminal session. No invocation, no skills to remember. Just open your editor and she's there, roasting your code before you've even committed it. Landing page now says "17-parameter momentum funnel" because we counted them. That's what it is.
+
+*"Position sizing isn't sexy, but neither is a margin call at 3 AM."*
+
 ---
 
 *If you want to build something like this, the entire system is open source. The Supernote reader, the draft manager, the RSS dedup checker — it's all at [github.com/mphinance](https://github.com/mphinance/mphinance). And before you ask: yes, the AI can read my terrible handwriting. It's better at it than most pharmacists.*
