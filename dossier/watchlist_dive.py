@@ -1104,7 +1104,7 @@ a{{color:inherit;text-decoration:none}}
 
     {vopr_html}
 
-    {_trade_plan_html(data.get("trade_plan", {{}}))}
+    {_trade_plan_html(data.get("trade_plan") or {})}
 
   </div>
 </div>
