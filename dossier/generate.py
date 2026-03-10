@@ -736,12 +736,17 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     # ── Stage 6: Technical Setups ──
     print("\n[6/16] TECHNICAL SETUPS (Tao of Trading)")
     from dossier.data_sources.technical_setups import generate_setups
-    # Analyze top strategy picks for setup quality
-    setup_tickers = [s["symbol"] for s in scanner_signals if s["strategy"] != "Core Watchlist"][:8]
-    # Fill with institutional buying tickers
+    # Ghost Alpha picks get TOP priority for setup analysis
+    ga_tickers = [r["ticker"] for r in ghost_screener_results.get("a_plus", [])][:8]
+    if not ga_tickers:
+        ga_tickers = [r["ticker"] for r in ghost_screener_results.get("results", [])
+                      if r.get("daily", {}).get("score", 0) >= 4.0][:8]
+    strategy_setup_tickers = [s["symbol"] for s in scanner_signals if s["strategy"] != "Core Watchlist"][:5]
     inst_buy_tickers = [s["ticker"] for s in institutional.get("top_buying", [])[:4]]
-    setup_tickers = [t for t in dict.fromkeys(setup_tickers + inst_buy_tickers) if not _is_junk(t)][:10]
-    # Fallback to core watchlist if no strategy/institutional tickers
+    # GA picks first, then strategy, then institutional
+    setup_tickers = [t for t in dict.fromkeys(ga_tickers + strategy_setup_tickers + inst_buy_tickers) if not _is_junk(t)][:10]
+    if ga_tickers:
+        print(f"  Ghost Alpha feeding: {', '.join(ga_tickers[:6])}")
     if not setup_tickers:
         setup_tickers = CORE_WATCHLIST[:6]
         print("  (falling back to Core Watchlist for setups)")
@@ -758,12 +763,19 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     print(f"\n[8/16] TICKER ENRICHMENT (top {MAX_DOSSIER_TICKERS})")
     from dossier.data_sources.ticker_enrichment import enrich_ticker
 
-    # Prioritize strategy-found tickers + institutional buying
+    # Ghost Alpha picks get TOP priority for enrichment
+    ga_enrich = [r["ticker"] for r in ghost_screener_results.get("a_plus", [])][:6]
+    if not ga_enrich:
+        ga_enrich = [r["ticker"] for r in ghost_screener_results.get("results", [])
+                     if r.get("daily", {}).get("score", 0) >= 4.0][:6]
     strategy_tickers = [s["symbol"] for s in scanner_signals if s["strategy"] != "Core Watchlist"][:5]
     inst_tickers = [s["ticker"] for s in institutional.get("top_buying", [])[:3]]
+    # GA picks → strategy → institutional → old scanner results
     enrichment_order = [t for t in dict.fromkeys(
-        strategy_tickers + inst_tickers + scanned_tickers[:MAX_DOSSIER_TICKERS]
+        ga_enrich + strategy_tickers + inst_tickers + scanned_tickers[:MAX_DOSSIER_TICKERS]
     ) if not _is_junk(t)]
+    if ga_enrich:
+        print(f"  Ghost Alpha priority: {', '.join(ga_enrich)}")
 
     dossiers = []
     for ticker in enrichment_order[:MAX_DOSSIER_TICKERS]:

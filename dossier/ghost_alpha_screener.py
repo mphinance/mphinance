@@ -1004,12 +1004,43 @@ def run_screener(save_history: bool = True) -> dict:
     if save_history:
         _save_history(results, funnel_stats)
 
+    # ── Write top picks to watchlist.txt ──
+    # Triggers watchlist_dive.yml GitHub Action on push → full deep dives
+    all_graded = a_plus if a_plus else [r for r in results if r["daily"].get("score", 0) >= 4.0]
+    if all_graded:
+        write_watchlist([r["ticker"] for r in all_graded[:8]])
+
     return {
         "results": results,
         "funnel_stats": funnel_stats,
         "a_plus": a_plus,
         "top_6": top_6,
     }
+
+
+def write_watchlist(tickers: list[str], max_tickers: int = 8):
+    """Write Ghost Alpha top picks to watchlist.txt.
+
+    Preserves the header comments, replaces ticker section.
+    When committed + pushed, triggers watchlist_dive.yml GH Action
+    which generates full deep dives with VoPR, fundamentals, AI narrative.
+    """
+    watchlist_path = PROJECT_ROOT / "watchlist.txt"
+
+    header = """# ╔══════════════════════════════════════════════════════════════╗
+# ║  WATCHLIST — Ghost Alpha auto-generated picks.              ║
+# ║  Commit + push → Deep Dive generated in ~60 seconds.       ║
+# ║  Reports persist in docs/ticker/{SYMBOL}/ after removal.   ║
+# ║                                                             ║
+# ║  ⚠️  NEVER delete docs/ticker/*/deep_dive.* files!         ║
+# ║  ⚠️  NEVER add deep_dive.* to .gitignore!                  ║
+# ╚══════════════════════════════════════════════════════════════╝
+"""
+    selected = tickers[:max_tickers]
+    content = header + "\n".join(selected) + "\n"
+    watchlist_path.write_text(content)
+    print(f"  ✓ Watchlist updated: {', '.join(selected)}")
+    return selected
 
 
 def _save_history(results: list[dict], funnel_stats: dict):
