@@ -692,6 +692,23 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             continue
 
     scanner_signals.sort(key=lambda x: x["score"], reverse=True)
+
+    # Run Finviz screens (unique signal: short interest, CANSLIM, earnings catalysts)
+    print("\n[2a/16] FINVIZ SCREENS")
+    try:
+        from strategies.finviz_screens import run_all_finviz_screens
+        finviz_signals = run_all_finviz_screens(max_per_screen=10)
+        existing_tickers = {s["symbol"] for s in scanner_signals}
+        added = 0
+        for sig in finviz_signals:
+            if sig["symbol"] not in existing_tickers:
+                scanner_signals.append(sig)
+                existing_tickers.add(sig["symbol"])
+                added += 1
+        print(f"  ✅ Finviz added {added} unique tickers to signal pool")
+    except Exception as e:
+        print(f"  [WARN] Finviz screens failed: {e}")
+
     print(f"  Total signals: {len(scanner_signals)}")
 
     scanned_tickers = [s["symbol"] for s in scanner_signals]
