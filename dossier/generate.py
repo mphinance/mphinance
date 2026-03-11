@@ -778,11 +778,35 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         print(f"  Ghost Alpha priority: {', '.join(ga_enrich)}")
 
     dossiers = []
+    # Build Ghost Alpha lookup for injecting grades into enriched data
+    ga_lookup = {}
+    for r in ghost_screener_results.get("results", []):
+        ticker = r.get("ticker", "")
+        daily = r.get("daily", {})
+        if ticker and daily:
+            ga_lookup[ticker] = {
+                "grade": daily.get("grade", ""),
+                "score": daily.get("score", 0),
+                "axes": daily.get("axes", {}),
+                "regime": daily.get("regime", ""),
+                "sqz_days": daily.get("sqz_days", 0),
+                "sqz_ratio": daily.get("sqz_ratio", 0),
+                "rvol": daily.get("rvol", 0),
+                "trend_phase": daily.get("trend_phase", ""),
+                "hull_bull": daily.get("hull_bull", False),
+            }
+
     for ticker in enrichment_order[:MAX_DOSSIER_TICKERS]:
         data = enrich_ticker(ticker)
         if data:
+            # Inject Ghost Alpha grade if available
+            if ticker in ga_lookup:
+                data["ghost_alpha"] = ga_lookup[ticker]
             dossiers.append(data)
     print(f"  {len(dossiers)} dossiers enriched")
+    if ga_lookup:
+        injected = sum(1 for d in dossiers if "ghost_alpha" in d)
+        print(f"  Ghost Alpha grades injected: {injected}/{len(dossiers)}")
 
     # ── Stage 8a: Market Regime Detection ──
     print("\n[9/16] MARKET REGIME DETECTION")
@@ -923,6 +947,7 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         ghost_suggestions=ghost_suggestions,
         momentum_picks=momentum_picks,
         market_regime=market_regime,
+        ghost_screener=ghost_screener_results,
     )
 
     pdf_path = None

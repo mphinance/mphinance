@@ -29,6 +29,7 @@ def build_report(
     ghost_suggestions: str = "",
     momentum_picks: dict = None,
     market_regime: dict = None,
+    ghost_screener: dict = None,
 ) -> str:
     """Render the daily Alpha Dossier report as HTML. Returns path to HTML file."""
     env = Environment(
@@ -64,6 +65,7 @@ def build_report(
         ghost_suggestions=ghost_suggestions,
         momentum_picks=momentum_picks or {},
         market_regime=market_regime or {},
+        ghost_screener=ghost_screener or {},
         disclaimer=DISCLAIMER,
         pdf_filename=pdf_filename,
         md_filename=md_filename,
@@ -177,7 +179,16 @@ def build_markdown(
         for d in dossiers:
             tech = d.get("technicals", {})
             lines.append(f"### [{d.get('ticker', '')}](https://www.tradingview.com/symbols/{d.get('ticker', '')}/chart/) — {d.get('name', '')}")
-            lines.append(f"**${d.get('price', 'N/A')}** | Grade: {d.get('scores', {}).get('grade', 'N/A')} | {d.get('verdict', '')}")
+            ga = d.get('ghost_alpha', {})
+            grade_line = f"**${d.get('price', 'N/A')}** | Grade: {d.get('scores', {}).get('grade', 'N/A')} | {d.get('verdict', '')}"
+            if ga:
+                ga_badge = f"GA: {ga.get('grade', '?')} ({ga.get('score', 0)}/7.0)"
+                rvol_str = f"RVOL {ga.get('rvol', 0):.1f}x" if ga.get('rvol') else ""
+                phase = ga.get('trend_phase', '')
+                sqz = f"Sqz:{ga.get('sqz_days', 0)}d" if ga.get('sqz_days', 0) > 0 else ""
+                extras = " · ".join(filter(None, [rvol_str, phase, sqz]))
+                grade_line += f" | 👻 {ga_badge} [{extras}]"
+            lines.append(grade_line)
             lines.append(f"- Trend: {tech.get('trend', '')} | EMA Stack: {tech.get('ema_stack', '')}")
             lines.append(f"- RSI: {tech.get('rsi_14', 'N/A')} | ADX: {tech.get('adx', 'N/A')} | ATR: {tech.get('atr', 'N/A')}")
             lines.append(f"- Pivot: ${tech.get('pivot', 'N/A')} | S1: ${tech.get('s1', 'N/A')} | R1: ${tech.get('r1', 'N/A')}")
