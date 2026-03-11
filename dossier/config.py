@@ -42,19 +42,9 @@ MARKET_PULSE = [
     "GLD", "TLT",                  # Safe havens
 ]
 
-# Core watchlist — always scanned and enriched
-CORE_WATCHLIST = [
-    # Mega-cap tech
-    "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "TSLA",
-    # Semis
-    "AMD", "AVGO", "TSM", "MRVL", "QCOM",
-    # Financials
-    "JPM", "GS", "V", "MA",
-    # Growth / Momentum favorites
-    "PLTR", "COIN", "HOOD", "SOFI",
-    # Energy / Resources
-    "XOM", "OXY",
-]
+# Core watchlist — DEPRECATED: pipeline now relies purely on Ghost Alpha screener.
+# Kept empty as fallback safety net. The screener finds fresh picks dynamically.
+CORE_WATCHLIST = []
 
 # Sector ETFs for rotation analysis
 SECTOR_ETFS = [
