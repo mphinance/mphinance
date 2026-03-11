@@ -1,32 +1,37 @@
-# GHOST_HANDOFF.md — Last Updated: 2026-03-10 Night
+# GHOST HANDOFF — 2026-03-11 Evening
 
-## What Happened This Session
+## What Just Shipped (This Session)
 
-### Ghost Auto-Trader Deployed (THE BIG ONE)
-Michael built and deployed the autonomous XSP 0DTE auto-trader on Venus. Full flow:
-1. **TradingView** fires Ghost Alpha Grade A alert on SPY
-2. **Webhook** hits `ghost.mphanko.com/api/signals/webhook`
-3. **Gemini 2.5 Flash AI gate** reviews the signal
-4. **Auto-execution**: buys XSP 0DTE option on Tradier if approved
-5. **Position monitor** every 30s: +50% TP, -40% SL, 3:00 PM ET auto-flatten
+### RAG Vector Search (`rag/`)
+- 9 content types, 523 chunks, Gemini embeddings + ChromaDB
+- **All** ticker technicals indexed (EMAs, pivots, fibs, IV/HV, options, insiders, SEC)
+- Historical dated JSONs for time-series queries
+- 5 integrations: MCP server, FastAPI, pipeline auto-reindex, Discord grounding, Substack enrichment
 
-Key files (on Venus, in `alpha-momentum/`):
-- `services/auto_trader.py` — core engine
-- `api/main.py` — webhook handler + status endpoint
-- `.env` — `AUTO_TRADE_XSP=true` kill switch
+### Backtesting Engine (`dossier/backtesting/`)
+- `scan_logger.py` — Archives picks with full technicals, tracks forward returns (1d/3d/5d/10d/21d)
+- `pattern_matcher.py` — "Have we seen this movie before?" — finds similar historical setups 
+- First real results: 22 validated, Grade B 71% WR, FULL BULLISH +5.58% avg 5d
+- Pipeline-integrated: logs + updates + pattern match on every 5AM run
 
-Risk guardrails: 9:45-11:30 AM ET entry window, 2 trades/day max, $30/position, $100 daily loss limit, delta 0.12-0.25.
+### Screen Expansion (13 total)
+- 5 new Finviz screens: Short Squeeze, CANSLIM, Earnings Gap, Consistent Growth, Oversold+Earnings
+- 2 dormant strategies activated: Small Cap Multibaggers, Bearish EMA Cross
+- `strategies/finviz_screens.py` with rate limiting and dedup
 
-Documentation: `auto.md` in mphinance root.
+### Repo Cleanup
+- 19 stale files + screenshots removed from root (40 → 20 files)
+- Substack scripts moved to `scripts/`
+- Stack2LLM removed (separate repo)
+- .gitignore cleaned: 90 lines → 50, 30 phantom entries removed
+- Secrets audit: CLEAN (zero keys/passwords/tokens in tracked files)
 
-### Previous Session (Pipeline Wiring)
-- Ghost Alpha screener → watchlist.txt → GitHub Action deep dives (full enrichment)
-- 7-axis scoring, GEX wall calculation, algorithmic trade plans
-- Sam auto-loads via `~/.gemini/settings.json`
+### Documentation (`docs/`)
+- `RAG.md` — Full RAG system docs
+- `BACKTESTING.md` — Scan logger + pattern matcher docs
+- `SCREENS.md` — Complete 13-screen catalog with coverage map
 
 ## What's Next
-1. **Tuesday morning** — first real test of the auto-trader during market hours
-2. **Paper trail the first week** — log every signal/gate decision/trade for performance data
-3. **Wire auto-trade log into Ghost Blog** — real-time trading receipts
-4. **ZenScans comparison** — still needs Playwright to scrape
-5. **RVOL tuning** — "early setup" tier for good technicals but low volume
+- Finviz backfill (30-day historical returns for pattern matcher)
+- Strategy Performance Dashboard widget
+- Wire pattern matcher conviction into auto-trader gate
