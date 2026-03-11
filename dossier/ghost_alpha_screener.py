@@ -611,15 +611,15 @@ def compute_ghost_grade(df: pd.DataFrame, hull_len: int = 55, trama_len: int = 3
     ax7_sqz_days = 0.5 if sqz_days >= 5 else 0.25 if sqz_days >= 3 else 0.0
 
     g_score = ax1 + ax2 + ax3 + ax4 + ax5 + ax6_rvol + ax7_sqz_days
-    if g_score >= 5.5:
+    if g_score >= 5.0:
         grade = "A+"
-    elif g_score >= 4.5:
+    elif g_score >= 4.0:
         grade = "A"
-    elif g_score >= 3.5:
+    elif g_score >= 3.0:
         grade = "B"
-    elif g_score >= 2.5:
+    elif g_score >= 2.0:
         grade = "C"
-    elif g_score >= 1.5:
+    elif g_score >= 1.0:
         grade = "D"
     else:
         grade = "F"
