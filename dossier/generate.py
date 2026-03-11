@@ -1248,6 +1248,26 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Status dashboard failed: {e}")
 
+    # ── Scan Logger — archive picks with full technicals ──
+    try:
+        from dossier.backtesting.scan_logger import log_todays_picks, update_forward_returns
+        print("\n[POST] SCAN LOGGER")
+        log_todays_picks()
+        update_forward_returns()
+    except Exception as e:
+        print(f"  [WARN] Scan logger failed (non-fatal): {e}")
+
+    # ── RAG Vector Store Reindex ──
+    try:
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+        from rag.ingest import index as rag_index
+        print("\n[POST] RAG VECTOR REINDEX")
+        rag_result = rag_index(reset=False, show_progress=False)
+        print(f"  ✓ Indexed {rag_result['chunks']} chunks into ChromaDB")
+    except Exception as e:
+        print(f"  [WARN] RAG reindex failed (non-fatal): {e}")
+
     print("\n" + "=" * 72)
     print("  ✅ PIPELINE COMPLETE")
     total_time = time.time() - timer._start_time
