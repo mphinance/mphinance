@@ -1,30 +1,32 @@
-# GHOST_HANDOFF.md — Last Updated: 2026-03-10 Evening
+# GHOST_HANDOFF.md — Last Updated: 2026-03-10 Night
 
 ## What Happened This Session
 
-### Ghost Alpha Pipeline Integration (The Big One)
-1. **Screener → Pipeline**: `ghost_alpha_screener.py` now writes top A+/A picks to `watchlist.txt`, which triggers `watchlist_dive.yml` GitHub Action for full deep dives
-2. **generate.py Stages 6+8**: Ghost Alpha picks now TOP PRIORITY in enrichment order (ahead of CORE_WATCHLIST)
-3. **Algorithmic Trade Plans**: Every deep dive includes composite stop/TP from 6 sources (S1/S2 pivots, Keltner, Fib 0.618, EMA 55, GEX walls), 3-tier take profit with R:R ratios, position sizing at 1% risk
-4. **GEX Wall Calculation**: Options chain gamma × OI → dealer hedging levels as natural support/resistance
-5. **7-Axis Scoring**: Expanded from 5 to 7 axes — added RVOL Gold-tier bonus (ax6) and consecutive squeeze days (ax7) from old strategy audit. Grade thresholds adjusted (A+ = 5.5/7.0)
+### Ghost Auto-Trader Deployed (THE BIG ONE)
+Michael built and deployed the autonomous XSP 0DTE auto-trader on Venus. Full flow:
+1. **TradingView** fires Ghost Alpha Grade A alert on SPY
+2. **Webhook** hits `ghost.mphanko.com/api/signals/webhook`
+3. **Gemini 2.5 Flash AI gate** reviews the signal
+4. **Auto-execution**: buys XSP 0DTE option on Tradier if approved
+5. **Position monitor** every 30s: +50% TP, -40% SL, 3:00 PM ET auto-flatten
 
-### Session Deliverables
-- Blog entry: "The Wiring Job" with momentum scores
-- Discord #sam-mph: R-rated version posted
-- Landing page: "17-parameter momentum funnel" vocab everywhere, deployed to Vultr
-- Substack: Session notes added (PCG trade plan, GEX walls, pipeline wiring)
-- Sam auto-loads: `~/.gemini/settings.json` systemInstruction added
-- Sam skill: `.gemini/skills/sam/SKILL.md` created
+Key files (on Venus, in `alpha-momentum/`):
+- `services/auto_trader.py` — core engine
+- `api/main.py` — webhook handler + status endpoint
+- `.env` — `AUTO_TRADE_XSP=true` kill switch
 
-### Test Results
-- PCG deep dive: A+ setup, stop $17.84 (S1 Pivot), TP up to $19.16 (2.5:1 R:R), 657 shares at $25K/1% risk
-- Momentum scoring: 5 Silver (PCG 68, PPL 63, CCEP 60, MCD 58, CP 58), 3 Bronze
-- All GA picks RVOL < 1.0 (early setups, no volume spike = pre-move)
+Risk guardrails: 9:45-11:30 AM ET entry window, 2 trades/day max, $30/position, $100 daily loss limit, delta 0.12-0.25.
+
+Documentation: `auto.md` in mphinance root.
+
+### Previous Session (Pipeline Wiring)
+- Ghost Alpha screener → watchlist.txt → GitHub Action deep dives (full enrichment)
+- 7-axis scoring, GEX wall calculation, algorithmic trade plans
+- Sam auto-loads via `~/.gemini/settings.json`
 
 ## What's Next
-1. **Tomorrow 5 AM pipeline** is the real test — first full end-to-end with GEX walls and 7-axis scoring
-2. **RVOL tuning**: Consider "early setup" tier for good technicals but low volume
-3. **ZenScans comparison**: Needs Playwright to scrape (JS-rendered)
-4. Substack should be published with the new session notes
-5. Clean stale running terminals (`/tmp/ghost-scan` commands from this session)
+1. **Tuesday morning** — first real test of the auto-trader during market hours
+2. **Paper trail the first week** — log every signal/gate decision/trade for performance data
+3. **Wire auto-trade log into Ghost Blog** — real-time trading receipts
+4. **ZenScans comparison** — still needs Playwright to scrape
+5. **RVOL tuning** — "early setup" tier for good technicals but low volume
