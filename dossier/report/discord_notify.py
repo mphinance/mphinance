@@ -122,3 +122,128 @@ def post_dossier_to_discord(summary: dict, dry_run: bool = False) -> bool:
     except Exception as e:
         print(f"  [WARN] Discord notification failed: {e}")
         return False
+
+
+def post_morning_setups(screener_results: dict, date: str = "", dry_run: bool = False) -> bool:
+    """
+    Post Ghost Alpha morning picks to Discord #sam-mph.
+
+    Called after the screener runs in the pipeline. Posts each pick
+    with GA grade, score, RVOL, and trend phase in Sam's voice.
+    """
+    webhook = _get_webhook()
+    if not webhook and not dry_run:
+        print("  [WARN] No WEBHOOK_SAM_MPH — skipping morning setups Discord")
+        return False
+
+    results = screener_results.get("results", [])
+    a_plus = screener_results.get("a_plus", [])
+    funnel = screener_results.get("funnel_stats", {})
+
+    if not results:
+        print("  [SKIP] No screener results to post")
+        return False
+
+    # Determine tier
+    if a_plus:
+        picks = a_plus[:8]
+        tier = "A+"
+        tier_emoji = "🏆"
+    else:
+        a_grade = [r for r in results if r.get("daily", {}).get("grade") == "A"
+                   or r.get("daily", {}).get("score", 0) >= 4.5]
+        if a_grade:
+            picks = a_grade[:8]
+            tier = "A (no A+ today)"
+            tier_emoji = "🎯"
+        else:
+            b_grade = [r for r in results if r.get("daily", {}).get("score", 0) >= 3.5]
+            picks = b_grade[:8]
+            tier = "B (slim pickings)"
+            tier_emoji = "📋"
+
+    if not picks:
+        return False
+
+    from datetime import datetime as _dt
+    if not date:
+        date = _dt.now().strftime("%Y-%m-%d")
+
+    # Build the picks list
+    pick_lines = []
+    for r in picks:
+        d = r.get("daily", {})
+        ticker = r.get("ticker", "?")
+        grade = d.get("grade", "?")
+        score = d.get("score", 0)
+        rvol = d.get("rvol", 0)
+        phase = d.get("trend_phase", "")
+        sqz = d.get("sqz_days", 0)
+
+        # Color emoji for grade
+        if grade in ("A+", "A"):
+            g_emoji = "🟢"
+        elif grade == "B":
+            g_emoji = "🔵"
+        elif grade == "C":
+            g_emoji = "🟡"
+        else:
+            g_emoji = "⚪"
+
+        extras = []
+        if rvol >= 1.2:
+            extras.append(f"🔥 RVOL {rvol:.1f}x")
+        elif rvol >= 0.8:
+            extras.append(f"RVOL {rvol:.1f}x")
+        if phase:
+            extras.append(phase)
+        if sqz >= 3:
+            extras.append(f"⚡ {sqz}d squeeze")
+
+        extra_str = " · ".join(extras) if extras else ""
+        pick_lines.append(
+            f"{g_emoji} **{ticker}** — {grade} ({score}/7.0)"
+            + (f" — {extra_str}" if extra_str else "")
+        )
+
+    screened = funnel.get("stage1_start", 0)
+    elapsed = funnel.get("elapsed_sec", 0)
+
+    msg = (
+        f"# ⚔️ Ghost Alpha Morning Setups — {date}\n"
+        f"{tier_emoji} **Tier: {tier}** · {len(picks)} picks from {screened} screened ({elapsed}s)\n\n"
+        + "\n".join(pick_lines)
+        + f"\n\n> *Sam ran {screened} tickers through the 17-parameter funnel. "
+        + f"These {len(picks)} survived. No guarantees, no refunds.* 👻\n\n"
+        f"**[📋 Full Dossier →](https://mphinance.github.io/mphinance/)**"
+    )
+
+    if dry_run:
+        print(f"  [DRY RUN] Discord morning setups ({len(msg)} chars):")
+        print(msg)
+        return True
+
+    payload = json.dumps({
+        "content": msg,
+        "username": "Sam the Quant Ghost 👻",
+    })
+
+    try:
+        result = subprocess.run(
+            ['curl', '-s', '-X', 'POST', webhook,
+             '-H', 'Content-Type: application/json',
+             '-d', payload,
+             '-w', '\n%{http_code}'],
+            capture_output=True, text=True, timeout=15
+        )
+
+        status_code = result.stdout.strip().split('\n')[-1]
+        if status_code in ('200', '204'):
+            print(f"  ✓ Morning setups posted to Discord ({len(picks)} picks, {len(msg)} chars)")
+            return True
+        else:
+            print(f"  [WARN] Discord morning setups error: HTTP {status_code}")
+            return False
+    except Exception as e:
+        print(f"  [WARN] Discord morning setups failed: {e}")
+        return False
