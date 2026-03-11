@@ -715,6 +715,14 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         print(f"  [WARN] Ghost screener failed: {e}")
         timer.skip("Ghost Alpha Screener")
 
+    # ── Stage 2c: Post morning setups to Discord ──
+    if ghost_screener_results and not dry_run:
+        try:
+            from dossier.report.discord_notify import post_morning_setups
+            post_morning_setups(ghost_screener_results, date)
+        except Exception as e:
+            print(f"  [WARN] Discord morning setups failed: {e}")
+
     # ── Stage 3: Institutional Data ──
     print("\n[3/16] TICKERTRACE INSTITUTIONAL DATA")
     from dossier.data_sources.tickertrace import fetch_institutional_data
