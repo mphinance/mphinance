@@ -611,15 +611,15 @@ def compute_ghost_grade(df: pd.DataFrame, hull_len: int = 55, trama_len: int = 3
     ax7_sqz_days = 0.5 if sqz_days >= 5 else 0.25 if sqz_days >= 3 else 0.0
 
     g_score = ax1 + ax2 + ax3 + ax4 + ax5 + ax6_rvol + ax7_sqz_days
-    if g_score >= 5.0:
+    if g_score >= 5.5:
         grade = "A+"
-    elif g_score >= 4.0:
+    elif g_score >= 4.5:
         grade = "A"
-    elif g_score >= 3.0:
+    elif g_score >= 3.5:
         grade = "B"
-    elif g_score >= 2.0:
+    elif g_score >= 2.5:
         grade = "C"
-    elif g_score >= 1.0:
+    elif g_score >= 1.5:
         grade = "D"
     else:
         grade = "F"
@@ -1029,9 +1029,26 @@ def run_screener(save_history: bool = True) -> dict:
 
     # ── Write top picks to watchlist.txt ──
     # Triggers watchlist_dive.yml GitHub Action on push → full deep dives
-    all_graded = a_plus if a_plus else [r for r in results if r["daily"].get("score", 0) >= 4.0]
-    if all_graded:
-        write_watchlist([r["ticker"] for r in all_graded[:8]])
+    # Be honest: if no A+, share A picks and say so
+    if a_plus:
+        watchlist_picks = a_plus[:8]
+        tier_label = "A+"
+    else:
+        # Fall back to A-grade (score >= 4.5) — honest about it
+        a_grade = [r for r in results if r["daily"].get("grade") == "A"
+                   or r["daily"].get("score", 0) >= 4.5]
+        if a_grade:
+            watchlist_picks = a_grade[:8]
+            tier_label = "A (no A+ today)"
+        else:
+            # Fall back to B-grade if even A is empty
+            b_grade = [r for r in results if r["daily"].get("score", 0) >= 3.5]
+            watchlist_picks = b_grade[:8]
+            tier_label = "B (no A+/A today)"
+
+    if watchlist_picks:
+        print(f"  📋 Watchlist tier: {tier_label} — {len(watchlist_picks)} picks")
+        write_watchlist([r["ticker"] for r in watchlist_picks])
 
     return {
         "results": results,
