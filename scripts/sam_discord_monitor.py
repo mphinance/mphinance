@@ -22,6 +22,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime, timedelta, timezone
+import re
 from pathlib import Path
 
 # Local-only storage — never in git
@@ -103,8 +104,44 @@ def get_messages(channel_id: str, hours: int = 24, limit: int = 50) -> list[dict
     return []
 
 
+def _get_rag_context(all_text: str) -> str:
+    """Extract tickers from messages and fetch RAG context for them."""
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+        from rag.query import search
+
+        # Extract potential tickers (1-5 uppercase letters)
+        tickers = set(re.findall(r'\b([A-Z]{1,5})\b', all_text))
+        # Filter out common words
+        noise = {'THE', 'AND', 'FOR', 'ARE', 'BUT', 'NOT', 'YOU', 'ALL', 'CAN',
+                 'HAD', 'HER', 'WAS', 'ONE', 'OUR', 'OUT', 'DAY', 'GET', 'HAS',
+                 'HIM', 'HOW', 'ITS', 'MAY', 'NEW', 'NOW', 'OLD', 'SEE', 'WAY',
+                 'WHO', 'DID', 'HIS', 'LET', 'SAY', 'SHE', 'TOO', 'USE', 'LOL',
+                 'OMG', 'WTF', 'IMO', 'TBH', 'LMAO', 'WHAT', 'WHEN', 'THIS',
+                 'THAT', 'WITH', 'HAVE', 'FROM', 'THEY', 'BEEN', 'SAID', 'EACH',
+                 'HTTP', 'HTTPS', 'API', 'URL', 'HTML', 'CSS', 'JSON', 'POST'}
+        tickers = tickers - noise
+
+        if not tickers:
+            # Fall back to general market context
+            results = search("current market regime and top picks", top_k=3)
+        else:
+            # Search for mentioned tickers
+            query = f"Analysis for {', '.join(list(tickers)[:5])}"
+            results = search(query, top_k=3)
+
+        if results:
+            context_lines = ["\n## Ghost Alpha Intel (from vector store)"]
+            for r in results:
+                context_lines.append(r['text'][:400])
+            return "\n".join(context_lines)
+    except Exception as e:
+        print(f"  ⚠️ RAG context unavailable: {e}")
+    return ""
+
+
 def summarize_with_gemini(channel_data: dict, guild_name: str) -> str:
-    """Use Gemini to summarize channel messages."""
+    """Use Gemini to summarize channel messages, grounded with RAG context."""
     # Build the context
     channel_summaries = []
     for channel_name, messages in channel_data.items():
@@ -124,6 +161,9 @@ def summarize_with_gemini(channel_data: dict, guild_name: str) -> str:
 
     all_text = "\n\n".join(channel_summaries)
 
+    # Enrich with RAG context
+    rag_context = _get_rag_context(all_text)
+
     prompt = f"""You are Sam the Quant Ghost summarizing Discord activity for Michael.
 
 Summarize activities from the Discord server "{guild_name}" in a concise, useful way.
@@ -134,12 +174,16 @@ Focus on:
 - Drama or interesting social dynamics (brief)
 - Skip bot spam, emoji-only messages, greetings
 
+When tickers are mentioned, reference your Ghost Alpha data to add context
+(e.g. your grade, EMA stack status, or regime). Don't force it — only if relevant.
+
 Use Discord markdown. Keep it under 1800 characters.
 Be Sam — witty, direct, slightly sarcastic, but actually helpful.
+{rag_context}
 
 Here's what happened:
 
-{all_text[:6000]}
+{all_text[:5000]}
 
 Write the summary now. Start with a header like "📋 **{guild_name} — Last [X] Hours**"
 """
