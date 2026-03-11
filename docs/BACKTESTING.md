@@ -97,14 +97,48 @@ By RSI Zone:
 
 ## Pipeline Integration
 
-Wired into `dossier/generate.py` as a post-pipeline step:
+Wired into `dossier/generate.py` as post-pipeline steps:
 
 ```python
 # After Stage 15e, before RAG reindex
 from dossier.backtesting.scan_logger import log_todays_picks, update_forward_returns
 log_todays_picks()        # Append today's picks
 update_forward_returns()  # Fill in returns for 7+ day old entries
+
+from dossier.backtesting.pattern_matcher import run_pattern_match, print_results
+pm_results = run_pattern_match()  # Compare today vs historical analogues
+print_results(pm_results)
 ```
+
+---
+
+## 🔮 Pattern Matcher — "Have We Seen This Movie Before?"
+
+```bash
+python dossier/backtesting/pattern_matcher.py               # All picks
+python dossier/backtesting/pattern_matcher.py --ticker NVDA  # Single ticker
+python dossier/backtesting/pattern_matcher.py --json         # Machine output
+```
+
+For each of today's picks, searches the scan archive for historically similar setups based on 7 dimensions:
+
+| Dimension | Weight | Match Logic |
+|-----------|--------|-------------|
+| EMA Stack | 3x | Exact match (FULL BULLISH vs PARTIAL etc) |
+| RSI Zone | 2x | Within ±5/10/20 points |
+| ADX Strength | 1.5x | Within ±5/15 points |
+| Market Regime | 1x | Same regime (Zen/Calm/Storm/Chaos) |
+| SMA Crossover | 1x | Same crossover status |
+| Sector | 0.5x | Same sector |
+| Rel Volume | 0.5x | Within ±0.5x |
+
+**Verdicts:**
+- 🟢 `HIGH_CONVICTION` — Similar setups averaged >2% gain, >60% win rate
+- 🔵 `MODERATE` — Positive average, >50% WR
+- 🔴 `CAUTION` — Similar setups averaged <-2% OR <40% WR
+- ⚪ `NEUTRAL` — Mixed signals
+
+**Gets smarter over time** — more data in the archive = more analogue matches = higher confidence.
 
 ---
 
@@ -112,10 +146,11 @@ update_forward_returns()  # Fill in returns for 7+ day old entries
 
 | File | Purpose |
 |------|---------|
-| `scan_logger.py` | **NEW** — Full technical snapshots + forward returns per pick |
-| `auto_backtest.py` | Legacy — Basic pick tracking (grade, EMA stack, no technicals) |
+| `scan_logger.py` | Full technical snapshots + forward returns per pick |
+| `pattern_matcher.py` | "Nearest neighbor" conviction from historical analogues |
+| `auto_backtest.py` | Legacy — Basic pick tracking (no full technicals) |
 | `track_record.json` | Legacy output — Stats from auto_backtest |
 | `screens_backtest.json` | Historical strategy-level stats (Vol Squeeze 63.5% WR, etc.) |
 | `signal_history.csv` | Raw signal log |
 
-The scan logger supersedes `auto_backtest.py` — it captures everything auto_backtest does plus full technicals, market regime, and more granular stats.
+The scan logger + pattern matcher together supersede `auto_backtest.py`.

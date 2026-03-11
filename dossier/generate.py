@@ -1274,6 +1274,16 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Scan logger failed (non-fatal): {e}")
 
+    # ── Pattern Matcher — "Have we seen this movie before?" ──
+    try:
+        from dossier.backtesting.pattern_matcher import run_pattern_match, print_results
+        print("\n[POST] PATTERN MATCHER")
+        pm_results = run_pattern_match()
+        if pm_results:
+            print_results(pm_results)
+    except Exception as e:
+        print(f"  [WARN] Pattern matcher failed (non-fatal): {e}")
+
     # ── RAG Vector Store Reindex ──
     try:
         import sys
