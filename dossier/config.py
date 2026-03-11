@@ -70,4 +70,6 @@ SCANNER_STRATEGIES = [
     "Volatility Squeeze",
     "EMA Cross Momentum",
     "Gamma Scan",
+    "Small Cap Multibaggers",
+    "Bearish EMA Cross (Down)",
 ]
