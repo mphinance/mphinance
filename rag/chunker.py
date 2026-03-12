@@ -760,6 +760,53 @@ def chunk_supernote() -> list[Chunk]:
 
 
 # ============================================================
+# Knowledge Base — standalone docs/*.md reference files
+# ============================================================
+
+def chunk_knowledge_base() -> list[Chunk]:
+    """Chunk standalone .md files in docs/ root — project knowledge, analyses, guides.
+
+    Ingests: SUBSTACK_ANALYSIS.md, BACKTESTING.md, and any future reference docs.
+    Skips: index.html, ticker dirs, api dir — those have their own chunkers.
+    """
+    chunks = []
+    docs_dir = PROJECT_ROOT / "docs"
+
+    for md_file in sorted(docs_dir.glob("*.md")):
+        text = md_file.read_text(encoding="utf-8").strip()
+        if not text or len(text) < 50:
+            continue
+
+        # Split on ## headers for section-aware chunking
+        sections = re.split(r'(?=^#{1,2}\s)', text, flags=re.MULTILINE)
+
+        for i, section in enumerate(sections):
+            section = section.strip()
+            if not section or len(section) < 30:
+                continue
+
+            title_match = re.match(r'^#{1,2}\s+(.+)', section)
+            section_title = title_match.group(1) if title_match else f"Section {i}"
+
+            sub_chunks = _split_text(section)
+            for j, sub in enumerate(sub_chunks):
+                chunk_id = f"kb_{md_file.stem}_{i}_{j}"
+                chunks.append(Chunk(
+                    id=chunk_id,
+                    text=sub,
+                    doc_type=DocType.KNOWLEDGE_BASE,
+                    source=str(md_file),
+                    metadata={
+                        "document": md_file.stem,
+                        "section": section_title,
+                        "chunk_index": j,
+                    }
+                ))
+
+    return chunks
+
+
+# ============================================================
 # Master Chunker
 # ============================================================
 
@@ -775,4 +822,5 @@ def chunk_all() -> list[Chunk]:
     all_chunks.extend(chunk_git_history())
     all_chunks.extend(chunk_handoff())
     all_chunks.extend(chunk_supernote())
+    all_chunks.extend(chunk_knowledge_base())
     return all_chunks
