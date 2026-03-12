@@ -1,37 +1,33 @@
-# GHOST HANDOFF — 2026-03-11 Evening
+# GHOST HANDOFF — 2026-03-12 Morning
 
 ## What Just Shipped (This Session)
 
-### RAG Vector Search (`rag/`)
-- 9 content types, 523 chunks, Gemini embeddings + ChromaDB
-- **All** ticker technicals indexed (EMAs, pivots, fibs, IV/HV, options, insiders, SEC)
-- Historical dated JSONs for time-series queries
-- 5 integrations: MCP server, FastAPI, pipeline auto-reindex, Discord grounding, Substack enrichment
+### Scoring Overhaul (backtest-driven)
+- **ADX scoring INVERTED** — fresh trend (<25) now gets max 18pts, exhaustion (>50) gets -5 PENALTY
+  - Backtest: ADX<25 = 100% WR at 5d. ADX>40 = 25% WR. Was giving max points to exhaustion.
+- **RVOL boosted** to 20pt max (was 15) — strongest single predictor (6.82R spread)
+  - >3x = 20pts, >2x = 18pts, >1.5x = 14pts, <0.7x = -3 PENALTY
+- Files: `dossier/momentum_picks.py`
 
-### Backtesting Engine (`dossier/backtesting/`)
-- `scan_logger.py` — Archives picks with full technicals, tracks forward returns (1d/3d/5d/10d/21d)
-- `pattern_matcher.py` — "Have we seen this movie before?" — finds similar historical setups 
-- First real results: 22 validated, Grade B 71% WR, FULL BULLISH +5.58% avg 5d
-- Pipeline-integrated: logs + updates + pattern match on every 5AM run
+### Finviz Screens Disabled
+- All 5 screens showed 23-30% WR with negative returns at every horizon
+- Commented out in `dossier/generate.py` Stage 2a
+- File retained at `strategies/finviz_screens.py` for reference
 
-### Screen Expansion (13 total)
-- 5 new Finviz screens: Short Squeeze, CANSLIM, Earnings Gap, Consistent Growth, Oversold+Earnings
-- 2 dormant strategies activated: Small Cap Multibaggers, Bearish EMA Cross
-- `strategies/finviz_screens.py` with rate limiting and dedup
+### Backtest Analysis (1,972 entries, Feb-Mar 2026)
+- Ran every indicator, combo, and categorical split across 1d/3d/5d/10d/21d
+- Key findings: RVOL is king (6.82R spread), ADX<25 is holy grail, Grade A is worst performer
+- Sector: Utilities/Mining/Energy outperform. Finance/Tech Services underperform.
+- Date analysis: 19-73% WR swings based on market conditions alone
 
-### Repo Cleanup
-- 19 stale files + screenshots removed from root (40 → 20 files)
-- Substack scripts moved to `scripts/`
-- Stack2LLM removed (separate repo)
-- .gitignore cleaned: 90 lines → 50, 30 phantom entries removed
-- Secrets audit: CLEAN (zero keys/passwords/tokens in tracked files)
+### Roadmap/Suggestions Fallback Updated
+- `dossier/report/ghost_suggestions.py` — stale defaults replaced with current priorities
 
-### Documentation (`docs/`)
-- `RAG.md` — Full RAG system docs
-- `BACKTESTING.md` — Scan logger + pattern matcher docs
-- `SCREENS.md` — Complete 13-screen catalog with coverage map
-
-## What's Next
-- Finviz backfill (30-day historical returns for pattern matcher)
-- Strategy Performance Dashboard widget
-- Wire pattern matcher conviction into auto-trader gate
+## What's Next (Priority Order)
+1. **VIX/VVIX regime gating** — date analysis shows market conditions dominate indicator signals
+2. **Add MFI, CCI, ATR to scan archive** — for R-multiple analysis and volume-weighted RSI
+3. **Screen health scoring** — rolling WR tracker per screen with degradation alerts
+4. **Gamma → pin level enrichment** — cross-reference gamma data for picks
+5. **Dossier as PWA** (Michael requested)
+6. **Cache candle data for API/sharing** (Michael requested)
+7. **Fix TradingView link** on landing page (couldn't reproduce — may be cached/stale)
