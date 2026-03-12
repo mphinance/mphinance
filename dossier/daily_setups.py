@@ -179,11 +179,46 @@ def build_daily_setups(ticker_payloads: list[dict], date: str,
         why = "; ".join(why_parts) if why_parts else "Pullback into support in uptrend"
         sw_picks.append(format_pick(p, i + 1, why))
 
-    # ── CSP PICKS (top 3 wheel candidates) ──
+    # ── CSP PICKS — grouped by capital tier ──
+    # Capital tiers so traders at every level see relevant setups
+    CAPITAL_TIERS = [
+        ("💰 MICRO",  0,     500,  "$1-$5 stocks, ~$100-$500 capital"),
+        ("💵 SMALL",  500,   2000, "$5-$20 stocks, ~$500-$2K capital"),
+        ("💎 MEDIUM", 2000,  5000, "$20-$50 stocks, ~$2K-$5K capital"),
+        ("🏦 LARGE",  5000,  99999, "$50+ stocks, $5K+ capital"),
+    ]
+
     csp_picks = []
+    csp_by_tier = {}  # tier_name -> list of picks
     if csp_data:
-        for i, c in enumerate(csp_data[:3]):
+        # Sort all candidates by ROC weekly descending
+        sorted_csp = sorted(csp_data, key=lambda x: (x.get("trade") or {}).get("roc_weekly", 0), reverse=True)
+
+        rank = 0
+        for c in sorted_csp:
             trade = c.get("trade", {}) or {}
+            # Determine capital required (strike × 100, or from wheel scanner)
+            capital = trade.get("capital", 0)
+            if not capital and trade.get("strike"):
+                capital = float(trade["strike"]) * 100
+            if not capital:
+                capital = c.get("price", 0) * 100  # fallback: stock price × 100
+
+            # Find tier
+            tier_name = "💵 SMALL"  # default
+            tier_desc = ""
+            for t_name, t_min, t_max, t_desc in CAPITAL_TIERS:
+                if t_min <= capital < t_max:
+                    tier_name = t_name
+                    tier_desc = t_desc
+                    break
+
+            # Max 2 per tier to keep it manageable
+            if csp_by_tier.get(tier_name, 0) >= 2:
+                continue
+            csp_by_tier[tier_name] = csp_by_tier.get(tier_name, 0) + 1
+
+            rank += 1
             why_parts = []
             if c.get("vopr_grade"):
                 why_parts.append(f"VoPR Grade {c['vopr_grade']}")
@@ -193,10 +228,12 @@ def build_daily_setups(ticker_payloads: list[dict], date: str,
                 why_parts.append(f"ROC {trade['roc_weekly']:.1f}%/wk")
             if c.get("vol_regime"):
                 why_parts.append(f"Vol regime: {c['vol_regime']}")
+            if c.get("sector"):
+                why_parts.append(c["sector"])
             why = "; ".join(why_parts) if why_parts else "Premium selling opportunity"
 
             csp_picks.append({
-                "rank": i + 1,
+                "rank": rank,
                 "ticker": c["ticker"],
                 "company": c.get("company", ""),
                 "price": c.get("price", 0),
@@ -206,9 +243,14 @@ def build_daily_setups(ticker_payloads: list[dict], date: str,
                 "vrp_ratio": c.get("vrp_ratio"),
                 "vol_regime": c.get("vol_regime", ""),
                 "trade": trade,
+                "capital_required": round(capital, 2),
+                "capital_tier": tier_name,
                 "why": why,
                 "tradingview": f"https://www.tradingview.com/chart/?symbol={c['ticker']}",
             })
+
+            if rank >= 8:  # cap total picks
+                break
 
     # ── Regime context ──
     regime_data = {}
@@ -241,15 +283,16 @@ def build_daily_setups(ticker_payloads: list[dict], date: str,
         },
         "csp": {
             "title": "🥉 Cash-Secured Put — Wheel",
-            "description": "Premium selling with an edge. Strong stocks you'd own anyway, sell puts at support.",
+            "description": "Premium selling with an edge. Grouped by capital required — find your tier.",
             "picks": csp_picks,
             "count": len(csp_picks),
+            "tiers_represented": list(csp_by_tier.keys()),
         },
         "total_analyzed": len(scored),
         "methodology": {
             "scoring": "9-factor ML-calibrated momentum composite (Stoch>ADX>RelVol>RSI>EMA21 proximity)",
             "classification": "Day trade = volume surge + RSI momentum. Swing = pullback to EMA + stoch oversold.",
-            "csp": "TradingView screener → EMA/ATR filter → options chain → VoPR enrichment",
+            "csp": "Wheel scanner (TV screener → EMA/ATR → options chain) grouped by capital tier",
         },
     }
 
@@ -302,28 +345,42 @@ def format_setups_text(setups: dict) -> str:
             lines.append("  (No setups today)")
             continue
 
-        for p in picks:
-            ticker = p.get("ticker", "?")
-            price = p.get("price", 0)
-            score = p.get("score", "")
-            why = p.get("why", "")
+        # For CSP, group output by capital tier
+        if category == "csp" and picks:
+            current_tier = None
+            for p in picks:
+                tier = p.get("capital_tier", "")
+                if tier != current_tier:
+                    current_tier = tier
+                    cap_req = p.get("capital_required", 0)
+                    lines.append(f"\n  {tier}")
 
-            if category == "csp":
                 trade = p.get("trade", {}) or {}
                 strike = trade.get("strike", "?")
                 exp = trade.get("expiration", "?")
                 prem = trade.get("premium", 0)
-                grade = p.get("vopr_grade", "?")
+                roc = trade.get("roc_weekly", 0)
+                cap = p.get("capital_required", 0)
+                grade = p.get("vopr_grade", "")
+                grade_str = f"  VoPR:{grade}" if grade else ""
                 lines.append(
-                    f"  #{p['rank']}  {ticker}  ${price:.2f}  "
-                    f"VoPR:{grade}  Sell ${strike}P exp {exp} @ ${prem:.2f}"
+                    f"    {p['ticker']}  ${p['price']:.2f}  "
+                    f"Sell ${strike}P {exp}  ${prem:.2f}prem  "
+                    f"{roc:.1f}%/wk  (${cap:,.0f} capital){grade_str}"
                 )
-            else:
+                lines.append(f"       ↳ {p.get('why', '')}")
+        else:
+            for p in picks:
+                ticker = p.get("ticker", "?")
+                price = p.get("price", 0)
+                score = p.get("score", "")
+                why = p.get("why", "")
+
                 lines.append(
                     f"  #{p['rank']}  {ticker}  ${price:.2f}  "
                     f"Score:{score}  Grade:{p.get('grade', '?')}"
                 )
-            lines.append(f"       ↳ {why}")
+                lines.append(f"       ↳ {why}")
 
     regime = setups.get("market_regime", {})
     if regime.get("note"):
