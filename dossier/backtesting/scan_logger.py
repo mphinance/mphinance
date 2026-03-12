@@ -105,6 +105,15 @@ def _get_ticker_snapshot(ticker: str) -> dict:
             "grade": data.get("scores", {}).get("grade", ""),
             "tech_score": data.get("scores", {}).get("technical", 0),
             "fund_score": data.get("scores", {}).get("fundamental", 0),
+            # NEW: ATR, squeeze, DI+/DI- from technical_analysis
+            "atr_14": ta.get("momentum", {}).get("atr") or ta.get("volume", {}).get("atr"),
+            "squeeze_ratio": ta.get("momentum", {}).get("squeeze_ratio"),
+            "di_plus": osc.get("di_plus"),
+            "di_minus": osc.get("di_minus"),
+            # Williams %R and CMF from oscillators (if available)
+            "williams_r": osc.get("williams_r") or osc.get("willr"),
+            "cmf": ta.get("volume", {}).get("cmf"),
+            "mfi": osc.get("mfi"),
         }
     except Exception:
         return {}
@@ -119,7 +128,10 @@ def _get_market_context() -> dict:
             return {
                 "regime": market.get("regime", ""),
                 "vix": market.get("vix", 0),
+                "vvix": market.get("vvix", 0),
+                "vix_vix3m_ratio": market.get("vix_vix3m_ratio", 0),
                 "spy_change": market.get("spy", {}).get("change_pct", 0),
+                "spy_vs_sma200": market.get("spy_vs_sma200", 0),
             }
         except Exception:
             continue
@@ -164,7 +176,10 @@ def log_todays_picks():
             # Market context
             "regime": market.get("regime", ""),
             "vix": market.get("vix", 0),
+            "vvix": market.get("vvix", 0),
+            "vix_vix3m_ratio": market.get("vix_vix3m_ratio", 0),
             "spy_change": market.get("spy_change", 0),
+            "spy_vs_sma200": market.get("spy_vs_sma200", 0),
             # Full technical snapshot
             **snapshot,
             # Forward returns (filled later)
