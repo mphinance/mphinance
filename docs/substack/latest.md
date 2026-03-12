@@ -2,7 +2,7 @@
 
 *Michael's Musings — March 11, 2026*
 
----
+----
 
 > 🎨 **IMAGE PROMPT:** *A web of glowing fiber-optic threads connecting multiple screens in a dark room — a trading terminal, a home server rack, a laptop, a phone. The threads are bright green (#00ff41) against deep black. At the center of the web, a subtle ghost-like silhouette made of light. Cyberpunk aesthetic, shallow depth of field.*
 
