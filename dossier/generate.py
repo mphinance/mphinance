@@ -780,10 +780,70 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     technical_setups = generate_setups(setup_tickers, max_setups=6)
     print(f"  {len(technical_setups)} setups analyzed")
 
-    # ── Stage 7: CSP Setups ──
+    # ── Stage 7: CSP Setups (Wheel Scanner integration) ──
     print("\n[7/16] CSP SETUPS")
-    from dossier.data_sources.csp_setups import fetch_csp_setups
-    csp_setups = fetch_csp_setups(max_results=8)
+    csp_setups = []
+    # Try reading pre-computed wheel scanner results (from momentum-phund-tasty, runs 4:30 AM)
+    try:
+        import json as _csp_json
+        from datetime import datetime as _csp_dt, timedelta as _csp_td
+
+        # Wheel scanner outputs to momentum-phund-tasty/docs/watchlist.json
+        _wheel_paths = [
+            Path.home() / "Antigravity" / "momentum-phund-tasty" / "docs" / "watchlist.json",
+            Path("/tmp") / "wheel_watchlist.json",  # fallback for CI/other environments
+        ]
+        _wheel_data = None
+        _wheel_path_used = None
+        for _wp in _wheel_paths:
+            if _wp.exists():
+                # Staleness check: skip if older than 24 hours
+                _age = time.time() - _wp.stat().st_mtime
+                if _age < 86400:  # 24 hours
+                    with open(_wp) as _wf:
+                        _wheel_data = _csp_json.load(_wf)
+                    _wheel_path_used = _wp
+                    break
+                else:
+                    print(f"  ⏭️ Wheel scanner file stale ({_age/3600:.0f}h old): {_wp}")
+
+        if _wheel_data and len(_wheel_data) > 0:
+            print(f"  ✓ Wheel scanner: {len(_wheel_data)} candidates from {_wheel_path_used}")
+            # Transform wheel scanner format → CSP data contract
+            for item in _wheel_data:
+                trade_info = {
+                    "type": "CSP",
+                    "expiration": item.get("expiry", ""),
+                    "strike": item.get("strike", 0),
+                    "premium": round(float(item.get("premium", 0) / 100), 2) if item.get("premium", 0) > 10 else round(float(item.get("premium", 0)), 2),
+                    "roc_weekly": round(float(item.get("roc_weekly", 0)), 2),
+                    "days_out": int(item.get("dte", 0)),
+                    "capital": float(item.get("capital", 0)),
+                }
+                csp_setups.append({
+                    "ticker": item.get("symbol", ""),
+                    "company": item.get("name", "")[:40],
+                    "price": round(float(item.get("price", 0)), 2),
+                    "adx": round(float(item.get("adx", 0)), 1) if item.get("adx") else 0,
+                    "rsi": round(float(item.get("rsi", 0)), 1) if item.get("rsi") else 0,
+                    "has_trade": True,
+                    "trade": trade_info,
+                    "vopr_grade": "",  # Wheel scanner doesn't do VoPR — could enrich later
+                    "vrp_ratio": None,
+                    "vol_regime": "",
+                    "sector": item.get("sector", ""),
+                    "source": "wheel_scanner",
+                })
+            # Sort by ROC weekly descending
+            csp_setups.sort(key=lambda x: x.get("trade", {}).get("roc_weekly", 0), reverse=True)
+            csp_setups = csp_setups[:8]
+            print(f"  Top ROC: {csp_setups[0]['ticker']} @ {csp_setups[0]['trade']['roc_weekly']}%/wk")
+        else:
+            raise FileNotFoundError("No fresh wheel scanner data")
+    except Exception as _wheel_err:
+        print(f"  ℹ️ Wheel scanner unavailable ({_wheel_err}), falling back to built-in CSP scanner")
+        from dossier.data_sources.csp_setups import fetch_csp_setups
+        csp_setups = fetch_csp_setups(max_results=8)
     print(f"  {len(csp_setups)} CSP candidates")
 
     # ── Stage 8: Ticker Enrichment ──
