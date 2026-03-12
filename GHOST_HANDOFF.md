@@ -1,33 +1,46 @@
-# GHOST HANDOFF — 2026-03-12 Morning
+# GHOST_HANDOFF — Last Updated 2026-03-12
 
-## What Just Shipped (This Session)
+## What Just Shipped
 
-### Scoring Overhaul (backtest-driven)
-- **ADX scoring INVERTED** — fresh trend (<25) now gets max 18pts, exhaustion (>50) gets -5 PENALTY
-  - Backtest: ADX<25 = 100% WR at 5d. ADX>40 = 25% WR. Was giving max points to exhaustion.
-- **RVOL boosted** to 20pt max (was 15) — strongest single predictor (6.82R spread)
-  - >3x = 20pts, >2x = 18pts, >1.5x = 14pts, <0.7x = -3 PENALTY
-- Files: `dossier/momentum_picks.py`
+### Pine Script v5 "Clean Edition"
+- 885→809 lines, emoji signals→text labels, 14→10 dashboard rows
+- EMA 21 warm gold ON by default, Hull/TRAMA visual speed hierarchy
+- Momentum zone fill (EMA 8-55 gradient) toggleable
+- Landing page `/ghost-alpha/` rewritten, deployed to Vultr
 
-### Finviz Screens Disabled
-- All 5 screens showed 23-30% WR with negative returns at every horizon
-- Commented out in `dossier/generate.py` Stage 2a
-- File retained at `strategies/finviz_screens.py` for reference
+### Wheel Scanner → Dossier Pipeline
+- `generate.py` Stage 7 reads `momentum-phund-tasty/watchlist.json` (runs 4:30 AM)
+- Falls back to built-in CSP scanner if file missing/stale
+- CSP picks grouped by capital tier: Micro/Small/Medium/Large (max 2/tier)
 
-### Backtest Analysis (1,972 entries, Feb-Mar 2026)
-- Ran every indicator, combo, and categorical split across 1d/3d/5d/10d/21d
-- Key findings: RVOL is king (6.82R spread), ADX<25 is holy grail, Grade A is worst performer
-- Sector: Utilities/Mining/Energy outperform. Finance/Tech Services underperform.
-- Date analysis: 19-73% WR swings based on market conditions alone
+### Substack Strategy + RAG
+- Analyzed 85 posts: stories=65% open rate, dossier=50%
+- BUT: unique data wrapped in story is the real winner (Confessions=71%)
+- `docs/SUBSTACK_ANALYSIS.md` saved for RAG ingestion
+- `KNOWLEDGE_BASE` doc type added — `chunk_knowledge_base()` ingests `docs/*.md`
 
-### Roadmap/Suggestions Fallback Updated
-- `dossier/report/ghost_suggestions.py` — stale defaults replaced with current priorities
+### Smart Draft Generator
+- `scripts/build_latest_draft.py` — auto-populates `docs/substack/latest.md`
+- Reads ghost blog entries + git commits since last publish
+- Never overwrites Michael's content (append only)
+- Frontmatter: `status: draft/published`, `author: sam/michael`
+- Michael edits in GitHub browser when he posts to Substack
 
-## What's Next (Priority Order)
-1. **VIX/VVIX regime gating** — date analysis shows market conditions dominate indicator signals
-2. **Add MFI, CCI, ATR to scan archive** — for R-multiple analysis and volume-weighted RSI
-3. **Screen health scoring** — rolling WR tracker per screen with degradation alerts
-4. **Gamma → pin level enrichment** — cross-reference gamma data for picks
-5. **Dossier as PWA** (Michael requested)
-6. **Cache candle data for API/sharing** (Michael requested)
-7. **Fix TradingView link** on landing page (couldn't reproduce — may be cached/stale)
+## What's Next
+1. **Michael reschedules momentum-phund-tasty cron to 4:30 AM CST**
+2. **Test wheel scanner → dossier pipeline end-to-end tomorrow morning**
+3. **Paste Pine Script v5 into TradingView and verify compilation**
+4. **Publish backtest data on Substack** — 754 entries, unique AI screener WR data
+5. **Wire `build_latest_draft.py` into the pipeline** so draft auto-refreshes
+
+## Key Files Changed
+- `dossier/generate.py` — Stage 7 wheel scanner integration
+- `dossier/daily_setups.py` — Capital tier bucketing
+- `rag/config.py` — KNOWLEDGE_BASE doc type
+- `rag/chunker.py` — chunk_knowledge_base() function
+- `rag/ingest.py` — knowledge_base in chunker mapping
+- `scripts/build_latest_draft.py` — NEW draft generator
+- `docs/SUBSTACK_ANALYSIS.md` — NEW engagement analysis
+- `docs/substack/latest.md` — Full session notes since March 10
+- `docs/pine/ghost_alpha.pine` — v5 Clean Edition
+- `landing/ghost-alpha/index.html` — Rewritten landing page
