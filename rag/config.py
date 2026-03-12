@@ -41,3 +41,4 @@ class DocType(str, Enum):
     GIT_HISTORY = "git_history"
     HANDOFF = "handoff"
     SUPERNOTE = "supernote"
+    KNOWLEDGE_BASE = "knowledge_base"
