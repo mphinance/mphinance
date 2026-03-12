@@ -330,7 +330,7 @@ def _save_picks(result: dict, date: str):
                 "breakdown": pick.get("breakdown", {}),
                 "quality_flags": pick.get("quality_flags", {}),
                 "quality_reasons": pick.get("quality_reasons", []),
-                "tradingview_url": f"https://www.tradingview.com/symbols/{pick['ticker']}/chart/",
+                "tradingview_url": f"https://www.tradingview.com/chart/?symbol={pick['ticker']}",
                 "regime_note": regime_note,
             })
 
