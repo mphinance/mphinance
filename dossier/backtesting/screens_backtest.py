@@ -34,7 +34,7 @@ SCORABLE_SHEETS = [
     "Momentum with Pullback",
     "EMA Cross Momentum",
     "Volatility Squeeze",
-    "Gravity Squeeze",
+    # "Gravity Squeeze",  # REMOVED: 34.2% WR across 237 picks — worst strategy by data
     "Bearish EMA Cross (Down)",
 ]
 
