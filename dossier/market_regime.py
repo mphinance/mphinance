@@ -81,7 +81,9 @@ def detect_regime():
         "vix": round(vix_current, 2),
         "vix_change_5d": round(vix_change_5d, 2),
         "vix_vix3m_ratio": round(vix_vix3m_ratio, 2),
+        "vvix": round(vvix_current, 2),
         "spy_vs_sma200": round(spy_vs_sma200, 2),
+        "spy_price": round(spy_current, 2),
         "hedge_suggestions": suggestions,
         "market_context": context
     }
