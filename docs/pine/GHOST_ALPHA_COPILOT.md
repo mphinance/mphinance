@@ -1,72 +1,64 @@
 # Ghost Alpha Copilot Cheat Sheet 👻
 
 > **For Gemini Live / AI assistants reading Michael's chart screenshots.**
-> This document explains every field in the Ghost Alpha dashboard and AI data link.
+> This document explains every field in the Ghost Alpha v5 dashboard and AI data link.
 
 ## Dashboard Fields (Top to Bottom)
 
 | Row | Label | Values | What It Means |
 |-----|-------|--------|---------------|
 | 1 | **SYS.GHOST.ALPHA** | Header | System identifier |
-| 2 | **REGIME** | `BULL 3.2%`, `BEAR`, `CHOP` | TRAMA trend quality. Number = distance from TRAMA as % |
-| 3 | **GRADE** | `A+` through `F` | Composite score: A+/A = trade with trend, D/F = stay out |
-| 4 | **HULL** | `LONG ▲`, `SHORT ▼` | Hull MA direction — primary trend signal |
-| 5 | **SQUEEZE** | `RELEASE ⚡`, `COILED ◉`, `NORMAL` | ATR compression state. COILED = about to move. RELEASE = moving now |
-| 6 | **EXHAUST** | `EXIT ▲/▼`, `OVERBOUGHT`, `OVERSOLD`, `CLEAR` | %R exhaustion state |
-| 7 | **STRUCT** | `BROKEN ▲/▼`, `TRAP ▲/▼`, `INTACT` | Structure break + volume validation. TRAP = low-volume fake break |
-| 8 | **KELT** | `LOWER ▽`, `UPPER △`, `INSIDE` | Where price sits in Keltner Channel |
-| 9 | **IV/VOL** | `LOW 🔋`, `HIGH 🔥`, `MID` + RVOL | Implied volatility regime + relative volume (1.0x = average) |
-| 10 | **SHAPE** | `BUYERS ▲`, `SELLERS ▼` + `⚠ DIV`/`AGREE` | Candle shape momentum (NOT true order flow). DIV = divergence from trend |
-| 11 | **RISK** | `XX shares` + `$X.XX ATR` | Position size for 1% risk on $10k account based on current ATR |
-| 12 | **ADAPT** | `H55 T34` + `R18/84` | Current adaptive parameters (Hull, TRAMA, %R fast/slow) |
+| 2 | **REGIME** | `BULL ▲`, `BEAR ▼`, `MODERATE`, `CHOP ═` | TRAMA trend quality + trend phase (FRESH/YOUNG/MATURE/AGING) |
+| 3 | **TRAMA Δ** | `AT VALUE`, `+1.2%`, `-2.3%` | Price distance from adaptive MA. >3% = stretched |
+| 4 | **SQUEEZE** | `RELEASE ⚡`, `COILED ◉`, `NORMAL` | ATR compression state. COILED = about to move. RELEASE = moving now |
+| 5 | **EXHAUST** | `EXIT ▲/▼`, `OVERBOUGHT`, `OVERSOLD`, `CLEAR` | %R exhaustion state |
+| 6 | **STRUCT** | `BROKEN ▲/▼`, `TRAP ▲/▼`, `INTACT` | Structure break + volume validation. TRAP = low-volume fake break |
+| 7 | **KELT** | `LOWER ▽`, `UPPER △`, `INSIDE` | Keltner channel position + golden cross status (50>200 ✓ / 50<200 ✗) |
+| 8 | **IV/VOL** | `LOW 🔋`, `HIGH 🔥`, `MID` + RVOL | IV percentile + relative volume (1.0x = average) |
+| 9 | **SHAPE** | `BUYERS ▲`, `SELLERS ▼` + `⚠ DIV`/`AGREE` | Candle shape momentum. DIV = divergence from trend |
+| 10 | **GRADE V2** | `A+` through `F` + `(X.X/5)` | Composite score + direction (LONG ▲ / SHORT ▼) |
+| 11 | *AI Data Link* | Compact pipe-delimited string | For OCR/screenshot reading by AI assistants |
 
-## Signal Emoji Dictionary
+## Signal Labels (v5 — Clean Text)
 
-| Emoji | Signal | What Happened |
+| Label | Signal | What Happened |
 |-------|--------|---------------|
-| ⚔️ | Structure Break | Price closed through a swing level WITH volume confirmation |
-| 🪫 | Exhaustion | %R says momentum is drained — trend reversal incoming |
-| 👾 | Liquidity Sweep | Stop hunt — price wicked past level then reversed (trap!) |
-| 💥 | Squeeze Release | ATR compression just broke — volatility explosion |
-| 🏁 | Ghost Trail Exit | Price crossed the ATR trailing stop — take profit / game over |
-| 🔮 | Divergence | Price vs momentum disagreement — smart money positioning opposite |
-| 👻 | Ghost Alpha | 2+ signals agree — highest conviction signal |
+| `BOS ▲/▼` | Break of Structure | Price closed through a swing level WITH volume |
+| `EXH` | Exhaustion | %R says momentum is drained — reversal incoming |
+| `SWP` | Liquidity Sweep | Stop hunt — wick past level then reversed (trap!) |
+| `SQZ ⚡` | Squeeze Release | ATR compression just broke — volatility explosion |
+| `EXIT` | Ghost Trail Exit | Price crossed the ATR trailing stop — game over |
+| `DIV` | Divergence | Price vs momentum disagreement — smart money |
+| `👻 N` | Ghost Alpha | N signals agree — highest conviction (the brand mark) |
 
-## Combo Labels
+## Default Visual Layers (v5)
 
-When 2+ signals fire on the same bar, they stack: `⚔️👾👻 x3`
-- The `x[N]` shows how many signals agreed
-- More signals = higher conviction
+Only three things show by default. Everything else is toggle-ON in settings:
+
+| Layer | Default | Toggle |
+|-------|---------|--------|
+| Hull Band (cyan/magenta glow) | ✅ ON | Always on |
+| Ghost Trail (ATR stop step-line) | ✅ ON | Ghost Trail settings |
+| Dashboard box | ✅ ON | Dashboard settings |
+| Hull Candle Coloring | ✅ ON | Signal Filter settings |
+| TRAMA line | ❌ OFF | TRAMA Regime settings |
+| Keltner bands | ❌ OFF | Keltner Envelope settings |
+| SMA 50 / SMA 200 | ❌ OFF | Key Moving Averages |
+| VWAP + Force Fields | ❌ OFF | Key Moving Averages |
+| Swing Levels | ❌ OFF | Structure settings |
+| S/D Zones | ❌ OFF | Structure settings |
+| FVG Boxes | ❌ OFF | Fair Value Gaps settings |
+| Background Glow | ❌ OFF | Volatility Squeeze settings |
+| HTF Hull | ❌ OFF | HTF Hull Overlay settings |
 
 ## AI Data Link (Ghost-to-Ghost)
 
 Bottom of dashboard, compact string for OCR/screenshot reading:
 
 ```
-GRADE | DIRECTION | REGIME | SQUEEZE | SIGNAL | SHAPE | RVOL | TRAMA%
-  B   |     L     |   B    |  FIRE   | SWP_BL | BUY   | 1.2x | 0.3%
+GRADE | DIRECTION | REGIME | SIGNAL | SHAPE | RVOL | SQUEEZE | TRAMA%
+  B   |     L     |   B    | SWP_BL | BUY   | 1.2x |  FIRE   | 0.3%
 ```
-
-### Field Decoder:
-
-| Field | Values | Meaning |
-|-------|--------|---------|
-| GRADE | `A+`, `A`, `B`, `C`, `D`, `F` | Setup quality |
-| DIRECTION | `L` (Long), `S` (Short) | Hull MA direction |
-| REGIME | `B` (Bull), `M` (Moderate), `C` (Chop) | Trend state |
-| SQUEEZE | `FIRE`, `COIL`, `NORM` | Volatility state |
-| SIGNAL | Signal name or `--` | Active signal type |
-| SHAPE | `BUY`, `SELL` | Candle shape pressure |
-| RVOL | `1.2x` | Volume relative to 20-period average |
-| TRAMA% | `0.3%` | Price distance from TRAMA line |
-
-## Reading the Chart at a Glance
-
-1. **Candle colors**: Cyan = bullish Hull, Magenta = bearish Hull
-2. **Hull Band**: Neon glow band — trend direction
-3. **Ghost Trail**: Step-line that trails price — your stop loss
-4. **FVG Boxes**: Cyan/magenta zones extending right — price magnets
-5. **VWAP Force Fields**: Orchid-colored bands — ±2σ/±3σ statistical extremes
 
 ## Quick Decision Framework
 
