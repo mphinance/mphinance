@@ -172,6 +172,13 @@ def _static_suggestions(date: str, git_stats: dict, issues: list) -> str:
             "🔥🔥 <b>Ship something.</b> It's been quiet in here. "
             "The watchlist isn't going to diversify itself."
         )
+    else:
+        suggestions.append(
+            f"🔥🔥🔥 <b>Validate the new scoring weights.</b> "
+            "ADX freshness and RVOL conviction filters are live — "
+            "backtest showed ADX<25 = 100% WR, RVOL>1.5 = 80%+ WR. "
+            "Track the next 20 picks and see if reality matches."
+        )
 
     if issues:
         oldest = issues[-1]
@@ -181,9 +188,15 @@ def _static_suggestions(date: str, git_stats: dict, issues: list) -> str:
         )
 
     suggestions.append(
-        "🔥 <b>Add chart images to the blog.</b> "
-        "People want to SEE the EMA stack, not just read about it. "
-        "We've got the data, just need to render it."
+        "🔥🔥 <b>Add VIX/VVIX regime gating to the screener.</b> "
+        "Date-level backtest showed 19-73% WR swings based purely on market conditions. "
+        "We need to know WHEN to trust the signals, not just WHICH signals."
+    )
+
+    suggestions.append(
+        "🔥 <b>Build screen health monitoring.</b> "
+        "Track rolling 20-pick WR per screen. Flag when a screen drops below 40%. "
+        "Gravity Squeeze is bleeding -20% at 21d and nobody's watching."
     )
 
     return "<br><br>".join(suggestions[:3])

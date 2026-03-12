@@ -5,19 +5,24 @@ Ranks ALL dossier tickers by a momentum-specific composite score
 and returns the top 3. Unlike the general grade (A/B/C/D) which
 blends technical + fundamental, this is PURE momentum:
 
-Scoring factors (max 100 raw, then quality multiplied):
-  EMA Stack alignment:   20 pts  (FULL BULL=20, PARTIAL BULL=12, TANGLED=4)
+Scoring factors (max ~100 raw, then quality multiplied):
+  EMA Stack alignment:   10 pts  (FULL BULL=10, PARTIAL BULL=6, TANGLED=2)
   Pullback Setup:        15 pts  (Bounce 2.0: EMA aligned + ADX>25 + Stoch<40 + near EMA21)
-  ADX trend strength:    15 pts  (>25 = trending, >40 = strong trend)
-  RSI sweet spot:        10 pts  (40-65 = max, <30 or >70 = low)
-  Trend direction:       10 pts  (Bullish=10, Bearish=0)
-  Relative Volume:       10 pts  (>1.5x = high interest)
-  Price vs EMA 21:       10 pts  (within 2% above = perfect pullback)
+  ADX FRESHNESS:         18 pts  (<20 = max, >50 = PENALTY — backtest: ADX<25 = 100% WR)
+  RSI sweet spot:        15 pts  (40-65 = max, <30 or >70 = low)
+  Trend direction:        5 pts  (Bullish=5, Bearish=0)
+  Relative Volume:       20 pts  (>3x = max, <0.7x = PENALTY — 6.82R spread in backtest)
+  Price vs EMA 21:       12 pts  (within 2% above = perfect pullback)
   MACD momentum:          5 pts  (histogram positive = accelerating)
   Institutional signal:   5 pts  (buying = bonus)
 
 Then: final_score = raw_score * (quality_score / 100)
 Quality filter penalizes SPACs, pinned acquisitions, junk bio, shells.
+
+Weights calibrated from backtest of 1,972 entries (Feb-Mar 2026).
+Key findings: ADX<25 = fresh trend = 100% WR at 5d.
+              RVOL>1.5 = high conviction = 80%+ WR.
+              ADX>40 = trend exhaustion = 25% WR (TRAP).
 """
 
 import json
@@ -91,17 +96,21 @@ def score_momentum(payload: dict) -> dict:
         pullback_score = 3
     breakdown["pullback"] = pullback_score
 
-    # ── 3. ADX strength (18 pts — was 15, ML importance 0.19) ──
-    if adx >= 40:
-        breakdown["adx"] = 18
-    elif adx >= 30:
-        breakdown["adx"] = 14
-    elif adx >= 25:
-        breakdown["adx"] = 10
-    elif adx >= 15:
-        breakdown["adx"] = 5
+    # ── 3. ADX FRESHNESS (18 pts — INVERTED from ML weights per backtest) ──
+    # Backtest: ADX <25 = 100% WR (fresh trend). ADX >40 = 25% WR (exhaustion trap).
+    # LOWER ADX = BETTER. The trend is young, not tired.
+    if adx < 20:
+        breakdown["adx"] = 18   # Ultra-fresh — best zone
+    elif adx < 25:
+        breakdown["adx"] = 15   # Fresh trend — 100% WR in backtest
+    elif adx < 30:
+        breakdown["adx"] = 10   # Moderate — still tradeable
+    elif adx < 40:
+        breakdown["adx"] = 5    # Getting extended
+    elif adx < 50:
+        breakdown["adx"] = 1    # Extended — 25% WR zone
     else:
-        breakdown["adx"] = 0
+        breakdown["adx"] = -5   # Extreme exhaustion — PENALTY
 
     # ── 4. RSI sweet spot (15 pts — was 10, ML importance 0.18) ──
     if 40 <= rsi <= 65:
@@ -116,15 +125,21 @@ def score_momentum(payload: dict) -> dict:
     # ── 5. Trend direction (5 pts — was 10, correlated with EMA stack) ──
     breakdown["trend"] = 5 if "Bullish" in trend else 0
 
-    # ── 6. Relative Volume (15 pts — was 10, ML importance 0.19) ──
-    if rel_vol >= 2.0:
-        breakdown["rel_vol"] = 15
+    # ── 6. Relative Volume (20 pts — UPGRADED, strongest predictor) ──
+    # Backtest: RVOL>1.5 = 80-100% WR. RVOL<0.7 = 20% WR.
+    # R-multiple spread: 6.82R between high/low RVOL. Non-negotiable filter.
+    if rel_vol >= 3.0:
+        breakdown["rel_vol"] = 20   # Spike — 100% WR in backtest
+    elif rel_vol >= 2.0:
+        breakdown["rel_vol"] = 18   # Very high conviction
     elif rel_vol >= 1.5:
-        breakdown["rel_vol"] = 12
+        breakdown["rel_vol"] = 14   # High — 80% WR zone
     elif rel_vol >= 1.0:
-        breakdown["rel_vol"] = 7
+        breakdown["rel_vol"] = 7    # Normal
+    elif rel_vol >= 0.7:
+        breakdown["rel_vol"] = 2    # Low conviction
     else:
-        breakdown["rel_vol"] = 2
+        breakdown["rel_vol"] = -3   # Dead volume — PENALTY (20% WR)
 
     # ── 7. Price vs EMA 21 (12 pts — was 10, ML importance 0.16) ──
     if ema_21 and price:
@@ -343,13 +358,13 @@ def _save_picks(result: dict, date: str):
             "total_scored": len(result.get("all_ranked", [])),
             "all_ranked": all_ranked,
             "scoring_weights": {
-                "ema_stack": {"max": 20, "desc": "EMA 8>21>34>55>89 alignment"},
+                "ema_stack": {"max": 10, "desc": "EMA 8>21>34>55>89 alignment"},
                 "pullback": {"max": 15, "desc": "Bounce 2.0: EMA aligned + ADX>25 + Stoch<40 + near EMA21"},
-                "adx": {"max": 15, "desc": "ADX trend strength (>25 trending, >40 strong)"},
-                "rsi": {"max": 10, "desc": "RSI sweet spot (40-65 optimal)"},
-                "trend": {"max": 10, "desc": "Overall trend direction (Bullish/Bearish)"},
-                "rel_vol": {"max": 10, "desc": "Relative volume vs 20-day avg"},
-                "price_vs_ema": {"max": 10, "desc": "Price proximity to EMA 21"},
+                "adx": {"max": 18, "desc": "ADX FRESHNESS (<20=best, >50=penalty — backtest: <25=100% WR)"},
+                "rsi": {"max": 15, "desc": "RSI sweet spot (40-65 optimal)"},
+                "trend": {"max": 5, "desc": "Overall trend direction (Bullish/Bearish)"},
+                "rel_vol": {"max": 20, "desc": "RVOL conviction (>1.5=80%WR, <0.7=penalty — 6.82R spread)"},
+                "price_vs_ema": {"max": 12, "desc": "Price proximity to EMA 21"},
                 "macd": {"max": 5, "desc": "MACD histogram momentum"},
                 "institutional": {"max": 5, "desc": "TickerTrace institutional buying signal"},
             },
