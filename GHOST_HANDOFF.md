@@ -1,37 +1,45 @@
 # Ghost Handoff — 2026-03-12
 
-## What Was Built
+## What Happened This Session
 
-### Ghost Alpha Intelligence Dashboard
-- **Location**: `docs/intelligence/index.html` (live at mphinance.github.io/mphinance/intelligence/)
-- **Data**: `docs/api/backtest-analytics.json` (mega analytics, inlined into HTML)
-- **Engine**: `scripts/intelligence_crossover.py` (crossover engine + analytics builder)
+### Intelligence Sweep Expansion
+- Pulled 2,931 screener entries from Venus (`venus:/home/mnt/Download2/docs/Momentum/anti/scheduling/scans/`) → `data/venus_scans/`
+- Killed **Gravity Squeeze** strategy — 34.2% WR across 237 picks (worst strategy by far)
+- Ingested Venus data into **ChromaDB RAG** — 2,515 scan_data chunks, 3,038 total, 786 unique tickers
+- Added `SCAN_DATA` doc type to `rag/config.py`, `chunk_scan_data()` to `rag/chunker.py`
 
-### Dashboard Sections (15+ interactive charts)
-1. Top stats cards (Gold Picks, Score 70+ performance)
-2. Gold picks equity curve (+12.13% cumulative, 25 picks)
-3. Sam's Optimal Screener (ML feature importance + filter tests)
-4. RSI-14 / ADX-14 / Stochastic %K zone performance charts
-5. IV Rank / Relative Volume zone analysis
-6. EMA stack + curated strategy breakdown
-7. Multi-timeframe score band analysis (5D/10D/21D)
-8. Screen strategy comparison (1,795 historical picks, 7 strategies)
-9. Pullback vs non-pullback multi-timeframe
-10. Sector performance (15 sectors)
-11. Grade performance cards (B: 71.4% WR, C: 75% WR)
-12. Full technical data table (RSI/ADX/Stoch/RVOL/EMA + 1D/5D/10D/21D)
-13. Streak analysis
+### Extended Parameter Sweep (3,175 entries)
+- 40 parameter combos, 8 combo filters, all timeframes (1D/3D/5D/10D)
+- **Top combos**: Near EMA21 + Strong ADX (58% WR), Thu scans (57.2%), Full Bullish + RSI 50-70 (54%, +2.16% avg)
+- **Avoid**: Dead RVOL <0.5x (36% WR), No Trend ADX <15 (38% WR)
+- Results in `docs/api/backtest-analytics.json` (22 keys)
 
-### Key Findings
-- **RVOL >= 1.5x**: 85.7% WR, +19.36% avg 5D (strongest single predictor)
-- **RVOL 1.5x + Full Bullish EMA**: 100% 1D WR, 80% 5D WR, +23.39% avg
-- **RSI 50-70**: 70% WR, +12.71% avg 5D
-- **Feature importance** (ML, 99% acc): stoch_val 22.3%, adx_val 19.2%, rel_vol 18.9%, rsi_val 17.8%
-- **Score 70+ picks**: 66.3% WR across 196 entries
-- **Volatility Squeeze** (curated): 63.5% WR
+### Intelligence Dashboard v2 (Complete Rebuild)
+- Rebuilt `docs/intelligence/index.html` from scratch — **zero undefined values**
+- 13 sections: summary stats, equity curve, 8 combo filter cards, 6 zone charts (RSI/ADX/Stoch/RVOL/MarketCap/PriceChange), EMA stack, strategy, DOW heatmap, sector, pullback, score dist, grade, sweep table, picks, RAG status
+- Defensive `safeObj`/`safeArr`/`fmt` helpers on every data access
+
+### Blog Cleanup + Fix
+- Removed 8 "API let me down" placeholder entries
+- Wrote 4 real Sam entries for sessions on 3/9, 3/10, 3/11, 3/12
+- Total: 46 entries
+
+## Key Commits
+- `a784981` — Massive parameter sweep from Venus data
+- `d6603a1` — Kill Gravity Squeeze
+- `875750c` — RAG ChromaDB ingestion
+- `021eee1` — Intelligence Dashboard v2 (complete rebuild)
 
 ## What's Next
-1. **Build 21D/30D swing analysis** — test which filters work for longer holds vs 5D trades
-2. **Wire RVOL into screener scoring** — strongest predictor not fully weighted in score calc
-3. **Wire TraderDaddy Agent API auth** — crossover engine ready, needs JWT token
-4. **Add intelligence stage to pipeline** — Stage 17 in generate.py for daily auto-refresh
+1. **Wire combo filters into auto-trader** — pre-trade gates based on 55%+ WR combos
+2. **More intelligence** — Michael wants even more analysis, deeper dives, more parameters
+3. **Regime-aware trading** — VIX circuit breaker, adaptive position sizing
+4. **Live combo overlay** — show which combo filter each daily pick matches
+
+## Important Files
+- `docs/intelligence/index.html` — Dashboard v2 (13 sections, inline DATA)
+- `docs/api/backtest-analytics.json` — 22-key analytics (sweep + zones + combos)
+- `rag/chunker.py` — `chunk_scan_data()` for Venus CSV ingestion
+- `rag/config.py` — `SCAN_DATA` doc type + paths
+- `data/venus_scans/` — 7 strategy CSVs from Venus
+- `scripts/export_candles_for_vero.py` — PatternPulse data bridge
