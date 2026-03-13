@@ -12,6 +12,7 @@ from typing import Optional
 from .config import (
     DocType, TICKER_DIR, BLOG_PATH, API_DIR,
     HANDOFF_PATH, SUPERNOTE_DIR, PROJECT_ROOT,
+    SCAN_DATA_DIR, SCAN_ARCHIVE_PATH,
     CHUNK_MAX_CHARS, CHUNK_OVERLAP_CHARS
 )
 
@@ -807,6 +808,242 @@ def chunk_knowledge_base() -> list[Chunk]:
 
 
 # ============================================================
+# Scan Data — Venus historical screener entries with full technicals
+# ============================================================
+
+def chunk_scan_data() -> list[Chunk]:
+    """Chunk historical screener scan data from Venus CSVs and scan_archive.
+    
+    Sources:
+      1. data/venus_scans/*_History.csv — raw screener CSVs with ADX, RSI, Stoch, etc.
+      2. docs/backtesting/scan_archive.jsonl — enriched entries with forward returns
+    
+    Each (ticker, date, strategy) becomes a searchable chunk with technicals.
+    """
+    import csv
+    chunks = []
+    seen = set()  # Dedup key: (ticker, date, strategy)
+    
+    def _safe_float(v, default=None):
+        try:
+            f = float(v)
+            return f if abs(f) < 1e9 else default
+        except (ValueError, TypeError):
+            return default
+    
+    def _entry_to_text(entry: dict) -> str:
+        """Convert a scan entry to natural-language text for embedding."""
+        ticker = entry.get('ticker', '?')
+        date = entry.get('date', '?')
+        strategy = entry.get('strategy', '?')
+        lines = [f"Screener Scan: {ticker} — {strategy} — {date}"]
+        
+        close = entry.get('close') or entry.get('price', 0)
+        if close:
+            lines.append(f"Price: ${close:.2f}")
+        
+        change = entry.get('change_pct', 0)
+        if change:
+            lines.append(f"Day Change: {change:+.2f}%")
+        
+        sector = entry.get('sector', '')
+        if sector:
+            lines.append(f"Sector: {sector}")
+        
+        # Technicals
+        tech_parts = []
+        adx = entry.get('adx') or entry.get('adx_14')
+        if adx is not None:
+            strength = 'No Trend' if adx < 15 else 'Weak' if adx < 25 else 'Strong' if adx < 40 else 'Very Strong' if adx < 60 else 'Extreme'
+            tech_parts.append(f"ADX: {adx:.1f} ({strength})")
+        
+        rsi = entry.get('rsi') or entry.get('rsi_14')
+        if rsi is not None:
+            zone = 'Oversold' if rsi < 30 else 'Weak' if rsi < 45 else 'Neutral' if rsi < 55 else 'Strong' if rsi < 70 else 'Overbought'
+            tech_parts.append(f"RSI: {rsi:.1f} ({zone})")
+        
+        stoch = entry.get('stoch_k')
+        if stoch is not None:
+            sz = 'Oversold' if stoch < 20 else 'Low' if stoch < 40 else 'Mid' if stoch < 60 else 'High' if stoch < 80 else 'Overbought'
+            tech_parts.append(f"Stoch: {stoch:.1f} ({sz})")
+        
+        rvol = entry.get('rel_vol')
+        if rvol is not None:
+            rv = 'Dead' if rvol < 0.5 else 'Below Avg' if rvol < 1 else 'Above Avg' if rvol < 2 else 'High' if rvol < 4 else 'Extreme'
+            tech_parts.append(f"RVOL: {rvol:.2f}x ({rv})")
+        
+        if tech_parts:
+            lines.append(f"Technicals: {' | '.join(tech_parts)}")
+        
+        # EMA Stack
+        ema = entry.get('ema_stack', '')
+        if ema:
+            lines.append(f"EMA Stack: {ema}")
+        
+        # EMAs
+        ema_vals = []
+        for k in ['ema8', 'ema21', 'ema34', 'ema55', 'ema89']:
+            v = entry.get(k)
+            if v:
+                ema_vals.append(f"{k.upper()}=${v:.2f}")
+        if ema_vals:
+            lines.append(f"EMAs: {', '.join(ema_vals)}")
+        
+        sma50 = entry.get('sma50')
+        if sma50:
+            lines.append(f"SMA50: ${sma50:.2f}")
+        ema200 = entry.get('ema200')
+        if ema200:
+            lines.append(f"EMA200: ${ema200:.2f}")
+        
+        # Fundamentals
+        fund_parts = []
+        for k, label in [('pe_ratio','P/E'), ('roe','ROE'), ('op_margin','OpMargin'),
+                        ('rev_growth','RevGrowth'), ('debt_equity','D/E'), ('current_ratio','CurrentRatio')]:
+            v = entry.get(k)
+            if v is not None and v != 0:
+                fund_parts.append(f"{label}: {v:.2f}")
+        if fund_parts:
+            lines.append(f"Fundamentals: {' | '.join(fund_parts)}")
+        
+        # Forward returns
+        ret_parts = []
+        for k, label in [('fwd_1d','1D'), ('fwd_3d','3D'), ('fwd_5d','5D'), ('fwd_10d','10D'), ('fwd_21d','21D')]:
+            v = entry.get(k)
+            if v is not None:
+                ret_parts.append(f"{label}: {v:+.2f}%")
+        if ret_parts:
+            lines.append(f"Forward Returns: {' | '.join(ret_parts)}")
+        
+        # Market context
+        vix = entry.get('vix')
+        spy = entry.get('spy_change')
+        if vix and vix > 0:
+            lines.append(f"VIX: {vix:.1f}")
+        if spy and spy != 0:
+            lines.append(f"SPY Change: {spy:+.2f}%")
+        
+        return '\n'.join(lines)
+    
+    # Source 1: Venus CSVs in data/venus_scans/
+    if SCAN_DATA_DIR.exists():
+        for csvf in sorted(SCAN_DATA_DIR.glob('*_History.csv')):
+            strategy = csvf.stem.replace('_History', '').replace('_', ' ')
+            if 'Fake' in strategy:
+                continue
+            try:
+                with open(csvf) as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        ticker = row.get('ticker', '')
+                        if ':' in ticker: ticker = ticker.split(':')[-1]
+                        if not ticker or len(ticker) > 8: continue
+                        
+                        date = (row.get('timestamp', '') or '')[:10]
+                        key = (ticker, date, strategy)
+                        if key in seen: continue
+                        seen.add(key)
+                        
+                        entry = {
+                            'ticker': ticker, 'strategy': strategy, 'date': date,
+                            'close': _safe_float(row.get('close'), 0),
+                            'change_pct': _safe_float(row.get('change'), 0),
+                            'sector': row.get('sector', ''),
+                            'adx': _safe_float(row.get('ADX')) if _safe_float(row.get('ADX'), 0) < 200 else None,
+                            'rsi': _safe_float(row.get('RSI')) if _safe_float(row.get('RSI'), 0) < 200 else None,
+                            'stoch_k': _safe_float(row.get('Stoch_K')) if _safe_float(row.get('Stoch_K'), 0) < 200 else None,
+                            'rel_vol': _safe_float(row.get('relative_volume_10d_calc')) if _safe_float(row.get('relative_volume_10d_calc'), 0) < 1000 else None,
+                            'sma50': _safe_float(row.get('SMA50')),
+                            'ema200': _safe_float(row.get('EMA200')),
+                            'ema8': _safe_float(row.get('EMA8')),
+                            'ema21': _safe_float(row.get('EMA21')),
+                            'ema34': _safe_float(row.get('EMA34')),
+                            'ema55': _safe_float(row.get('EMA55')),
+                            'ema89': _safe_float(row.get('EMA89')),
+                        }
+                        # Fundamentals
+                        for k, col in [('pe_ratio','price_earnings_ttm'),('roe','return_on_equity'),
+                                      ('op_margin','operating_margin'),('rev_growth','total_revenue_yoy_growth_ttm'),
+                                      ('debt_equity','debt_to_equity'),('current_ratio','current_ratio')]:
+                            if col in (reader.fieldnames or []):
+                                entry[k] = _safe_float(row.get(col))
+                        
+                        # Derive EMA stack
+                        emas = [entry.get(f'ema{p}', 0) or 0 for p in [8,21,34,55,89]]
+                        if all(e > 0 for e in emas):
+                            if emas[0]>emas[1]>emas[2]>emas[3]>emas[4]:
+                                entry['ema_stack'] = 'FULL BULLISH'
+                            elif emas[0]>emas[1]:
+                                entry['ema_stack'] = 'PARTIAL BULLISH'
+                            elif emas[4]>emas[3]>emas[2]>emas[1]>emas[0]:
+                                entry['ema_stack'] = 'FULL BEARISH'
+                            else:
+                                entry['ema_stack'] = 'TANGLED'
+                        
+                        text = _entry_to_text(entry)
+                        chunk_id = f"scan_{ticker}_{date}_{strategy.replace(' ','_')}"
+                        chunks.append(Chunk(
+                            id=chunk_id, text=text,
+                            doc_type=DocType.SCAN_DATA,
+                            source=str(csvf),
+                            metadata={
+                                'ticker': ticker, 'date': date,
+                                'strategy': strategy, 'sector': entry.get('sector', ''),
+                                'adx': str(round(entry['adx'], 1)) if entry.get('adx') else '',
+                                'rsi': str(round(entry['rsi'], 1)) if entry.get('rsi') else '',
+                            }
+                        ))
+            except Exception as ex:
+                print(f"  [WARN] Error reading {csvf.name}: {ex}")
+    
+    # Source 2: scan_archive.jsonl (enriched entries with forward returns)
+    if SCAN_ARCHIVE_PATH.exists():
+        for line in open(SCAN_ARCHIVE_PATH):
+            line = line.strip()
+            if not line: continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            
+            ticker = entry.get('ticker', '')
+            date = entry.get('date', '')[:10]
+            strategy = entry.get('strategy', 'Ghost Alpha')
+            if entry.get('grade') and entry['grade'] != 'SCREEN_HISTORY':
+                strategy = f"Ghost Alpha ({entry['grade']})"
+            
+            key = (ticker, date, strategy)
+            if key in seen: continue
+            seen.add(key)
+            
+            # Normalize field names
+            norm = dict(entry)
+            if 'rsi_14' in norm and 'rsi' not in norm:
+                norm['rsi'] = norm['rsi_14']
+            if 'adx_14' in norm and 'adx' not in norm:
+                norm['adx'] = norm['adx_14']
+            if 'price' in norm and 'close' not in norm:
+                norm['close'] = norm['price']
+            norm['strategy'] = strategy
+            
+            text = _entry_to_text(norm)
+            if len(text) < 30: continue
+            
+            chunk_id = f"archive_{ticker}_{date}_{strategy.replace(' ','_').replace('(','').replace(')','')}"
+            chunks.append(Chunk(
+                id=chunk_id, text=text,
+                doc_type=DocType.SCAN_DATA,
+                source=str(SCAN_ARCHIVE_PATH),
+                metadata={
+                    'ticker': ticker, 'date': date,
+                    'strategy': strategy, 'sector': entry.get('sector', ''),
+                }
+            ))
+    
+    return chunks
+
+
+# ============================================================
 # Master Chunker
 # ============================================================
 
@@ -819,6 +1056,7 @@ def chunk_all() -> list[Chunk]:
     all_chunks.extend(chunk_dossier())
     all_chunks.extend(chunk_daily_picks())
     all_chunks.extend(chunk_screener_history())
+    all_chunks.extend(chunk_scan_data())
     all_chunks.extend(chunk_git_history())
     all_chunks.extend(chunk_handoff())
     all_chunks.extend(chunk_supernote())
