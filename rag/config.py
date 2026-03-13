@@ -15,6 +15,8 @@ BLOG_PATH = PROJECT_ROOT / "landing" / "blog" / "blog_entries.json"
 HANDOFF_PATH = PROJECT_ROOT / "GHOST_HANDOFF.md"
 SUPERNOTE_DIR = PROJECT_ROOT / "data" / "supernote"  # Downloaded PDFs land here
 VECTORSTORE_DIR = PROJECT_ROOT / "data" / "vectorstore"
+SCAN_DATA_DIR = PROJECT_ROOT / "data" / "venus_scans"  # Historical screener CSVs from Venus
+SCAN_ARCHIVE_PATH = PROJECT_ROOT / "docs" / "backtesting" / "scan_archive.jsonl"
 
 # === Embedding Model ===
 EMBEDDING_MODEL = "gemini-embedding-001"
@@ -42,3 +44,4 @@ class DocType(str, Enum):
     HANDOFF = "handoff"
     SUPERNOTE = "supernote"
     KNOWLEDGE_BASE = "knowledge_base"
+    SCAN_DATA = "scan_data"  # Venus historical screener entries

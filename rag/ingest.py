@@ -9,7 +9,7 @@ from .config import DocType
 from .chunker import (
     chunk_all, chunk_deep_dives, chunk_blog_entries, chunk_ticker_json,
     chunk_dossier, chunk_daily_picks, chunk_screener_history,
-    chunk_knowledge_base, Chunk
+    chunk_knowledge_base, chunk_scan_data, Chunk
 )
 from .embeddings import embed_documents
 from .store import upsert_chunks, get_collection
@@ -26,6 +26,7 @@ def _chunker_for_type(doc_type: str):
         "daily_picks": chunk_daily_picks,
         "screener": chunk_screener_history,
         "knowledge_base": chunk_knowledge_base,
+        "scan_data": chunk_scan_data,
     }
     return mapping.get(doc_type)
 
