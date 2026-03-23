@@ -313,6 +313,7 @@ def fetch_tastytrade_data():
     total_deposited = 0
     total_withdrawn = 0
     realized_losses = 0
+    transactions = []
 
     try:
         # Fetch recent transactions
@@ -400,6 +401,47 @@ def fetch_tastytrade_data():
 
     top_positions.sort(key=lambda x: abs(x["pnl"]), reverse=True)
     positions_out.sort(key=lambda x: abs(x["net_pnl"]), reverse=True)
+
+    # ── Add CLOSED positions that had premium income ──
+    current_symbols = {p["symbol"] for p in positions_out}
+    for symbol, prem in premium_by_symbol.items():
+        if symbol in current_symbols or prem <= 0:
+            continue
+        # This is a closed position with premium collected (e.g., BITF)
+        # Find sale details from transactions
+        sale_price = 0
+        sale_qty = 0
+        exit_reason = ""
+        realized_pnl = 0
+        cost_basis = 0
+        for txn in transactions:
+            tsym = txn.get("underlying-symbol", txn.get("symbol", ""))
+            if tsym != symbol:
+                continue
+            sub = txn.get("transaction-sub-type", "")
+            amt = float(txn.get("net-value", 0))
+            if sub == "Sell to Close":
+                sale_qty += abs(int(float(txn.get("quantity", 0))))
+                realized_pnl += amt
+            elif sub == "Buy to Open":
+                cost_basis = abs(float(txn.get("price", txn.get("average-price", 0))))
+
+        pos_entry = {
+            "symbol": symbol,
+            "qty": 0,
+            "qty_sold": sale_qty or 0,
+            "cost_basis": round(cost_basis, 2),
+            "sale_price": round(sale_price, 2),
+            "mkt": 0,
+            "stock_pnl": round(realized_pnl, 2),
+            "premium": round(prem, 2),
+            "net_pnl": round(realized_pnl + prem, 2),
+            "strategy": "Wheel (closed)",
+            "closed": True,
+            "exit_reason": exit_reason or "Position closed",
+        }
+        positions_out.append(pos_entry)
+        wheel_symbols.add(symbol)
 
     # ── Check for wash sales (sold at loss within 30 days) ──
     wash_sales = []
