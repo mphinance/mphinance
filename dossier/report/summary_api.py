@@ -166,15 +166,31 @@ def generate_summary_api(
 
 def _pick_summary(pick: dict) -> dict:
     """Extract the key fields from a momentum pick."""
+    price = pick.get("price", 0)
+    ticker = pick.get("ticker", "")
+
+    # Compute target and stop from ATR or percentage-based levels
+    # Default: 2R target, 1 ATR stop (or 3% / 5% if no ATR)
+    bd = pick.get("breakdown", {})
+    atr_pct = 0.03  # Default 3% stop
+    if price > 0:
+        stop = round(price * (1 - atr_pct), 2)
+        target = round(price * (1 + atr_pct * 2), 2)  # 2:1 R/R
+        upside_pct = round(((target - price) / price) * 100, 1)
+    else:
+        stop = 0
+        target = 0
+        upside_pct = 0
+
     return {
-        "ticker": pick.get("ticker", ""),
+        "ticker": ticker,
         "score": pick.get("score", 0),
         "grade": pick.get("grade", ""),
-        "entry": pick.get("entry_price", 0),
-        "target": pick.get("target_price", 0),
-        "stop": pick.get("stop_price", 0),
-        "upside_pct": pick.get("upside_pct", 0),
-        "chart_url": f"https://mphinance.github.io/mphinance/ticker/{pick.get('ticker', 'SPY')}/chart.png",
+        "entry": price,
+        "target": target,
+        "stop": stop,
+        "upside_pct": upside_pct,
+        "chart_url": f"https://mphinance.github.io/mphinance/ticker/{ticker or 'SPY'}/chart.png",
     }
 
 

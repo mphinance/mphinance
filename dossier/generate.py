@@ -844,6 +844,42 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         print(f"  ℹ️ Wheel scanner unavailable ({_wheel_err}), falling back to built-in CSP scanner")
         from dossier.data_sources.csp_setups import fetch_csp_setups
         csp_setups = fetch_csp_setups(max_results=8)
+
+    # ── Final fallback: build CSP candidates from scanner signals (never empty!) ──
+    if not csp_setups and scanner_signals:
+        print("  ℹ️ No CSP data from scanner — building candidates from signal pool")
+        for sig in scanner_signals[:15]:
+            sym = sig.get("symbol", "")
+            if not sym or sig.get("direction") == "BEARISH":
+                continue
+            rsi = sig.get("rationale", [])
+            rsi_val = 0
+            for r in rsi:
+                if "RSI" in str(r):
+                    try:
+                        rsi_val = float(str(r).split()[-1])
+                    except (ValueError, IndexError):
+                        pass
+            # Good CSP candidates: bullish bias, RSI 30-55, not overbought
+            if 25 <= rsi_val <= 60:
+                csp_setups.append({
+                    "ticker": sym,
+                    "company": "",
+                    "price": sig.get("price", 0),
+                    "adx": 0,
+                    "rsi": rsi_val,
+                    "has_trade": False,
+                    "trade": None,
+                    "vopr_grade": "",
+                    "vrp_ratio": None,
+                    "vol_regime": "",
+                    "sector": "",
+                    "source": "signal_pool_synthetic",
+                })
+            if len(csp_setups) >= 6:
+                break
+        if csp_setups:
+            print(f"  ✓ Generated {len(csp_setups)} synthetic CSP candidates from signals")
     print(f"  {len(csp_setups)} CSP candidates")
 
     # ── Stage 8: Ticker Enrichment ──
@@ -1272,10 +1308,28 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Track record update failed: {e}")
 
+        # ── Stage 15f: Intelligence Dashboard Data ──
+        print("\n[15f/16] INTELLIGENCE DASHBOARD")
+        try:
+            from dossier.backtesting.screen_health import _load_validated_entries, compute_health
+            import json as _intel_json
+            entries = _load_validated_entries()
+            if entries:
+                health = compute_health(entries, window=30)
+                intel_path = PROJECT_ROOT / "docs" / "intelligence" / "data.json"
+                intel_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(intel_path, "w") as f:
+                    _intel_json.dump(health, f, indent=2)
+                print(f"  ✓ Intelligence data updated → {intel_path}")
+            else:
+                print("  ⏭️ No validated entries yet — skipped")
+        except Exception as e:
+            print(f"  [WARN] Intelligence dashboard update failed: {e}")
+
         print("\n[16/16] GIT PUSH")
         print("  Committing to Git...")
         try:
-            subprocess.run(["git", "add", "docs/", "dossier/persistence/", "landing/blog/", "landing/data/", "watchlist.txt"],
+            subprocess.run(["git", "add", "docs/", "dossier/persistence/", "landing/blog/", "landing/data/", "watchlist.txt", "docs/intelligence/"],
                            cwd=str(PROJECT_ROOT), check=True)
             subprocess.run(
                 ["git", "commit", "-m", f"📊 Alpha Dossier {date}"],

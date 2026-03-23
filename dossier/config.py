@@ -53,7 +53,7 @@ SECTOR_ETFS = [
 ]
 
 # Max tickers to enrich for detailed dossiers (top N from scanners)
-MAX_DOSSIER_TICKERS = 8
+MAX_DOSSIER_TICKERS = 15
 
 # ─── VIX Regimes ─────────────────────────────────────────────────
 VIX_REGIMES = {

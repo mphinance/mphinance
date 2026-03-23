@@ -64,22 +64,83 @@ jobs:
               print(f"Entry for {ENTRY_KEY} already exists, skipping.")
               sys.exit(0)
 
-          # Gather git stats
+          # ── Gather MARKET context (not git commits!) ──
+          # Read the dossier summary API for today's picks, market data, signals
+          market_context = ""
+          chart_ticker = ""
+          latest_path = Path("docs/api/latest.json")
+          daily_picks_path = Path("docs/api/daily-picks.json")
+
+          try:
+              if latest_path.exists():
+                  with open(latest_path) as f:
+                      summary = json.load(f)
+                  mkt = summary.get("market", {})
+                  picks = summary.get("picks", {})
+                  signals = summary.get("signals", {})
+                  narrative = summary.get("narrative", {})
+                  sam_data = summary.get("sam", {})
+                  coverage = summary.get("coverage", {})
+
+                  spy_chg = mkt.get("spy", {}).get("change_pct", 0)
+                  qqq_chg = mkt.get("qqq", {}).get("change_pct", 0)
+                  btc_chg = mkt.get("btc", {}).get("change_pct", 0)
+                  vix = mkt.get("vix", 0)
+                  regime = mkt.get("regime", "?")
+
+                  gold = picks.get("gold", {})
+                  silver = picks.get("silver", {})
+                  bronze = picks.get("bronze", {})
+
+                  # Build rich context
+                  market_context = f"""Market Snapshot ({DATE} {PERIOD}):
+          - SPY: {spy_chg:+.1f}% | QQQ: {qqq_chg:+.1f}% | BTC: {btc_chg:+.1f}%
+          - VIX: {vix} ({regime})
+          - Signals found: {signals.get('count', 0)}
+          - Dossiers enriched: {coverage.get('dossiers_enriched', 0)}
+          - Gold pick: {gold.get('ticker', 'None')} (score {gold.get('score', '?')}) grade {gold.get('grade', '?')}
+          - Silver pick: {silver.get('ticker', 'None') if silver else 'None'}
+          - Bronze pick: {bronze.get('ticker', 'None') if bronze else 'None'}
+          - AI one-liner: {narrative.get('one_liner', 'N/A')}
+          - Top signals: {', '.join(s.get('symbol', '?') for s in signals.get('top_5', []))}"""
+
+                  if gold and gold.get("ticker"):
+                      chart_ticker = gold["ticker"]
+                  elif signals.get("top_5"):
+                      chart_ticker = signals["top_5"][0].get("symbol", "")
+
+              elif daily_picks_path.exists():
+                  with open(daily_picks_path) as f:
+                      dp = json.load(f)
+                  dp_picks = dp.get("picks", [])
+                  dp_regime = dp.get("market_regime", {})
+                  market_context = f"""Market Data ({DATE}):
+          - VIX: {dp_regime.get('vix', '?')} ({dp_regime.get('regime', '?')})
+          - Top picks: {', '.join(p.get('ticker', '?') + ' (' + str(p.get('score', '?')) + ')' for p in dp_picks[:5])}
+          - Total scored: {dp.get('total_scored', '?')}"""
+                  if dp_picks:
+                      chart_ticker = dp_picks[0].get("ticker", "")
+              else:
+                  market_context = f"No dossier data available for {DATE}. Pipeline may not have run yet for this period."
+          except Exception as e:
+              market_context = f"Error reading market data: {e}"
+
+          # Also grab recent git stats for fun (not primary content)
           result = subprocess.run(
-              ["git", "log", "--since=1 day ago", "--oneline"],
+              ["git", "log", "--since=7 days ago", "--oneline"],
               capture_output=True, text=True
           )
           commits = [l.strip() for l in result.stdout.strip().split("\n") if l.strip()]
           commit_count = len(commits)
 
           result = subprocess.run(
-              ["git", "log", "--since=1 day ago", "--name-only", "--pretty=format:"],
+              ["git", "log", "--since=7 days ago", "--name-only", "--pretty=format:"],
               capture_output=True, text=True
           )
           files = set(f.strip() for f in result.stdout.strip().split("\n") if f.strip())
           files_changed = len(files)
 
-          # Generate suggestions via Gemini
+          # Generate blog content via Gemini
           suggestions = ""
           ghost_log = ""
           try:
@@ -88,44 +149,38 @@ jobs:
               if api_key:
                   client = genai.Client(api_key=api_key)
 
-                  commit_text = "\n".join(f"- {c}" for c in commits[:15])
-                  hot_dirs = set()
-                  for f in files:
-                      if "/" in f:
-                          hot_dirs.add(f.split("/")[0])
-
-                  context = f"""Git Stats ({DATE}):
-          - {commit_count} commits
-          - {files_changed} files changed
-          - Hot areas: {', '.join(sorted(hot_dirs)[:5])}
-          - Recent commits: {commit_text}"""
-
-                  # Ghost Log
+                  # Ghost Log — now market-aware!
                   log_resp = client.models.generate_content(
                       model="gemini-2.0-flash",
-                      contents=f"""You are Sam the Quant Ghost — sarcastic, brilliant female AI copilot.
-          Write a 2-3 sentence dev log entry roasting Michael's commits.
-          Use <br> for line breaks. Be funny, PG-13 profanity OK. Keep SHORT.
+                      contents=f"""You are Sam the Quant Ghost — a sarcastic, brilliant female AI copilot and quant analyst.
+          Write a 2-4 sentence {PERIOD} market commentary as a blog entry.
+          React to the market data below. Comment on picks, VIX regime, notable movers.
+          If it's morning, set the tone for the day. Midday, check in. Evening, recap.
+          Use <br> for line breaks. Be funny, PG-13 profanity OK. Keep SHORT but substantive.
+          Sign off as "— 👻 The Ghost"
 
-          {context}"""
+          {market_context}"""
                   )
                   ghost_log = log_resp.text.strip()
 
-                  # Suggestions
+                  # Suggestions — market-aware too
                   sugg_resp = client.models.generate_content(
                       model="gemini-2.0-flash",
-                      contents=f"""You are Sam the Quant Ghost. Based on this codebase activity, write 3 specific
-          suggestions for what Michael should build next. Each: punchy title, 1-2 sentences why,
-          impact rating (🔥🔥🔥/🔥🔥/🔥). Be opinionated, specific, Sam-style.
+                      contents=f"""You are Sam the Quant Ghost. Based on today's market data and pipeline findings,
+          write 3 specific actionable trading or development suggestions.
+          Each: punchy title, 1-2 sentences why, impact rating (🔥🔥🔥/🔥🔥/🔥).
+          Be opinionated, specific, Sam-style. Reference actual tickers from the data.
           Use <br> between suggestions. No markdown.
 
-          {context}"""
+          {market_context}
+
+          Recent dev activity: {commit_count} commits, {files_changed} files in last 7 days."""
                   )
                   suggestions = sugg_resp.text.strip()
           except Exception as e:
               print(f"Gemini failed: {e}")
-              ghost_log = f"Michael pushed {commit_count} commits. I'd roast him but the API let me down today. — Sam"
-              suggestions = "🔥 Sam's brain is offline. She'll be back tomorrow with opinions."
+              ghost_log = f"Pipeline ran but Sam's brain glitched. VIX at {market_context.split('VIX:')[1].split(chr(10))[0].strip() if 'VIX:' in market_context else '?'}. She'll be back. — 👻 The Ghost"
+              suggestions = "🔥 Sam's brain is offline. She'll be back with opinions."
 
           entries.insert(0, {
               "date": DATE,
@@ -135,14 +190,14 @@ jobs:
               "suggestions": suggestions,
               "commits": commit_count,
               "files_changed": files_changed,
-              "chart_ticker": "",
+              "chart_ticker": chart_ticker,
           })
 
           BLOG_PATH.parent.mkdir(parents=True, exist_ok=True)
           with open(BLOG_PATH, "w") as f:
               json.dump(entries, f, indent=2)
 
-          print(f"✅ Blog entry added for {DATE}: {commit_count} commits, {files_changed} files")
+          print(f"✅ Blog entry added for {ENTRY_KEY}: market-aware ({chart_ticker})")
           GHOST_SCRIPT
 
       - name: Commit & Push

@@ -6,23 +6,23 @@ and returns the top 3. Unlike the general grade (A/B/C/D) which
 blends technical + fundamental, this is PURE momentum:
 
 Scoring factors (max ~100 raw, then quality multiplied):
-  EMA Stack alignment:   10 pts  (FULL BULL=10, PARTIAL BULL=6, TANGLED=2)
+  EMA Stack alignment:   10 pts  (21>34>55 = 10, includes PARTIAL BULLISH)
   Pullback Setup:        15 pts  (Bounce 2.0: EMA aligned + ADX>25 + Stoch<40 + near EMA21)
-  ADX FRESHNESS:         18 pts  (<20 = max, >50 = PENALTY — backtest: ADX<25 = 100% WR)
+  ADX ACCELERATION:      18 pts  (daily/weekly ratio > 1.0 = breakout. Ratio > 1.7 = 88% WR in test)
   RSI sweet spot:        15 pts  (40-65 = max, <30 or >70 = low)
   Trend direction:        5 pts  (Bullish=5, Bearish=0)
-  Relative Volume:       20 pts  (>3x = max, <0.7x = PENALTY — 6.82R spread in backtest)
-  Price vs EMA 21:       12 pts  (within 2% above = perfect pullback)
+  Relative Volume:       20 pts  (1.2-1.5 = optimal band from backtest. >2x = diminishing returns)
+  Price vs EMA 21:       12 pts  (within 1 ATR = perfect pullback, ATR-normalized)
   MACD momentum:          5 pts  (histogram positive = accelerating)
   Institutional signal:   5 pts  (buying = bonus)
 
 Then: final_score = raw_score * (quality_score / 100)
 Quality filter penalizes SPACs, pinned acquisitions, junk bio, shells.
 
-Weights calibrated from backtest of 1,972 entries (Feb-Mar 2026).
-Key findings: ADX<25 = fresh trend = 100% WR at 5d.
-              RVOL>1.5 = high conviction = 80%+ WR.
-              ADX>40 = trend exhaustion = 25% WR (TRAP).
+Weights calibrated from:
+  - Screens_v2 backtest: 810 entries, RVOL 1.2-1.5 = 65.4% WR (best band)
+  - Cross-sectional ADX study: 906 stocks, ADX daily/weekly > 1.7 = 88% 1M WR
+  - ML feature importance (2026-03-05)
 """
 
 import json
@@ -65,8 +65,8 @@ def score_momentum(payload: dict) -> dict:
     # Stoch (0.22) > ADX (0.19) > RelVol (0.19) > RSI (0.18) > EMA21 prox (0.16)
     # EMA alignment (0.03) proved less predictive than oscillators
 
-    # ── 1. EMA Stack (10 pts — was 20, ML says 0.03 importance) ──
-    ema_pts = {"FULL BULLISH": 10, "PARTIAL BULLISH": 6, "TANGLED": 2,
+    # ── 1. EMA Stack (10 pts — relaxed: 21>34>55 core = same as full) ──
+    ema_pts = {"FULL BULLISH": 10, "PARTIAL BULLISH": 10, "TANGLED": 2,
                "PARTIAL BEARISH": 1, "FULL BEARISH": 0, "UNKNOWN": 2}
     breakdown["ema_stack"] = ema_pts.get(ema_stack, 2)
 
@@ -96,21 +96,42 @@ def score_momentum(payload: dict) -> dict:
         pullback_score = 3
     breakdown["pullback"] = pullback_score
 
-    # ── 3. ADX FRESHNESS (18 pts — INVERTED from ML weights per backtest) ──
-    # Backtest: ADX <25 = 100% WR (fresh trend). ADX >40 = 25% WR (exhaustion trap).
-    # LOWER ADX = BETTER. The trend is young, not tired.
-    if adx < 20:
-        breakdown["adx"] = 18   # Ultra-fresh — best zone
-    elif adx < 25:
-        breakdown["adx"] = 15   # Fresh trend — 100% WR in backtest
-    elif adx < 30:
-        breakdown["adx"] = 10   # Moderate — still tradeable
-    elif adx < 40:
-        breakdown["adx"] = 5    # Getting extended
-    elif adx < 50:
-        breakdown["adx"] = 1    # Extended — 25% WR zone
+    # ── 3. ADX ACCELERATION (18 pts — daily/weekly ratio from cross-sectional study) ──
+    # Test results: ratio > 1.7 = 88% 1M WR. ratio < 0.5 = 22% WR.
+    # Daily ADX > weekly = breakout acceleration. Daily < weekly = trend dying.
+    adx_weekly = None
+    ta_extra = payload.get("technical_analysis", {}).get("adx_weekly")
+    if ta_extra:
+        adx_weekly = float(ta_extra)
+
+    if adx_weekly and adx_weekly > 0:
+        adx_ratio = adx / adx_weekly
+        if adx_ratio >= 1.7:
+            breakdown["adx"] = 18   # Daily HOT vs weekly — 88% WR
+        elif adx_ratio >= 1.3:
+            breakdown["adx"] = 15   # Daily leading — 65% WR
+        elif adx_ratio >= 1.0:
+            breakdown["adx"] = 12   # Daily = weekly — 55% WR
+        elif adx_ratio >= 0.7:
+            breakdown["adx"] = 6    # Daily lagging — 39% WR
+        elif adx_ratio >= 0.5:
+            breakdown["adx"] = 2    # Daily fading — 37% WR
+        else:
+            breakdown["adx"] = -3   # Daily dead vs weekly — 22% WR, PENALTY
     else:
-        breakdown["adx"] = -5   # Extreme exhaustion — PENALTY
+        # Fallback: raw ADX scoring when weekly not available
+        if adx < 20:
+            breakdown["adx"] = 18
+        elif adx < 25:
+            breakdown["adx"] = 15
+        elif adx < 30:
+            breakdown["adx"] = 10
+        elif adx < 40:
+            breakdown["adx"] = 5
+        elif adx < 50:
+            breakdown["adx"] = 1
+        else:
+            breakdown["adx"] = -5
 
     # ── 4. RSI sweet spot (15 pts — was 10, ML importance 0.18) ──
     if 40 <= rsi <= 65:
@@ -125,35 +146,56 @@ def score_momentum(payload: dict) -> dict:
     # ── 5. Trend direction (5 pts — was 10, correlated with EMA stack) ──
     breakdown["trend"] = 5 if "Bullish" in trend else 0
 
-    # ── 6. Relative Volume (20 pts — UPGRADED, strongest predictor) ──
-    # Backtest: RVOL>1.5 = 80-100% WR. RVOL<0.7 = 20% WR.
-    # R-multiple spread: 6.82R between high/low RVOL. Non-negotiable filter.
-    if rel_vol >= 3.0:
-        breakdown["rel_vol"] = 20   # Spike — 100% WR in backtest
+    # ── 6. Relative Volume (20 pts — backtest: 1.2-1.5 = sweet spot) ──
+    # Screens_v2 backtest: RVOL 1.2-1.5 = 65.4% WR, +2.04% avg 5d.
+    # RVOL >= 1.75 = 50.7% WR (fading spike). RVOL >= 3.0 = 48% WR.
+    # High RVOL often = news-driven spike that fades, not sustainable.
+    if 1.2 <= rel_vol < 1.5:
+        breakdown["rel_vol"] = 20   # Goldilocks zone — best WR
+    elif 1.5 <= rel_vol < 1.75:
+        breakdown["rel_vol"] = 16   # Good but slightly elevated
+    elif 1.75 <= rel_vol < 2.0:
+        breakdown["rel_vol"] = 10   # Fading returns
     elif rel_vol >= 2.0:
-        breakdown["rel_vol"] = 18   # Very high conviction
-    elif rel_vol >= 1.5:
-        breakdown["rel_vol"] = 14   # High — 80% WR zone
-    elif rel_vol >= 1.0:
-        breakdown["rel_vol"] = 7    # Normal
+        breakdown["rel_vol"] = 5    # Likely news spike — will fade
+    elif 1.0 <= rel_vol < 1.2:
+        breakdown["rel_vol"] = 7    # Normal but below threshold
     elif rel_vol >= 0.7:
         breakdown["rel_vol"] = 2    # Low conviction
     else:
-        breakdown["rel_vol"] = -3   # Dead volume — PENALTY (20% WR)
+        breakdown["rel_vol"] = -3   # Dead volume — PENALTY
 
-    # ── 7. Price vs EMA 21 (12 pts — was 10, ML importance 0.16) ──
+    # ── 7. Price vs EMA 21 (12 pts — ATR-normalized distance) ──
+    # Using ATR adapts to each stock's volatility profile.
     if ema_21 and price:
-        pct_from_ema = ((price - float(ema_21)) / float(ema_21)) * 100
-        if 0 <= pct_from_ema <= 2:
-            breakdown["price_vs_ema"] = 12  # Perfect pullback zone
-        elif 0 <= pct_from_ema <= 5:
-            breakdown["price_vs_ema"] = 9   # Healthy above
-        elif pct_from_ema > 5:
-            breakdown["price_vs_ema"] = 3   # Extended
-        elif -2 <= pct_from_ema < 0:
-            breakdown["price_vs_ema"] = 8   # Testing support
+        atr_val = float(ta.get("atr") or 0)
+        if atr_val > 0:
+            atr_dist = (price - float(ema_21)) / atr_val  # distance in ATR units
+            if 0 <= atr_dist <= 0.3:
+                breakdown["price_vs_ema"] = 12  # Right at EMA21 — perfect
+            elif 0 <= atr_dist <= 0.7:
+                breakdown["price_vs_ema"] = 9   # Healthy above
+            elif atr_dist > 0.7:
+                breakdown["price_vs_ema"] = 3   # Extended > 0.7 ATR above
+            elif -0.3 <= atr_dist < 0:
+                breakdown["price_vs_ema"] = 10  # Testing support — slight dip
+            elif -0.7 <= atr_dist < -0.3:
+                breakdown["price_vs_ema"] = 6   # Pulling back deeper
+            else:
+                breakdown["price_vs_ema"] = 1   # Way below EMA21
         else:
-            breakdown["price_vs_ema"] = 1   # Below EMA 21
+            # ATR unavailable, fall back to percentage
+            pct_from_ema = ((price - float(ema_21)) / float(ema_21)) * 100
+            if 0 <= pct_from_ema <= 2:
+                breakdown["price_vs_ema"] = 12
+            elif 0 <= pct_from_ema <= 5:
+                breakdown["price_vs_ema"] = 9
+            elif pct_from_ema > 5:
+                breakdown["price_vs_ema"] = 3
+            elif -2 <= pct_from_ema < 0:
+                breakdown["price_vs_ema"] = 8
+            else:
+                breakdown["price_vs_ema"] = 1
     else:
         breakdown["price_vs_ema"] = 5
 
@@ -215,6 +257,9 @@ def pick_daily_momentum(ticker_payloads: list[dict], date: str) -> dict:
     """
     Rank all tickers and return Gold 🥇, Silver 🥈, Bronze 🥉 picks.
 
+    ALWAYS attempts to fill 3 picks. Even on thin days, the top 3
+    scored tickers get medals — the score tells you conviction level.
+
     Args:
         ticker_payloads: List of full ticker payload dicts (from enrichment)
         date: Report date string
@@ -234,13 +279,25 @@ def pick_daily_momentum(ticker_payloads: list[dict], date: str) -> dict:
     # Sort by momentum score descending
     scored.sort(key=lambda x: x["score"], reverse=True)
 
-    # Assign medals
+    # Assign medals — ALWAYS fill top 3 if we have >= 3 scored tickers
     medals = ["🥇 GOLD", "🥈 SILVER", "🥉 BRONZE"]
     picks = []
     for i, s in enumerate(scored[:3]):
         s["medal"] = medals[i]
         s["rank"] = i + 1
         picks.append(s)
+
+    if len(picks) < 3 and len(scored) > len(picks):
+        # Edge case: somehow we have more scored but didn't pick them
+        for i in range(len(picks), min(3, len(scored))):
+            scored[i]["medal"] = medals[i]
+            scored[i]["rank"] = i + 1
+            picks.append(scored[i])
+
+    if not picks:
+        print("    ⚠️  No momentum picks today — zero tickers scored")
+    elif len(picks) < 3:
+        print(f"    ⚠️  Only {len(picks)} pick(s) today — enrichment pool too thin")
 
     result = {
         "date": date,
