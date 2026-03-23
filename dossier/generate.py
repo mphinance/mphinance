@@ -931,6 +931,29 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         injected = sum(1 for d in dossiers if "ghost_alpha" in d)
         print(f"  Ghost Alpha grades injected: {injected}/{len(dossiers)}")
 
+    # ── Stage 8b: VMD Time Series Decomposition ──
+    print("\n[8b/16] VMD TIME SERIES DECOMPOSITION")
+    try:
+        from dossier.data_sources.vmd_enrichment import enrich_ticker_vmd
+        vmd_count = 0
+        for d in dossiers:
+            ticker = d.get("ticker", "")
+            if not ticker:
+                continue
+            vmd_data = enrich_ticker_vmd(ticker, period="6mo", K=3)
+            if vmd_data:
+                d["vmd"] = vmd_data
+                vmd_count += 1
+                regime = vmd_data["vmd_regime"]
+                slope = vmd_data["vmd_trend_slope"]
+                emoji = "📈" if slope > 0 else "📉"
+                print(f"    {emoji} {ticker}: {regime} | slope={slope:.3f} | swing={vmd_data['vmd_swing_position']}")
+        print(f"  ✓ VMD decomposed {vmd_count}/{len(dossiers)} tickers")
+    except ImportError:
+        print("  ⚠️ vmdpy not installed, skipping VMD enrichment")
+    except Exception as e:
+        print(f"  ⚠️ VMD enrichment failed: {e}")
+
     # ── Stage 8a: Market Regime Detection ──
     print("\n[9/16] MARKET REGIME DETECTION")
     market_regime = {}
