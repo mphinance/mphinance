@@ -1432,6 +1432,33 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             print(f"     └─ {err['stage']}: {err['message'][:80]}")
     print("=" * 72)
 
+    # ── Pipeline Health File — for monitoring/alerting ──
+    try:
+        import json as _health_json
+        health_status = {
+            "date": date,
+            "status": "DEGRADED" if timer.errors else "HEALTHY",
+            "total_time_sec": round(total_time, 1),
+            "signals_count": len(scanner_signals),
+            "dossiers_count": len(dossiers),
+            "picks": {
+                "gold": momentum_picks["picks"][0]["ticker"] if momentum_picks and momentum_picks.get("picks") else None,
+                "silver": momentum_picks["picks"][1]["ticker"] if momentum_picks and len(momentum_picks.get("picks", [])) > 1 else None,
+                "bronze": momentum_picks["picks"][2]["ticker"] if momentum_picks and len(momentum_picks.get("picks", [])) > 2 else None,
+            },
+            "csp_setups": len(csp_setups) if csp_setups else 0,
+            "errors": [{"stage": e["stage"], "msg": e["message"][:120]} for e in timer.errors],
+            "vix": market["vix"]["vix_level"] if market.get("vix") else None,
+            "regime": market["vix"]["regime_name"] if market.get("vix") else None,
+        }
+        health_path = PROJECT_ROOT / "docs" / "api" / "pipeline-health.json"
+        health_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(health_path, "w") as f:
+            _health_json.dump(health_status, f, indent=2)
+        print(f"  📊 Pipeline health: {health_status['status']} → {health_path}")
+    except Exception as _he:
+        print(f"  [WARN] Health status write failed: {_he}")
+
     return report_path
 
 
