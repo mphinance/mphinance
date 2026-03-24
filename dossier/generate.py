@@ -1334,18 +1334,31 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         # ── Stage 15f: Intelligence Dashboard Data ──
         print("\n[15f/16] INTELLIGENCE DASHBOARD")
         try:
-            from dossier.backtesting.screen_health import _load_validated_entries, compute_health
             import json as _intel_json
-            entries = _load_validated_entries()
-            if entries:
-                health = compute_health(entries, window=30)
-                intel_path = PROJECT_ROOT / "docs" / "intelligence" / "data.json"
-                intel_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(intel_path, "w") as f:
-                    _intel_json.dump(health, f, indent=2)
-                print(f"  ✓ Intelligence data updated → {intel_path}")
-            else:
-                print("  ⏭️ No validated entries yet — skipped")
+            import shutil
+            # Full analytics — produces equity curves, grade perf, heatmaps, etc.
+            from scripts.intelligence_crossover import build_analytics
+            analytics = build_analytics()
+
+            # Also write to intelligence/ dir where the dashboard fetches data.json
+            intel_path = PROJECT_ROOT / "docs" / "intelligence" / "data.json"
+            intel_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(intel_path, "w") as f:
+                _intel_json.dump(analytics, f, indent=2)
+            print(f"  ✓ Intelligence dashboard data → {intel_path}")
+
+            # Also run screen health for the API endpoint
+            try:
+                from dossier.backtesting.screen_health import _load_validated_entries, compute_health
+                entries = _load_validated_entries()
+                if entries:
+                    health = compute_health(entries, window=30)
+                    health_path = PROJECT_ROOT / "docs" / "api" / "screen-health.json"
+                    with open(health_path, "w") as f:
+                        _intel_json.dump(health, f, indent=2)
+                    print(f"  ✓ Screen health API → {health_path}")
+            except Exception as e:
+                print(f"  [WARN] Screen health failed: {e}")
         except Exception as e:
             print(f"  [WARN] Intelligence dashboard update failed: {e}")
 
