@@ -16,8 +16,10 @@
 | 7 | **KELT** | `LOWER ▽`, `UPPER △`, `INSIDE` | Keltner channel position + golden cross status (50>200 ✓ / 50<200 ✗) |
 | 8 | **IV/VOL** | `LOW 🔋`, `HIGH 🔥`, `MID` + RVOL | IV percentile + relative volume (1.0x = average) |
 | 9 | **SHAPE** | `BUYERS ▲`, `SELLERS ▼` + `⚠ DIV`/`AGREE` | Candle shape momentum. DIV = divergence from trend |
-| 10 | **GRADE V2** | `A+` through `F` + `(X.X/5)` | Composite score + direction (LONG ▲ / SHORT ▼) |
+| 10 | **GRADE V2** | `A+` through `F` + `(X.X/5)` | Composite score + **hull direction** (LONG ▲ / SHORT ▼) |
 | 11 | *AI Data Link* | Compact pipe-delimited string | For OCR/screenshot reading by AI assistants |
+
+> **Note:** Hull direction no longer has its own row — it's shown in the GRADE V2 row as `LONG ▲` or `SHORT ▼`.
 
 ## Signal Labels (v5 — Clean Text)
 
@@ -25,10 +27,10 @@
 |-------|--------|---------------|
 | `BOS ▲/▼` | Break of Structure | Price closed through a swing level WITH volume |
 | `EXH` | Exhaustion | %R says momentum is drained — reversal incoming |
-| `SWP` | Liquidity Sweep | Stop hunt — wick past level then reversed (trap!) |
+| `SWP` | Liquidity Sweep | Stop hunt — wick past level then reversed (first bar only) |
 | `SQZ ⚡` | Squeeze Release | ATR compression just broke — volatility explosion |
 | `EXIT` | Ghost Trail Exit | Price crossed the ATR trailing stop — game over |
-| `DIV` | Divergence | Price vs momentum disagreement — smart money |
+| `DIV` | Divergence | Price vs %R momentum disagreement — smart money divergence |
 | `👻 N` | Ghost Alpha | N signals agree — highest conviction (the brand mark) |
 
 ## Default Visual Layers (v5)
@@ -41,6 +43,8 @@ Only three things show by default. Everything else is toggle-ON in settings:
 | Ghost Trail (ATR stop step-line) | ✅ ON | Ghost Trail settings |
 | Dashboard box | ✅ ON | Dashboard settings |
 | Hull Candle Coloring | ✅ ON | Signal Filter settings |
+| EMA 21 Line (pullback magnet) | ✅ ON | EMA Stack settings |
+| EMA Stack Zone (8-55 fill) | ❌ OFF | EMA Stack settings |
 | TRAMA line | ❌ OFF | TRAMA Regime settings |
 | Keltner bands | ❌ OFF | Keltner Envelope settings |
 | SMA 50 / SMA 200 | ❌ OFF | Key Moving Averages |
@@ -56,9 +60,31 @@ Only three things show by default. Everything else is toggle-ON in settings:
 Bottom of dashboard, compact string for OCR/screenshot reading:
 
 ```
-GRADE | DIRECTION | REGIME | SIGNAL | SHAPE | RVOL | SQUEEZE | TRAMA%
-  B   |     L     |   B    | SWP_BL | BUY   | 1.2x |  FIRE   | 0.3%
+GRADE | DIR | REGIME | SIGNAL | SHAPE | RVOL  | SQUEEZE | TRAMA% | CONF
+  B   |  L  |   B    | SWP_BL | BUY   | 1.2x  |  FIRE   |  0.3%  |  3
 ```
+
+### Regime Codes
+| Code | Meaning |
+|------|---------|
+| `B` | Bull (strong, trending up) |
+| `BR` | Bear (strong, trending down) |
+| `M` | Moderate (trend present but weak) |
+| `C` | Chop (no trend, stay flat) |
+
+### Signal Codes
+| Code | Meaning |
+|------|---------|
+| `SWP_BL` / `SWP_BR` | Liquidity sweep bull/bear |
+| `CF_BL` / `CF_BR` | Confluence bull/bear (2+ signals) |
+| `BK_UP` / `BK_DN` | Structure break up/down |
+| `—` | No active signal |
+
+### CONF (Confluence Count)
+Number of simultaneous signals firing. Higher = more conviction:
+- `1` = single signal
+- `2` = confluence (👻 appears)
+- `3+` = high-conviction multi-signal alignment
 
 ## Quick Decision Framework
 
@@ -68,3 +94,7 @@ GRADE | DIRECTION | REGIME | SIGNAL | SHAPE | RVOL | SQUEEZE | TRAMA%
 | B | Half position, tight trail |
 | C | No new entries, manage existing |
 | D / F | DO NOT TRADE. Wait for regime change. |
+
+## Webhook Payload (JSON)
+
+The enriched webhook fires on any signal with 25+ fields including all 5 Ghost Grade axes, squeeze/exhaustion details, CMF, trend age, EMA stack alignment, IV percentile, and confluence count. See `ghost_alpha.pine` lines 834-884 for the full field list.
