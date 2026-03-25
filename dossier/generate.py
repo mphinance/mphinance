@@ -1383,6 +1383,16 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
                 print("  ✓ Landing data synced to Vultr")
             except Exception as e:
                 print(f"  [WARN] Vultr rsync failed (non-fatal): {e}")
+
+            # Backup ChromaDB vectorstore to Venus (no redundancy otherwise)
+            try:
+                subprocess.run(
+                    ["rsync", "-az", "data/vectorstore/", "venus:/home/mph/backups/vectorstore/"],
+                    cwd=str(PROJECT_ROOT), check=True, timeout=60
+                )
+                print("  ✓ ChromaDB vectorstore backed up to Venus")
+            except Exception as e:
+                print(f"  [WARN] Venus vectorstore backup failed (non-fatal): {e}")
         except subprocess.CalledProcessError as e:
             print(f"  [WARN] Git push failed: {e}")
     else:

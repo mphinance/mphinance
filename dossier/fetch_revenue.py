@@ -50,9 +50,9 @@ def fetch_stripe_data():
 
     print("📊 Fetching Stripe data...")
 
-    # ── Charges ──
+    # ── Charges (with balance_transaction expanded to avoid N+1 queries) ──
     all_charges = []
-    params = {"limit": 100}
+    params = {"limit": 100, "expand": ["data.balance_transaction"]}
     while True:
         charges = stripe.Charge.list(**params)
         all_charges.extend(charges.data)
@@ -67,12 +67,13 @@ def fetch_stripe_data():
     fees_total = 0
     platform_fees = 0
     for c in succeeded:
-        if c.balance_transaction:
-            try:
-                bt = stripe.BalanceTransaction.retrieve(c.balance_transaction)
-                fees_total += bt.fee / 100
-            except Exception:
-                fees_total += c.amount * 0.029 / 100 + 0.30  # estimate
+        bt = c.balance_transaction
+        if bt and hasattr(bt, "fee"):
+            # Expanded object — fee is directly available
+            fees_total += bt.fee / 100
+        elif bt:
+            # String ID fallback (shouldn't happen with expand, but safety net)
+            fees_total += c.amount * 0.029 / 100 + 0.30
 
     refund_amount = sum(c.amount_refunded / 100 for c in refunded)
     refund_count = len(refunded)

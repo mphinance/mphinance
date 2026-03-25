@@ -116,24 +116,32 @@ def search(query: str, top_k: int = 5,
 
 
 def get_stats() -> dict:
-    """Get collection statistics."""
+    """Get collection statistics (paginated to avoid OOM on large collections)."""
     collection = get_collection()
     count = collection.count()
 
     if count == 0:
         return {"total_chunks": 0, "by_type": {}}
 
-    # Sample metadata to get type distribution
-    sample = collection.get(limit=count, include=["metadatas"])
+    # Paginate metadata reads in batches to avoid loading entire collection
     type_counts = {}
     ticker_set = set()
+    batch_size = 1000
+    offset = 0
 
-    for meta in sample["metadatas"]:
-        doc_type = meta.get("doc_type", "unknown")
-        type_counts[doc_type] = type_counts.get(doc_type, 0) + 1
-        ticker = meta.get("ticker", "")
-        if ticker:
-            ticker_set.add(ticker)
+    while offset < count:
+        batch = collection.get(
+            limit=batch_size,
+            offset=offset,
+            include=["metadatas"],
+        )
+        for meta in batch["metadatas"]:
+            doc_type = meta.get("doc_type", "unknown")
+            type_counts[doc_type] = type_counts.get(doc_type, 0) + 1
+            ticker = meta.get("ticker", "")
+            if ticker:
+                ticker_set.add(ticker)
+        offset += batch_size
 
     return {
         "total_chunks": count,

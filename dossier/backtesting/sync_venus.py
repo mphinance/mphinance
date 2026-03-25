@@ -3,7 +3,7 @@ import os
 import glob
 import pandas as pd
 
-PROJECT_ROOT = "/home/sam/Antigravity/empty/mphinance"
+PROJECT_ROOT = "/home/sam/mphinance"
 HISTORY_DIR = os.path.join(PROJECT_ROOT, "data/screens_history")
 VENUS_SOURCE = "venus:/home/mnt/Download2/docs/Momentum/anti/scheduling/scans/*_History.csv"
 
@@ -13,7 +13,7 @@ def get_row_counts():
         try:
             df = pd.read_csv(f, on_bad_lines='skip')
             counts[os.path.basename(f)] = len(df)
-        except:
+        except Exception:
             pass
     return counts
 

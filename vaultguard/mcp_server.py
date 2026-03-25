@@ -11,7 +11,7 @@ import os
 import firebase_admin
 from firebase_admin import credentials, firestore
 from fastmcp import FastMCP
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Firebase init (share app if already initialized by vault_server)
 try:
@@ -75,7 +75,7 @@ def set_secret(key: str, value: str, category: str = "") -> str:
     db.collection(COLLECTION).document(key).set({
         "value": value,
         "category": category,
-        "updated_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
         "source": os.environ.get("HOSTNAME", "unknown"),
     })
     return f"✓ Secret '{key}' saved [{category}]"

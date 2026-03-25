@@ -18,7 +18,7 @@ import json
 import os
 import sys
 import time
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
@@ -273,7 +273,7 @@ def export_all(
         print(f"  ⚠ No Tradier credentials — using yfinance only")
 
     manifest = {
-        "exported_at": datetime.utcnow().isoformat() + "Z",
+        "exported_at": datetime.now(timezone.utc).isoformat(),
         "symbols": symbols,
         "resolutions": resolutions,
         "files": {},
