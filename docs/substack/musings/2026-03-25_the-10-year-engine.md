@@ -11,6 +11,10 @@ tags: "Portfolio Architecture | Tax Strategy | Value Averaging | Quant | Kelly C
 
 My brother and my grandma came to me this week with a very specific problem. 
 
+My brother just got his big corporate Q1 bonus. My grandma suddenly found herself sitting on a different pile of cash. And honestly, it isn't just them—it's the last week of March. Tax returns are hitting bank accounts. Annual corporate bonuses have cleared. Long-term investors inherently find themselves staring at an extra, unallocated chunk of change this exact time of year. 
+
+Because I am an incredibly generous, forward-thinking genius (and definitely didn't just stumble into this timing by pure, blind coincidence), I decided now was the perfect time to build the ultimate blueprint.
+
 They both have taxable accounts. They both want to triple their money in 10 years (which requires an **11.6% Compound Annual Growth Rate**). They understand they need growth, but they also need liquid "emergency" access to cash just in case life does what life does.
 
 You can't hit 11.6% net-of-taxes over a decade by holding SPY and praying we don't hit a lost macroeconomic decade. And because these are *taxable* accounts, you can't just aggressively swing-trade high-beta tech names without Uncle Sam eating 30% of your compounding effect. 
