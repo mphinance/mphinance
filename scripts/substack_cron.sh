@@ -12,7 +12,7 @@
 # ═══════════════════════════════════════════════════════
 
 set -e
-REPO="/home/sam/Antigravity/empty/mphinance"
+REPO="/home/sam/mphinance"
 LOG="/tmp/substack_cron.log"
 DATE=$(date +%Y-%m-%d)
 
@@ -44,7 +44,7 @@ case "${1:-draft}" in
     echo "[$DATE] Refresh + Draft..." >> "$LOG"
     python3 substack_sid_refresh.py >> "$LOG" 2>&1
     sleep 5
-    python3 substack_dossier.py --date "$DATE" >> "$LOG" 2>&1
+    python3 scripts/substack_draft_manager.py check >> "$LOG" 2>&1
     ;;
 
   *)

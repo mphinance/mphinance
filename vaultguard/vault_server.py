@@ -10,12 +10,16 @@ Endpoints:
   GET  /health          — Health check
 """
 import os
+import logging
 import firebase_admin
 from firebase_admin import credentials, firestore
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, Depends
 from pydantic import BaseModel
 import uvicorn
-from datetime import datetime
+from datetime import datetime, timezone
+
+logger = logging.getLogger("vaultguard")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 
 # Firebase init
 cred_path = os.environ.get("FIREBASE_CREDENTIALS", "service_account.json")
@@ -29,10 +33,14 @@ db = firestore.client()
 COLLECTION = "secrets"
 API_KEY = os.environ.get("VAULTGUARD_API_KEY", "")
 
+if not API_KEY:
+    logger.warning("⚠️  VAULTGUARD_API_KEY is empty — all endpoints are UNPROTECTED")
+
 app = FastAPI(title="VaultGuard", description="Centralized secrets management")
 
 
 def verify_key(x_api_key: str = Header("")):
+    """Dependency: validate API key on every protected endpoint."""
     if API_KEY and x_api_key != API_KEY:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
@@ -43,8 +51,8 @@ class SecretPayload(BaseModel):
 
 
 @app.get("/secrets")
-async def list_secrets(x_api_key: str = Header("")):
-    verify_key(x_api_key)
+async def list_secrets(_=Depends(verify_key)):
+    logger.info("LIST secrets")
     docs = db.collection(COLLECTION).stream()
     results = []
     for doc in docs:
@@ -59,8 +67,8 @@ async def list_secrets(x_api_key: str = Header("")):
 
 
 @app.get("/secrets/{key}")
-async def get_secret(key: str, x_api_key: str = Header("")):
-    verify_key(x_api_key)
+async def get_secret(key: str, _=Depends(verify_key)):
+    logger.info("GET secret: %s", key)
     doc = db.collection(COLLECTION).document(key).get()
     if not doc.exists:
         raise HTTPException(status_code=404, detail=f"Secret '{key}' not found")
@@ -68,8 +76,8 @@ async def get_secret(key: str, x_api_key: str = Header("")):
 
 
 @app.put("/secrets/{key}")
-async def set_secret(key: str, payload: SecretPayload, x_api_key: str = Header("")):
-    verify_key(x_api_key)
+async def set_secret(key: str, payload: SecretPayload, _=Depends(verify_key)):
+    logger.info("SET secret: %s", key)
     # Infer category from key name
     category = payload.category
     if not category:
@@ -90,22 +98,30 @@ async def set_secret(key: str, payload: SecretPayload, x_api_key: str = Header("
     db.collection(COLLECTION).document(key).set({
         "value": payload.value,
         "category": category,
-        "updated_at": datetime.utcnow().isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
         "source": os.environ.get("HOSTNAME", "unknown"),
     })
     return {"status": "ok", "key": key, "category": category}
 
 
 @app.delete("/secrets/{key}")
-async def delete_secret(key: str, x_api_key: str = Header("")):
-    verify_key(x_api_key)
+async def delete_secret(key: str, _=Depends(verify_key)):
+    logger.warning("DELETE secret: %s", key)
+    doc = db.collection(COLLECTION).document(key).get()
+    if not doc.exists:
+        raise HTTPException(status_code=404, detail=f"Secret '{key}' not found")
     db.collection(COLLECTION).document(key).delete()
     return {"status": "deleted", "key": key}
 
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "vaultguard", "collection": COLLECTION}
+    try:
+        # Verify Firestore connectivity
+        db.collection(COLLECTION).limit(1).get()
+        return {"status": "ok", "service": "vaultguard", "collection": COLLECTION, "firestore": "connected"}
+    except Exception as e:
+        return {"status": "degraded", "service": "vaultguard", "error": str(e)[:100]}
 
 
 if __name__ == "__main__":

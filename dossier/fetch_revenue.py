@@ -183,7 +183,7 @@ def fetch_stripe_data():
     prev = {}
     if OUTPUT_FILE.exists():
         try:
-            prev = json.load(open(OUTPUT_FILE)).get("allocation", {})
+            prev = json.loads(OUTPUT_FILE.read_text()).get("allocation", {})
         except Exception:
             pass
 
@@ -406,11 +406,16 @@ def fetch_tastytrade_data():
     wash_sales = []
     if OUTPUT_FILE.exists():
         try:
-            prev = json.load(open(OUTPUT_FILE))
-            wash_sales = prev.get("brokerage", {}).get("wash_sales", [])
+            prev = json.loads(OUTPUT_FILE.read_text())
+            wash_sales_raw = prev.get("brokerage", {}).get("wash_sales", [])
             today = datetime.now()
-            wash_sales = [w for w in wash_sales
-                         if datetime.strptime(w["wash_sale_end"], "%Y-%m-%d") > today]
+            for w in wash_sales_raw:
+                try:
+                    end_date = datetime.strptime(w.get("wash_sale_end", ""), "%Y-%m-%d")
+                    if end_date > today:
+                        wash_sales.append(w)
+                except (ValueError, TypeError):
+                    pass  # Skip malformed dates
         except Exception:
             pass
 
@@ -518,7 +523,7 @@ def fetch_stripe_revenue():
         # Preserve existing Stripe data if we can't refresh
         if OUTPUT_FILE.exists():
             try:
-                prev = json.load(open(OUTPUT_FILE))
+                prev = json.loads(OUTPUT_FILE.read_text())
                 for k in ["stripe_audit", "gross_revenue", "subscription_count", "net_payouts",
                            "payout_count", "stripe_balance", "subscriptions", "allocation",
                            "monthly", "api_calls"]:
@@ -545,7 +550,7 @@ def fetch_stripe_revenue():
         # Preserve existing TastyTrade data
         if OUTPUT_FILE.exists():
             try:
-                prev = json.load(open(OUTPUT_FILE))
+                prev = json.loads(OUTPUT_FILE.read_text())
                 if "brokerage" in prev:
                     stats["brokerage"] = prev["brokerage"]
                     print("  ⚠️ Using cached TastyTrade data")
