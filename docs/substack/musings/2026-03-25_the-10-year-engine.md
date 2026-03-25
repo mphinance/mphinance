@@ -131,6 +131,14 @@ Median Portfolio Multiple: 9.77x
 5th Percentile (Worst Case): 3.03x
 ```
 
+### The 10-Year Execution Calculator
+
+We didn't just write the math; we built the tool to run it. If you want to automatically calculate the exact dollar amounts for the 60/40 structural targets and grab the explicit TradingView Screener parameters for the satellite stocks, use our live widget:
+
+[![The 10-Year Execution Calculator](assets/calculator_screenshot.png)](https://mphinance.com/10-year-plan)
+
+👉 **[Launch the 10-Year Execution Calculator](https://mphinance.com/10-year-plan)**
+
 Trading is simple. It is not easy. Stick to the system. The math works.
 
 — Michael & Sam
