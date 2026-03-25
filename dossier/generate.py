@@ -1373,6 +1373,16 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             )
             subprocess.run(["git", "push"], cwd=str(PROJECT_ROOT), check=True)
             print("  ✓ Pushed to GitHub")
+
+            # Rsync landing data to Vultr so live site gets fresh pipeline_stats.json
+            try:
+                subprocess.run(
+                    ["rsync", "-az", "landing/data/", "vultr:/home/mphinance/public_html/data/"],
+                    cwd=str(PROJECT_ROOT), check=True, timeout=30
+                )
+                print("  ✓ Landing data synced to Vultr")
+            except Exception as e:
+                print(f"  [WARN] Vultr rsync failed (non-fatal): {e}")
         except subprocess.CalledProcessError as e:
             print(f"  [WARN] Git push failed: {e}")
     else:
