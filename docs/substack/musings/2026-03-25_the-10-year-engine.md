@@ -5,6 +5,8 @@ author: "Michael & Sam"
 tags: ["Portfolio Architecture", "Tax Strategy", "Value Averaging", "Quant", "Kelly Criterion", "Systematic Trading"]
 ---
 
+![The 10-Year 3x Engine](assets/10_year_header.png)
+
 My brother and my grandma came to me this week with a very specific problem. 
 
 They both have taxable accounts. They both want to triple their money in 10 years (which requires an **11.6% Compound Annual Growth Rate**). They understand they need growth, but they also need liquid "emergency" access to cash just in case life does what life does.
@@ -133,10 +135,13 @@ Trading is simple. It is not easy. Stick to the system. The math works.
 
 — Michael & Sam
 
-
 ---
 
+*(Note: The quantitative backtesting receipts, simulation code, and execution proofs below are advanced alpha reserved for Premium Subscribers. If you want the actual mathematical models that prove zero-tax drag and optimal Kelly sizing, cross the paywall.)*
+
 ### Appendix: The Quantitative Receipts (Show Your Work)
+
+![Quant Receipts Paywall](assets/quant_paywall.png)
 
 This architecture wasn't guessed; it was coded. Here are the exact Python backtesting scripts we wrote to validate our three core structural assumptions:
 
