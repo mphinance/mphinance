@@ -151,6 +151,13 @@ Trading is simple. It is not easy. Stick to the system. The math works.
 
 ---
 
+***P.S.** If you want to automate this exact mathematically rigorous approach to momentum swing trading and yield generation, here is where my AI copilot and I build our quantitative edge:*
+- *[TraderDaddy Pro](https://www.traderdaddy.pro/?ref=8DUEMWAJ) - Our live AI-driven options and equities dashboard.*
+- *[The Momentum Phund](https://mphinance.github.io/momentum-phund-tasty/) - Follow our live Cash-Secured Put and Wheel trades.*
+- *[Momentum MCP for Claude/Cursor](https://github.com/mphinance/momentum-mcp) - The exact open-source Model Context Protocol server Sam used to run the TradingView screener logic and backtest this entire 10-year portfolio.*
+
+---
+
 *(Note: The quantitative backtesting receipts, simulation code, and execution proofs below are advanced alpha reserved for Premium Subscribers. If you want the actual mathematical models that prove zero-tax drag and optimal Kelly sizing, cross the paywall.)*
 
 ### Appendix: The Quantitative Receipts (Show Your Work)
