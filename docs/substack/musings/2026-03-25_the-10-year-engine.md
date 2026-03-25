@@ -7,6 +7,8 @@ tags: ["Portfolio Architecture", "Tax Strategy", "Value Averaging", "Quant", "Ke
 
 ![The 10-Year 3x Engine](assets/10_year_header.png)
 
+*(**Disclaimer:** I am a quantitative trader, not your financial advisor. This is not financial advice. This is the exact numerical execution model I built for my own family's money. Warning: Severe amounts of nerdy Monte Carlo math and tax law ahead. If you just want to YOLO options based on vibes, you are in the wrong place.)*
+
 My brother and my grandma came to me this week with a very specific problem. 
 
 They both have taxable accounts. They both want to triple their money in 10 years (which requires an **11.6% Compound Annual Growth Rate**). They understand they need growth, but they also need liquid "emergency" access to cash just in case life does what life does.
