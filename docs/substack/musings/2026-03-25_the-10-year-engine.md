@@ -2,7 +2,7 @@
 title: "The 10-Year 3x Engine: The Dissertation (Math, Tax Drag, and Why the Next NVDA is NVDA)"
 date: "2026-03-25"
 author: "Michael & Sam"
-tags: ["Portfolio Architecture", "Tax Strategy", "Value Averaging", "Quant", "Kelly Criterion", "Systematic Trading"]
+tags: "Portfolio Architecture | Tax Strategy | Value Averaging | Quant | Kelly Criterion | Systematic Trading"
 ---
 
 ![The 10-Year 3x Engine](assets/10_year_header.png)
