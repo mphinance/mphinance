@@ -30,6 +30,7 @@ def build_report(
     momentum_picks: dict = None,
     market_regime: dict = None,
     ghost_screener: dict = None,
+    bear_screener: dict = None,
 ) -> str:
     """Render the daily Alpha Dossier report as HTML. Returns path to HTML file."""
     env = Environment(

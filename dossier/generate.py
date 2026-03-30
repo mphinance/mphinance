@@ -742,6 +742,26 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Discord morning setups failed: {e}")
 
+    # ── Stage 2d: Bear Mode Screener ──
+    print("\n[2d/16] 🐻 BEAR MODE SCREENER")
+    bear_screener_results = {}
+    try:
+        from dossier.bear_screener import run_bear_screener
+        with timer.stage("Bear Mode Screener"):
+            bear_screener_results = run_bear_screener(save_history=True)
+            n_bear_total = len(bear_screener_results.get("results", []))
+            n_bear_aligned = len(bear_screener_results.get("bear_aligned", []))
+            n_strong = len(bear_screener_results.get("strong_bears", []))
+            b_elapsed = bear_screener_results.get("funnel_stats", {}).get("elapsed_sec", 0)
+            print(f"  ✅ Bear scan: {n_bear_total} graded, {n_bear_aligned} multi-TF aligned, "
+                  f"{n_strong} strong bears ({b_elapsed}s)")
+            if bear_screener_results.get("bear_aligned"):
+                bear_tickers = [r["ticker"] for r in bear_screener_results["bear_aligned"]]
+                print(f"  ☠️  Top bears: {', '.join(bear_tickers[:8])}")
+    except Exception as e:
+        print(f"  [WARN] Bear screener failed: {e}")
+        timer.skip("Bear Mode Screener")
+
     # ── Stage 3: Institutional Data ──
     print("\n[3/16] TICKERTRACE INSTITUTIONAL DATA")
     from dossier.data_sources.tickertrace import fetch_institutional_data
@@ -1094,6 +1114,7 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         momentum_picks=momentum_picks,
         market_regime=market_regime,
         ghost_screener=ghost_screener_results,
+        bear_screener=bear_screener_results,
     )
 
     pdf_path = None
