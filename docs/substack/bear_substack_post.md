@@ -1,12 +1,12 @@
 # 🐻 I Built a Bear Screener Because the Market Told Me To
 
-Look, I know I'm a momentum guy. I built this whole pipeline to find beautiful bullish EMA stacks, Bounce 2.0 pullbacks, the whole Tao of Trading playbook. But here's the truth: when the tape turns, you either adapt or you bleed.
+Look, I know I'm a momentum guy. I built this whole pipeline to find beautiful bullish EMA stacks and Bounce 2.0 pullbacks, the whole Tao of Trading playbook. But here's the truth: when the tape turns, you either adapt or you bleed.
 
 So I reversed everything.
 
 ## What the Bear Screener Does
 
-You know my "Stacked EMAs Tao" setup, the one where EMA 8 > 21 > 34 > 55 > 89 and you buy the pullback? I took that exact logic and flipped every single filter:
+You know my "Stacked EMAs Tao" setup, the one where EMA 8 > 21 > 34 > 55 > 89 and you buy the pullback? I took that exact logic and flipped every single filter.
 
 📉 **EMA Death Stack**: 8 < 21 < 34 < 55 < 89
 📉 **Death Cross**: EMA 50 below EMA 200
@@ -15,7 +15,7 @@ You know my "Stacked EMAs Tao" setup, the one where EMA 8 > 21 > 34 > 55 > 89 an
 
 That last one is what makes this work. We're not buying puts at the bottom of the dump like amateurs. We're waiting for price to bounce back up into resistance, the EMA 21 zone, where the sellers are sitting. Stoch above 60 means the dead cat bounced far enough. Time to load puts.
 
-## Why Puts, Not Shorting
+## Why Puts
 
 Here's the thing. Most of you can't short stocks. Your broker won't let you, or you don't have margin, or the borrow fee is insane. Puts solve that problem. Defined risk, no margin calls, and you know exactly what you can lose before you click buy.
 
@@ -23,86 +23,71 @@ For these setups I'm looking at puts 30 to 45 days out, near the money. You want
 
 ## What It Found Today (March 30, 2026)
 
-I ran the entire US equity universe, about 8,000 stocks, through the bear funnel. It eliminated 99.8% of them and gave me 16 survivors. Seven had daily AND weekly bearish alignment. Here's what I'm watching and the put flow behind them.
+I ran the entire US equity universe through the bear funnel. It eliminated 99.8% of them and gave me 16 survivors. But here's the problem I ran into right away: a lot of technically perfect bear setups have garbage options chains. No volume, no open interest, wide spreads. So I filtered the results again through an options liquidity lens.
+
+Here are **the three I'd actually trade**.
 
 ---
 
-### 📈 OZK (Bank OZK) at $44.77, Best Put Liquidity
+## 📈 TROW (T. Rowe Price) at $89.03
 
-Regional banks coughing up blood again. This one has the nastiest CMF reading on the scan at -0.25, meaning institutional money is pouring out. The squeeze ratio at 0.76 says volatility is coiling. When it fires in a downtrend, it fires down.
+This is the one that made me sit up. $19B market cap asset manager that just fell off a cliff. Look at this chart. The EMA stack just cascaded into full bearish alignment and price gapped down hard through all of them. The stochastic bounced back toward 60, which is exactly the dead cat bounce I'm scanning for.
 
-![OZK bearish with deeply negative CMF showing institutional selling](images/ozk_bear.png)
+![TROW bear EMA stack with stochastic](images/trow_bear.png)
 
-**Bear Grade: A (5.0/7) | CMF: -0.25 🩸 | Death Cross ☠️ | Multi-TF Aligned ✅**
+What I like about TROW is the story behind the technicals. Asset managers bleed in risk-off environments. When the market gets scared, people pull money out of actively managed funds. That's TROW's whole business. The technicals are confirming what the fundamentals already tell you.
 
-💰 **Put Flow (May 15 expiry)**:
-| Strike | Volume | Open Interest | Bid/Ask | IV |
-|--------|--------|---------------|---------|-----|
-| $45 P | 5 | 426 | $2.50/$3.00 | 44.9% |
-| $42.50 P | 1 | 819 | $1.55/$2.00 | 48.1% |
-
-OZK has the best options liquidity of the bunch. 4,008 total put open interest with tight spreads. The $45 put gives you right at the money exposure for about $275. The $42.50 is cheaper at ~$175 but needs a bigger move.
+**The puts**: May 15 expiry has 1,259 total put open interest. The $85 put traded 79 contracts today with an ask of $2.60. The $90 ATM put has 345 open interest, ask at $5.00. These are tradeable spreads on a real name.
 
 ---
 
-### 📈 GNTX (Gentex) at $21.40, Textbook Setup
+## 📈 STLA (Stellantis) at $6.75
 
-Perfect specimen. 25 bars into the bear trend, CMF at -0.18 so institutions are still selling, and the squeeze ratio is 0.80, meaning it's compressing for the next leg down.
+Stellantis has been in free fall since that massive gap down in January. 27 million shares traded on that candle. The EMA stack went full bearish and hasn't looked back. RelVol at 1.11 says people are still actively trading this thing down.
 
-![GNTX bearish descent with stochastic bouncing into resistance](images/gntx_bear.png)
+![STLA bear EMA stack with massive gap down volume](images/stla_bear.png)
 
-**Bear Grade: A (5.0/7) | CMF: -0.18 🩸 | Death Cross ☠️ | Multi-TF Aligned ✅**
-
-💰 **Put Flow (May 15 expiry)**:
-| Strike | Volume | Open Interest | Bid/Ask | IV |
-|--------|--------|---------------|---------|-----|
-| $20 P | 1 | 1 | $0.50/$1.00 | 54.2% |
-
-Thin options chain here. Only 2 total put OI. If you play this one, you're dealing with wide spreads. Might be better as a stock short if you have the margin, or just skip it and focus on OZK where the liquidity is.
+The thing about STLA is the options flow is screaming. 4,821 total put open interest on the April 17 expiry. The $7 put has 2,151 open interest and is trading $0.45 bid/$0.50 ask. That's a tight spread on a liquid chain. For fifty bucks you get a defined risk bet that this thing revisits $6.
 
 ---
 
-### 📈 CPB (Campbell's) at $22.18, Biggest Institutional Outflow
+## 📈 CWH (Camping World) at $6.58
 
-CMF at -0.32, that's the highest institutional outflow on the entire scan. Smart money is gone. The EMA stack is textbook bearish and the stock just bounced into the resistance zone.
+Down 4.78% today. Relative volume 1.13, so the selling is real and active. CWH has been grinding lower since October, and the EMA cascade is textbook. Price tried to bounce back to the EMA 21 in January and got smacked right back down. Classic.
 
-![CPB bearish EMA stack with Stochastic showing bounce to resistance](images/cpb_bear.png)
+![CWH bearish grind with EMA resistance rejections](images/cwh_bear.png)
 
-**Bear Grade: B (4.0/7) | CMF: -0.32 🩸 | Death Cross ☠️ | Multi-TF Aligned ✅**
-
-💰 **Put Flow (May 8 expiry)**:
-| Strike | Volume | Open Interest | Bid/Ask | IV |
-|--------|--------|---------------|---------|-----|
-| $21 P | 3 | 3 | $0.65/$0.85 | 47.8% |
-
-Light volume but the IV at 47.8% isn't crazy. The $21 put costs about $75, defined risk if you want a small bet on continuation.
+**The puts**: May 15 expiry. The $6 put just moved 564 contracts today. That's real activity. IV is elevated at 93% so you're paying up for it, but 564 contracts on a $6 stock tells you somebody bigger than you and me is betting on more downside.
 
 ---
 
-### Other Names and Their Options Situation
+## The Runners Up
 
-| Ticker | Price | Bear Grade | CMF | Put OI (Total) | Tradeable? |
-|--------|-------|------------|-----|----------------|------------|
-| ULCC | $3.41 | A+ (5.5) | -0.17 | 91 | ⚠️ Low price, penny options |
-| GO | $6.78 | A (5.0) | -0.14 | 53 | ⚠️ Thin chain |
-| MC | $54.88 | A (4.5) | -0.09 | 2 | ❌ No liquidity |
-| MBC | $8.22 | A (4.5) | -0.07 | 1 | ❌ No liquidity |
-| JEF | $39.62 | B (4.0) | -0.09 | TBD | Needs checking |
-| FHB | $24.13 | B (4.0) | -0.01 | TBD | Needs checking |
+**OZK (Bank OZK) at $44.77** has the deepest institutional outflow on the scan (CMF -0.25) with 4,008 total put OI. The regional bank story isn't pretty. But looking at the chart honestly, it's choppier than the other three. The EMAs are aligned but the price action is messy.
 
-## The Honest Truth About These
+![OZK bear setup with heavy CMF outflow](images/ozk_bear.png)
 
-The scanner found 7 multi-timeframe aligned bear setups. The technicals are clean. But here's the thing I need to be straight about: most of these are small and mid cap names with thin options chains. **OZK is the only one with real put liquidity.**
+**GNTX (Gentex) at $21.40** is technically clean but the options chain is dead. 2 total put open interest. You can't trade that.
 
-If you're going to play the bear side through puts, you need volume and open interest. Wide bid/ask spreads eat into your edge fast. So while the screener is finding valid setups, the tradeable universe is smaller than the signal list.
+**CPB (Campbell's) at $22.18** has the deepest CMF reading of the whole scan at -0.32. Institutions are dumping this thing. But again, thin options. 11 put contracts traded all day.
 
-That's fine. It means less competition.
+---
+
+## How I'm Playing This
+
+I'm looking at the TROW $85 puts for May 15. About $260 per contract, defined risk, on a name with real fundamentals driving the bear case.
+
+The STLA $7 put for April 17 is the cheapest bet on the board at $50 a contract. If you've got $200 to risk, that's 4 contracts with a tight spread.
+
+CWH is the speculative one. The 93% IV means you're overpaying, but that volume today tells a story.
+
+Position sizing stays small. These are defined risk trades. If I'm wrong, I lose the premium and nothing else. If I'm right, the death cascade takes care of itself.
 
 ## The Pipeline
 
 This bear screener is now wired directly into my daily Alpha Dossier pipeline. Every morning at 5 AM CST, it runs alongside the bullish Ghost Alpha screener. Bull picks on the left, bear feed on the right. I like to know what's working on both sides of the tape.
 
-The full scan takes about 3 seconds. The bear feed outputs to `docs/api/bear-screener.json` with grades, CMF readings, squeeze status, and multi-timeframe alignment scores.
+The full scan takes about 3 seconds. It starts with 8,000 stocks, runs them through TradingView's API for the bearish EMA stack, then a 15-stage funnel eliminates everything that doesn't pass. The survivors get deep scanned for weekly alignment, squeeze detection, and institutional money flow.
 
 ---
 
