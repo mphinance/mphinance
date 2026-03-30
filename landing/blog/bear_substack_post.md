@@ -25,7 +25,7 @@ I ran the entire US equity universe, about 8,000 stocks, through the bear funnel
 
 I already shorted this one. CMF at -0.32, that's the highest institutional outflow on the entire scan. Smart money is gone. The EMA stack is textbook bearish and the stock just bounced into the resistance zone.
 
-![CPB bearish EMA stack with Stochastic showing bounce to resistance](/home/mph/.gemini/antigravity/brain/20847377-5ae8-469e-bb54-cde0feb5e62f/cpb_chart.png)
+![CPB bearish EMA stack with Stochastic showing bounce to resistance](images/cpb_bear.png)
 
 **Bear Grade: B (4.0/7) | CMF: -0.32 🩸 | Death Cross ☠️ | Multi-TF Aligned ✅**
 
@@ -35,7 +35,7 @@ I already shorted this one. CMF at -0.32, that's the highest institutional outfl
 
 Perfect specimen. 25 bars into the bear trend, CMF at -0.18 so institutions are still selling, and the squeeze ratio is 0.80, meaning it's compressing for the next leg down. This is the kind of setup that makes you want puts 30 to 45 days out.
 
-![GNTX bearish descent with stochastic bouncing into resistance](/home/mph/.gemini/antigravity/brain/20847377-5ae8-469e-bb54-cde0feb5e62f/gntx_chart.png)
+![GNTX bearish descent with stochastic bouncing into resistance](images/gntx_bear.png)
 
 **Bear Grade: A (5.0/7) | CMF: -0.18 🩸 | Death Cross ☠️ | Multi-TF Aligned ✅**
 
@@ -45,7 +45,7 @@ Perfect specimen. 25 bars into the bear trend, CMF at -0.18 so institutions are 
 
 Regional banks coughing up blood again. This one has the nastiest CMF reading on the scan at -0.25. The squeeze ratio at 0.76 says volatility is coiling. When it fires in a downtrend, it fires down.
 
-![OZK bearish with deeply negative CMF showing institutional selling](/home/mph/.gemini/antigravity/brain/20847377-5ae8-469e-bb54-cde0feb5e62f/ozk_chart.png)
+![OZK bearish with deeply negative CMF showing institutional selling](images/ozk_bear.png)
 
 **Bear Grade: A (5.0/7) | CMF: -0.25 🩸 | Death Cross ☠️ | Multi-TF Aligned ✅**
 
