@@ -1,4 +1,10 @@
-# Ghost Handoff — Last Updated 2026-05-05
+# Ghost Handoff — Last Updated 2026-05-30
+
+## 2026-05-30 - Substack: "Water the Flowers" Rebalancing Rule
+- **What got done:** Turned Michael's four-sentence note into a full Substack article: `docs/articles/fidelity-water-the-flowers/README.md`. Topic is his Peter Lynch "water the flowers" rule, when a smaller target position (ARM, started 4%) overtakes a larger one (TER, started 6%) in the Fidelity basket, swap their target weights instead of trimming the winner. ARM at 5.4% / $628.85 just edged TER at 5.3% / $625.09, so ARM is promoted to 6% and TER demoted to 4%.
+- **Images:** Generated three dark-theme infographics in the article dir (`hero_banner.png`, `the_crossover.png`, `the_rule.png`) via `make_images.py`. Bloomberg/hacker aesthetic, no em dashes, tags line instead of byline per current SUBSTACK.md rules.
+- **Logging:** Appended a Sam-voice entry to `blog_entries.json` (chart_ticker ARM).
+- **What's left:** Optional follow-ups in the blog entry suggestions, build a crossover-detector script, backtest the swap rule vs trim-to-target, add a live leaderboard widget to the landing page.
 
 ## 2026-05-06 18:45 - District 12 AA Directory Automation
 - **What got done:** Fully automated the District 12 AA meeting directory. Built a Python scraper (`scripts/scrape_district12.py`) that pulls live data from aamilwaukee.com.
