@@ -1,0 +1,50 @@
+name: Claude Code Review
+
+# Automatic review of every non-draft PR when it opens or gets new commits.
+# Claude reads the diff and posts review comments. It follows .github/CLAUDE.md,
+# so it leads with bugs / security / edge cases and skips nitpicks.
+#
+# Auth: CLAUDE_CODE_OAUTH_TOKEN repo secret (subscription-driven, set by
+# `/install-github-app`). To stop auto-reviewing a PR, mark it as draft.
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+# A new push supersedes the in-flight review for the same PR.
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    # Skip drafts and anything Claude itself opened (avoid self-review loops).
+    if: |
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.user.login != 'claude'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write   # post review comments
+      issues: write
+      id-token: write
+      actions: read          # read CI results to factor into the review
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0      # full history so the diff base is available
+
+      - name: Review PR
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Review pull request #${{ github.event.pull_request.number }} in this repository.
+            First read .github/CLAUDE.md and follow its review guidance.
+            Lead with correctness bugs, security risks, and broken edge cases; note
+            missing input validation and any change with no validation story. Skip
+            style nitpicks. Post your findings as PR review comments. If the diff is
+            clean, say so briefly rather than inventing problems.
+          claude_args: |
+            --append-system-prompt "You are reviewing, not implementing. Do not push commits or open PRs. Do NOT perform AGENTS.md local-agent rituals (no ghost blog / handoff edits)."

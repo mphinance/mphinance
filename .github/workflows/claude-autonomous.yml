@@ -1,0 +1,127 @@
+name: Claude Autonomous Loop
+
+# A self-driving coding loop. Give it a SPEC.md and it works through the spec
+# one feature per run, opening a PR each time. Two roles, auto-selected:
+#
+#   INITIALIZER  (first run, no feature_list.json yet)
+#     Reads SPEC.md, breaks it into an ordered list of small features, writes
+#     feature_list.json + claude-progress.txt, and opens a bootstrap PR.
+#
+#   CODER  (every run after that)
+#     Reads SPEC.md, feature_list.json, claude-progress.txt, and recent git
+#     history; picks the next unfinished feature; runs the existing tests to
+#     catch regressions BEFORE writing code; implements just that one feature;
+#     updates the progress notes; commits; opens or updates a PR.
+#
+# It NEVER pushes to main — every change lands as a PR you review and merge.
+#
+# Trigger it by hand (Actions tab -> Run workflow) or let the nightly cron run.
+# Comment out the `schedule:` block to make it manual-only.
+#
+# Auth: CLAUDE_CODE_OAUTH_TOKEN repo secret (subscription-driven, set by
+# `/install-github-app`). Each run draws on that subscription; one feature per
+# run keeps usage bounded and the PRs reviewable.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 09:00 UTC nightly (~03:00 CST) — off-hours, clear of the morning dossier.
+    - cron: '0 9 * * *'
+
+# Don't let two loop runs stomp each other; let an in-flight run finish.
+concurrency:
+  group: claude-autonomous
+  cancel-in-progress: false
+
+jobs:
+  loop:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write        # commit + push the feature branch
+      pull-requests: write   # open / update the PR
+      issues: write          # file a plan issue for risky/blocked features
+      id-token: write        # OIDC (required by the action)
+      actions: read          # read CI results
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0      # full history so the coder can read recent commits
+
+      # Pick the role from repo state. No feature_list.json yet => bootstrap it.
+      - name: Select role
+        id: role
+        run: |
+          if [ ! -f SPEC.md ]; then
+            echo "::error title=No SPEC.md::Create SPEC.md at the repo root describing what to build, then re-run."
+            exit 1
+          fi
+          if [ -f feature_list.json ]; then
+            echo "mode=coder" >> "$GITHUB_OUTPUT"
+            echo "Role: CODER (feature_list.json exists)"
+          else
+            echo "mode=init" >> "$GITHUB_OUTPUT"
+            echo "Role: INITIALIZER (no feature_list.json)"
+          fi
+
+      # ── INITIALIZER ─────────────────────────────────────────────────────────
+      - name: Initialize feature list
+        if: steps.role.outputs.mode == 'init'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            You are the INITIALIZER for an autonomous coding loop. feature_list.json does not exist yet.
+
+            1. Read SPEC.md at the repo root. If it is empty or just placeholder text, do nothing,
+               leave a note saying SPEC.md needs real content, and stop.
+            2. Read .github/CLAUDE.md for repo conventions.
+            3. Decompose SPEC.md into an ORDERED list of small, independently shippable features.
+               Order them so earlier features unblock later ones.
+            4. Write feature_list.json as a JSON array of objects, each:
+               {"id": <int starting at 1>, "title": <short string>, "description": <1-3 sentences>,
+                "status": "pending", "pr": null, "notes": ""}
+            5. Create claude-progress.txt with a one-line header and an initialized entry
+               (date, "loop initialized", "0/<N> features done"). Use UTC dates.
+            6. On a branch `claude/autonomous-init`, commit feature_list.json and claude-progress.txt,
+               push, and open a PR to main titled "chore: initialize autonomous feature loop".
+               In the PR body, list the features you generated.
+
+            Do NOT implement any feature yet. Do NOT touch secrets, .github/workflows/*, or generated docs/ output.
+          claude_args: |
+            --append-system-prompt "You are the autonomous GitHub coding agent. Never push to main directly. Do NOT perform AGENTS.md local-agent rituals (no ghost blog entries, no GHOST_HANDOFF.md or blog_entries.json edits)."
+
+      # ── CODER ───────────────────────────────────────────────────────────────
+      - name: Implement next feature
+        if: steps.role.outputs.mode == 'coder'
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            You are the CODER for an autonomous coding loop. Implement exactly ONE feature this run.
+
+            1. Read SPEC.md, feature_list.json, claude-progress.txt, and recent history (`git log -20 --oneline`).
+            2. Read .github/CLAUDE.md and follow its conventions.
+            3. Pick the FIRST feature whose status is "pending", respecting order/dependencies.
+               If none are pending, append a "all features complete" note to claude-progress.txt and stop
+               without other changes.
+            4. BASELINE FIRST: run the existing test suite to catch regressions before you touch anything
+               (e.g. `pytest -q` if tests exist; `npm test` in substack_social if relevant). If there is no
+               test suite, say so and validate by running the affected script/stage instead. Never claim
+               tests pass when none ran.
+            5. Implement ONLY that one feature, reusing existing patterns. Keep the diff tight.
+            6. Re-run the tests / validation and confirm no regressions.
+            7. Update feature_list.json: set that feature's status to "done" and fill in "pr". Append a
+               dated entry to claude-progress.txt describing what you did and how you validated it.
+            8. On branch `claude/autonomous-feature-<id>`, commit, push, and open a PR to main
+               (or update the existing one) titled "feat: <title> (autonomous)". In the PR body summarize
+               the change and the exact validation you ran, and reference the feature id.
+
+            If the feature is ambiguous, risky (schema change, data deletion, major dependency bump), or too
+            large for one run: do NOT implement it. Instead set its status to "blocked" with a note, and
+            open or update an issue describing a plan. Then stop.
+
+            NEVER push to main directly, touch secrets, edit .github/workflows/*, or delete generated docs/ artifacts.
+          claude_args: |
+            --append-system-prompt "You are the autonomous GitHub coding agent. One feature per run. Never push to main directly. Do NOT perform AGENTS.md local-agent rituals (no ghost blog entries, no GHOST_HANDOFF.md or blog_entries.json edits)."
+            --max-turns 60
