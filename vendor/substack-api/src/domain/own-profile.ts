@@ -63,9 +63,12 @@ export class OwnProfile extends Profile {
     let count = 0
     for (const user of followingUsers) {
       if (options.limit && count >= options.limit) break
+      // The following list now carries only ids (no handles), so resolve each
+      // profile by id. Skip self — the feed includes the authenticated user.
+      if (user.id === this.id) continue
 
       try {
-        const profileResponse = await this.profileService.getProfileBySlug(user.handle)
+        const profileResponse = await this.profileService.getProfileById(user.id)
         yield new Profile(
           profileResponse,
           this.publicationClient,

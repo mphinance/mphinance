@@ -1,12 +1,46 @@
 import { SubstackClient } from 'substack-api';
 import * as fs from 'fs';
+import * as path from 'path';
 
-const sid = "s%3AbOEIouthsRC1PWBVi8Jl07qP4-pMjLiz.8aqscWSVtI65wqmEAsGMfJpWSxHXyaIJgcYadK%2BoG7k";
+// ─── Load SID from repo-root .env (search up from here) ─────────────────────
+function loadEnv(): Record<string, string> {
+  const candidates = [
+    path.resolve(__dirname, '.env'),
+    path.resolve(__dirname, '..', '.env'),
+    path.resolve(__dirname, '..', '..', '.env'),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) {
+      const out: Record<string, string> = {};
+      for (const line of fs.readFileSync(p, 'utf8').split(/\r?\n/)) {
+        const t = line.trim();
+        if (!t || t.startsWith('#') || !t.includes('=')) continue;
+        const [k, ...rest] = t.split('=');
+        out[k.trim()] = rest.join('=').trim().replace(/^"(.*)"$/, '$1');
+      }
+      return out;
+    }
+  }
+  return {};
+}
+
+const env = loadEnv();
+const sid = process.env.SUBSTACK_SID || env.SUBSTACK_SID;
+const pubUrl = process.env.SUBSTACK_HOSTNAME || env.SUBSTACK_HOSTNAME || 'mphinance.substack.com';
+
+if (!sid) {
+  console.error('No SUBSTACK_SID found. Set it in repo-root .env or as an env var.');
+  process.exit(1);
+}
 
 async function run() {
   const client = new SubstackClient({
     token: sid,
-    publicationUrl: 'mphinance.substack.com',
+    publicationUrl: pubUrl,
+    // substack.com 429s well below the lib's default of 25/s. Resolving each
+    // followed profile now costs 2 calls (feed + public_profile), so keep this
+    // low — ~3/s mirrors engage.py's 0.4s spacing and stays under the limit.
+    maxRequestsPerSecond: 3,
   });
 
   const isConnected = await client.testConnectivity();
@@ -113,7 +147,8 @@ async function run() {
   }
   
   items.sort((a, b) => b.date.getTime() - a.date.getTime());
-  
+
+  // ─── Reading-list markdown ────────────────────────────────────────────────
   let md = `# Your Substack Catch-Up (Last 2 Weeks)\n\n`;
   md += `*Processed ${attempts} items, successfully liked ${likedCount} recent posts across your network.*\n\n`;
   for (const item of items) {
@@ -124,12 +159,47 @@ async function run() {
     md += `> ${snippet.substring(0, 300)}...\n\n`;
     md += `---\n\n`;
   }
-  
-  const path = "/home/mph/.gemini/antigravity/brain/09965367-b7d3-42a0-94cf-f9897122b399/artifacts/substack_reading_list.md";
-  fs.mkdirSync("/home/mph/.gemini/antigravity/brain/09965367-b7d3-42a0-94cf-f9897122b399/artifacts", { recursive: true });
-  fs.writeFileSync(path, md);
-  console.log(`Reading list written to ${path}`);
+
+  const dataDir = path.resolve(__dirname, 'data');
+  fs.mkdirSync(dataDir, { recursive: true });
+  const readingPath = path.join(dataDir, 'substack_reading_list.md');
+  fs.writeFileSync(readingPath, md);
+  console.log(`Reading list written to ${readingPath}`);
+
+  // ─── Comment review queue ────────────────────────────────────────────────
+  // engage.ts auto-likes. Comments are NOT auto-fired — they queue here for
+  // Michael to review/edit, then engage_comments.ts posts only `approved: true` ones.
+  // Only queue Posts (skip Notes — they get fewer signal-worthy comments).
+  const queuePath = path.join(dataDir, 'comment_queue.json');
+  let existingQueue: any[] = [];
+  if (fs.existsSync(queuePath)) {
+    try { existingQueue = JSON.parse(fs.readFileSync(queuePath, 'utf8')); } catch {}
+  }
+  const existingUrls = new Set(existingQueue.map((q: any) => q.url));
+
+  const newQueue = items
+    .filter(it => it.type === 'Post' && !existingUrls.has(it.url))
+    .map(it => ({
+      url: it.url,
+      author: it.author,
+      title: it.title,
+      date: it.date.toISOString().split('T')[0],
+      snippet: (typeof it.snippet === 'string' ? it.snippet : '').substring(0, 240),
+      // Edit this; engage_comments.ts only fires comments with body.length > 0
+      comment: "",
+      // Flip to true after you've written a comment and want it sent
+      approved: false,
+      // Bookkeeping
+      status: "pending", // pending | sent | skipped
+      added: new Date().toISOString(),
+    }));
+
+  const mergedQueue = [...existingQueue, ...newQueue];
+  fs.writeFileSync(queuePath, JSON.stringify(mergedQueue, null, 2));
+  console.log(`Comment queue: +${newQueue.length} new (${mergedQueue.length} total pending) → ${queuePath}`);
+
   console.log(`Total attempts: ${attempts}, total liked: ${likedCount}`);
+  console.log(`\nNext: edit ${queuePath}, set comment + approved:true, then run "npm run engage:comments"`);
 }
 
 run().catch(console.error);
