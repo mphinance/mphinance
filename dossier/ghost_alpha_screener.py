@@ -45,6 +45,24 @@ except ImportError:
     print("❌ pip install yfinance")
     sys.exit(1)
 
+try:
+    from dossier.utils.validate_api import safe_json, check_yfinance_history
+except ImportError:
+    # Running the screener standalone outside the package — inline fallbacks
+    def safe_json(resp, context=""):
+        try:
+            return resp.json()
+        except Exception as e:
+            print(f"    [WARN] [{context}] Response not valid JSON: {e}", file=sys.stderr)
+            return None
+
+    def check_yfinance_history(df, ticker, min_rows=2):
+        if df is None or df.empty:
+            return False, f"{ticker}: empty history"
+        if len(df) < min_rows:
+            return False, f"{ticker}: only {len(df)} rows"
+        return True, ""
+
 # ─── Config ───────────────────────────────────────────────────────
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -122,8 +140,8 @@ def _tv_fetch_all_stocks() -> list[dict]:
 
     resp = requests.post(TV_SCANNER_URL, json=payload, timeout=30)
     resp.raise_for_status()
-    data = resp.json()
-    rows = data.get("data", [])
+    data = safe_json(resp, "TradingView scanner") or {}
+    rows = data.get("data") or []
 
     results = []
     for item in rows:
