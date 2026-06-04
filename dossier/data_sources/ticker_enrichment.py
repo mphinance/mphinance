@@ -10,6 +10,8 @@ import pandas as pd
 import numpy as np
 import feedparser
 
+from dossier.utils.validate_api import check_yfinance_history, check_yfinance_info
+
 
 # ─── Technical Indicator Functions ────────────────────────────────
 
@@ -194,8 +196,9 @@ def enrich_ticker(ticker: str) -> dict | None:
     # ── Price History ──
     try:
         df = stock.history(period="1y")
-        if df.empty:
-            print(f"    [WARN] No price data for {ticker}")
+        ok, reason = check_yfinance_history(df, ticker)
+        if not ok:
+            print(f"    [WARN] {reason}")
             return None
     except Exception as e:
         print(f"    [ERR] {ticker} history: {e}")
@@ -318,7 +321,7 @@ def enrich_ticker(ticker: str) -> dict | None:
     # ── Fundamentals ──
     info = {}
     try:
-        info = stock.info or {}
+        info = check_yfinance_info(stock.info, ticker)
     except Exception:
         pass
 

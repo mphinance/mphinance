@@ -39,6 +39,18 @@ from pathlib import Path
 
 import requests
 
+try:
+    from dossier.utils.validate_api import is_tradier_null, safe_json
+except ImportError:
+    def is_tradier_null(v):
+        return v is None or (isinstance(v, str) and v.strip().lower() == "null") or (isinstance(v, (dict, list)) and not v)
+    def safe_json(resp, context=""):
+        try:
+            return resp.json()
+        except Exception as e:
+            print(f"    [WARN] [{context}] not valid JSON: {e}", file=sys.stderr)
+            return None
+
 # ─── API Key ──────────────────────────────────────────────────────
 def _get_tradier_key() -> str:
     key = os.getenv("TRADIER_API_KEY")
@@ -127,8 +139,11 @@ def get_options_expirations(symbol: str) -> list[str]:
             headers=_tradier_headers(), timeout=10)
         if resp.status_code != 200:
             return []
-        exps = resp.json().get("expirations", {})
-        if not exps:
+        parsed = safe_json(resp, f"Tradier expirations {symbol}")
+        if parsed is None:
+            return []
+        exps = parsed.get("expirations", {})
+        if is_tradier_null(exps):
             return []
         dates = exps.get("date", [])
         return [dates] if isinstance(dates, str) else (dates or [])
@@ -143,8 +158,11 @@ def get_options_chain(symbol: str, expiration: str) -> list[dict]:
             headers=_tradier_headers(), timeout=10)
         if resp.status_code != 200:
             return []
-        od = resp.json().get("options", {})
-        if not od or od == "null":
+        data = safe_json(resp, f"Tradier options chain {symbol}")
+        if data is None:
+            return []
+        od = data.get("options", {})
+        if is_tradier_null(od):
             return []
         chain = od.get("option", [])
         return [chain] if isinstance(chain, dict) else (chain or [])

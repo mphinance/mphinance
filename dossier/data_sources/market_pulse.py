@@ -7,6 +7,7 @@ Fetches current price, daily change, and key metrics for SPY, QQQ, BTC, ETH, etc
 import yfinance as yf
 from dossier.config import MARKET_PULSE
 from dossier.utils.retry import retry
+from dossier.utils.validate_api import check_yfinance_history
 
 
 @retry(max_retries=2, initial_delay=1.5)
@@ -14,8 +15,9 @@ def _fetch_ticker_data(symbol: str) -> dict:
     """Fetch price data for a single ticker with retry."""
     ticker = yf.Ticker(symbol)
     hist = ticker.history(period="5d")
-    if hist.empty or len(hist) < 2:
-        raise ValueError(f"Insufficient data for {symbol}")
+    ok, reason = check_yfinance_history(hist, symbol, min_rows=2)
+    if not ok:
+        raise ValueError(reason)
 
     latest = float(hist["Close"].iloc[-1])
     prev = float(hist["Close"].iloc[-2])
