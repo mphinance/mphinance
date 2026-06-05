@@ -1,5 +1,6 @@
 import { SubstackClient } from 'substack-api';
 import * as fs from 'fs';
+import { withRetry } from './retry';
 
 const sid = "s%3AbOEIouthsRC1PWBVi8Jl07qP4-pMjLiz.8aqscWSVtI65wqmEAsGMfJpWSxHXyaIJgcYadK%2BoG7k";
 
@@ -17,7 +18,7 @@ async function run() {
   
   let me;
   try {
-     me = await client.ownProfile();
+     me = await withRetry(() => client.ownProfile(), 'ownProfile');
      console.log(`Authenticated as ${me.name}`);
   } catch (e) {
      console.error("Failed to get own profile:", e.message);
@@ -51,15 +52,15 @@ async function run() {
             let liked = false;
             try {
               if (likedCount < 200) {
-                 await post.like();
+                 await withRetry(() => post.like(), `like post ${post.id}`);
                  likedCount++;
                  liked = true;
               }
             } catch(e: any) { console.error(`Like Post failed: ${e.message}`); }
-            
+
             let url = "";
             try {
-               const fp = await post.fullPost();
+               const fp = await withRetry(() => post.fullPost(), `fullPost ${post.id}`);
                url = fp.url;
             } catch(e) {
                url = `https://${prof.slug}.substack.com/p/${post.id}`;
@@ -85,7 +86,7 @@ async function run() {
             let liked = false;
             try {
               if (likedCount < 200) {
-                 await note.like();
+                 await withRetry(() => note.like(), `like note ${note.id}`);
                  likedCount++;
                  liked = true;
               }

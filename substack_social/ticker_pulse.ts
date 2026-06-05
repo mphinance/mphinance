@@ -1,6 +1,7 @@
 import { SubstackClient } from 'substack-api';
 import * as fs from 'fs';
 import * as path from 'path';
+import { withRetry } from './retry';
 
 const sid = process.env.SUBSTACK_SID;
 if (!sid) {
@@ -104,7 +105,10 @@ async function run() {
   for (const slug of PUBLICATIONS) {
     let prof;
     try {
-      prof = await client.profileForSlug(slug);
+      prof = await withRetry(
+        () => client.profileForSlug(slug),
+        `profileForSlug(${slug})`,
+      );
     } catch (e: any) {
       console.error(`✗ ${slug}: ${e.message}`);
       continue;
@@ -120,11 +124,14 @@ async function run() {
         let bodyHtml = '';
         let url = '';
         try {
-          const fp = await post.fullPost();
+          const fp = await withRetry(
+            () => post.fullPost(),
+            `fullPost(${post.id})`,
+          );
           bodyHtml = fp.htmlBody || fp.body || '';
           url = fp.url;
         } catch (e: any) {
-          console.error(`  ! fullPost(${post.id}) failed: ${e.message}`);
+          console.error(`  ! fullPost(${post.id}) failed after retries: ${e.message}`);
           continue;
         }
 
