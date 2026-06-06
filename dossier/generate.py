@@ -1211,12 +1211,10 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
 
         # ── Stage 15d: Auto-Backtest ──
         print("\n[15d/16] AUTO-BACKTEST")
-        try:
+        with timer.stage("Auto-Backtest"):
             from dossier.backtesting.auto_backtest import main as run_backtest
             run_backtest()
             print(f"  ✓ Backtest complete")
-        except Exception as e:
-            print(f"  [WARN] Auto-backtest failed: {e}")
 
         # ── Stage 15e: Track Record ──
         print("\n[15e/16] TRACK RECORD UPDATE")
