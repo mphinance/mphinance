@@ -41,6 +41,16 @@ output formats that downstream stages or the published site depend on.
 4. **Wire `auto_backtest.py` into the daily pipeline.** Add it as a late stage of
    the dossier run, guarded so a backtest failure does not fail the whole pipeline.
 
+5. **Market mood ring.** The pipeline already detects a daily regime
+   (`dossier/market_regime.py` `detect_regime()` → `vix_level`, `regime_name`,
+   `regime`) but only prints it and overwrites one snapshot in
+   `landing/data/pipeline_stats.json`. On top of that **existing** signal (no new
+   regime/signal math): append today's regime to a deduped, date-keyed history file
+   (`landing/data/regime_history.json`) — guarded so a write failure never fails the
+   pipeline — and render a colored "mood ring" banner on the dossier header
+   (risk-on/green, neutral/amber, risk-off/red) showing today's mood plus a strip of
+   the last ~10 days' emojis from the history. Pure surfacing + persistence.
+
 ## Out of scope (do not touch without a new spec)
 
 - Trading logic / signal math changes.
