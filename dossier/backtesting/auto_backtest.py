@@ -81,12 +81,9 @@ def recalculate_stats(track_record):
         "total_picks_tracked": len(entries),
         "total_validated": len(validated),
         "best_pick": {"ticker": best_pick['ticker'], "date": best_pick['date'], "return": best_pick['fwd_5d']},
-        "worst_pick": {"ticker": worst_pick['ticker'], "date": worst_pick['date'], "return": worst_pick['worst_pick' if 'worst_pick' in worst_pick else 'fwd_5d']}, # Fix name if needed
+        "worst_pick": {"ticker": worst_pick['ticker'], "date": worst_pick['date'], "return": worst_pick['fwd_5d']},
         "sharpe_5d": round(float(sharpe), 2)
     }
-    
-    # Correcting worst_pick field access
-    track_record['stats']['worst_pick'] = {"ticker": worst_pick['ticker'], "date": worst_pick['date'], "return": worst_pick['fwd_5d']}
 
     return track_record
 
