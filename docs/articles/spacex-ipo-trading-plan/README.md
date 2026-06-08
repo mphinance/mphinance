@@ -68,7 +68,7 @@ Now the fine print, because this is where people lose money being *right*.
 
 **Hole number three: "index inclusion" is not one thing, and the plan blurs it.** NASDAQ bent its rules. **S&P did not.** S&P Dow Jones Indices looked at the same situation and publicly *reaffirmed* its existing eligibility rules, which slams the door on fast entry into the **S&P 500.** That matters, because the S&P 500 is where the really big passive money lives (think SPY, think every 401k in America). So the forced-buying bid is real, but it's a **NASDAQ-100 bid, not an S&P 500 bid.** It's a meaningful chunk of money. It is not the tidal wave some people are pricing in. If you're long expecting *all* the index money to show up, half of it just RSVP'd no.
 
-**Hole number four, and this is the big one: a forced buyer everyone can see is a forced buyer everyone front-runs.** The rule is public. The ~15-day timeline is public. So the bid gets pulled forward into the days *before* inclusion, and the actual inclusion date can print a "buy the rumor, sell the news" dump. The edge isn't *that* it happens. The edge is being positioned **before** the crowd that's also read the plan. By the time it's a clean, obvious trade, it's a crowded one.
+**Hole number four, and this is the big one: a forced buyer everyone can see tends to get front-run.** The rule is public. The ~15-day timeline is public. So the bid often gets pulled forward into the days *before* inclusion, and the actual inclusion date can print a "buy the rumor, sell the news" dump. The edge isn't *that* it happens. The edge is being positioned **before** the crowd that's also read the plan. By the time it's a clean, obvious trade, it's a crowded one.
 
 The catalyst is real. The easy version of the trade is already gone.
 
@@ -87,9 +87,9 @@ The float at IPO is tiny: SpaceX is only selling **555.6 million shares, roughly
 
 ![The Lockup Cliff: Share Supply Over Six Months](lockup_cliff.png)
 
-So the tradeable supply explodes from that 555 million share float into the **billions** inside six months. For the price to merely hold flat, demand has to grow many times over to absorb it. It won't. Unless the story gets dramatically *bigger* between now and Thanksgiving, gravity wins. The same scarcity that's the floor in Month 1 becomes the ceiling by Month 6.
+So the tradeable supply expands from that 555 million share float into the **billions** inside six months. For the price to merely hold flat, demand has to grow many times over to absorb it, and I wouldn't want to be the one betting it does. Unless the story gets dramatically *bigger* between now and Thanksgiving, supply usually wins that fight. The same scarcity that's the floor in Month 1 can easily become the ceiling by Month 6.
 
-Now here's the detail that tells you everything. **Elon agreed to lock up his own shares for 366 days.** A full year. But the rank-and-file insiders and early investors? They can start selling as soon as the second trading day after the first earnings report. Read what that structure is actually saying: *the jockey stays in the saddle for the cameras, while the stable hands are handed the exits early.* When you buy SPCX in month three, you are quite literally the liquidity those early sellers are selling into. **You are the exit.**
+Now here's the detail that tells you everything. **Elon agreed to lock up his own shares for 366 days.** A full year. But the rank-and-file insiders and early investors? They can start selling as soon as the second trading day after the first earnings report. Read what that structure looks like to me: *the jockey stays in the saddle for the cameras, while the stable hands get handed the exits early.* If you're buying SPCX in month three, there's a decent chance you're the liquidity those early sellers are selling into. **Think hard about which side of that trade you're on.**
 
 This is the most correct part of Cameron's plan and I'd put real size behind the direction. Institutional desks will build shorts into these windows. History agrees: a long line of hyped IPOs eventually trade **below their IPO price** once the hype fades and the supply shows up. Ask anyone who bought the open on a 2021 SPAC.
 
@@ -103,13 +103,13 @@ The discipline here: short the *failure of the bounce*, not the calendar date. L
 
 Here's the part of the plan I love most, because it's the most honest.
 
-To 10x your money on SpaceX itself, the market cap has to go from $1.77T to nearly **$18 trillion.** That's more than four times the size of the largest company that has ever existed. **It is not happening in your trading lifetime, let alone this year.** SpaceX is a great *company* bet and a terrible *10x* bet. Those are different sentences and most people blur them.
+To 10x your money on SpaceX itself, the market cap has to go from $1.77T to nearly **$18 trillion.** That's more than four times the size of the largest company that has ever existed. **That's almost certainly not happening anytime soon.** SpaceX can be a fine *company* bet and still be a terrible *10x* bet. Those are different sentences and most people blur them.
 
 So if you want asymmetric upside, you look *away* from SpaceX. You look at the **small-cap space-themed sympathy plays**: the tickers that fire off a press release with the word "satellite" or "lunar" in it and rip 500% because they're floating on 4 million shares and a prayer.
 
 The plan cites **ASTC** as the dream. So I pulled the actual tape. Astrotech (ASTC) closed near **$2.77 on May 8th.** By June 2nd it was swinging between the low $30s and an intraday high of **$68.85**, then closed that very session back at **$45.** Call it a **2,500% run in about three weeks**, with single days that ripped 40% and gave half of it back before the close. That's the dream everyone's chasing.
 
-**So here's hole number six, and it's the one that'll actually empty accounts.** A 2,500% move with $68-to-$45 intraday swings is not an investment thesis. **It's a pump-and-dump signature.** That's a low-float, low-information stock getting passed around like a hot potato in a Discord. For every ASTC you screenshot on the way up, there are fifty bag-holders on the other side of it who bought at hour 71 of a 72-hour squeeze.
+**So here's hole number six, and it's the one that'll actually empty accounts.** A 2,500% move with $68-to-$45 intraday swings is not an investment thesis. **That's the price action of a low-float lottery ticket, not a company you can value.** When a thin float gets passed around like a hot potato, the chart can round-trip faster than you can click sell. For every ASTC you screenshot on the way up, plenty of people are holding the other side of it, having bought near hour 71 of a 72-hour squeeze.
 
 Can you trade sympathy plays into a SpaceX mania? Absolutely. I will be. But you trade them like what they are: **fireworks, not foundations.** Tiny size. Hard stops. No bag-holding. No "it'll come back." You are renting volatility by the hour, and the rent is due the second the headline goes stale.
 
