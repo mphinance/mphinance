@@ -11,10 +11,12 @@ Covers:
 import pytest
 
 from dossier.grandma_mode import (
+    ai_glossary_for,
     define,
     explain_regime,
     glossary_for,
     plain_english,
+    translate_ai_article,
 )
 
 
@@ -132,3 +134,39 @@ def test_plain_english_attaches_core_glossary():
     terms = [g["term"] for g in out["glossary"]]
     assert "VIX" in terms
     assert all(g["definition"] for g in out["glossary"])
+
+
+# ── AI glossary — the jargon that actually tosses Grandma ─────────────
+
+def test_define_finds_ai_terms_too():
+    assert "autocomplete" in define("LLM").lower()
+    assert define("rag") == define("RAG")  # case-insensitive across glossaries
+
+
+def test_ai_glossary_for_finds_present_terms():
+    terms = dict(ai_glossary_for("We used RAG with an LLM agent over a big context window."))
+    assert {"RAG", "LLM", "agent", "context window"} <= set(terms)
+
+
+def test_ai_glossary_for_is_whole_word():
+    # "tokenize" should not trip the "token" entry
+    assert ai_glossary_for("tokenize the inputs") == []
+
+
+def test_ai_and_trading_glossaries_are_separate():
+    # AI scan must not return trading terms, and vice-versa
+    assert ai_glossary_for("the VIX spiked") == []
+    assert glossary_for("we fine-tuned the LLM") == []
+
+
+def test_translate_ai_article_builds_box():
+    box = translate_ai_article("This agent uses RAG and sometimes has a hallucination.")
+    terms = [g["term"] for g in box["glossary"]]
+    assert {"agent", "RAG", "hallucination"} <= set(terms)
+    assert box["intro"]
+    assert box["disclaimer"]
+
+
+def test_translate_ai_article_empty_when_no_jargon():
+    assert translate_ai_article("Grandma reads gamma exposure for fun.") == {}
+    assert translate_ai_article("") == {}

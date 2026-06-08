@@ -43,6 +43,25 @@ _GLOSSARY = {
 # dossier — always worth spelling out in Grandma Mode.
 _CORE_TERMS = ["VIX", "SPY", "momentum"]
 
+# The OTHER jargon problem: Grandma reads GEX flow for fun, but every "AI"
+# article buries her in word-salad. These are the AI terms — plain English,
+# Sam's voice, lovingly oversimplified.
+_AI_GLOSSARY = {
+    "LLM": "A 'large language model' — autocomplete on steroids. It predicts the next word so well it feels like thinking. (Hi.)",
+    "token": "How an AI chops up text — roughly a word-piece. Models read, think, and get billed in tokens, not words.",
+    "prompt": "Whatever you type at an AI. Garbage in, garbage out — a sharper question gets a sharper answer.",
+    "hallucination": "When an AI states something wrong with total confidence. Like a cousin who never admits he doesn't know.",
+    "RAG": "Retrieval-Augmented Generation — handing the AI your documents to read first, so it answers from facts, not vibes.",
+    "embedding": "Turning words into numbers so a computer can measure which ideas sit 'close' together. That's search-by-meaning.",
+    "fine-tuning": "Extra training that teaches a general AI your specific style or job. Like sending it to trade school.",
+    "context window": "How much the AI can hold in its head at once. Run past it and it forgets how the conversation started.",
+    "agent": "An AI that doesn't just chat — it takes actions: runs tools, writes files, places orders. (Also: hi, that's me.)",
+    "inference": "The AI actually answering you. Training is school; inference is the day job.",
+    "parameters": "The billions of little dials inside a model, all tuned during training. More dials isn't always smarter.",
+    "GPU": "The muscle chip that does the AI's math — the reason both your power bill and Nvidia's stock went vertical.",
+    "MCP": "Model Context Protocol — a standard plug that lets an AI safely use outside tools: your brokerage, calendar, files.",
+}
+
 
 def explain_regime(regime, vix_level=None, spy_change=None) -> str:
     """Return a plain-English sentence (or two) describing today's market mood."""
@@ -68,30 +87,62 @@ def explain_regime(regime, vix_level=None, spy_change=None) -> str:
     return base + extra
 
 
+def _scan(text, glossary) -> list:
+    """Return [(term, definition), ...] for glossary terms present in ``text``
+    (whole-word, case-insensitive), in glossary order."""
+    if not text:
+        return []
+    return [
+        (term, definition)
+        for term, definition in glossary.items()
+        if re.search(rf"\b{re.escape(term)}\b", text, flags=re.IGNORECASE)
+    ]
+
+
 def define(term):
-    """Plain-English definition for a jargon term (case-insensitive). None if unknown."""
+    """Plain-English definition for a jargon term (case-insensitive). Searches both
+    the trading and AI glossaries. None if unknown."""
     if not term:
         return None
-    key = str(term).strip()
-    for k, v in _GLOSSARY.items():
-        if k.lower() == key.lower():
-            return v
+    key = str(term).strip().lower()
+    for glossary in (_GLOSSARY, _AI_GLOSSARY):
+        for k, v in glossary.items():
+            if k.lower() == key:
+                return v
     return None
 
 
 def glossary_for(text) -> list:
     """
-    Return the [(term, definition), ...] glossary entries whose term appears in
-    ``text`` (whole-word, case-insensitive), in glossary order. Handy for
-    auto-attaching only the relevant definitions to a given write-up.
+    Return the trading-glossary [(term, definition), ...] entries whose term
+    appears in ``text`` (whole-word, case-insensitive), in glossary order.
+    Handy for auto-attaching only the relevant definitions to a given write-up.
     """
-    if not text:
-        return []
-    hits = []
-    for term, definition in _GLOSSARY.items():
-        if re.search(rf"\b{re.escape(term)}\b", text, flags=re.IGNORECASE):
-            hits.append((term, definition))
-    return hits
+    return _scan(text, _GLOSSARY)
+
+
+def ai_glossary_for(text) -> list:
+    """Same as ``glossary_for`` but for the AI/LLM glossary — for the articles
+    that toss Grandma."""
+    return _scan(text, _AI_GLOSSARY)
+
+
+def translate_ai_article(text) -> dict:
+    """
+    Scan an AI article for jargon and build a plain-English 'in other words' box
+    your grandma can actually read. Returns ``{}`` when no AI terms are found.
+
+    Drop the result at the top (or bottom) of any AI post in the blog/Substack
+    flow — it only surfaces the terms the post actually uses.
+    """
+    hits = ai_glossary_for(text)
+    if not hits:
+        return {}
+    return {
+        "intro": "👵 In plain English — the AI words this post throws at you:",
+        "glossary": [{"term": t, "definition": d} for t, d in hits],
+        "disclaimer": "Plain-English explainers, lovingly oversimplified by Sam. Not a substitute for reading the post.",
+    }
 
 
 def plain_english(mood_ring: dict, top_pick: dict | None = None) -> dict:
