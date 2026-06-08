@@ -6,162 +6,162 @@
 
 ---
 
-The most dangerous trade on the planet this Friday isn't shorting SpaceX. It's believing you found free money.
+Let me guess. You've already got your SpaceX plan. You ran the numbers twice, you've got an entry and a target, and somewhere behind your eyes a small, confident voice is purring that you, specifically, have spotted the thing forty million other people missed. That voice has a name. It's "exit liquidity," and it would love to buy you a drink.
 
-SpaceX prices Friday, June 12th, at **$135 a share** (ticker **SPCX**), valuing the company at **$1.77 trillion** on a 555.6 million share offering. That's a $75 billion raise, the biggest IPO in history by a mile. Every retail trader with a Robinhood account and a dream has a plan. I read a good one this week: Ross Cameron's playbook. Day 1 long bias, a 30-day index-inclusion thesis, a 6-month lockup short. Clean structure. Smart guy.
+I'm not here to talk you out of the trade. I'm here to introduce you to the strangers at your table, because Friday you're playing cards with all of them at once.
+
+SpaceX prices Friday, June 12th, at **$135 a share** (ticker **SPCX**), valuing the company at **$1.77 trillion** on a 555.6 million share offering. That's a **$75 billion raise**, the biggest IPO in history by a comfortable mile. Naturally, every group chat on Earth has a plan. I read a good one this week: Ross Cameron's playbook. Day 1 long bias, a 30-day index-inclusion thesis, a 6-month lockup short. Clean structure. Smart guy.
 
 It also has holes you could fly a Falcon 9 through.
 
-So I'm going to rebuild it. Keep what works, poke the parts that leak, and show you where the "free money" is actually a trapdoor. This is not a takedown. Cameron's framework is more disciplined than 95% of what you'll see in your feed this week. But a framework you don't stress-test is just a prayer with a price target.
-
-Let me show you the receipts.
+So let's rebuild it. Keep what works, poke what leaks, and find the spots where the "easy money" turns out to be a trapdoor with a nice rug thrown over it. This is not a takedown. Cameron's framework is more disciplined than 95% of what's about to flood your feed. But a plan you haven't stress-tested isn't a plan. It's a prayer with a price target.
 
 ---
 
 ## The Setup: A $1.77 Trillion Company That Lost $4.9 Billion
 
-Here's the thing nobody wants to say out loud before the bell rings Friday.
+Every great investment story has one number the storyteller is praying you won't ask about. Here's SpaceX's.
 
-SpaceX is valued at **$1.77 trillion** and it **lost $4.9 billion in fiscal 2025** (versus a $791 million profit the year before). Revenue was real: **$18 billion, up 33%.** Starlink alone did $11.4 billion in revenue and threw off **$4.4 billion in operating profit.** The connectivity business prints money.
+The company is valued at **$1.77 trillion** and it **lost $4.9 billion in fiscal 2025**, after turning a $791 million profit the year before. The revenue is real enough: **$18 billion, up 33%.** Starlink alone did $11.4 billion of it and threw off **$4.4 billion in operating profit.** The satellite-internet business is a genuine cash machine.
 
-So where did the $4.9 billion go? Mostly into the **AI segment, which posted a $6.35 billion operating loss.** Read that again. The rockets and the satellites are profitable. The thing dragging the whole company into the red is the moonshot bet stapled to the side of it.
+So where did the rest of that $4.9 billion go? Into the **AI segment, which lost $6.35 billion at the operating line all by itself.** The rockets are profitable. The satellites are profitable. The thing quietly setting the income statement on fire is the moonshot bolted onto the side, and wouldn't you know it, that's the part of the pitch wearing the brightest costume.
 
-You can't run a P/E ratio on this. There's no E. There's an L, and it's nine zeros deep.
+You cannot run a P/E ratio on this. There is no E. There's an L, and it has nine zeros holding hands behind it.
 
-So what are you actually buying? You're buying Elon. This is the textbook **"bet on the jockey, not the horse"** trade. The financials are a footnote. The thesis is "this man bends reality, and I'd rather be long his reality than short it." Fine. I get it. I've made worse bets on worse jockeys.
+So what are you actually buying at $1.77 trillion? You're buying Elon. This is the textbook **"bet on the jockey, not the horse"** trade, except the jockey has promised to fly the horse to Mars. The financials are a footnote. The thesis is "this man bends reality, and I'd rather be long his reality than short it." Fine. I've made worse bets on worse jockeys, usually around 2am.
 
-But understand what that means: **you are buying a story, at a price the story has to grow into.** When the story is the only fundamental, the story leaving the building is the only risk that matters. Hold that thought. We'll need it in six months.
+Just be honest with yourself about what it is. **You're buying a story at a price the story still has to grow into.** When the story is the only fundamental you've got, the story walking out of the building is the only risk that counts. Tuck that away. We need it again in about six months.
 
 ---
 
 ## Act 1, Day One: Long Bias, Yes. Free Money, No.
 
-Cameron's Day 1 call is a **cautiously long bias**, and on that he's right. Shorting SpaceX on debut day would be, in his words, "insane." I'll go further: shorting a retail-mania IPO on Day 1 is how you donate your account to someone with more patience than you.
+Cameron's Day 1 call is a **cautiously long bias**, and on that he's dead right. Shorting SpaceX on its debut would be, in his words, "insane." I'll raise him: shorting a retail-mania IPO on Day 1 is just donating your account to someone with more patience and a bigger margin balance than you.
 
-Here's the Day 1 math as the plan lays it out:
+Here's the Day 1 math the way the plan lays it out:
 
 - Priced at **$135**.
-- Expected to open **15 to 20% higher**, so call it **$155 to $162**.
+- Expected to open **15 to 20% higher**, call it **$155 to $162**.
 - First target if it opens soft: **$150**. Stretch targets: **$175 and $200** on the day.
 
-That's a clean momentum ladder, and as a guy who trades volatility for a living, I'll be in there scalping the chop right alongside everyone else. Hold for minutes, sometimes seconds, take the move, get out.
+That's a clean momentum ladder, and as a man who trades volatility for a living, I'll be right there in the chop with everyone else, holding positions for minutes, sometimes seconds. In and out before the candle finishes forming an opinion.
 
-**But here's the first hole.** The plan leans on "mandatory buying support from institutional funds" as a Day 1 floor. That's not how index money works. **Index funds don't buy on the open.** They buy at inclusion. And per Cameron's own thesis, inclusion is Day 15, not Day 1. So the "structural support" he's counting on isn't in the building yet on Friday. Day 1 is **pure retail reflexivity**: momentum feeding on momentum, with zero institutional floor underneath it.
+**But here's the first hole.** The plan leans on "mandatory buying support from institutional funds" as a Day 1 floor. That is not how index money works. **Index funds don't buy on the open.** They buy at inclusion, and per Cameron's own thesis, inclusion is Day 15, not Day 1. So the structural floor he's standing on hasn't been poured yet. Day 1 is **pure retail reflexivity**: a crowd buying because the crowd is buying, with nothing underneath it but vibes.
 
-That's not a reason to short. It's a reason to respect your stops. A move with no floor cuts both ways, fast.
+That's not a reason to short. It's a reason to keep your hand near your stop. A move with no floor goes through the basement just as fast as it went through the roof.
 
-**Second hole:** opening "near $150" contradicts a 15-to-20% pop, which lands you at $155 to $162. Small thing. But if your first target is below where the thing realistically opens, you don't have a target. You have a number you already missed.
+**Second hole, a small one, but it'll itch if I don't say it:** opening "near $150" can't coexist with a 15-to-20% pop, which puts you at $155 to $162. If your first target sits below where the thing realistically opens, that's not a target. That's a number you already waved goodbye to.
 
 ---
 
 ## Act 2, The First 30 Days: The NASDAQ 100 Catalyst (Read The Fine Print)
 
-This is the strongest part of the plan, and also the part where I want everyone to slow down.
+This is the strongest leg of the plan, which is precisely why I want you to slow down and read the contract.
 
-The thesis: SpaceX gets **early inclusion in the NASDAQ 100** around **Day 15**. And here's the part I went and verified, because it sounded too convenient to be true: **it's real.** NASDAQ actually rewrote its index rules. The new "Fast Entry" provision lets a megacap join just **15 trading days** after IPO, down from the traditional **three-month seasoning period.** They also slashed the minimum free-float requirement so a stock with a tiny float (like, say, one selling only 4% of itself) still qualifies. Every ETF tracking the index then has to buy SpaceX to match an estimated **0.47% to 0.7% weighting**. Forced, mechanical, one-time buying. A real, structural bid.
+The thesis: SpaceX gets **early inclusion in the NASDAQ 100** around **Day 15**. I went and checked this one personally, because it sounded too convenient to be true. It's true. NASDAQ rewrote its own rulebook. The new "Fast Entry" provision lets a megacap join the index just **15 trading days** after IPO, down from the traditional **three-month seasoning period**, and they trimmed the minimum free-float requirement so a company selling barely 4% of itself still makes the cut. Every ETF tracking the index then has to buy SpaceX to hit an estimated **0.47% to 0.7% weighting**. Forced, mechanical, price-blind buying. A real, structural bid.
 
 ![The Three-Act Structure of the SpaceX IPO Trade](three_act_timeline.png)
 
-When it's real, index-inclusion buying is the closest thing to a free lunch the market serves. I've traded it. It works. So here's where I agree with Cameron completely: **for roughly the first three weeks, the path of least resistance is up,** because there's a known, dumb, price-insensitive buyer about to show up.
+When it's real, this kind of forced buying is about as close to a sure thing as the market ever hands you. I've traded it. It works. So here's where Cameron and I shake hands: **for roughly the first three weeks, the bias leans higher,** because a large, dumb, price-insensitive buyer is scheduled to walk through the door.
 
-Now the fine print, because this is where people lose money being *right*.
+Now the fine print, because this is the aisle where people lose money while being technically correct.
 
-**Hole number three: "index inclusion" is not one thing, and the plan blurs it.** NASDAQ bent its rules. **S&P did not.** S&P Dow Jones Indices looked at the same situation and publicly *reaffirmed* its existing eligibility rules, which slams the door on fast entry into the **S&P 500.** That matters, because the S&P 500 is where the really big passive money lives (think SPY, think every 401k in America). So the forced-buying bid is real, but it's a **NASDAQ-100 bid, not an S&P 500 bid.** It's a meaningful chunk of money. It is not the tidal wave some people are pricing in. If you're long expecting *all* the index money to show up, half of it just RSVP'd no.
+**Hole number three: "index inclusion" is not one thing, and the plan smudges it into one.** NASDAQ bent its rules. **S&P flatly refused to.** S&P Dow Jones Indices looked at the same circus and publicly *reaffirmed* its existing standards, slamming the door on fast entry into the **S&P 500**, which is where the truly enormous passive money sleeps. Think SPY. Think every 401(k) in America running on autopilot. So the forced bid is real, but it's a **NASDAQ-100 bid, not an S&P 500 bid.** That's a meaningful pile of money. It is not the tidal wave the loudest accounts are pricing in. If you're long expecting *all* the index money to show up, half of it already RSVP'd "no."
 
-**Hole number four, and this is the big one: a forced buyer everyone can see tends to get front-run.** The rule is public. The ~15-day timeline is public. So the bid often gets pulled forward into the days *before* inclusion, and the actual inclusion date can print a "buy the rumor, sell the news" dump. The edge isn't *that* it happens. The edge is being positioned **before** the crowd that's also read the plan. By the time it's a clean, obvious trade, it's a crowded one.
+**Hole number four, the big one: a buyer everyone can see coming is a buyer everyone front-runs.** The rule is public. The roughly-15-day clock is public. So the bid gets dragged forward into the days *before* inclusion, and the actual date can print a textbook "buy the rumor, sell the news" dump right onto the people who politely waited for the obvious moment. The edge was never *that* it happens. The edge is being early to a trade the whole internet has already screenshotted. By the time it's clean and obvious, you're not early. You're the crowd.
 
-The catalyst is real. The easy version of the trade is already gone.
+The catalyst is real. The easy version of it left before you got here.
 
 ---
 
 ## Act 3, Six Months Out: The Lockup Cliff Is Not A Cliff. It's a Demolition Schedule.
 
-Now we flip bearish, and now I'm fully on board with the direction, if not the framing.
+Now we flip bearish, and now I'm fully aboard the direction, if not the wording.
 
-The float at IPO is tiny: SpaceX is only selling **555.6 million shares, roughly 4% of the company.** Scarcity plus mania is why the first month floats up. But the lockup holding the other ~96% is, and I am not exaggerating, one of the most aggressive insider-exit structures I've ever seen on a marquee IPO. The S-1 lays it out in waves:
+The float at IPO is tiny: SpaceX is selling just **555.6 million shares, about 4% of the company.** Scarcity plus mania is why the first month tends to float upward. But the lockup holding the other ~96% is one of the most aggressive insider-exit structures I've seen on a marquee IPO, and the S-1 spells it out in waves:
 
-- **Five time-based tranches at 70, 90, 105, 120, and 135 days**, each freeing up another ~7% of eligible insider shares.
-- A first earnings release (Q2) unlocks up to **20%**, plus another **10%** if the stock is up at least 30% over the offer price.
-- A second earnings release (Q3) unlocks a further **28%**.
-- The 180-day mark releases the remainder.
+- **Five time-based tranches at 70, 90, 105, 120, and 135 days**, each springing another ~7% of eligible insider shares.
+- The first earnings release (Q2) frees up to **20%**, plus another **10%** if the stock is up at least 30% over the offer price.
+- The second earnings release (Q3) frees a further **28%**.
+- The 180-day mark lets the rest off the leash.
 
 ![The Lockup Cliff: Share Supply Over Six Months](lockup_cliff.png)
 
-So the tradeable supply expands from that 555 million share float into the **billions** inside six months. For the price to merely hold flat, demand has to grow many times over to absorb it, and I wouldn't want to be the one betting it does. Unless the story gets dramatically *bigger* between now and Thanksgiving, supply usually wins that fight. The same scarcity that's the floor in Month 1 can easily become the ceiling by Month 6.
+So the tradeable supply swells from that 555 million share sliver into the **billions** within six months. For the price to merely tread water, demand has to multiply many times over to swallow all of it, and I would not want to be the one standing under that with my mouth open. Unless the story gets dramatically *bigger* between now and Thanksgiving, supply wins that arm-wrestle. The scarcity that floors the price in Month 1 becomes the ceiling that caps it by Month 6.
 
-Now here's the detail that tells you everything. **Elon agreed to lock up his own shares for 366 days.** A full year. But the rank-and-file insiders and early investors? They can start selling as soon as the second trading day after the first earnings report. Read what that structure looks like to me: *the jockey stays in the saddle for the cameras, while the stable hands get handed the exits early.* If you're buying SPCX in month three, there's a decent chance you're the liquidity those early sellers are selling into. **Think hard about which side of that trade you're on.**
+Then look at what Elon did with his own stake. **He locked his shares up for 366 days.** A full year. The rank-and-file insiders and early investors? They can start drifting toward the doors as soon as the second trading day after the first earnings report. Read that arrangement slowly. *The jockey stays in the saddle for the cameras while the stable hands are quietly shown the exits.* If you're buying SPCX in month three, there's a healthy chance you're the person those early sellers are selling to. Remember that confident little voice from the top of this letter? This is the part where it presents you with the bill.
 
-This is the most correct part of Cameron's plan and I'd put real size behind the direction. Institutional desks will build shorts into these windows. History agrees: a long line of hyped IPOs eventually trade **below their IPO price** once the hype fades and the supply shows up. Ask anyone who bought the open on a 2021 SPAC.
+This is the truest section of Cameron's plan, and I'd put real size behind the direction. Institutional desks will build shorts into these windows. History nods along: a long parade of hyped IPOs eventually trade **below their offering price** once the spell breaks and the supply arrives. Ask anyone still cradling a 2021 SPAC like a participation trophy.
 
-**But here's hole number five, and it's a hole in the *edge*, not the logic.** Those dates are *public*. They're in the S-1. Everyone reading this knows them. **Knowing a lockup expires is not an edge. It's a calendar.** The entire market positions for the same dates, which means the move often front-runs the actual expiration and then reverses when the expected selling doesn't materialize on schedule. The cliff is real. *Trading* the cliff is a knife fight with a thousand other people holding the same map.
+**But here's hole number five, and it's a hole in the *edge*, not the logic.** Those dates are *public*. They're printed in the S-1. Everyone reading this knows them, which is the entire problem. **Knowing a lockup expires isn't an edge. It's a calendar.** The whole market crowds the same squares, the move front-runs the actual expiration, then it whipsaws the instant the expected selling fails to show on cue. The cliff is real. *Trading* it is a knife fight in a phone booth with a thousand people holding the same map.
 
-The discipline here: short the *failure of the bounce*, not the calendar date. Let price confirm the supply is winning before you press it.
+The discipline: short the *failed bounce*, not the date. Let price confirm supply is winning before you lay a finger on it.
 
 ---
 
-## The Move Nobody's Pitching: Don't Trade SpaceX At All
+## The Best SpaceX Trade Might Not Be SpaceX
 
-Here's the part of the plan I love most, because it's the most honest.
+Here's the part of the plan I love most, because it's the most honest thing in it.
 
-To 10x your money on SpaceX itself, the market cap has to go from $1.77T to nearly **$18 trillion.** That's more than four times the size of the largest company that has ever existed. **That's almost certainly not happening anytime soon.** SpaceX can be a fine *company* bet and still be a terrible *10x* bet. Those are different sentences and most people blur them.
+To 10x your money on SpaceX itself, the market cap has to climb from $1.77T to nearly **$18 trillion**, more than four times the largest company that has ever drawn breath. **That is almost certainly not happening on any timeline that does you good.** SpaceX can be a perfectly fine *company* bet and a genuinely silly *10x* bet at the same time. Those are two different sentences, and the hype machine is engineered to blur them into one.
 
-So if you want asymmetric upside, you look *away* from SpaceX. You look at the **small-cap space-themed sympathy plays**: the tickers that fire off a press release with the word "satellite" or "lunar" in it and rip 500% because they're floating on 4 million shares and a prayer.
+So if it's asymmetric upside you're after, you look *away* from the main stage. You look at the **small-cap space-themed sympathy plays**: the tickers that fire off a press release with "satellite" or "lunar" in it and rocket 500% because they're floating on four million shares and a dream.
 
-The plan cites **ASTC** as the dream. So I pulled the actual tape. Astrotech (ASTC) closed near **$2.77 on May 8th.** By June 2nd it was swinging between the low $30s and an intraday high of **$68.85**, then closed that very session back at **$45.** Call it a **2,500% run in about three weeks**, with single days that ripped 40% and gave half of it back before the close. That's the dream everyone's chasing.
+The plan points at **ASTC**, so I pulled the actual tape instead of the legend. Astrotech (ASTC) closed near **$2.77 on May 8th**. By June 2nd it was swinging between the low $30s and a **$68.85** intraday high, then closed that very same session back at **$45**. Call it a **2,500% run in about three weeks**, complete with single days that ripped 40% and gave half of it back before the bell. That's the dream everyone's chasing, and I get the appeal. It's also a wood chipper with a "free money" sticker slapped on the side.
 
-**So here's hole number six, and it's the one that'll actually empty accounts.** A 2,500% move with $68-to-$45 intraday swings is not an investment thesis. **That's the price action of a low-float lottery ticket, not a company you can value.** When a thin float gets passed around like a hot potato, the chart can round-trip faster than you can click sell. For every ASTC you screenshot on the way up, plenty of people are holding the other side of it, having bought near hour 71 of a 72-hour squeeze.
+**Hole number six, the one that actually empties accounts:** a 2,500% move with $68-to-$45 intraday mood swings is not an investment thesis. **It's the heartbeat of a low-float lottery ticket, not a company you can value.** When a float that thin gets tossed between momentum desks, the chart round-trips faster than you can find the sell button. For every ASTC someone screenshots on the way up, there's a matching set of people holding the other side, who bought somewhere around hour 71 of a 72-hour squeeze and are now, regrettably, "long-term investors."
 
-Can you trade sympathy plays into a SpaceX mania? Absolutely. I will be. But you trade them like what they are: **fireworks, not foundations.** Tiny size. Hard stops. No bag-holding. No "it'll come back." You are renting volatility by the hour, and the rent is due the second the headline goes stale.
+Can you trade sympathy plays into a SpaceX mania? Absolutely. I will be. But you trade them as what they are: **fireworks, not foundations.** Tiny size. Hard stops. No bag-holding, no "it'll come back," no naming them after pets. You are renting volatility by the hour, and the rent comes due the instant the headline goes stale.
 
-Riding coattails works right up until the coat gets up and leaves.
+Riding coattails works beautifully right up until the coat stands up and walks out of the room.
 
 <!--paywall-->
 
 ## How I'm Actually Positioning (Paid Subscribers)
 
-*Free readers got the full teardown above. That's the real value, and I meant every word of it. What follows is the part where I put my own account on the line, because that's what you're paying for: not opinions, live positioning.*
+*Free readers got the entire teardown above, and I meant every word of it. What follows is the part where I put my own account where my mouth is, because that's what you pay me for: not opinions, positions.*
 
-Here's the exact structure I'm running into Friday and through the six-month window. Real tickers, real triggers, real invalidation levels.
+Here's the exact structure I'm running into Friday and across the six-month window. Real tickers, real triggers, real lines where I admit I'm wrong and walk.
 
 **Day 1 (Friday):**
-- I'm not holding overnight. Period. Day 1 is a scalp environment. I'm trading the opening 30-minute range with VWAP as my line in the sand. Long above, flat below. I am not marrying this position.
-- Hard rule: if it opens above $165, I do not chase the first green candle. I wait for the first pullback to hold. Chasing the open on an IPO is how you buy the exact top tick.
+- I am not holding overnight. Full stop. Day 1 is a scalper's playground, not a place to fall in love. I'm trading the opening 30-minute range with VWAP as my line in the sand: long above it, flat below it.
+- Hard rule: if it opens north of $165, I do not chase the first green candle like a dog after a car. I wait for the first pullback to hold. Chasing an IPO open is just buying the exact top tick with extra steps.
 
 **The 30-Day Index Trade:**
-- I want to be positioned in the Days 8-12 window, *before* the Day-15 crowd, **only if** I can confirm the inclusion date from the index provider directly. No confirmation, no trade. I'm not betting my account on a YouTube thumbnail.
-- Exit plan: I sell *into* the inclusion-week strength, not on the date itself. The news is the exit, not the entry.
+- I want to be positioned in the Days 8 to 12 window, *ahead* of the Day-15 crowd, and **only** if I can confirm the inclusion date from the index provider itself. No confirmation, no trade. I am not wiring my account into a YouTube thumbnail.
+- Exit plan: I sell *into* inclusion-week strength, not on the date. The news is the door I leave through, not the one I enter.
 
 **The 6-Month Short:**
-- I'm not shorting a calendar date. I'm watching the 70-day and 90-day windows for a *failed bounce*, a lower high after the first wave of unlocked supply hits. That's my trigger. Confirmation over prediction, every time.
+- I'm not shorting a square on the calendar. I'm watching the 70-day and 90-day windows for a *failed bounce*, a lower high after the first wave of supply lands. That's the trigger. Confirmation over prophecy, every single time.
 
 **The Sympathy Basket:**
-- My watchlist of low-float space names, the exact float thresholds I'm screening for, and the one rule that keeps a 2,500% screenshot from turning into a 90% drawdown in my own account.
+- My watchlist of low-float space names, the exact float thresholds I screen for, and the one rule that keeps a 2,500% screenshot from becoming a 90% hole in my own account.
 
-And the position sizing math underneath all of it, because the setup doesn't matter if the size is wrong.
+Plus the position-sizing math under all of it, because the prettiest setup on Earth still detonates if the size is wrong.
 
 ---
 
-## Here's The Truth
+## The Only Edge That Survives a Crowd
 
-Cameron's plan is good. Better than most. But every leg of it leans on something the whole market can see: a public IPO price, a public index date, a public lockup schedule, a public viral stat.
+Cameron's plan is good. Better than most. But every leg of it leans on something the entire market can already see: a public IPO price, a public index date, a public lockup schedule, a public viral stat.
 
-**Information everyone has is not an edge. It's the price of admission.**
+**Information everyone has isn't an edge. It's the cover charge.**
 
-The edge isn't knowing SpaceX is going public Friday. Your barber knows that. The edge is having a structure, sizing it so a wrong call doesn't end you, and being honest about which leg of the trade is real money and which is just a story you want to be true.
+The edge was never knowing SpaceX goes public Friday. Your barber knows that. Your barber has a position. The edge is having a structure, sizing it so a wrong call bruises instead of buries you, and being honest about which leg of the trade is real money and which is just a story you'd very much like to be true.
 
-I've spent a lot of my life betting big on stories I wanted to be true. It cost me everything, more than once. Recovery taught me the only thing that's ever actually worked: don't predict, prepare. Size small enough to be wrong. Take the trade in front of you, not the one in your imagination.
+I've spent long stretches of my life betting everything on stories I wanted to be true. It cost me all of it, more than once, and not just money. Recovery taught me the only thing that has ever actually worked: don't predict, prepare. Size small enough to be wrong out loud. Trade the hand on the table, not the one in your imagination.
 
-The SpaceX IPO is going to mint a few legends and a lot of cautionary tales. Which one you become has almost nothing to do with SpaceX, and almost everything to do with whether you respect your stops when the whole timeline is screaming at you to bet the farm.
+The SpaceX IPO will mint a handful of legends and a stadium full of people who'll spend Saturday explaining to someone what a "lockup expiration" is. Which one you become has almost nothing to do with SpaceX and almost everything to do with whether you can stand up from the table while you're still ahead. Nobody practices standing up. That's the whole tragedy.
 
 Don't bet the farm. The farm is how you eat next year.
 
 ---
 
-*If this saved you from chasing the open Friday, the best thing you can do is [subscribe](https://mphinance.substack.com) and forward it to the friend you already know is about to YOLO his rent into a $4 satellite stock. Stop him. Be a hero.*
+*If this saved you from chasing the open Friday, do me a kindness: [subscribe](https://mphinance.substack.com), and forward it to the friend you already know is about to YOLO his rent into a $4 satellite stock. Go on. Be his stop loss.*
 
 *The receipts: IPO price and $1.77T valuation per [CNBC](https://www.cnbc.com/2026/06/03/spacex-ipo-stock-price-roadshow-musk.html) and [Fortune](https://fortune.com/2026/06/03/spacex-ipo-share-price-index-funds-valuation-public/). NASDAQ's Fast Entry rule and S&P's refusal per [CNBC](https://www.cnbc.com/2026/06/05/spacex-blocked-from-early-us-benchmark-index-entry-as-sp-reaffirms-existing-rules.html). The staggered lockup and Musk's 366-day hold per [CNBC](https://www.cnbc.com/2026/05/21/spacex-insiders-will-get-to-sell-shares-earlier-than-usual-after-the-ipo.html) and [Darrow Wealth](https://darrowwealthmanagement.com/blog/spacex-ipo-employee-lockup-release-dates/). 2025 financials from the S-1 via [Morningstar](https://www.morningstar.com/stocks/6-charts-spacexs-s-1-financials).*
 
-*None of this is financial advice. It's one felon-with-a-keyboard's read on a very crowded trade. Do your own work, set your own stops, and for the love of God, confirm the index details before you size up.*
+*None of this is financial advice. It's one felon-with-a-keyboard's read on an extremely crowded table. Do your own work, set your own stops, and for the love of God, confirm the index details before you size up.*
 
 *God, grant me the serenity to accept the trades I cannot change, the courage to cut the ones I should, and the wisdom to tell the damn difference.*
 
