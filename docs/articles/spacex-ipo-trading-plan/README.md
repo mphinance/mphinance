@@ -6,13 +6,13 @@
 
 ---
 
-The fastest way to lose money on SpaceX this Friday isn't shorting it. It's strolling in convinced there's free money lying on the floor.
+There's an old trick gamblers run on themselves: they mistake a crowded table for a lucky one. But a trade only pays when you see something the crowd doesn't, and this Friday the whole market sits down at SpaceX at once. So the fastest way to lose your stake won't be shorting it. It'll be strolling in certain the easy money is still on the felt, waiting for you specifically.
 
 SpaceX prices Friday, June 12th, at **$135 a share** (ticker **SPCX**), valuing the company at **$1.77 trillion** on a 555.6 million share offering. That's a $75 billion raise, the biggest IPO in history by a mile. Half the group chats I'm in already have a plan. I read a good one this week: Ross Cameron's playbook. Day 1 long bias, a 30-day index-inclusion thesis, a 6-month lockup short. Clean structure. Smart guy.
 
 It also has holes you could fly a Falcon 9 through.
 
-So I'm going to rebuild it. Keep what works, poke the parts that leak, and show you where the "free money" is actually a trapdoor. This is not a takedown. Cameron's framework is more disciplined than 95% of what you'll see in your feed this week. But a framework you don't stress-test is just a prayer with a price target.
+So I'm going to rebuild it. Keep what works, poke the parts that leak, and show you where the "easy money" is actually a trapdoor. This is not a takedown. Cameron's framework is more disciplined than 95% of what you'll see in your feed this week. But a framework you don't stress-test is just a prayer with a price target.
 
 ---
 
@@ -149,7 +149,7 @@ The edge isn't knowing SpaceX is going public Friday. Your barber knows that. Th
 
 I've spent a lot of my life betting big on stories I wanted to be true. It cost me everything, more than once. Recovery taught me the only thing that's ever actually worked: don't predict, prepare. Size small enough to be wrong. Take the trade in front of you, not the one in your imagination.
 
-The SpaceX IPO is going to mint a few legends and a lot of cautionary tales. Which one you become has almost nothing to do with SpaceX, and almost everything to do with whether you respect your stops when the whole timeline is screaming at you to bet the farm.
+The SpaceX IPO will mint a handful of legends and a stadium full of cautionary tales. Which one you turn into has almost nothing to do with SpaceX, and almost everything to do with whether you can stand up from the table while you're still ahead.
 
 Don't bet the farm. The farm is how you eat next year.
 
