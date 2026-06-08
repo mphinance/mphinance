@@ -1,8 +1,8 @@
-# Everyone's About to Get Rich Off the SpaceX IPO. Most of Them Won't.
+# Everyone Has a Plan for the SpaceX IPO. That's the Problem.
 
 *Tags: SpaceX IPO, momentum trading, lockup expiration, NASDAQ 100, Elon Musk, sympathy stocks, index rebalancing*
 
-![Everyone's About to Get Rich Off the SpaceX IPO. Most of Them Won't.](hero_banner.png)
+![Everyone Has a Plan for the SpaceX IPO. That's the Problem.](hero_banner.png)
 
 ---
 
