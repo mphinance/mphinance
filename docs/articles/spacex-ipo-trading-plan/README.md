@@ -6,25 +6,23 @@
 
 ---
 
-The most dangerous trade on the planet this Friday isn't shorting SpaceX. It's believing you found free money.
+The fastest way to lose money on SpaceX this Friday isn't shorting it. It's strolling in convinced there's free money lying on the floor.
 
-SpaceX prices Friday, June 12th, at **$135 a share** (ticker **SPCX**), valuing the company at **$1.77 trillion** on a 555.6 million share offering. That's a $75 billion raise, the biggest IPO in history by a mile. Every retail trader with a Robinhood account and a dream has a plan. I read a good one this week: Ross Cameron's playbook. Day 1 long bias, a 30-day index-inclusion thesis, a 6-month lockup short. Clean structure. Smart guy.
+SpaceX prices Friday, June 12th, at **$135 a share** (ticker **SPCX**), valuing the company at **$1.77 trillion** on a 555.6 million share offering. That's a $75 billion raise, the biggest IPO in history by a mile. Half the group chats I'm in already have a plan. I read a good one this week: Ross Cameron's playbook. Day 1 long bias, a 30-day index-inclusion thesis, a 6-month lockup short. Clean structure. Smart guy.
 
 It also has holes you could fly a Falcon 9 through.
 
 So I'm going to rebuild it. Keep what works, poke the parts that leak, and show you where the "free money" is actually a trapdoor. This is not a takedown. Cameron's framework is more disciplined than 95% of what you'll see in your feed this week. But a framework you don't stress-test is just a prayer with a price target.
 
-Let me show you the receipts.
-
 ---
 
 ## The Setup: A $1.77 Trillion Company That Lost $4.9 Billion
 
-Here's the thing nobody wants to say out loud before the bell rings Friday.
+Start with the line item the hype machine skips.
 
 SpaceX is valued at **$1.77 trillion** and it **lost $4.9 billion in fiscal 2025** (versus a $791 million profit the year before). Revenue was real: **$18 billion, up 33%.** Starlink alone did $11.4 billion in revenue and threw off **$4.4 billion in operating profit.** The connectivity business prints money.
 
-So where did the $4.9 billion go? Mostly into the **AI segment, which posted a $6.35 billion operating loss.** Read that again. The rockets and the satellites are profitable. The thing dragging the whole company into the red is the moonshot bet stapled to the side of it.
+So where did the $4.9 billion go? Mostly into the **AI segment, which posted a $6.35 billion operating loss.** The rockets and the satellites are profitable. The thing dragging the whole company into the red is the moonshot bet stapled to the side of it.
 
 You can't run a P/E ratio on this. There's no E. There's an L, and it's nine zeros deep.
 
@@ -62,7 +60,7 @@ The thesis: SpaceX gets **early inclusion in the NASDAQ 100** around **Day 15**.
 
 ![The Three-Act Structure of the SpaceX IPO Trade](three_act_timeline.png)
 
-When it's real, index-inclusion buying is the closest thing to a free lunch the market serves. I've traded it. It works. So here's where I agree with Cameron completely: **for roughly the first three weeks, the path of least resistance is up,** because there's a known, dumb, price-insensitive buyer about to show up.
+When it's real, this kind of forced buying is about as close to a sure thing as the market hands out. I've traded it. It works. So here's where I agree with Cameron completely: **for roughly the first three weeks, the bias leans higher,** because there's a known, dumb, price-insensitive buyer about to show up.
 
 Now the fine print, because this is where people lose money being *right*.
 
@@ -78,7 +76,7 @@ The catalyst is real. The easy version of the trade is already gone.
 
 Now we flip bearish, and now I'm fully on board with the direction, if not the framing.
 
-The float at IPO is tiny: SpaceX is only selling **555.6 million shares, roughly 4% of the company.** Scarcity plus mania is why the first month floats up. But the lockup holding the other ~96% is, and I am not exaggerating, one of the most aggressive insider-exit structures I've ever seen on a marquee IPO. The S-1 lays it out in waves:
+The float at IPO is tiny: SpaceX is only selling **555.6 million shares, roughly 4% of the company.** Scarcity plus mania is why the first month floats up. But the lockup holding the other ~96% is one of the most aggressive insider-exit structures I've seen on a marquee IPO. The S-1 lays it out in waves:
 
 - **Five time-based tranches at 70, 90, 105, 120, and 135 days**, each freeing up another ~7% of eligible insider shares.
 - A first earnings release (Q2) unlocks up to **20%**, plus another **10%** if the stock is up at least 30% over the offer price.
@@ -89,7 +87,7 @@ The float at IPO is tiny: SpaceX is only selling **555.6 million shares, roughly
 
 So the tradeable supply expands from that 555 million share float into the **billions** inside six months. For the price to merely hold flat, demand has to grow many times over to absorb it, and I wouldn't want to be the one betting it does. Unless the story gets dramatically *bigger* between now and Thanksgiving, supply usually wins that fight. The same scarcity that's the floor in Month 1 can easily become the ceiling by Month 6.
 
-Now here's the detail that tells you everything. **Elon agreed to lock up his own shares for 366 days.** A full year. But the rank-and-file insiders and early investors? They can start selling as soon as the second trading day after the first earnings report. Read what that structure looks like to me: *the jockey stays in the saddle for the cameras, while the stable hands get handed the exits early.* If you're buying SPCX in month three, there's a decent chance you're the liquidity those early sellers are selling into. **Think hard about which side of that trade you're on.**
+Then look at what Elon did with his own stake. **He locked his shares up for 366 days.** A full year. But the rank-and-file insiders and early investors? They can start selling as soon as the second trading day after the first earnings report. Read what that structure looks like to me: *the jockey stays in the saddle for the cameras, while the stable hands get handed the exits early.* If you're buying SPCX in month three, there's a decent chance you're the liquidity those early sellers are selling into. **Think hard about which side of that trade you're on.**
 
 This is the most correct part of Cameron's plan and I'd put real size behind the direction. Institutional desks will build shorts into these windows. History agrees: a long line of hyped IPOs eventually trade **below their IPO price** once the hype fades and the supply shows up. Ask anyone who bought the open on a 2021 SPAC.
 
@@ -99,7 +97,7 @@ The discipline here: short the *failure of the bounce*, not the calendar date. L
 
 ---
 
-## The Move Nobody's Pitching: Don't Trade SpaceX At All
+## The Best SpaceX Trade Might Not Be SpaceX
 
 Here's the part of the plan I love most, because it's the most honest.
 
@@ -109,7 +107,7 @@ So if you want asymmetric upside, you look *away* from SpaceX. You look at the *
 
 The plan cites **ASTC** as the dream. So I pulled the actual tape. Astrotech (ASTC) closed near **$2.77 on May 8th.** By June 2nd it was swinging between the low $30s and an intraday high of **$68.85**, then closed that very session back at **$45.** Call it a **2,500% run in about three weeks**, with single days that ripped 40% and gave half of it back before the close. That's the dream everyone's chasing.
 
-**So here's hole number six, and it's the one that'll actually empty accounts.** A 2,500% move with $68-to-$45 intraday swings is not an investment thesis. **That's the price action of a low-float lottery ticket, not a company you can value.** When a thin float gets passed around like a hot potato, the chart can round-trip faster than you can click sell. For every ASTC you screenshot on the way up, plenty of people are holding the other side of it, having bought near hour 71 of a 72-hour squeeze.
+**So here's hole number six, and it's the one that'll actually empty accounts.** A 2,500% move with $68-to-$45 intraday swings is not an investment thesis. **That's the price action of a low-float lottery ticket, not a company you can value.** When a float that thin gets tossed between momentum desks, the chart round-trips faster than you can click sell. For every ASTC you screenshot on the way up, plenty of people are holding the other side of it, having bought near hour 71 of a 72-hour squeeze.
 
 Can you trade sympathy plays into a SpaceX mania? Absolutely. I will be. But you trade them like what they are: **fireworks, not foundations.** Tiny size. Hard stops. No bag-holding. No "it'll come back." You are renting volatility by the hour, and the rent is due the second the headline goes stale.
 
@@ -141,7 +139,7 @@ And the position sizing math underneath all of it, because the setup doesn't mat
 
 ---
 
-## Here's The Truth
+## The Only Edge That Survives a Crowd
 
 Cameron's plan is good. Better than most. But every leg of it leans on something the whole market can see: a public IPO price, a public index date, a public lockup schedule, a public viral stat.
 
