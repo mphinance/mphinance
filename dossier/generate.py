@@ -719,6 +719,17 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         print(f"  Regime: {regime} (VIX {vix_level:.1f})")
         print(f"  {market_regime.get('market_context', '')}")
 
+    # ── Stage 4a: Regime History (Mood Ring) ──
+    regime_history = []
+    try:
+        from dossier.mood_ring import append_regime_history
+        spy_change = market_pulse[0].get("change_pct", 0) if market_pulse else 0
+        history_path = PROJECT_ROOT / "landing" / "data" / "regime_history.json"
+        regime_history = append_regime_history(date, regime, vix_level, spy_change, history_path)
+        print(f"  ✓ Regime history updated ({len(regime_history)} entries) → {history_path.name}")
+    except Exception as _e:
+        print(f"  [WARN] Regime history write failed: {_e}")
+
     # ── Stage 4b: ROIC Fortress Filter ──
     print("\n[4b/16] ROIC FORTRESS QUALITY FILTER")
     fortress_results = {}
@@ -989,6 +1000,7 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         leveraged_top_pick=leveraged_top_pick,
         gamma_warnings=gamma_warnings,
         daily_cuts=daily_cuts,
+        regime_history=regime_history,
     )
 
     pdf_path = None
