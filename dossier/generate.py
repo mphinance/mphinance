@@ -719,6 +719,24 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         print(f"  Regime: {regime} (VIX {vix_level:.1f})")
         print(f"  {market_regime.get('market_context', '')}")
 
+    # ── Stage 4a: Mood Ring history (persist today's regime; never fails pipeline) ──
+    # Pure surfacing on top of detect_regime() — append a deduped, date-keyed entry
+    # so the dossier header can render the mood-ring strip of the last ~10 days.
+    try:
+        from dossier.mood_ring import record_regime
+        regime_entry = {
+            "date": date,
+            "regime": market_regime.get("regime", "UNKNOWN"),
+            "regime_name": market_regime.get("vix", {}).get("regime_name", "UNKNOWN"),
+            "vix_level": market_regime.get("vix", {}).get("vix_level", 0),
+            "spy_change": market_pulse[0].get("change_pct", 0) if market_pulse else 0,
+        }
+        rh_path = PROJECT_ROOT / "landing" / "data" / "regime_history.json"
+        record_regime(rh_path, regime_entry)
+        print(f"  ✓ Mood ring history updated → {rh_path}")
+    except Exception as e:
+        print(f"  [WARN] Mood ring history failed: {e}")
+
     # ── Stage 4b: ROIC Fortress Filter ──
     print("\n[4b/16] ROIC FORTRESS QUALITY FILTER")
     fortress_results = {}
