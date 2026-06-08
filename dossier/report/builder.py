@@ -8,7 +8,7 @@ Also generates markdown and PDF versions.
 from datetime import datetime, timezone
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
-from dossier.config import OUTPUT_DIR, AUTHOR, REPORT_TITLE, DISCLAIMER
+from dossier.config import OUTPUT_DIR, PROJECT_ROOT, AUTHOR, REPORT_TITLE, DISCLAIMER
 
 
 TEMPLATE_DIR = Path(__file__).parent
@@ -58,6 +58,25 @@ def build_report(
     else:
         ai_html = ""
 
+    # ── Mood Ring banner (pure surfacing of the persisted regime history) ──
+    mood_ring = {}
+    try:
+        from dossier.mood_ring import load_history, build_mood_ring
+        history = load_history(PROJECT_ROOT / "landing" / "data" / "regime_history.json")
+        today_entry = next((e for e in history if e.get("date") == date), None)
+        mood_ring = build_mood_ring(history, today=today_entry)
+    except Exception as e:
+        print(f"  [WARN] Mood ring banner failed: {e}")
+
+    # ── Grandma Mode (plain-English translation of the day) ──
+    grandma = {}
+    try:
+        from dossier.grandma_mode import plain_english
+        picks = (momentum_picks or {}).get("picks") or []
+        grandma = plain_english(mood_ring, top_pick=picks[0] if picks else None)
+    except Exception as e:
+        print(f"  [WARN] Grandma mode failed: {e}")
+
     content = template.render(
         title=REPORT_TITLE,
         author=AUTHOR,
@@ -76,6 +95,8 @@ def build_report(
         ghost_suggestions=ghost_suggestions,
         momentum_picks=momentum_picks or {},
         market_regime=market_regime or {},
+        mood_ring=mood_ring,
+        grandma=grandma,
         leveraged_top_pick=leveraged_top_pick,
         gamma_warnings=gamma_warnings or [],
         daily_cuts=daily_cuts or {},
