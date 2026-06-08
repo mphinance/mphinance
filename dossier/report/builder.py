@@ -32,6 +32,7 @@ def build_report(
     leveraged_top_pick: dict = None,
     gamma_warnings: list = None,
     daily_cuts: dict = None,
+    regime_history: list = None,
 ) -> str:
     """Render the daily Alpha Dossier report as HTML. Returns path to HTML file."""
     env = Environment(
@@ -58,6 +59,20 @@ def build_report(
     else:
         ai_html = ""
 
+    # Build mood_ring context for the banner (today's mood + last 10 days strip)
+    mood_ring = None
+    if regime_history:
+        from dossier.mood_ring import regime_to_mood
+        current_regime = (market_regime or {}).get("regime", "UNKNOWN")
+        mood = regime_to_mood(current_regime)
+        mood_ring = {
+            "color": mood["color"],
+            "emoji": mood["emoji"],
+            "label": mood["label"],
+            "regime": current_regime,
+            "strip": regime_history[:10],
+        }
+
     content = template.render(
         title=REPORT_TITLE,
         author=AUTHOR,
@@ -79,6 +94,7 @@ def build_report(
         leveraged_top_pick=leveraged_top_pick,
         gamma_warnings=gamma_warnings or [],
         daily_cuts=daily_cuts or {},
+        mood_ring=mood_ring,
         disclaimer=DISCLAIMER,
         pdf_filename=pdf_filename,
         md_filename=md_filename,
