@@ -2,14 +2,24 @@
 """
 Fetch GA4 analytics stats and write to landing/data/ga4_stats.json.
 
-Uses the GA4 Data API with OAuth credentials.
-Can be run standalone or called from the dossier pipeline.
+Uses the GA4 Data API. Credentials are resolved in priority order so the
+script works both locally (interactive browser) and headless (CI):
+
+  1. Service account  — env GA4_SERVICE_ACCOUNT_JSON (raw JSON) or
+     GA4_SERVICE_ACCOUNT_FILE (path to key file). Best for CI; grant the
+     service account "Viewer" on each GA4 property.
+  2. OAuth refresh token — env GA4_REFRESH_TOKEN + GA4_CLIENT_ID +
+     GA4_CLIENT_SECRET. Reuses an existing user grant, no browser needed.
+  3. Cached token file  — ga4_token.json next to the repo (local dev).
+  4. Interactive flow   — opens a browser to authorize (local dev only;
+     skipped when headless/non-TTY or GA4_NONINTERACTIVE is set).
 
 Usage:
     python3 -m dossier.fetch_ga4_stats
 """
 import json
 import os
+import sys
 from pathlib import Path
 from datetime import datetime
 
@@ -31,41 +41,106 @@ SCOPES = [
 ]
 
 
+def _credential_source(env=None, token_file=None, client_file=None) -> str:
+    """Decide which credential method will be used, in priority order.
+
+    Pure/inspectable (no Google imports) so it can be unit-tested. Returns one
+    of: 'service_account_json', 'service_account_file', 'refresh_token',
+    'cached_token', 'interactive', 'none'.
+    """
+    env = os.environ if env is None else env
+    token_file = TOKEN_FILE if token_file is None else token_file
+    client_file = CLIENT_FILE if client_file is None else client_file
+
+    if env.get("GA4_SERVICE_ACCOUNT_JSON"):
+        return "service_account_json"
+    if env.get("GA4_SERVICE_ACCOUNT_FILE"):
+        return "service_account_file"
+    if all(env.get(k) for k in ("GA4_REFRESH_TOKEN", "GA4_CLIENT_ID", "GA4_CLIENT_SECRET")):
+        return "refresh_token"
+    if Path(token_file).exists():
+        return "cached_token"
+    if Path(client_file).exists():
+        return "interactive"
+    return "none"
+
+
 def _get_credentials():
-    """Get OAuth credentials, refreshing or re-authing as needed."""
-    from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import InstalledAppFlow
+    """Resolve GA4 credentials (see module docstring for priority order)."""
+    from google.auth.transport.requests import Request
 
-    creds = None
+    source = _credential_source()
 
-    # Try loading cached token
-    if TOKEN_FILE.exists():
+    # 1. Service account — ideal for CI / headless.
+    if source in ("service_account_json", "service_account_file"):
+        try:
+            from google.oauth2 import service_account
+            if source == "service_account_json":
+                info = json.loads(os.environ["GA4_SERVICE_ACCOUNT_JSON"])
+                creds = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
+                print("  [+] Using service-account credentials (GA4_SERVICE_ACCOUNT_JSON)")
+            else:
+                path = os.environ["GA4_SERVICE_ACCOUNT_FILE"]
+                creds = service_account.Credentials.from_service_account_file(path, scopes=SCOPES)
+                print(f"  [+] Using service-account credentials ({path})")
+            return creds
+        except Exception as e:
+            print(f"  [ERR] Service-account credentials failed: {e}")
+            return None
+
+    # 2. OAuth refresh token from env — headless, reuses an existing user grant.
+    if source == "refresh_token":
+        try:
+            from google.oauth2.credentials import Credentials
+            creds = Credentials(
+                None,
+                refresh_token=os.environ["GA4_REFRESH_TOKEN"],
+                client_id=os.environ["GA4_CLIENT_ID"],
+                client_secret=os.environ["GA4_CLIENT_SECRET"],
+                token_uri="https://oauth2.googleapis.com/token",
+                scopes=SCOPES,
+            )
+            creds.refresh(Request())
+            print("  [+] Using OAuth refresh-token credentials (env)")
+            return creds
+        except Exception as e:
+            print(f"  [ERR] Refresh-token credentials failed: {e}")
+            return None
+
+    # 3. Cached token file (local dev) — refresh if expired.
+    if source == "cached_token":
+        from google.oauth2.credentials import Credentials
+        creds = None
         try:
             creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), SCOPES)
         except Exception:
-            pass
-
-    # Refresh if expired
-    if creds and creds.expired and creds.refresh_token:
-        try:
-            from google.auth.transport.requests import Request
-            creds.refresh(Request())
-            with open(TOKEN_FILE, "w") as f:
-                f.write(creds.to_json())
-        except Exception:
             creds = None
+        if creds and creds.expired and creds.refresh_token:
+            try:
+                creds.refresh(Request())
+                TOKEN_FILE.write_text(creds.to_json())
+            except Exception:
+                creds = None
+        if creds and creds.valid:
+            return creds
+        # cached token unusable → fall through to interactive (if allowed)
 
-    # Re-auth if needed
-    if not creds or not creds.valid:
-        if not CLIENT_FILE.exists():
-            print(f"  [ERR] OAuth client file not found: {CLIENT_FILE}")
-            return None
-        flow = InstalledAppFlow.from_client_secrets_file(str(CLIENT_FILE), SCOPES)
-        creds = flow.run_local_server(port=8085, open_browser=True)
-        with open(TOKEN_FILE, "w") as f:
-            f.write(creds.to_json())
-        print("  [+] OAuth token cached")
+    # 4. Interactive browser flow — local dev only; never hang in CI.
+    if not sys.stdin.isatty() or os.environ.get("GA4_NONINTERACTIVE"):
+        print("  [ERR] No usable GA4 credentials and running headless.")
+        print("        Set GA4_SERVICE_ACCOUNT_JSON / GA4_SERVICE_ACCOUNT_FILE, or")
+        print("        GA4_REFRESH_TOKEN + GA4_CLIENT_ID + GA4_CLIENT_SECRET.")
+        return None
 
+    if not CLIENT_FILE.exists():
+        print(f"  [ERR] OAuth client file not found: {CLIENT_FILE}")
+        return None
+
+    from google_auth_oauthlib.flow import InstalledAppFlow
+    flow = InstalledAppFlow.from_client_secrets_file(str(CLIENT_FILE), SCOPES)
+    creds = flow.run_local_server(port=8085, open_browser=True)
+    TOKEN_FILE.write_text(creds.to_json())
+    print("  [+] OAuth token cached")
     return creds
 
 
