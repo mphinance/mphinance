@@ -26,7 +26,6 @@ Michael writes as **Momentum Phinance** — a trader who builds his own tools, h
 - "The Phund" (his portfolio/investment thesis)  
 - "money glitch" (for financial engineering tricks)
 - "the damn _____" (casual intensifier)
-- "Here's the truth..." (transition to real talk)
 - "I thought I'd use..." (casual expertise framing)
 - Calls stocks by personality: "PLUMPY" for Plume, "the copper plated compounder" for MLI
 
@@ -46,6 +45,7 @@ Michael writes as **Momentum Phinance** — a trader who builds his own tools, h
 - Starts with "In this article, we will..."
 - Uses passive voice
 - Pretends to be perfect
+- Says "Here's the truth..." (or any canned "real talk" transition). Michael hates it. Just make the claim.
 
 ## Example Opening Lines
 >
