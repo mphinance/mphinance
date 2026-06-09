@@ -19,7 +19,7 @@ The Q1 Earnings Report is the gold standard. It pulled the highest engagement be
 - **NO EM DASHES (—). EVER.** Restructure the sentence. Use periods, commas, colons, or semicolons instead. This is Michael's #1 pet peeve. The previous agent used exactly zero em dashes and that's the correct number.
 - **NO MARKDOWN TABLES.** Substack will render them as garbage text. Generate an image instead. Dark theme. Bloomberg aesthetic. Every single time.
 - **Images inline in markdown.** `![Alt text](filename.png)` format so Michael can copy-paste the whole article from the GitHub preview. All images must be generated and saved in the article directory alongside the README.md.
-- **TAGS LINE, NOT A BYLINE.** The line directly under the H1 title is a comma-separated tags line. It fills the Substack subtitle slot. Format: `*Tags: keyword one, keyword two, keyword three*`. NEVER put "by Michael Hanko", "Momentum Phinance", or any byline there. The author is credited once, in the signature at the very end. Pull 5 to 7 tags from the article's actual topic, not from the brand or the author name.
+- **TAGS LINE, NOT A BYLINE.** The line directly under the H1 title is a comma-separated tags line. It fills the Substack subtitle slot. Format: `*Tags: keyword one, keyword two, keyword three*`. NEVER put "by Michael", "Momentum Phinance", or any byline there. The author is credited once, in the signature at the very end. Pull 5 to 7 tags from the article's actual topic, not from the brand or the author name. **NEVER use Michael's last name anywhere in any article, byline, or signature.**
 
 ### Voice
 - Open with the strongest, most controversial take. Not "In this article, we will discuss..."
@@ -34,7 +34,7 @@ Every Substack article follows this skeleton:
 
 ```
 1. Title (the H1 headline)
-2. Tags line (the subtitle slot: `*Tags: keyword, keyword, keyword*`. NOT a byline. Never "by Michael Hanko".)
+2. Tags line (the subtitle slot: `*Tags: keyword, keyword, keyword*`. NOT a byline. Never any byline, never the last name.)
 3. Hero image (generated, dark theme, article title + key stat)
 4. Bold opener (1-2 paragraphs, hook the reader immediately)
 5. Context section (what's happening in the market RIGHT NOW)
@@ -44,8 +44,20 @@ Every Substack article follows this skeleton:
 9. Paid-only deep dive (live data, next trades, insider view)
 10. CTA (subscribe nudge, never desperate)
 11. Recovery wisdom closer
-12. Signature: "- Michael Hanko" or "- Michael Hanko, Managing Partner, The Phund"
+12. Signature: `\- Michael` or `\- Michael, Managing Partner, The Phund`. **Escape the leading dash with a backslash** so the markdown→HTML converter doesn't bulletize it into a single-item list. **First name only. Never use the last name.**
 ```
+
+### Callout Blocks, Dividers & Restacks
+
+`draft_to_substack.py` already converts standard markdown into Substack's native blocks. Use them in README.md instead of leaving them for a hand-pass later.
+
+- **Callout / quote blocks.** A line starting with `> ` becomes Substack's highlighted quote box. This is the single biggest lever for **restacks**: readers restack a quote block far more than a body paragraph. Pull the 2 to 3 most quotable lines of the piece into their own `> ` blockquote (the sharpest zinger, the headline stat, the one-line thesis). Keep each short and standalone, a tweet not a paragraph, and put it where a reader's thumb stops.
+- **Sam asides.** Sam the Quant Ghost can interject as a blockquote (`> **Sam:** ...`) for a sarcastic gut-check or plain-English translation. One or two per piece.
+- **Member-review quotes.** Real testimonials each in their own blockquote on tool/promo posts.
+- **Section dividers.** `* * *` on its own line between major sections. Never `---` (a dash line under text becomes a heading).
+- **Restack nudge.** One short, non-desperate line near the end asking for a restack.
+- **Disclaimer / disclosure.** Italic block above the signature. Required on real-money or referral (`?ref=`) posts: a not-financial-advice line plus the disclosure.
+- **Paywall.** `<!--paywall-->` on its own line becomes Substack's paywall divider (paid posts only).
 
 ### Image Generation Rules
 - **Theme:** Dark background (#0a0a0a or #111), neon green (#00ff41) for bullish/good, gold (#f0b400) for caution, red (#e53935) for danger. Monospace or clean sans-serif fonts.
