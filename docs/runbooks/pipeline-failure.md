@@ -62,7 +62,6 @@ Each scheduled workflow has visible artifacts:
 | `ghost_daily.yml` | [landing/blog/blog_entries.json](../../landing/blog/blog_entries.json) |
 | `watchlist_dive.yml` | [docs/ticker/*/latest.html](../../docs/ticker/) |
 | `update_district12.yml` | [docs/district12.html](../../docs/district12.html) |
-| `triage.yml` | [STATUS.md](../../STATUS.md) |
 | `deploy_pages.yml` | <https://mphinance.github.io/mphinance/> |
 | `secret_aliveness.yml` | weekly probe — see workflow summary for ✅/❌ per secret |
 
