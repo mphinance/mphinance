@@ -1,0 +1,52 @@
+name: Supernote → GitHub Issues
+
+# Reads new handwritten Supernote PDFs from Google Drive, transcribes them with
+# Gemini vision, and files a GitHub issue in the repo named by each note's
+# right-column margin tag (see scripts/supernote_reader.py REPO_MAP).
+#
+# Runs daily and on demand. To DISABLE: comment out the whole `schedule:` block
+# below (manual runs still work), or disable the workflow in the Actions tab.
+
+on:
+  workflow_dispatch:   # Run manually from the Actions tab.
+  schedule:
+    # 08:30 UTC daily (~02:30 CST) — off-hours, clear of the morning dossier.
+    - cron: '30 8 * * *'
+
+concurrency:
+  group: supernote
+  cancel-in-progress: false
+
+jobs:
+  read-and-file:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      # The service-account JSON is stored as a single secret. We materialize it
+      # to a file and point GOOGLE_APPLICATION_CREDENTIALS at it. The folder must
+      # be shared with the service account's client_email (one-time manual step).
+      - name: Write service-account credentials
+        run: echo "$SA_JSON" > "$RUNNER_TEMP/service_account.json"
+        env:
+          SA_JSON: ${{ secrets.SUPERNOTE_SERVICE_ACCOUNT_JSON }}
+
+      - name: Read Supernote notes and file issues
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/service_account.json
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # CROSS-REPO PAT with `repo` scope. The default GITHUB_TOKEN is
+          # single-repo and cannot open issues in other repos, so a PAT is
+          # required to file into mphinance/TickerTrace, traderdaddy-trade, etc.
+          GH_PAT: ${{ secrets.SUPERNOTE_GH_PAT }}
+          PYTHONIOENCODING: utf-8
+        run: python scripts/supernote_reader.py
