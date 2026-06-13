@@ -141,3 +141,32 @@ jobs:
             --append-system-prompt "You are the autonomous GitHub coding agent. One feature per run. Never push to main directly. Do NOT perform AGENTS.md local-agent rituals (no ghost blog entries, no GHOST_HANDOFF.md or blog_entries.json edits)."
             --permission-mode bypassPermissions
             --max-turns 80
+
+      # ── AUTO-MERGE ────────────────────────────────────────────────────────────
+      # Ship a feature a day without a manual merge. After the CODER lands its work
+      # on claude/autonomous, validate it with a LIGHT gate (this repo has no test
+      # suite) and merge if green. If the gate fails, leave the PR open with a note.
+      - name: Validate and auto-merge the feature PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR=$(gh pr list --head claude/autonomous --state open --json number -q '.[0].number')
+          if [ -z "$PR" ]; then echo "No open claude/autonomous PR; nothing to merge."; exit 0; fi
+          git fetch -q origin main claude/autonomous
+          git checkout -q -B _automerge_check origin/claude/autonomous
+          CHANGED=$(git diff --name-only origin/main...HEAD)
+          echo "Changed files:"; echo "$CHANGED"
+          fail=0
+          while IFS= read -r f; do
+            [ -n "$f" ] && [ -f "$f" ] || continue
+            case "$f" in
+              *.py) python -m py_compile "$f" || { echo "py_compile FAILED: $f"; fail=1; } ;;
+              *.js|*.mjs|*.cjs) node --check "$f" || { echo "node --check FAILED: $f"; fail=1; } ;;
+            esac
+          done <<< "$CHANGED"
+          if [ "$fail" -ne 0 ]; then
+            gh pr comment "$PR" --body "🤖 Auto-merge held: a changed file failed the basic validity gate (py_compile / node --check). Leaving PR #$PR open for a look."
+            echo "Gate failed; not merging."; exit 0
+          fi
+          gh pr merge "$PR" --squash --delete-branch
+          echo "Auto-merged PR #$PR."
