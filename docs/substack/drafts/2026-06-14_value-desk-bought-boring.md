@@ -39,7 +39,7 @@ Funds buying: 2 (Avantis large value leading)
 Sector: Semiconductors / chip equipment
 
 **The Read**
-The single biggest large-cap value conviction add of the week, by a mile. KLA makes the inspection and measurement gear every chip fab on earth needs to make anything. If the AI buildout is real, somebody sells the picks and shovels. While retail bought the rocket, the value desk bought the company that checks the rocket's chips. It is not cheap-cheap, but it is a real business at a real multiple, not a trillion-dollar dream.
+The single biggest large-cap value conviction add of the week, by a mile. KLA makes the inspection and measurement gear every chip fab on earth needs to make anything. If the AI buildout is real, somebody sells the picks and shovels. While retail bought the rocket, the value desk bought the company that checks the rocket's chips. One honest caveat so nobody gets fooled: KLA is not cheap on a price-to-earnings basis, it actually screens expensive. Avantis did not buy it for a bargain multiple. They buy the profitability factor, the fat durable margins and high return on capital that a quality value fund pays up for. That is a different kind of value than a low P/E, and it is the whole reason a value desk can own a stock trading at a premium.
 
 ---
 
