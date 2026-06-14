@@ -109,6 +109,19 @@ DATA:
 - TradingView: {data['tv_rec']}
 - Valuation: {data['val_status']} (Gap: {data['val_gap']}%), Target: ${data['val_target']}
 
+IMPORTANT — read the valuation correctly. "Value" is two different things and most
+writers conflate them:
+  - DEEP / GRAHAM VALUE = statistically cheap: low P/E, price below intrinsic. The
+    blended Valuation line above measures THIS, and only this.
+  - QUALITY / PROFITABILITY-FACTOR VALUE = high return on capital and fat, durable
+    margins, which factor funds (Avantis, DFA, and the like) accumulate even at a
+    premium multiple.
+A name can read "OVERVALUED" on the Graham blend and still be a legitimate
+quality-factor holding. If {ticker} screens overvalued but carries a strong profit
+margin ({data['profit_margin']}%), say so plainly: name which kind of value investor
+it actually suits instead of flatly calling it expensive, and do not treat the
+valuation gap alone as a sell signal.
+
 Write the full report now. Be direct, opinionated, data-driven. Use markdown formatting.
 Reference specific price levels and numbers. No generic filler.
 Sign off: "— Ghost out. 👻"
