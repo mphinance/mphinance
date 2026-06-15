@@ -34,32 +34,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from contextlib import contextmanager
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from functools import wraps
 
 # Ensure project root (mphinance/) is on path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-
-def retry(exceptions, tries=3, delay=1, backoff=2, jitter=(0.1, 0.5)):
-    """Retry decorator with exponential backoff and jitter."""
-    def decorator(f):
-        @wraps(f)
-        def wrapper(*args, **kwargs):
-            _tries, _delay = tries, delay
-            while _tries > 1:
-                try:
-                    return f(*args, **kwargs)
-                except exceptions as e:
-                    time.sleep(_delay + random.uniform(*jitter))
-                    _tries -= 1
-                    _delay *= backoff
-            return f(*args, **kwargs)
-        return wrapper
-    return decorator
+from dossier.utils.retry import retry  # noqa: E402
 
 
-@retry(Exception, tries=3, delay=2)
+@retry(max_retries=2, initial_delay=2.0, exceptions=(Exception,))
 def _safe_enrich_ticker(ticker: str):
     """Parallel-safe enrichment with jitter."""
     from dossier.data_sources.ticker_enrichment import enrich_ticker
