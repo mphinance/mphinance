@@ -20,6 +20,7 @@ import yfinance as yf
 import matplotlib
 matplotlib.use("Agg")  # Non-interactive backend for server/CI
 
+import tempfile
 from pathlib import Path
 
 
@@ -173,7 +174,7 @@ if __name__ == "__main__":
     # Quick test
     import sys
     ticker = sys.argv[1] if len(sys.argv) > 1 else "AAPL"
-    result = generate_chart(ticker, output_dir="/tmp/charts")
+    result = generate_chart(ticker, output_dir=str(Path(tempfile.gettempdir()) / "charts"))
     if result:
         print(f"\n✅ Chart generated: {result}")
     else:

@@ -28,6 +28,7 @@ import sys
 import json
 import time
 import argparse
+import tempfile
 from pathlib import Path
 from datetime import datetime, timedelta, time as dtime
 from collections import defaultdict
@@ -142,7 +143,7 @@ def compute_relative_volume(volumes: list, lookback: int = 10) -> float:
 import pickle
 import os
 
-CACHE_DIR = Path("/tmp/yfinance_intraday_cache")
+CACHE_DIR = Path(tempfile.gettempdir()) / "yfinance_intraday_cache"
 CACHE_FILE = CACHE_DIR / "cache.pkl"
 
 _DATA_CACHE = {}
