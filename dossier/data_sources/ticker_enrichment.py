@@ -11,30 +11,7 @@ import numpy as np
 import feedparser
 
 from dossier.utils.validate_api import check_yfinance_history, check_yfinance_info
-
-
-# ─── Technical Indicator Functions ────────────────────────────────
-
-def _sma(series, window):
-    return series.rolling(window=window).mean()
-
-def _ema(series, span):
-    return series.ewm(span=span, adjust=False).mean()
-
-def _rsi(series, window=14):
-    delta = series.diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
-    rs = gain / loss
-    return 100 - (100 / (1 + rs))
-
-def _macd(series, fast=12, slow=26, signal=9):
-    ema_fast = _ema(series, fast)
-    ema_slow = _ema(series, slow)
-    macd = ema_fast - ema_slow
-    signal_line = _ema(macd, signal)
-    hist = macd - signal_line
-    return macd, signal_line, hist
+from dossier.utils.indicators import _ema, _sma, _rsi, _macd, _safe
 
 
 # ─── TradingView Summary ─────────────────────────────────────────
@@ -165,19 +142,6 @@ def _fmt_num(num) -> str:
             return f"${num:,.0f}"
     except (ValueError, TypeError):
         return str(num)
-
-
-def _safe(val, decimals=2):
-    """Safely round a value, returning None for NaN/Inf."""
-    if val is None:
-        return None
-    try:
-        f = float(val)
-        if np.isnan(f) or np.isinf(f):
-            return None
-        return round(f, decimals)
-    except (ValueError, TypeError):
-        return None
 
 
 # ─── Main Enrichment Function ────────────────────────────────────

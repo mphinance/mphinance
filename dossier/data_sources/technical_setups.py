@@ -11,23 +11,8 @@ Based on the Tao of Trading methodology:
 
 import yfinance as yf
 import pandas as pd
-import numpy as np
 
-
-def _ema(series, span):
-    return series.ewm(span=span, adjust=False).mean()
-
-
-def _sma(series, window):
-    return series.rolling(window=window).mean()
-
-
-def _rsi(series, window=14):
-    delta = series.diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
-    rs = gain / loss
-    return 100 - (100 / (1 + rs))
+from dossier.utils.indicators import _ema, _sma, _rsi, _safe
 
 
 def _stochastic(high, low, close, k_period=14, d_period=3):
@@ -43,18 +28,6 @@ def _trama(series, length=34):
     ema1 = _ema(series, length)
     ema2 = _ema(ema1, length)
     return 2 * ema1 - ema2
-
-
-def _safe(val, decimals=2):
-    if val is None:
-        return None
-    try:
-        f = float(val)
-        if np.isnan(f) or np.isinf(f):
-            return None
-        return round(f, decimals)
-    except (ValueError, TypeError):
-        return None
 
 
 def analyze_setup(ticker: str) -> dict | None:
