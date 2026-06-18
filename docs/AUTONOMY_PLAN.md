@@ -122,7 +122,10 @@ If thin, kill it cheap.
 **Rule compliance:** studies his edits to sharpen HIS writing. Never writes a
 public word. Pure feed-the-writer.
 
-- Status: corpus located, v0 not yet built. Open question below on Substack fetch.
+- Status: **v0 SHIPPED (2026-06-18).** `/VOICE-DELTA.md` written from 4 clean
+  before/after pairs (06-17, 06-11, 05-22, 04-25); corpus + reusable fetcher in
+  `docs/voice-delta/`. Awaiting Michael's read on whether it's reading him right.
+  Open question #1 resolved: public Substack JSON API (no auth) — see below.
 
 ### 3.3 Self-directing roadmap (code only)  —  later
 
@@ -175,8 +178,11 @@ irreversible.
 
 ## 6. Open Questions / Decisions Needed
 
-1. **Voice-delta fetch path:** pull shipped posts via public post URLs (simple,
-   public only) or via substack-toolkit API (covers paywalled, needs auth)?
+1. ~~**Voice-delta fetch path:**~~ **RESOLVED (2026-06-18):** public Substack JSON
+   API — `/api/v1/posts/<slug>` for bodies, `/api/v1/archive` for the index, no
+   auth. Free portion of paid posts is enough for the above-the-wall delta. The
+   authenticated substack-toolkit path is only needed to diff *below* the
+   paywall; deferred. See `docs/voice-delta/fetch_shipped.py`.
 2. **Loop ambition ceiling:** how big a diff is too big for an unattended merge
    on mphinance? Current soft cap is ~150 lines; widening 3.1 means raising it.
 3. **Other repos:** which beyond mphinance + TickerTrace get a nightly loop?
@@ -187,7 +193,7 @@ irreversible.
 
 ## 7. Next Actions (in order)
 
-1. Build the **voice-delta v0** on the pairs sittable right now, ship
-   `VOICE-DELTA.md`, get Michael's read.
+1. ~~Build the **voice-delta v0**~~ **DONE 2026-06-18** — `/VOICE-DELTA.md`
+   shipped from 4 pairs. ← *Michael's read pending: is it reading him right?*
 2. **Widen the mphinance loop** brief (3.1) toward tools/screeners/research.
 3. Decide the next repos (Q3) and stand up routines.
