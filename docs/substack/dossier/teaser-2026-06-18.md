@@ -1,10 +1,10 @@
 # Ghost Alpha Dossier — 2026-06-18
 
-> 🟡 **Transition** · SPY ▼ 1.2% · VIX 17.1
+> 🟡 **Transition** · SPY ▼ 1.2% · VIX 17.2
 
 ---
 
-Alright, let's cut to the chase.
+The tape's calm, with VIX holding a casual 17.
 
 
 ## 🥇 Gold Pick: USB
@@ -28,7 +28,7 @@ Alright, let's cut to the chase.
 
 - **170 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 1.2% | **VIX:** 17.1
+- **SPY:** ▼ 1.2% | **VIX:** 17.2
 
 ---
 
