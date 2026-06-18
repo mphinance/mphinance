@@ -809,7 +809,15 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     with timer.stage("Triangle Breakout"):
         try:
             from dossier.data_sources.triangle_screener import generate_triangles
-            triangle_universe = candidate_pool[:40] or scanned_tickers[:40]
+            # Blend liquid strategy survivors / core (which pass the engine's
+            # liquidity + 300-bar gates and actually form clean triangles) with
+            # the broad universe movers. Survivors first so the liquid names are
+            # guaranteed in-scope; universe adds small/mid-cap breakout candidates
+            # (illiquid ones simply fail the gate — no harm). De-duped, junk-filtered.
+            triangle_universe = [
+                t for t in dict.fromkeys(scanned_tickers[:30] + candidate_pool[:30])
+                if not _is_junk(t)
+            ][:50] or scanned_tickers[:40]
             triangle_signals = generate_triangles(triangle_universe, max_results=10)
             confirmed = [t for t in triangle_signals if t.get("pattern") == "confirmed"]
             print(f"  {len(triangle_signals)} triangles ({len(confirmed)} confirmed) "
