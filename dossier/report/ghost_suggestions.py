@@ -8,6 +8,7 @@ and signed by Sam.
 
 import subprocess
 import os
+import sys
 import json
 from pathlib import Path
 
@@ -41,8 +42,8 @@ def _recent_git_stats() -> dict:
             from collections import Counter
             dirs = [f.split("/")[0] for f in files if "/" in f]
             stats["hot_dirs"] = [d for d, _ in Counter(dirs).most_common(5)]
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[WARN] ghost_suggestions: _recent_git_stats failed: {e}", file=sys.stderr)
     return stats
 
 
@@ -57,8 +58,8 @@ def _open_issues() -> list[dict]:
         )
         if result.returncode == 0:
             issues = json.loads(result.stdout)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[WARN] ghost_suggestions: _open_issues failed: {e}", file=sys.stderr)
     return issues
 
 
@@ -73,8 +74,8 @@ def _stale_patterns() -> dict:
             )
             if result.returncode == 0:
                 patterns[key] = len(result.stdout.strip().split("\n"))
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[WARN] ghost_suggestions: _stale_patterns failed: {e}", file=sys.stderr)
     return patterns
 
 
@@ -114,8 +115,8 @@ def generate_suggestions(date: str) -> str:
     # Try Gemini
     try:
         return _ai_suggestions(date, context)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[WARN] ghost_suggestions: _ai_suggestions failed: {e}", file=sys.stderr)
 
     # Fallback
     return _static_suggestions(date, git_stats, issues)
