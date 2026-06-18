@@ -41,6 +41,10 @@ a production system with real users or real dollars.
 | `pytest` CI gate on PRs | mphinance | LIVE (`.github/workflows/ci.yml`, PR #42) |
 | "Daily Glow-Up" routine: ready PR, watches own CI, squash-merges on green | TickerTrace | LIVE (cloud routine `trig_01RQi59q535AgYZA49Pkj3oJ`, 15:00 UTC daily) |
 | Old draft-PR graveyard cleared (#8, #9, #11, #12, #13, #15) | TickerTrace | DONE, all merged |
+| Voice-delta v0 + weekly recurring agent (re-pairs each new post, opens a PR) | mphinance | LIVE (cloud routine `voice-delta-refresh` `trig_01K7bwuff8s1xVYo7ZkRgDTq`, Sun 03:00 UTC; PR #46) |
+| Nightly builder: one self-contained screener/analytics change, auto-merge on green CI; IBKR read-only market data attached (no trading) | scanline | LIVE (cloud routine `scanline-nightly-builder` `trig_01N3VdigxVz4hyiYGb7yGFBe`, 08:00 UTC daily) |
+| Loop brief widened from chores to building | mphinance | LIVE (PR #47) |
+| Next-repos audit (scanline=send, alpha-skills=needs CI, rest defer) | mphinance | DONE (PR #45, `docs/autonomy/next-repos.md`) |
 
 Both loops now do the same shape: **open a PR you can see, land it on green CI,
 zero clicks from you.** No more direct-to-main invisibility, no more draft pile
@@ -194,6 +198,21 @@ irreversible.
 ## 7. Next Actions (in order)
 
 1. ~~Build the **voice-delta v0**~~ **DONE 2026-06-18** — `/VOICE-DELTA.md`
-   shipped from 4 pairs. ← *Michael's read pending: is it reading him right?*
-2. **Widen the mphinance loop** brief (3.1) toward tools/screeners/research.
-3. Decide the next repos (Q3) and stand up routines.
+   shipped from 4 pairs (PR #46, merged) + weekly `voice-delta-refresh` routine.
+   ← *Michael's read pending: is it reading him right?*
+2. ~~**Widen the mphinance loop** brief (3.1)~~ **DONE 2026-06-18** (PR #47, merged).
+3. ~~Decide the next repos (Q3) and stand up routines.~~ **DONE 2026-06-18** —
+   audit in `docs/autonomy/next-repos.md` (PR #45). **scanline** stood up as a
+   nightly cloud routine (`scanline-nightly-builder`, auto-merge on green CI,
+   IBKR read-only market data attached per Michael — no order/trade tools).
+   Remaining: **alpha-skills** is one cheap CI gate away from qualifying; the
+   money/order/audience repos (mur, alpha-command-center, TD-Pro shipping) stay
+   deferred on the section-5 hard line.
+
+## 8. What's next (post-list)
+
+- **alpha-skills**: add a compile/lint CI gate, then stand up its loop (the only
+  remaining "feeds the work" candidate not blocked by the hard line).
+- **Self-directing roadmap (3.3)** and **memory/decision journal (3.5)**: still
+  later — the fleet now has three repos building; a shared backlog keeps them
+  laddering instead of doing brownian motion.
