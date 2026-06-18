@@ -683,6 +683,33 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
 
     scanned_tickers = [s["symbol"] for s in scanner_signals]
 
+    # ── Stage 2b: Broad Universe Scan (scanline union) ──
+    # Size-agnostic candidate pool (momentum ∪ unusual-volume ∪ oversold-bounce)
+    # so the new deep-screener legs (triangle, flow) see small/mid-cap movers the
+    # native top-200-by-mcap funnel misses. Never raises → [] on failure.
+    print("\n[2b/16] BROAD UNIVERSE SCAN (scanline)")
+    universe_rows: list[dict] = []
+    universe_mcap: dict[str, float] = {}
+    with timer.stage("Universe Scan"):
+        try:
+            from dossier.data_sources.universe_scan import scan_universe_union
+            universe_rows = scan_universe_union(limit_per=120)
+            universe_mcap = {
+                r["ticker"]: r["market_cap"]
+                for r in universe_rows
+                if r.get("ticker") and r.get("market_cap") is not None
+            }
+            multi = [r for r in universe_rows if len(r.get("sources", [])) >= 2]
+            print(f"  {len(universe_rows)} candidates ({len(multi)} multi-source)")
+        except Exception as e:
+            print(f"  [WARN] Universe scan failed: {e}")
+    # Candidate pool for the new legs: union tickers first (broad), then the
+    # existing strategy survivors. De-duped, junk-filtered, order-preserving.
+    universe_syms = [r["ticker"] for r in universe_rows if r.get("ticker")]
+    candidate_pool = [
+        t for t in dict.fromkeys(universe_syms + scanned_tickers) if not _is_junk(t)
+    ]
+
     # ── Stage 3: Institutional Data ──
     print("\n[3/16] TICKERTRACE INSTITUTIONAL DATA")
     from dossier.data_sources.tickertrace import fetch_institutional_data
@@ -701,6 +728,22 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         vix_level = vix_data.get("vix_level", 0)
         print(f"  Regime: {regime} (VIX {vix_level:.1f})")
         print(f"  {market_regime.get('market_context', '')}")
+
+    # ── Stage 4c: Market Weather (StrikeForge VIX term-structure) ──
+    # Upgrades the level-only regime read with VIX/VIX3M term structure
+    # (contango/backwardation) + a "should I trade today" verdict. Fail-open.
+    print("\n[4c/16] MARKET WEATHER (VIX term structure)")
+    market_weather_data: dict = {}
+    with timer.stage("Market Weather"):
+        try:
+            from dossier.data_sources.sf_market_weather import market_weather
+            market_weather_data = market_weather()
+            if market_weather_data.get("available"):
+                print(f"  {market_weather_data.get('headline', '')}")
+            else:
+                print("  ⏭️ Market weather unavailable (VIX fetch failed)")
+        except Exception as e:
+            print(f"  [WARN] Market weather failed: {e}")
 
     # ── Stage 4a: Mood Ring history (persist today's regime; never fails pipeline) ──
     # Pure surfacing on top of detect_regime() — append a deduped, date-keyed entry
@@ -757,11 +800,79 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     technical_setups = generate_setups(setup_tickers, max_setups=6)
     print(f"  {len(technical_setups)} setups analyzed")
 
+    # ── Stage 6b: Triangle Breakout (TD Pro engine, OHLCV-only) ──
+    # Scans the broad candidate pool's top names for confirmed/forming triangles.
+    # Each scan fetches 2y daily bars (yfinance), so cap the universe to keep the
+    # static-IP yfinance load bounded. Never raises → [].
+    print("\n[6b/16] TRIANGLE BREAKOUT")
+    triangle_signals: list[dict] = []
+    with timer.stage("Triangle Breakout"):
+        try:
+            from dossier.data_sources.triangle_screener import generate_triangles
+            triangle_universe = candidate_pool[:40] or scanned_tickers[:40]
+            triangle_signals = generate_triangles(triangle_universe, max_results=10)
+            confirmed = [t for t in triangle_signals if t.get("pattern") == "confirmed"]
+            print(f"  {len(triangle_signals)} triangles ({len(confirmed)} confirmed) "
+                  f"from {len(triangle_universe)} scanned")
+        except Exception as e:
+            print(f"  [WARN] Triangle breakout failed: {e}")
+
     # ── Stage 7: CSP Setups ──
     print("\n[7/16] CSP SETUPS")
     from dossier.data_sources.csp_setups import fetch_csp_setups
     csp_setups = fetch_csp_setups(max_results=8)
     print(f"  {len(csp_setups)} CSP candidates")
+
+    # ── Stage 7b: Options Flow (daily Tradier snapshot) ──
+    # Once-daily Vol/OI + premium-skew snapshot, static scoring. Tradier-backed
+    # (no yfinance), market-cap-aware tier floors via the universe scan. Never raises.
+    print("\n[7b/16] OPTIONS FLOW (Tradier daily)")
+    options_flow_signals: list[dict] = []
+    with timer.stage("Options Flow"):
+        try:
+            from dossier.data_sources.options_flow import fetch_options_flow
+            flow_universe = candidate_pool[:15] or scanned_tickers[:15]
+            options_flow_signals = fetch_options_flow(
+                flow_universe, max_results=10, market_caps=universe_mcap
+            )
+            bull = [f for f in options_flow_signals if f.get("skew") == "bullish"]
+            print(f"  {len(options_flow_signals)} tickers with flow ({len(bull)} bullish skew)")
+        except Exception as e:
+            print(f"  [WARN] Options flow failed: {e}")
+
+    # Build a per-ticker signal-source map from the new directional legs — feeds
+    # both the IBKR book overlay and the analyst-watchlist cross-reference.
+    signals_by_ticker: dict[str, list[str]] = {}
+    for t in triangle_signals:
+        sym = (t.get("ticker") or "").upper()
+        if sym:
+            signals_by_ticker.setdefault(sym, []).append(f"triangle_{t.get('pattern', '')}")
+    for f in options_flow_signals:
+        sym = (f.get("ticker") or "").upper()
+        if sym:
+            skew = f.get("skew", "balanced")
+            signals_by_ticker.setdefault(sym, []).append(f"flow_{skew}")
+
+    # ── Stage 7c: IBKR Book ("Your Book") ──
+    # Live holdings from the local bridge (degrades to empty if the gateway is
+    # asleep), each tagged HOLD/ADD/TRIM/WATCH against today's signal overlaps.
+    print("\n[7c/16] IBKR BOOK (Your Book)")
+    book_data: dict = {"positions": [], "account": {}, "ok": False}
+    book_overlay: list[dict] = []
+    with timer.stage("IBKR Book"):
+        try:
+            from dossier.data_sources.ibkr_book import get_book, overlay_book
+            book_data = get_book()
+            if book_data.get("ok"):
+                book_overlay = overlay_book(book_data.get("positions", []), signals_by_ticker)
+                actions = [p.get("action") for p in book_overlay]
+                print(f"  {len(book_overlay)} positions "
+                      f"(ADD {actions.count('ADD')}, TRIM {actions.count('TRIM')}, "
+                      f"WATCH {actions.count('WATCH')})")
+            else:
+                print(f"  ⏭️ IBKR bridge unavailable ({book_data.get('error', 'no data')})")
+        except Exception as e:
+            print(f"  [WARN] IBKR book failed: {e}")
 
     # ── Stage 8: Ticker Enrichment ──
     print(f"\n[8/16] TICKER ENRICHMENT (top {MAX_DOSSIER_TICKERS})")
@@ -887,6 +998,35 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Daily Cuts failed: {e}")
 
+    # ── Stage 11d: Analyst Watchlist Overlay ──
+    # Ingest the nightly analyst watchlist (email when available, else the
+    # ANALYST_WATCHLIST env var) and cross-reference it against today's signals
+    # to surface confirmed overlaps vs off-radar (narrow-universe-gap) names.
+    print("\n[11d/16] ANALYST WATCHLIST OVERLAY")
+    analyst_overlay: dict = {}
+    try:
+        from dossier.data_sources.watchlist_ingest import (
+            parse_watchlist, cross_reference, fetch_latest_watchlist_email,
+        )
+        raw_watch = fetch_latest_watchlist_email() or os.environ.get("ANALYST_WATCHLIST", "")
+        watch = parse_watchlist(raw_watch) if raw_watch else []
+        if watch:
+            signals_by_source = {
+                "universe": universe_syms,
+                "triangle": [t.get("ticker") for t in triangle_signals],
+                "flow": [f.get("ticker") for f in options_flow_signals],
+                "institutional": [s.get("ticker") for s in institutional.get("top_buying", [])],
+                "momentum": [p.get("ticker") for p in (momentum_picks.get("picks", []) if momentum_picks else [])],
+            }
+            analyst_overlay = cross_reference(watch, signals_by_source)
+            summ = analyst_overlay.get("summary", {})
+            print(f"  {len(watch)} analyst names — {summ.get('overlap_count', 0)} confirmed, "
+                  f"{len(summ.get('off_radar', []))} off-radar")
+        else:
+            print("  ⏭️ No analyst watchlist available (set ANALYST_WATCHLIST or wire email)")
+    except Exception as e:
+        print(f"  [WARN] Analyst watchlist overlay failed: {e}")
+
     # ── Stage 8c: Chart Generation ──
     print("\n[12/16] CHART GENERATION")
     try:
@@ -945,6 +1085,26 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
                           f"[Grav:{gq}]")
         except Exception as e:
             print(f"  [WARN] Gamma watch failed: {e}")
+
+    # ── Stage 9d: GEX (StrikeForge dealer positioning) ──
+    # Gamma-exposure read on the top dossier picks: gamma flip, call/put walls,
+    # dealer regime. Tradier-backed, capped to the top names. Never raises.
+    print("\n[13d/16] GEX DEALER POSITIONING")
+    gex_reads: list[dict] = []
+    with timer.stage("GEX"):
+        try:
+            from dossier.data_sources.sf_gex import gex_read
+            gex_tickers = [d["ticker"] for d in dossiers[:5]]
+            for tkr in gex_tickers:
+                r = gex_read(tkr)
+                if r:
+                    gex_reads.append(r)
+                    print(f"  {tkr}: {r.get('regime', '?')} "
+                          f"(flip {r.get('gamma_flip')}, net GEX {r.get('net_gex')})")
+            if not gex_reads:
+                print("  ⏭️ No GEX reads (no key / no chains)")
+        except Exception as e:
+            print(f"  [WARN] GEX failed: {e}")
 
     # ── Stage 9b: Ghost Dev Log ──
     print("\n[13b/16] GHOST DEV LOG")

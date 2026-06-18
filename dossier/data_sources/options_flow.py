@@ -476,14 +476,24 @@ def scan_flow(ticker: str, market_cap: float | None = None) -> dict | None:
 # ████  BATCH ENTRY POINT  ████
 # ═══════════════════════════════════════════════════════════════════
 
-def fetch_options_flow(tickers: list[str], max_results: int = 10) -> list[dict]:
+def fetch_options_flow(
+    tickers: list[str],
+    max_results: int = 10,
+    market_caps: dict[str, float] | None = None,
+) -> list[dict]:
     """
     Batch daily flow snapshot. Returns a list of per-ticker dicts (those with
     usable flow), ranked by top contract score, capped at max_results.
     Never raises — degrades to [].
+
+    `market_caps` (optional): a {TICKER: market_cap} map so the per-ticker tier
+    floors apply (small-cap names get looser thresholds). When a ticker is
+    absent the scan defaults to the large-cap floor.
     """
     if not tickers:
         return []
+
+    mcaps = {str(k).upper(): v for k, v in (market_caps or {}).items()}
 
     print("  Running daily options-flow snapshot (Tradier)...")
     results: list[dict] = []
@@ -495,7 +505,7 @@ def fetch_options_flow(tickers: list[str], max_results: int = 10) -> list[dict]:
             continue
         seen.add(t)
         try:
-            snap = scan_flow(t)
+            snap = scan_flow(t, market_cap=mcaps.get(t))
         except Exception as e:  # belt-and-suspenders; scan_flow already guards
             print(f"    [ERR] options_flow({t}): {e}")
             snap = None
