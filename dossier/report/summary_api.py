@@ -95,13 +95,23 @@ def generate_summary_api(
         if sentences:
             one_liner = sentences[0].strip() + '.'
 
+    # ── Synthesis sections (Daily Review v2) — passed via kwargs ──
+    # Only the PUBLIC subset (confluence/migration/market_weather) is emitted;
+    # your_book + analyst overlay are private and handled by the push, not here.
+    confluence = kwargs.get("confluence") or {}
+    migration = kwargs.get("migration") or {}
+    market_weather = kwargs.get("market_weather") or {}
+
+    confluence_section = _confluence_summary(confluence)
+    migration_section = _migration_summary(migration)
+
     # ── Build the summary ──
     summary = {
         "meta": {
             "date": date,
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "report_url": f"https://mphinance.github.io/mphinance/reports/{date}_alpha_dossier.html",
-            "pipeline_version": "2.0",
+            "pipeline_version": "2.1",
         },
         "market": {
             "spy": {"price": spy.get("price", 0), "change_pct": spy.get("pct_change", 0)},
@@ -136,6 +146,20 @@ def generate_summary_api(
             "technical_setups": len(technical_setups) if technical_setups else 0,
             "benchmarks": len(market_pulse),
         },
+        # ── Daily Review v2 synthesis (PUBLIC subset only) ──
+        # NOTE: your_book (Mike's live IBKR positions) and analyst_overlap (a
+        # third party's private list) are DELIBERATELY excluded — this JSON is
+        # published to public GitHub Pages. Those go only into the private push.
+        "confluence": confluence_section,
+        "migration": migration_section,
+        "market_weather": {
+            "regime": market_weather.get("regime"),
+            "vix": market_weather.get("vix"),
+            "term_structure": market_weather.get("term_structure"),
+            "verdict": market_weather.get("verdict"),
+            "trade_ok": market_weather.get("trade_ok"),
+            "headline": market_weather.get("headline"),
+        } if market_weather else None,
     }
 
     # ── Write to disk ──
@@ -162,6 +186,73 @@ def generate_summary_api(
         print(f"  🥇 Gold Pick: {gold_pick['ticker']} ({gold_pick.get('score', '?')}/100)")
 
     return summary
+
+
+def _confluence_summary(confluence: dict) -> dict:
+    """Shape the confluence watchlist for the summary API (top multi-leg names)."""
+    watchlist = (confluence or {}).get("watchlist") or []
+    rows = []
+    for r in watchlist:
+        if r.get("n_legs", 0) < 2:
+            continue  # the API surfaces only multi-leg convergence
+        rows.append({
+            "ticker": r.get("ticker"),
+            "n_legs": r.get("n_legs"),
+            "score": r.get("score"),
+            "conflict": r.get("conflict", False),
+            "conflict_reason": r.get("conflict_reason", ""),
+            "legs": [{"source": l.get("source"), "direction": l.get("direction"),
+                      "detail": l.get("detail")} for l in (r.get("legs") or [])],
+        })
+        if len(rows) >= 8:
+            break
+    top = rows[0] if rows else None
+    return {
+        "count": len(rows),
+        "top": top,
+        "watchlist": rows,
+    }
+
+
+def _migration_summary(migration: dict) -> dict:
+    """Shape the migration feed for the summary API."""
+    migrations = (migration or {}).get("migrations") or []
+    motd = (migration or {}).get("migration_of_the_day")
+    return {
+        "count": len(migrations),
+        "migration_of_the_day": motd,
+        "migrations": migrations[:10],
+    }
+
+
+def _your_book_summary(your_book: dict) -> dict:
+    """Shape the IBKR 'Your Book' overlay for the summary API."""
+    positions = (your_book or {}).get("positions") or []
+    actionable = [p for p in positions
+                  if p.get("action") in ("ADD", "TRIM") or p.get("overlap")]
+    return {
+        "ok": bool((your_book or {}).get("ok")),
+        "position_count": len(positions),
+        "actionable": [{
+            "ticker": p.get("ticker"),
+            "action": p.get("action"),
+            "signal_sources": p.get("signal_sources", []),
+            "note": p.get("note", ""),
+            "unrealized_pnl": p.get("unrealized_pnl"),
+        } for p in actionable[:5]],
+        "net_liq": (your_book or {}).get("net_liq"),
+        "daily_pnl": (your_book or {}).get("daily_pnl"),
+    }
+
+
+def _analyst_summary(analyst_overlay: dict) -> dict:
+    """Shape the nightly analyst-watchlist cross-reference for the summary API."""
+    summ = (analyst_overlay or {}).get("summary") or {}
+    return {
+        "confirmed": summ.get("confirmed", []),
+        "off_radar": summ.get("off_radar", []),
+        "overlap_count": summ.get("overlap_count", 0),
+    }
 
 
 def _pick_summary(pick: dict) -> dict:

@@ -288,6 +288,62 @@ def overlay_book(
     return out
 
 
+def enrich_with_quotes(positions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Fill in `last` / `market_value` / `unrealized_pnl` for STOCK positions.
+
+    The bridge /positions doesn't carry live prices, so we fetch last close per
+    stock ticker from yfinance and derive market value + unrealized P&L from
+    qty/avg_price. Options are left as-is (per-contract avg_price; pricing an
+    option chain here is out of scope). NEVER raises — returns positions
+    unchanged on any failure, enriches what it can.
+    """
+    if not positions:
+        return positions or []
+    try:
+        import yfinance as yf
+    except Exception:
+        return positions
+
+    stock_tickers = sorted({
+        p["ticker"] for p in positions
+        if isinstance(p, dict) and p.get("ticker") and p.get("asset_class") == "stock"
+    })
+    if not stock_tickers:
+        return positions
+
+    last_by_ticker: dict[str, float] = {}
+    try:
+        data = yf.download(stock_tickers, period="2d", progress=False,
+                           auto_adjust=True, threads=True)
+        # Multi vs single ticker shapes differ; handle both.
+        closes = data["Close"] if "Close" in getattr(data, "columns", []) else data
+        for t in stock_tickers:
+            try:
+                series = closes[t] if hasattr(closes, "columns") and t in closes.columns else closes
+                val = series.dropna().iloc[-1]
+                last_by_ticker[t] = float(val)
+            except Exception:
+                continue
+    except Exception as e:
+        print(f"[ibkr_book] quote enrichment failed: {e}")
+        return positions
+
+    for p in positions:
+        if not isinstance(p, dict) or p.get("asset_class") != "stock":
+            continue
+        last = last_by_ticker.get(p.get("ticker"))
+        if last is None:
+            continue
+        qty = p.get("qty")
+        avg = p.get("avg_price")
+        p["last"] = round(last, 4)
+        if isinstance(qty, (int, float)):
+            p["market_value"] = round(last * qty, 2)
+            if isinstance(avg, (int, float)):
+                p["unrealized_pnl"] = round((last - avg) * qty, 2)
+    return positions
+
+
 # ── CLI smoke test ───────────────────────────────────────────
 
 if __name__ == "__main__":

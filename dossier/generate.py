@@ -861,10 +861,12 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     book_overlay: list[dict] = []
     with timer.stage("IBKR Book"):
         try:
-            from dossier.data_sources.ibkr_book import get_book, overlay_book
+            from dossier.data_sources.ibkr_book import get_book, overlay_book, enrich_with_quotes
             book_data = get_book()
             if book_data.get("ok"):
-                book_overlay = overlay_book(book_data.get("positions", []), signals_by_ticker)
+                positions = enrich_with_quotes(book_data.get("positions", []))
+                book_data["positions"] = positions
+                book_overlay = overlay_book(positions, signals_by_ticker)
                 actions = [p.get("action") for p in book_overlay]
                 print(f"  {len(book_overlay)} positions "
                       f"(ADD {actions.count('ADD')}, TRIM {actions.count('TRIM')}, "
@@ -873,6 +875,15 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
                 print(f"  ⏭️ IBKR bridge unavailable ({book_data.get('error', 'no data')})")
         except Exception as e:
             print(f"  [WARN] IBKR book failed: {e}")
+
+    # Assemble the private "Your Book" payload for the push (never published).
+    _acct = book_data.get("account", {}) if isinstance(book_data, dict) else {}
+    your_book = {
+        "ok": bool(book_data.get("ok")),
+        "positions": book_overlay,
+        "net_liq": _acct.get("NetLiquidation_num") or _acct.get("NetLiquidation"),
+        "daily_pnl": _acct.get("dailyPnL"),
+    }
 
     # ── Stage 8: Ticker Enrichment ──
     print(f"\n[8/16] TICKER ENRICHMENT (top {MAX_DOSSIER_TICKERS})")
@@ -955,6 +966,64 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         print(f"  {picks_text}")
     except Exception as e:
         print(f"  [WARN] Momentum picks failed: {e}")
+
+    # ── Stage 10b: Confluence + Day-over-Day Migration (the synthesis) ──
+    # Rank tickers by how many INDEPENDENT, directionally-agreeing legs fire
+    # (trend ∪ triangle ∪ flow ∪ 13F), then detect what MATURED since yesterday.
+    # Both pure + never-raise. Migration needs per-leg namespaced persistence, so
+    # we record each new leg into its OWN namespace first (the default-namespace
+    # scanner call already happened at Stage 5 — do NOT duplicate it).
+    print("\n[10b/16] CONFLUENCE + MIGRATION")
+    confluence = {"watchlist": [], "generated": 0}
+    migration = {"migrations": [], "migration_of_the_day": None}
+    with timer.stage("Confluence + Migration"):
+        try:
+            from dossier.confluence import compute_confluence, compute_migration
+            from dossier.persistence.tracker import update_persistence, load_persistence
+
+            confluence = compute_confluence(
+                scanner_signals=scanner_signals,
+                triangle_signals=triangle_signals,
+                options_flow_signals=options_flow_signals,
+                institutional=institutional,
+                momentum_picks=momentum_picks,
+                universe_rows=universe_rows,
+                market_regime=market_regime,
+            )
+            print(f"  Confluence: {confluence['generated']} multi-leg names "
+                  f"(of {len(confluence['watchlist'])} ranked)")
+            top = confluence["watchlist"][0] if confluence["watchlist"] else None
+            if top:
+                print(f"    Top: {top['ticker']} — {top['n_legs']} legs (score {top['score']})")
+
+            # Namespaced persistence for the new legs (migration anchors).
+            mom_tickers = [p.get("ticker") for p in momentum_picks.get("picks", [])] if momentum_picks else []
+            update_persistence([t["ticker"] for t in triangle_signals], date, namespace="triangle")
+            update_persistence([f["ticker"] for f in options_flow_signals], date, namespace="flow")
+            update_persistence([t for t in mom_tickers if t], date, namespace="momentum")
+            update_persistence([b.get("ticker") for b in institutional.get("top_buying", []) if b.get("ticker")], date, namespace="institutional")
+            update_persistence(universe_syms, date, namespace="universe")
+
+            namespaces_today = {
+                "scanner": scanned_tickers,
+                "triangle": [t["ticker"] for t in triangle_signals],
+                "flow": [f["ticker"] for f in options_flow_signals],
+                "momentum": [t for t in mom_tickers if t],
+                "institutional": [b.get("ticker") for b in institutional.get("top_buying", []) if b.get("ticker")],
+                "universe": universe_syms,
+            }
+            namespaces_persistence = {ns: load_persistence(ns) for ns in namespaces_today}
+            migration = compute_migration(
+                namespaces_today=namespaces_today,
+                namespaces_persistence=namespaces_persistence,
+                market_caps=universe_mcap,
+                date=date,
+            )
+            motd = migration.get("migration_of_the_day")
+            print(f"  Migration: {len(migration['migrations'])} maturation events"
+                  + (f" — MOTD {motd['ticker']} {motd['note']}" if motd else ""))
+        except Exception as e:
+            print(f"  [WARN] Confluence/migration failed: {e}")
 
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
@@ -1150,6 +1219,9 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         leveraged_top_pick=leveraged_top_pick,
         gamma_warnings=gamma_warnings,
         daily_cuts=daily_cuts,
+        confluence=confluence,
+        migration=migration,
+        market_weather=market_weather_data,
     )
 
     pdf_path = None
@@ -1243,6 +1315,9 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             technical_setups=technical_setups,
             daily_setups=daily_setups_data,
             ghost_log=ghost_log,
+            confluence=confluence,
+            migration=migration,
+            market_weather=market_weather_data,
         )
         # Auto-generate Substack teaser from the summary
         try:
@@ -1250,12 +1325,22 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             generate_teaser(summary)
         except Exception as te:
             print(f"  [WARN] Substack teaser failed: {te}")
-        # Auto-post to Discord
+        # Auto-post to Discord (PUBLIC teaser)
         try:
             from dossier.report.discord_notify import post_dossier_to_discord
             post_dossier_to_discord(summary)
         except Exception as de:
             print(f"  [WARN] Discord notification failed: {de}")
+        # Private "Daily Review" push (Your Book + analyst overlay) — writes a
+        # private payload for the Claude task to deliver; posts now if a private
+        # webhook is configured. Never published.
+        try:
+            from dossier.report.daily_review_push import emit_push
+            push = emit_push(summary, your_book=your_book, analyst_overlay=analyst_overlay)
+            print(f"  ✓ Daily-review push staged ({len(push.get('phone_lines', []))} lines"
+                  + (", webhook sent" if push.get("_webhook_sent") else ", file only") + ")")
+        except Exception as pe:
+            print(f"  [WARN] Daily-review push failed: {pe}")
     except Exception as e:
         print(f"  [WARN] Summary API failed: {e}")
 
