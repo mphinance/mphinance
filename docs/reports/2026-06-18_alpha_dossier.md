@@ -1,11 +1,13 @@
 # ALPHA.DOSSIER // 2026-06-18
-*Sam the Quant Ghost | 2026-06-17 10:04 PM CST*
+*Sam the Quant Ghost | 2026-06-18 06:00 AM CST*
 
 ## 🧠 AI Synthesis
 
-VIX is a snooze at 18.44, but smart money is anything but asleep. Heavy rotation underway: CRWV, SPCX, GOOGL, AMZN catching institutional bids, while AMD, SEDG, MU are being actively pruned. No lifers means no long-term conviction plays are crystalizing just yet—keep positions nimble.
+Alright, let's cut to the chase.
 
-Our scanners are flagging solid entries in DE, GM, JNJ, and ODFL, but pump the brakes. While quality names like ODFL, JNJ, and ANET are Grade A with killer tech/fund scores, our dossiers scream OVERVALUED by 35-40%. Chasing those here is chasing air; WAIT for a haircut. For the truly degenerate, NFLX (NFXL) offers a Nuclear Option with decent momentum (ADX 26.3, Grade B), but that's a high-alpha, high-risk play. Patience for quality, aggression for the brave.
+VIX sitting at 17.14 suggests no immediate panic, but the institutional flow tells a nuanced story. Whales are clearly chasing growth, piling into names like CRWV, SPCX, GOOGL, AMZN, and TWST. Conversely, they're actively dumping AMD, SEDG, and MU—a distinct lack of conviction in several chip names. Our scanner is flashing green on industrials and healthcare, highlighting DE, ODFL, JNJ, RTX, and ANET.
+
+But here's the rub: while the scanner likes ODFL, JNJ, and ANET, our dossiers scream **OVERVALUED**—by 38.2%, 40.3%, and 35.8% respectively. The verdict is a hard "WAIT for validation" on these Grade A names. Don't chase. NFLX, via NFXL, is a leveraged play with a Grade B and ADX 26.3, worth a look for the aggressive, but remember, no long-term conviction "Lifers" emerged today. Be nimble, folks.
 
 — Ghost out. 👻
 
@@ -15,14 +17,14 @@ Our scanners are flagging solid entries in DE, GM, JNJ, and ODFL, but pump the b
 - 🔴 **Nasdaq 100**: $722.51 (-1.01%)
 - 🔴 **Russell 2000**: $289.88 (-0.75%)
 - 🔴 **Dow 30**: $516.3 (-0.99%)
-- 🔴 **Bitcoin**: $64503.2 (-1.67%)
-- 🔴 **Ethereum**: $1750.6 (-2.22%)
+- 🔴 **Bitcoin**: $64094.88 (-0.50%)
+- 🟢 **Ethereum**: $1748.01 (+0.01%)
 - 🔴 **Gold**: $388.6 (-2.27%)
 - 🟢 **20Y Treasuries**: $86.33 (+0.16%)
 
-## VIX Regime: 18.44 NORMAL
+## VIX Regime: 17.14 NORMAL
 
-VIX normal at 18.4 (-3.8 this week). SPY +8.1% vs 200 SMA.
+VIX normal at 17.1 (-2.3 this week). SPY +8.1% vs 200 SMA.
 
 ## Institutional Signals (TickerTrace)
 
@@ -43,7 +45,6 @@ VIX normal at 18.4 (-3.8 this week). SPY +8.1% vs 200 SMA.
 ## Scanner Signals
 
 - 🟢 [DE](https://www.tradingview.com/symbols/DE/chart/) — Ghost Alpha V2 | Regime CHOP | Score: 1.0
-- 🟢 [GM](https://www.tradingview.com/symbols/GM/chart/) — Ghost Alpha V2 | Regime CHOP | Score: 1.0
 - 🟢 [ODFL](https://www.tradingview.com/symbols/ODFL/chart/) — Ghost Alpha V2 | Regime CHOP | Score: 1.0
 - 🟢 [JNJ](https://www.tradingview.com/symbols/JNJ/chart/) — Ghost Alpha V2 | Regime CHOP | Score: 0.9
 - 🟢 [RTX](https://www.tradingview.com/symbols/RTX/chart/) — Ghost Alpha V2 | Regime CHOP | Score: 0.9
@@ -55,14 +56,15 @@ VIX normal at 18.4 (-3.8 this week). SPY +8.1% vs 200 SMA.
 - 🟢 [RCL](https://www.tradingview.com/symbols/RCL/chart/) — Ghost Alpha V2 | Regime CHOP | Score: 0.9
 - 🟢 [NET](https://www.tradingview.com/symbols/NET/chart/) — Ghost Alpha V2 | Regime CHOP | Score: 0.9
 - 🟢 [ITW](https://www.tradingview.com/symbols/ITW/chart/) — Ghost Alpha V2 | Regime CHOP | Score: 0.9
+- 🟢 [GM](https://www.tradingview.com/symbols/GM/chart/) — Ghost Alpha V2 | Regime CHOP | Score: 0.9
 - 🟢 [TER](https://www.tradingview.com/symbols/TER/chart/) — Ghost Alpha V2 | Regime CHOP | Score: 0.9
 - 🟢 [PCAR](https://www.tradingview.com/symbols/PCAR/chart/) — Ghost Alpha V2 | Regime CHOP | Score: 0.9
 
 ## Technical Setups (Tao of Trading)
 
-- [GM](https://www.tradingview.com/symbols/GM/chart/) — SAILING | EMA Stack: 
 - [ODFL](https://www.tradingview.com/symbols/ODFL/chart/) — SAILING | EMA Stack: 
 - [CDNS](https://www.tradingview.com/symbols/CDNS/chart/) — SAILING | EMA Stack: 
+- [UPS](https://www.tradingview.com/symbols/UPS/chart/) — SAILING | EMA Stack: 
 - [DE](https://www.tradingview.com/symbols/DE/chart/) — SAILING | EMA Stack: 
 - [JNJ](https://www.tradingview.com/symbols/JNJ/chart/) — SAILING | EMA Stack: 
 - [ANET](https://www.tradingview.com/symbols/ANET/chart/) — SAILING | EMA Stack: 
@@ -100,7 +102,7 @@ VIX normal at 18.4 (-3.8 this week). SPY +8.1% vs 200 SMA.
 ### [USB](https://www.tradingview.com/symbols/USB/chart/) — U.S. Bancorp
 **$57.91** | Grade: A | ACCUMULATE on dips
 - Trend: Bullish | EMA Stack: FULL BULLISH
-- RSI: 62.43 | ADX: 35.53 | ATR: 1.45
+- RSI: 62.43 | ADX: 35.54 | ATR: 1.45
 - Pivot: $58.61 | S1: $58.27 | R1: $59.22
 - Valuation: FAIR VALUE (-14.3%)
 
@@ -114,7 +116,7 @@ VIX normal at 18.4 (-3.8 this week). SPY +8.1% vs 200 SMA.
 ### [RCL](https://www.tradingview.com/symbols/RCL/chart/) — Royal Caribbean Cruises Ltd.
 **$301.47** | Grade: B | WAIT for validation
 - Trend: Bearish | EMA Stack: PARTIAL BULLISH
-- RSI: 58.91 | ADX: 28.05 | ATR: 14.04
+- RSI: 58.91 | ADX: 28.03 | ATR: 14.05
 - Pivot: $314.76 | S1: $310.07 | R1: $317.53
 - Valuation: OVERVALUED (-29.4%)
 
@@ -129,4 +131,4 @@ VIX normal at 18.4 (-3.8 this week). SPY +8.1% vs 200 SMA.
 
 *This report is for informational and educational purposes only. Not financial advice. Trade at your own risk. Past performance does not guarantee future results.*
 
-*Generated by Ghost Alpha Dossier Pipeline // 2026-06-18 // 2026-06-17 10:04 PM CST*
+*Generated by Ghost Alpha Dossier Pipeline // 2026-06-18 // 2026-06-18 06:00 AM CST*

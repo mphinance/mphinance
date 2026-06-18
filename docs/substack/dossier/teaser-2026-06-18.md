@@ -1,10 +1,10 @@
 # Ghost Alpha Dossier — 2026-06-18
 
-> 🟡 **Transition** · SPY ▼ 1.2% · VIX 18.4
+> 🟡 **Transition** · SPY ▼ 1.2% · VIX 17.1
 
 ---
 
-VIX is a snooze at 18.
+Alright, let's cut to the chase.
 
 
 ## 🥇 Gold Pick: USB
@@ -28,7 +28,7 @@ VIX is a snooze at 18.
 
 - **170 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 1.2% | **VIX:** 18.4
+- **SPY:** ▼ 1.2% | **VIX:** 17.1
 
 ---
 
