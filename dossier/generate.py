@@ -825,6 +825,32 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Triangle breakout failed: {e}")
 
+    # ── Stage 6c: Downtrend Breakout (falling-trendline reversal — Michael's edge) ──
+    # His #1 setup: a break of a MULTI-MONTH falling resistance line (lower highs
+    # from a major peak), out of a real downtrend — not a triangle, not an uptrend
+    # pullback, not a falling knife. Reuses the triangle engine's pivot/liquidity
+    # machinery but fits its own long (~9mo) line. Each scan is a 2y yfinance fetch,
+    # so cap the universe. Never raises → [].
+    print("\n[6c/16] DOWNTREND BREAKOUT")
+    downtrend_break_signals: list[dict] = []
+    with timer.stage("Downtrend Breakout"):
+        try:
+            from dossier.data_sources.downtrend_breakout import generate_downtrend_breaks
+            # Same liquid-blended pool as triangle: survivors first (they pass the
+            # liquidity gate), then broad-universe movers (illiquid ones fail the
+            # gate harmlessly). De-duped, junk-filtered, capped for yfinance load.
+            dtb_universe = [
+                t for t in dict.fromkeys(scanned_tickers[:30] + candidate_pool[:30])
+                if not _is_junk(t)
+            ][:40] or scanned_tickers[:30]
+            downtrend_break_signals = generate_downtrend_breaks(dtb_universe, max_results=10)
+            actionable = [s for s in downtrend_break_signals
+                          if s.get("pattern") in ("confirmed", "forming")]
+            print(f"  {len(downtrend_break_signals)} downtrend breaks "
+                  f"({len(actionable)} actionable confirmed/forming) from {len(dtb_universe)} scanned")
+        except Exception as e:
+            print(f"  [WARN] Downtrend breakout failed: {e}")
+
     # ── Stage 7: CSP Setups ──
     print("\n[7/16] CSP SETUPS")
     from dossier.data_sources.csp_setups import fetch_csp_setups
@@ -992,6 +1018,7 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             confluence = compute_confluence(
                 scanner_signals=scanner_signals,
                 triangle_signals=triangle_signals,
+                downtrend_break_signals=downtrend_break_signals,
                 options_flow_signals=options_flow_signals,
                 institutional=institutional,
                 momentum_picks=momentum_picks,
@@ -1007,6 +1034,7 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             # Namespaced persistence for the new legs (migration anchors).
             mom_tickers = [p.get("ticker") for p in momentum_picks.get("picks", [])] if momentum_picks else []
             update_persistence([t["ticker"] for t in triangle_signals], date, namespace="triangle")
+            update_persistence([s["ticker"] for s in downtrend_break_signals], date, namespace="downtrend_breakout")
             update_persistence([f["ticker"] for f in options_flow_signals], date, namespace="flow")
             update_persistence([t for t in mom_tickers if t], date, namespace="momentum")
             update_persistence([b.get("ticker") for b in institutional.get("top_buying", []) if b.get("ticker")], date, namespace="institutional")
