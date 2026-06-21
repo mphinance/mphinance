@@ -1500,6 +1500,18 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Track record update failed: {e}")
 
+        # ── Sync regime history to docs/ for the Mood Ring widget (GH Pages) ──
+        import shutil as _shutil
+        _rh_landing = PROJECT_ROOT / "landing" / "data" / "regime_history.json"
+        _rh_docs = PROJECT_ROOT / "docs" / "data" / "regime_history.json"
+        try:
+            if _rh_landing.exists():
+                _rh_docs.parent.mkdir(parents=True, exist_ok=True)
+                _shutil.copy2(_rh_landing, _rh_docs)
+                print(f"  ✓ Regime history synced → docs/data/")
+        except Exception as _sync_e:
+            print(f"  [WARN] Regime history sync failed: {_sync_e}")
+
         print("\n[16/16] GIT PUSH")
         print("  Committing to Git...")
         try:
