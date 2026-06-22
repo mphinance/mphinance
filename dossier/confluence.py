@@ -81,15 +81,17 @@ from typing import Any, Iterable
 # legs. Regime is CONTEXT, never a leg.
 TREND = "trend"
 TRIANGLE = "triangle"
+ASCENDING_REVERSAL = "ascending_reversal"
 FLOW = "flow"
 INSTITUTIONAL = "institutional"
 
-INDEPENDENT_LEGS = (TREND, TRIANGLE, FLOW, INSTITUTIONAL)
+INDEPENDENT_LEGS = (TREND, TRIANGLE, ASCENDING_REVERSAL, FLOW, INSTITUTIONAL)
 
 # Per-leg score contribution when the leg agrees bullishly.
 _LEG_WEIGHT = {
     TREND: 1.0,
     TRIANGLE: 1.2,   # decorrelated + structural → slightly heavier
+    ASCENDING_REVERSAL: 1.1,  # decorrelated structural reversal-coil (Michael's edge)
     FLOW: 1.1,       # decorrelated smart-money read
     INSTITUTIONAL: 1.3,  # 13F conviction → heaviest single leg
 }
@@ -166,6 +168,7 @@ def compute_confluence(
     *,
     scanner_signals: list[dict] | None = None,
     triangle_signals: list[dict] | None = None,
+    ascending_reversal_signals: list[dict] | None = None,
     options_flow_signals: list[dict] | None = None,
     institutional: dict | None = None,
     momentum_picks: dict | None = None,
@@ -196,6 +199,7 @@ def compute_confluence(
     try:
         scanner_signals = _as_list(scanner_signals)
         triangle_signals = _as_list(triangle_signals)
+        ascending_reversal_signals = _as_list(ascending_reversal_signals)
         options_flow_signals = _as_list(options_flow_signals)
         momentum_picks = momentum_picks if isinstance(momentum_picks, dict) else {}
         institutional = institutional if isinstance(institutional, dict) else {}
@@ -296,6 +300,30 @@ def compute_confluence(
             # confirmed breakouts carry a small magnitude bonus
             if pattern == "confirmed" or sig_type == "triangle_breakout":
                 cand(t)["extra"] += 0.3
+
+        # ── (b2) ASCENDING-REVERSAL leg — higher-lows coiling into a declining 200DMA ──
+        # The MIRROR of the downtrend-breakout reversal (Michael's manual DIS find).
+        # Only the fresh-actionable tiers drive confluence: confirmed (just reclaimed
+        # the lid / 200DMA) and forming (coiling up under it). extended (entry passed)
+        # and retest (sitting on the lid) are detected + persisted upstream but NOT
+        # counted here — honors the "no extended names in the watchlist" rule.
+        # Bullish-only; never a standalone buy.
+        for ar in ascending_reversal_signals:
+            if not isinstance(ar, dict):
+                continue
+            t = _ticker_of(ar)
+            if not t:
+                continue
+            pattern = ar.get("pattern") or ""
+            if pattern not in ("confirmed", "forming"):
+                continue
+            if pattern == "confirmed":
+                rd = ar.get("reclaim_date")
+                detail = f"ascending reversal (confirmed{', reclaimed ' + str(rd) if rd else ''})"
+                cand(t)["extra"] += 0.3  # fresh structural reversal → magnitude bonus
+            else:
+                detail = "ascending reversal (forming — coiling under the 200DMA)"
+            add_leg(t, ASCENDING_REVERSAL, "bullish", detail)
 
         # ── (c) FLOW leg — bullish skew adds, bearish = conflict, SHORT_DATED trap ──
         for fl in options_flow_signals:

@@ -846,6 +846,33 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Triangle breakout failed: {e}")
 
+    # ── Stage 6c: Ascending Reversal-Coil (higher lows into a declining 200DMA) ──
+    # The MIRROR of the downtrend-breakout reversal (Michael's manual DIS find): a
+    # base of HIGHER LOWS coiling UP into a flat lid that sits at a DECLINING 200DMA,
+    # price still BELOW it — a reversal-in-waiting, not a momentum-pullback. Reuses
+    # the triangle engine's pivot/liquidity machinery but fits its own rising support
+    # line + flat lid. Each scan is a 2y yfinance fetch, so cap the universe. Never
+    # raises → [].
+    print("\n[6c/16] ASCENDING REVERSAL-COIL")
+    ascending_reversal_signals: list[dict] = []
+    with timer.stage("Ascending Reversal"):
+        try:
+            from dossier.data_sources.ascending_reversal import generate_ascending_reversals
+            # Same liquid-blended pool as triangle: survivors first (they pass the
+            # liquidity gate), then broad-universe movers (illiquid ones fail the
+            # gate harmlessly). De-duped, junk-filtered, capped for yfinance load.
+            ar_universe = [
+                t for t in dict.fromkeys(scanned_tickers[:30] + candidate_pool[:30])
+                if not _is_junk(t)
+            ][:40] or scanned_tickers[:30]
+            ascending_reversal_signals = generate_ascending_reversals(ar_universe, max_results=10)
+            actionable = [s for s in ascending_reversal_signals
+                          if s.get("pattern") in ("confirmed", "forming")]
+            print(f"  {len(ascending_reversal_signals)} ascending reversals "
+                  f"({len(actionable)} actionable confirmed/forming) from {len(ar_universe)} scanned")
+        except Exception as e:
+            print(f"  [WARN] Ascending reversal failed: {e}")
+
     # ── Stage 7: CSP Setups ──
     print("\n[7/16] CSP SETUPS")
     from dossier.data_sources.csp_setups import fetch_csp_setups
@@ -1013,6 +1040,7 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             confluence = compute_confluence(
                 scanner_signals=scanner_signals,
                 triangle_signals=triangle_signals,
+                ascending_reversal_signals=ascending_reversal_signals,
                 options_flow_signals=options_flow_signals,
                 institutional=institutional,
                 momentum_picks=momentum_picks,
@@ -1028,6 +1056,7 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             # Namespaced persistence for the new legs (migration anchors).
             mom_tickers = [p.get("ticker") for p in momentum_picks.get("picks", [])] if momentum_picks else []
             update_persistence([t["ticker"] for t in triangle_signals], date, namespace="triangle")
+            update_persistence([s["ticker"] for s in ascending_reversal_signals], date, namespace="ascending_reversal")
             update_persistence([f["ticker"] for f in options_flow_signals], date, namespace="flow")
             update_persistence([t for t in mom_tickers if t], date, namespace="momentum")
             update_persistence([b.get("ticker") for b in institutional.get("top_buying", []) if b.get("ticker")], date, namespace="institutional")
