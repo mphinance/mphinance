@@ -14,6 +14,7 @@ Usage (called by generate.py):
 """
 
 import json
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from xml.etree.ElementTree import Element, SubElement, tostring
@@ -48,7 +49,8 @@ def generate_rss_feed(max_entries: int = 30) -> str:
             summaries.append(summary)
             if len(summaries) >= max_entries:
                 break
-        except Exception:
+        except Exception as e:
+            print(f"[WARN] rss_feed: failed to load {api_file.name}: {e}", file=sys.stderr)
             continue
 
     if not summaries:
@@ -139,8 +141,8 @@ def generate_rss_feed(max_entries: int = 30) -> str:
             SubElement(item, "pubDate").text = dt.strftime(
                 "%a, %d %b %Y 06:00:00 +0000"  # 6AM UTC = 5AM CST pipeline
             )
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[WARN] rss_feed: failed to parse date '{date}': {e}", file=sys.stderr)
 
     # Pretty-print the XML
     rough_string = tostring(rss, encoding="unicode")

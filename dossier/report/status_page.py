@@ -9,6 +9,7 @@ Auto-generated every pipeline run, persisted to docs/data/pipeline_status.json.
 """
 
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -27,8 +28,8 @@ def _load_history() -> list[dict]:
         try:
             with open(STATUS_JSON) as f:
                 return json.load(f)
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[WARN] status_page: failed to load history: {e}", file=sys.stderr)
     return []
 
 
