@@ -101,6 +101,7 @@ def generate_summary_api(
     confluence = kwargs.get("confluence") or {}
     migration = kwargs.get("migration") or {}
     market_weather = kwargs.get("market_weather") or {}
+    sector_rs = kwargs.get("sector_rs") or {}
 
     confluence_section = _confluence_summary(confluence)
     migration_section = _migration_summary(migration)
@@ -152,6 +153,7 @@ def generate_summary_api(
         # published to public GitHub Pages. Those go only into the private push.
         "confluence": confluence_section,
         "migration": migration_section,
+        "sector_rs": _sector_rs_summary(sector_rs),
         "market_weather": {
             "regime": market_weather.get("regime"),
             "vix": market_weather.get("vix"),
@@ -222,6 +224,28 @@ def _migration_summary(migration: dict) -> dict:
         "count": len(migrations),
         "migration_of_the_day": motd,
         "migrations": migrations[:10],
+    }
+
+
+def _sector_rs_summary(sector_rs: dict) -> dict | None:
+    """Compact sector-RS snapshot for the public summary API."""
+    if not sector_rs or not sector_rs.get("ranked"):
+        return None
+    leaders = [
+        {"ticker": r["ticker"], "name": r["name"], "composite_rs": r["composite_rs"],
+         "rotation": r["rotation"]}
+        for r in sector_rs.get("leaders", [])[:3]
+    ]
+    laggards = [
+        {"ticker": r["ticker"], "name": r["name"], "composite_rs": r["composite_rs"],
+         "rotation": r["rotation"]}
+        for r in sector_rs.get("laggards", [])[:3]
+    ]
+    return {
+        "leaders": leaders,
+        "laggards": laggards,
+        "sector_count": len(sector_rs.get("ranked", [])),
+        "generated_at": sector_rs.get("generated_at"),
     }
 
 

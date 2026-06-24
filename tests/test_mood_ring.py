@@ -164,3 +164,52 @@ def test_build_mood_ring_strip_entries_have_emoji_and_color():
     assert cell["emoji"]
     assert cell["color"] == "#e53935"
     assert cell["date"] == "2026-06-01"
+
+
+# ── Mood Ring widget data contract ───────────────────────────────────
+# The mood-ring widget (docs/widgets/mood-ring.html) reads
+# docs/data/regime_history.json.  These tests verify that the data
+# produced by save_history / record_regime satisfies the fields the
+# widget's JS depends on.
+
+def test_widget_data_contract_keys(tmp_path):
+    """Every history entry must carry date, regime, vix_level, spy_change."""
+    p = tmp_path / "regime_history.json"
+    entry = _entry("2026-06-21", "NORMAL", 17.5)
+    record_regime(p, entry)
+    data = json.loads(p.read_text())
+    assert isinstance(data, list) and len(data) == 1
+    row = data[0]
+    for key in ("date", "regime", "vix_level", "spy_change"):
+        assert key in row, f"widget requires '{key}' in history entry"
+
+
+def test_widget_data_contract_sorted(tmp_path):
+    """History must be sorted oldest-first so the widget strip slice is correct."""
+    p = tmp_path / "rh.json"
+    for d in ("2026-06-03", "2026-06-01", "2026-06-02"):
+        record_regime(p, _entry(d, "NORMAL", 16.0))
+    data = json.loads(p.read_text())
+    dates = [e["date"] for e in data]
+    assert dates == sorted(dates), "history must be sorted by date ascending"
+
+
+def test_widget_sync_copies_file(tmp_path):
+    """Simulates the generate.py sync: copy landing → docs/data."""
+    import shutil
+    landing_data = tmp_path / "landing" / "data"
+    landing_data.mkdir(parents=True)
+    docs_data = tmp_path / "docs" / "data"
+
+    src = landing_data / "regime_history.json"
+    history = [_entry("2026-06-21", "NORMAL", 16.91)]
+    save_history(src, history)
+
+    # Replicate the sync logic from generate.py
+    if src.exists():
+        docs_data.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, docs_data / "regime_history.json")
+
+    dst = docs_data / "regime_history.json"
+    assert dst.exists()
+    assert json.loads(dst.read_text()) == history

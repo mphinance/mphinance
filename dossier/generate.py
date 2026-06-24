@@ -623,6 +623,27 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         market_pulse = fetch_market_pulse()
         print(f"  {len(market_pulse)} benchmarks fetched")
 
+    # ── Stage 1b: Sector Relative Strength ──
+    print("\n[1b/16] SECTOR RELATIVE STRENGTH")
+    sector_rs: dict = {}
+    with timer.stage("Sector RS"):
+        try:
+            from dossier.data_sources.sector_rs import fetch_sector_rs
+            sector_rs = fetch_sector_rs()
+            if sector_rs.get("ranked"):
+                leaders = sector_rs.get("leaders", [])
+                laggards = sector_rs.get("laggards", [])
+                lead_str = ", ".join(
+                    f"{r['name']} ({r['composite_rs']:+.1f})" for r in leaders[:2]
+                )
+                lag_str = ", ".join(
+                    f"{r['name']} ({r['composite_rs']:+.1f})" for r in laggards[:2]
+                )
+                print(f"  Leaders: {lead_str}")
+                print(f"  Laggards: {lag_str}")
+        except Exception as e:
+            print(f"  [WARN] Sector RS failed: {e}")
+
     # ── Stage 2: Strategy Scanner ──
     print("\n[2/16] STRATEGY SCANNER")
     try:
@@ -1354,6 +1375,7 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             confluence=confluence,
             migration=migration,
             market_weather=market_weather_data,
+            sector_rs=sector_rs,
         )
         # Auto-generate Substack teaser from the summary
         try:
@@ -1505,6 +1527,18 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             generate_track_record()
         except Exception as e:
             print(f"  [WARN] Track record update failed: {e}")
+
+        # ── Sync regime history to docs/ for the Mood Ring widget (GH Pages) ──
+        import shutil as _shutil
+        _rh_landing = PROJECT_ROOT / "landing" / "data" / "regime_history.json"
+        _rh_docs = PROJECT_ROOT / "docs" / "data" / "regime_history.json"
+        try:
+            if _rh_landing.exists():
+                _rh_docs.parent.mkdir(parents=True, exist_ok=True)
+                _shutil.copy2(_rh_landing, _rh_docs)
+                print(f"  ✓ Regime history synced → docs/data/")
+        except Exception as _sync_e:
+            print(f"  [WARN] Regime history sync failed: {_sync_e}")
 
         print("\n[16/16] GIT PUSH")
         print("  Committing to Git...")
