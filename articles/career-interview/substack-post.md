@@ -128,4 +128,19 @@ That is all this is. A robot that will not let you perform. Thirty minutes. Your
 
 They keep telling us the truth will set us free, but first it tends to make a mess. Sit in the mess. That is where the real answer is.
 
+## This is bigger than a career quiz
+
+Once you see the trick, the same one breaks loose everywhere. The format is just **a thing that asks, waits, does not judge, and plays your own words back.** That is useful any time the honest answer is the hard one to say out loud. A few I have either tried or want to:
+
+- **The pre-mortem on a decision.** About to take the job, sign the lease, marry the idea? Have it interview you about the choice with the same rules. No talking you into it, no talking you out of it. Just "what are you actually afraid of," and then silence. You will hear your own gut before you hear your own spreadsheet.
+- **The relationship check-in.** Strip the rules down and point them at "what is working and what am I tolerating." It is a journal that asks follow-up questions. The hardest stuff is the stuff you would never type, but you will say it to a quiet voice in the car.
+- **The founder's "why."** Every pitch deck has a fake origin story bolted on after the fact. Run this before you write the deck and you get the real one, the reason that survives a bad quarter.
+- **The exit interview you give yourself.** Leaving a job, a city, a version of you? Interview yourself on the way out. What did it teach you, what are you carrying forward, what are you finally putting down. Closure is just honesty with the lights on.
+- **The kid who hates the "what do you want to be" question.** My almost-eight-year-old freezes on that one too. The voice version, with no right answer and no grown-up nodding along, gets more out of him than any dinner-table interrogation I have run.
+- **The team retro that does not turn into a meeting.** Everyone answers the same no-judgment interview solo, out loud, then you compare the patterns. You find out what people actually think before the loudest person in the room tells them what to think.
+
+The tool is not the magic. The **structure** is the magic. Ask one real question. Then shut up long enough for a real answer. We almost never do that for each other anymore. The least the machines can do is hold the space we stopped holding.
+
+They keep telling us the truth will set us free, but first it tends to make a mess. Sit in the mess. That is where the real answer is.
+
 - Michael Hanko, Momentum Phinance
