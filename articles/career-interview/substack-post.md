@@ -32,9 +32,21 @@ You paste the prompt once. You turn the mic on. You answer like nobody is gradin
 
 You can talk to it in the car. On a walk. Folding laundry. The good answers tend to show up when your hands are busy and your guard is down anyway.
 
+## How to actually run this (60 seconds of setup)
+
+You do not need an app, an account upgrade, or a single dollar. Here is the whole thing.
+
+1. **Open Gemini.** On your phone, the Gemini app. On a computer, gemini.google.com. It is free.
+2. **Paste the prompt below into a normal text chat first.** Just paste it and send it. This loads the rules. It will reply with its first question.
+3. **Now tap Gemini Live.** On the phone it is the Live icon (the little waveform / voice button). This drops you into a voice conversation that already knows the rules you just pasted.
+4. **Put the phone down and talk.** Earbuds help. Go for a walk, sit in the car, fold laundry. The best answers show up when your hands are busy and your guard is down.
+5. **Answer like nobody is grading you.** Long pauses are fine. It is built to wait. When you are finished, say "I'm done," and it will play your patterns back to you.
+
+No phone? Same prompt works typed in any chat with Gemini, ChatGPT, or Claude. You lose the "out loud" magic, but the no-praise, no-leading structure still does most of the work.
+
 ## Here is the prompt. Steal it.
 
-Copy everything in the box. Paste it into Gemini Live. Turn the mic on. Give it 20 to 40 minutes. Do not narrate, do not perform, just answer.
+Copy everything in the box. Paste it in, then switch to voice. Give it 20 to 40 minutes. Do not narrate, do not perform, just answer.
 
 ```
 You are my interviewer. Your only job for the next 30 minutes is to help me

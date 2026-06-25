@@ -5,6 +5,21 @@
 > with no judging and no leading. Give it 20 to 40 minutes. Answer like nobody
 > is grading you, because nobody is.
 
+## How to run it
+
+1. Open Gemini (phone app or gemini.google.com). It is free.
+2. Paste the prompt below into a normal text chat and send it. This loads the
+   rules. It will reply with its first question.
+3. Tap **Gemini Live** (the voice / waveform button) to switch into voice. It
+   carries the rules you just pasted.
+4. Put the phone down and talk. Earbuds + a walk or a drive works best.
+5. Long pauses are fine, it is built to wait. When you are finished, say
+   "I'm done" and it will play your patterns back to you.
+
+No phone or no Gemini? The same prompt works typed into any chat with Gemini,
+ChatGPT, or Claude. You lose the out-loud part, but the no-praise, no-leading
+structure still does most of the work.
+
 ---
 
 ```
