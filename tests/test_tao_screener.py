@@ -268,3 +268,40 @@ def test_score_tao_empty_history_returns_none(monkeypatch):
 
     result = tao_screener.score_tao("EMPTY")
     assert result is None
+
+
+# ─── _save_api_output ─────────────────────────────────────────────
+
+def test_save_api_output_writes_valid_json(tmp_path, monkeypatch):
+    """_save_api_output must write a parseable JSON file with correct structure."""
+    import json
+    from dossier import tao_screener
+
+    monkeypatch.setattr(tao_screener, "PROJECT_ROOT", tmp_path)
+
+    results = [
+        {"ticker": "AAPL", "score": 88, "grade": "A+", "ema_stack": 4, "full_stack": True},
+        {"ticker": "MSFT", "score": 72, "grade": "A",  "ema_stack": 3, "full_stack": False},
+    ]
+    tao_screener._save_api_output(results)
+
+    out = tmp_path / "docs" / "api" / "tao-screener.json"
+    assert out.exists(), "output file not created"
+    payload = json.loads(out.read_text())
+    assert payload["count"] == 2
+    assert payload["results"][0]["ticker"] == "AAPL"
+    assert "generated_at" in payload
+
+
+def test_save_api_output_empty_results(tmp_path, monkeypatch):
+    """_save_api_output with an empty list must not raise and must set count=0."""
+    import json
+    from dossier import tao_screener
+
+    monkeypatch.setattr(tao_screener, "PROJECT_ROOT", tmp_path)
+
+    tao_screener._save_api_output([])
+    out = tmp_path / "docs" / "api" / "tao-screener.json"
+    payload = json.loads(out.read_text())
+    assert payload["count"] == 0
+    assert payload["results"] == []

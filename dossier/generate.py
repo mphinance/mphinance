@@ -1082,6 +1082,34 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Confluence/migration failed: {e}")
 
+    # ── Stage 10c: TAO Pullback Screen ──
+    # Scan the top strategy picks + momentum names + core watchlist for EMA-stack
+    # pullbacks. Reuses the already-assembled candidate list so there is no extra
+    # TradingView call — just the yfinance deep scan for confirmed setups.
+    print("\n[10c/16] TAO PULLBACK SCREEN (EMA stack + pullback quality)")
+    tao_results: list[dict] = []
+    with timer.stage("TAO Screen"):
+        try:
+            import time as _tao_time
+            from dossier.tao_screener import score_tao, _save_api_output as _tao_save
+            _mom_tickers = [p.get("ticker", "") for p in (momentum_picks.get("picks", []) if momentum_picks else [])]
+            _tao_pool = [t for t in dict.fromkeys(
+                scanned_tickers[:25] + _mom_tickers + list(CORE_WATCHLIST)
+            ) if not _is_junk(t)][:45]
+            for _t in _tao_pool:
+                _r = score_tao(_t)
+                if _r:
+                    tao_results.append(_r)
+                _tao_time.sleep(0.05)
+            tao_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _tao_save(tao_results)
+            _top_tao = [r for r in tao_results if r["grade"] in ("A+", "A")]
+            print(f"  🌊 {len(tao_results)} TAO setups — {len(_top_tao)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['score']})" for r in _top_tao[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] TAO screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
