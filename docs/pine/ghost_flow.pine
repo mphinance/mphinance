@@ -298,17 +298,23 @@ float rsi_val = ta.rsi(close, 14)
 float pct_e21 = f_div(close - ema21, ema21) * 100.0
 bool  near_e21 = not na(pct_e21) and pct_e21 >= b2_lo and pct_e21 <= b2_hi
 bool  bounce2 = b2_enable and ema_aligned and adx >= b2_adx and stoch_k <= b2_stoch and near_e21
+// Edge, not state: the raw condition holds for every bar of a pullback, which spams
+// shapes/alerts and re-anchors the risk overlay each bar. Fire only on the transition.
+bool  bounce2_fire = bounce2 and not bounce2[1]
 
 // ═══════════════════════════════════════════════════════════════
 // ████  RISK OVERLAY — ATR stop / R-target / position size  ████
 // ═══════════════════════════════════════════════════════════════
 // Anchored on EMA21 ± ATR (the repos' Keltner-stop convention). Only drawn
 // when a fresh long-side trigger prints, to keep the chart clean.
-bool long_signal = bounce2 or (exh_bull_rev and bull) or (sqz_fire and bull) or aplus_new
+bool long_signal = bounce2_fire or (exh_bull_rev and bull) or (sqz_fire and bull) or aplus_new
 float stop_lvl   = ema21 - atr * risk_mult
 float risk_dist  = close - stop_lvl
 float target_lvl = close + risk_dist * risk_rr
-int   pos_shares = atr > 0 ? int(math.floor(f_div(acct_risk, atr * risk_mult))) : 0
+// Size off the TRUE per-share risk (entry − stop), not atr*risk_mult. Bounce 2.0 enters
+// above EMA21, so risk_dist > atr*risk_mult by (close − ema21) — using the latter
+// systematically oversizes every trade past its stated $-risk budget.
+int   pos_shares = risk_dist > 0 ? int(math.floor(f_div(acct_risk, risk_dist))) : 0
 
 var float plot_stop = na
 var float plot_tgt  = na
@@ -348,7 +354,7 @@ bgcolor(sqz_coiled ? color.new(C_FIRE, 94) : na, title="Squeeze Coil")
 
 // Clean signal set — fewer, smarter markers (the brief's anti-clutter rule):
 //   ⚡ Bounce 2.0  ·  💥 Squeeze Fire  ·  🪫 %R Exhaustion release  ·  👻 A+ confirmed
-plotshape(bounce2,                "Bounce 2.0",       shape.labelup,   location.belowbar, color.new(C_BULL, 0),  text="⚡",  textcolor=color.white, size=size.small)
+plotshape(bounce2_fire,           "Bounce 2.0",       shape.labelup,   location.belowbar, color.new(C_BULL, 0),  text="⚡",  textcolor=color.white, size=size.small)
 plotshape(sqz_fire and bull,      "Squeeze Fire Up",  shape.diamond,   location.belowbar, color.new(C_FIRE, 0),  text="💥", textcolor=C_FIRE,      size=size.tiny)
 plotshape(sqz_fire and not bull,  "Squeeze Fire Dn",  shape.diamond,   location.abovebar, color.new(C_FIRE, 0),  text="💥", textcolor=C_FIRE,      size=size.tiny)
 plotshape(exh_bull_rev,           "Exhaustion Bull",  shape.triangleup,location.belowbar, color.new(C_BULL, 0),  text="🪫", textcolor=C_BULL,      size=size.tiny)
@@ -435,7 +441,7 @@ if dash_on and barstate.islast
 // ████  ALERTS  ████
 // ═══════════════════════════════════════════════════════════════
 alertcondition(aplus_new,     "A+ Confirmed",       "👻 Ghost Flow A+ CONFIRMED on {{ticker}} (HTF-aligned)")
-alertcondition(bounce2,       "Bounce 2.0",         "⚡ Bounce 2.0 pullback entry on {{ticker}}")
+alertcondition(bounce2_fire,  "Bounce 2.0",         "⚡ Bounce 2.0 pullback entry on {{ticker}}")
 alertcondition(sqz_fire,      "Squeeze Fire",       "💥 Volatility squeeze released on {{ticker}}")
 alertcondition(exh_bull_rev,  "Bullish Exhaustion", "🪫 Bullish %R exhaustion (oversold release) on {{ticker}}")
 alertcondition(exh_bear_rev,  "Bearish Exhaustion", "🪫 Bearish %R exhaustion (overbought release) on {{ticker}}")
@@ -448,9 +454,9 @@ plot(htf_enable ? htf_grade : na, "HTF Grade", display=display.none)
 
 // ── Consolidated JSON webhook for external systems (fires once per bar close) ──
 if barstate.isconfirmed
-    bool any_sig = aplus_new or bounce2 or sqz_fire or exh_bull_rev or exh_bear_rev or flip_bull or flip_bear
+    bool any_sig = aplus_new or bounce2_fire or sqz_fire or exh_bull_rev or exh_bear_rev or flip_bull or flip_bear
     if any_sig
-        string sig = aplus_new ? "APLUS_CONFIRMED" : bounce2 ? "BOUNCE2" : sqz_fire ? "SQUEEZE_FIRE" : exh_bull_rev ? "EXHAUST_BULL" : exh_bear_rev ? "EXHAUST_BEAR" : flip_bull ? "HULL_BULL" : "HULL_BEAR"
+        string sig = aplus_new ? "APLUS_CONFIRMED" : bounce2_fire ? "BOUNCE2" : sqz_fire ? "SQUEEZE_FIRE" : exh_bull_rev ? "EXHAUST_BULL" : exh_bear_rev ? "EXHAUST_BEAR" : flip_bull ? "HULL_BULL" : "HULL_BEAR"
         // str.format keeps the JSON readable; literal braces are doubled ({{ }}).
         string payload = str.format('{{"ticker":"{0}","tf":"{1}","grade":"{2}","score":{3},"htf":{4},"signal":"{5}","vol":"{6}","regime":"{7}","price":{8}}}', syminfo.ticker, timeframe.period, grade, math.round(g_score * 10) / 10, na(htf_grade) ? -1 : math.round(htf_grade * 10) / 10, sig, vol_read, rv_regime, close)
         alert(payload, alert.freq_once_per_bar_close)
