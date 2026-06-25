@@ -126,8 +126,6 @@ Here is what I keep coming back to. I spent a lot of years not asking myself any
 
 That is all this is. A robot that will not let you perform. Thirty minutes. Your own voice. Go find out what you actually said.
 
-They keep telling us the truth will set us free, but first it tends to make a mess. Sit in the mess. That is where the real answer is.
-
 ## This is bigger than a career quiz
 
 Once you see the trick, the same one breaks loose everywhere. The format is just **a thing that asks, waits, does not judge, and plays your own words back.** That is useful any time the honest answer is the hard one to say out loud. A few I have either tried or want to:
