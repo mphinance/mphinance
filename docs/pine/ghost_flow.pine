@@ -1,0 +1,456 @@
+// Ghost Flow [mph1nance] — Cross-Repo Synthesis
+// © mph1nance + Sam the Quant Ghost
+//
+// A fusion of the two trading engines:
+//   • mphinance  → Ghost Alpha 5-axis Grade V2 (Hull trend × CMF flow × squeeze ×
+//                  maturity × %R exhaustion) + the Bounce 2.0 pullback trigger.
+//   • StrikeForge → the mispricing brain: a multi-model realized-vol blend
+//                  (Parkinson / Garman-Klass / Rogers-Satchell), the vol-regime
+//                  classifier, and a rich/cheap "vol premium" read.
+//
+// What this adds over the existing ghost_alpha.pine:
+//   1. A real WEEKLY grade gate (one request.security call) — Ghost Alpha's
+//      defining screener rule is "Daily >=4 AND Weekly >=4 = A+", which the old
+//      Pine never actually computed. Here the weekly grade confirms or down-ranks
+//      the chart-timeframe setup.
+//   2. StrikeForge's volatility-premium lens (multi-model RV + regime) so the
+//      indicator reads whether vol is rich (favor sellers) or cheap (favor buyers)
+//      — the "mispricing is the headline" pillar, in pure price data.
+//
+// Design goals (per the brief): clean chart, fewer-but-smarter signals,
+//   configurable everything, na-safe across assets and timeframes, single
+//   request.security call, all single-pass ta.* math (no per-bar loops).
+//
+// Zero external dependencies. Pure Pine v6.
+
+//@version=6
+indicator("Ghost Flow [mph1nance]", "👻 Ghost Flow", overlay=true, max_bars_back=500, max_labels_count=300)
+
+// ═══════════════════════════════════════════════════════════════
+// ████  COLOR PALETTE  ████
+// ═══════════════════════════════════════════════════════════════
+const color C_BULL    = #00E5FF   // cyan  — bullish / cheap-vol
+const color C_BEAR    = #FF1E8E   // magenta — bearish / rich-vol
+const color C_NEUTRAL = #8A92B2   // steel — neutral / dim text
+const color C_FIRE    = #FFC400   // amber — squeeze release / warnings
+const color C_HOT     = #FF3D00   // orange — exhaustion / break
+const color C_CONF    = #00FFC8   // teal  — confluence / A+ confirmed
+const color C_DASH_BG = #0A0E1A   // dashboard background
+const color C_DASH_BD = #1E2A44   // dashboard border
+
+// ═══════════════════════════════════════════════════════════════
+// ████  INPUTS  ████
+// ═══════════════════════════════════════════════════════════════
+
+// ── Trend (Axis 1) ───────────────────────────────────────────
+g_trend   = "━━━ 🌊 Trend (Hull) ━━━"
+hull_src  = input.source(close, "Source",         group=g_trend)
+hull_len  = input.int(55, "Hull Length", minval=4, group=g_trend)
+show_hull = input.bool(true, "Show Hull Band",     group=g_trend)
+show_ema  = input.bool(true, "Show EMA Ribbon (8/21/34/55/89)", group=g_trend)
+
+// ── Money Flow (Axis 2) ──────────────────────────────────────
+g_flow    = "━━━ 💰 Money Flow (CMF) ━━━"
+cmf_len   = input.int(20, "CMF Length", minval=2,  group=g_flow)
+cmf_strong= input.float(0.10, "Strong-Flow Threshold", step=0.01, group=g_flow)
+
+// ── Volatility / Squeeze (Axis 3) ────────────────────────────
+g_sqz     = "━━━ 🔋 Volatility Squeeze ━━━"
+atr_len   = input.int(14, "ATR Length", minval=1,  group=g_sqz)
+sqz_base  = input.int(50, "Compression Baseline", minval=5, group=g_sqz)
+sqz_coil  = input.float(0.75, "Coil Threshold", step=0.05, group=g_sqz)
+sqz_top   = input.float(1.50, "Expansion Ceiling", step=0.05, group=g_sqz)
+
+// ── Trend Maturity (Axis 4) ──────────────────────────────────
+g_mat     = "━━━ ⏳ Trend Maturity ━━━"
+mat_min   = input.int(5,  "Fresh-Trend Min (bars)", minval=1, group=g_mat)
+mat_max   = input.int(30, "Fresh-Trend Max (bars)", minval=2, group=g_mat)
+mat_late  = input.int(50, "Aging Cutoff (bars)",    minval=3, group=g_mat)
+
+// ── Exhaustion (Axis 5) — the cross-repo flagship dual %R ─────
+g_exh     = "━━━ 💀 %R Trend Exhaustion ━━━"
+exh_fast  = input.int(21,  "Fast %R Length",  minval=1, group=g_exh)
+exh_slow  = input.int(112, "Slow %R Length",  minval=1, group=g_exh)
+exh_fsm   = input.int(7,   "Fast Smoothing",  minval=1, group=g_exh)
+exh_ssm   = input.int(3,   "Slow Smoothing",  minval=1, group=g_exh)
+exh_thr   = input.int(20,  "OB/OS Threshold", minval=1, maxval=50, group=g_exh)
+show_zones= input.bool(true, "Shade Confluence Zones", group=g_exh)
+
+// ── Bounce 2.0 (mphinance pullback trigger) ──────────────────
+g_b2      = "━━━ ⚡ Bounce 2.0 Trigger ━━━"
+b2_enable = input.bool(true, "Enable Bounce 2.0",  group=g_b2)
+b2_adx    = input.float(25.0, "Min ADX",  step=1, group=g_b2)
+b2_stoch  = input.float(40.0, "Max Stoch %K (pullback zone)", step=1, group=g_b2)
+b2_lo     = input.float(-3.0, "Min % from EMA21", step=0.5, group=g_b2)
+b2_hi     = input.float(5.0,  "Max % from EMA21", step=0.5, group=g_b2)
+
+// ── Weekly Confirmation Gate (the one request.security) ──────
+g_htf     = "━━━ 🔭 Higher-Timeframe Gate ━━━"
+htf_enable= input.bool(true, "Confirm on Higher Timeframe", group=g_htf)
+htf_tf    = input.timeframe("W", "Confirmation Timeframe",  group=g_htf)
+htf_min   = input.float(4.0, "Min HTF Grade to Confirm", step=0.5, group=g_htf)
+
+// ── StrikeForge Vol-Premium Lens (multi-model RV) ────────────
+g_vol     = "━━━ 📈 Vol Premium (StrikeForge) ━━━"
+vol_enable= input.bool(true, "Enable Vol-Premium Lens", group=g_vol)
+rv_len    = input.int(20,  "RV Window",      minval=5,  group=g_vol)
+rv_rank   = input.int(252, "Percentile Lookback", minval=30, group=g_vol, tooltip="Bars used for the RICH/CHEAP vol percentile. 252 ≈ 1yr on a DAILY chart. On intraday charts 252 bars is only a few sessions, so the read turns hyperactive — raise this (e.g. ~1500 on 5m for a few weeks of context) when using lower timeframes.")
+
+// ── Risk Overlay ─────────────────────────────────────────────
+g_risk    = "━━━ 🛡️ Risk Overlay ━━━"
+risk_show = input.bool(true, "Show Stop / Target on Signals", group=g_risk)
+risk_mult = input.float(2.0, "ATR Stop Multiple", step=0.1, group=g_risk)
+risk_rr   = input.float(2.0, "Reward : Risk Target", step=0.5, group=g_risk)
+acct_risk = input.float(100.0,"Risk $ per Trade (for sizing)", step=10, group=g_risk)
+
+// ── Dashboard ────────────────────────────────────────────────
+g_dash    = "━━━ 📋 Dashboard ━━━"
+dash_on   = input.bool(true, "Show Dashboard", group=g_dash)
+dash_pos  = input.string("Top Right", "Position", options=["Top Right","Top Left","Bottom Right","Bottom Left"], group=g_dash)
+dash_sz   = input.string("Small", "Text Size", options=["Tiny","Small","Normal"], group=g_dash)
+
+// ═══════════════════════════════════════════════════════════════
+// ████  HELPERS  ████
+// ═══════════════════════════════════════════════════════════════
+
+// na-safe division — never throws on empty chains / zero ranges.
+f_div(float a, float b) => not na(b) and b != 0 ? a / b : na
+
+// Hull MA (matches Ghost Alpha's HMA variation).
+f_hma(float s, int l) => ta.wma(2 * ta.wma(s, math.max(1, l / 2)) - ta.wma(s, l), math.max(1, math.round(math.sqrt(l))))
+
+// Williams %R over a length, range [-100, 0]; na-guarded on flat ranges.
+f_wr(int len) =>
+    float mx = ta.highest(high, len)
+    float mn = ta.lowest(low, len)
+    float rng = mx - mn
+    na(rng) or rng == 0 ? -50.0 : 100.0 * (close - mx) / rng
+
+// ═══════════════════════════════════════════════════════════════
+// ████  TIMEFRAME-AWARE ANNUALIZATION (for vol math)  ████
+// ═══════════════════════════════════════════════════════════════
+// RV must annualize by bars-per-year or it only reads right on daily charts.
+float tf_sec    = timeframe.in_seconds()
+float secs_day  = syminfo.type == "crypto" ? 86400.0 : 23400.0  // crypto 24h, equities 6.5h
+float bars_day  = math.max(f_div(secs_day, tf_sec), 1.0)
+float ann_sqrt  = math.sqrt(bars_day * 252.0)
+
+// ═══════════════════════════════════════════════════════════════
+// ████  AXIS 1 — TREND (Hull MA)  ████
+// ═══════════════════════════════════════════════════════════════
+float hull   = f_hma(hull_src, hull_len)
+float hull_s = hull[2]                       // lagged copy → slope / band
+bool  bull   = hull > hull_s
+bool  flip_bull = bull and not bull[1]
+bool  flip_bear = not bull and bull[1]
+float ax1_trend = bull ? 1.0 : 0.0
+
+// EMA ribbon (Bounce 2.0 stack) — also feeds the pullback trigger.
+float ema8  = ta.ema(close, 8)
+float ema21 = ta.ema(close, 21)
+float ema34 = ta.ema(close, 34)
+float ema55 = ta.ema(close, 55)
+float ema89 = ta.ema(close, 89)
+bool  stack_full    = ema8 > ema21 and ema21 > ema34 and ema34 > ema55 and ema55 > ema89
+bool  stack_partial = ema8 > ema21 and ema21 > ema55
+bool  ema_aligned   = stack_full or stack_partial
+
+// ═══════════════════════════════════════════════════════════════
+// ████  AXIS 2 — MONEY FLOW (Chaikin Money Flow)  ████
+// ═══════════════════════════════════════════════════════════════
+// The "smart money" axis from the Phantom-Flow framing: volume-weighted,
+// independent of price direction. Guards a zero-range bar.
+float c_range = high - low
+float cmf_mf  = c_range != 0 ? ((close - low) - (high - close)) / c_range : 0.0
+float vol_sma = ta.sma(volume, cmf_len)
+float cmf     = vol_sma != 0 ? f_div(ta.sma(cmf_mf * volume, cmf_len), vol_sma) : 0.0
+float ax2_flow = cmf > cmf_strong ? 1.0 : cmf > 0.0 ? 0.5 : 0.0
+
+// ═══════════════════════════════════════════════════════════════
+// ████  AXIS 3 — VOLATILITY SQUEEZE (self-normalized ATR)  ████
+// ═══════════════════════════════════════════════════════════════
+// Compare current ATR to its own baseline so it works on every timeframe
+// (the StrikeForge/Ghost fix for the old intraday-vs-weekly mismatch).
+float atr        = ta.atr(atr_len)
+float atr_base   = ta.sma(atr, sqz_base)
+float sqz_ratio  = nz(atr_base) > 0 ? f_div(atr, atr_base) : 1.0
+bool  sqz_coiled = sqz_ratio < sqz_coil
+bool  sqz_fire   = sqz_ratio >= sqz_coil and sqz_ratio[1] < sqz_coil
+float ax3_vol    = (sqz_ratio >= sqz_coil and sqz_ratio <= sqz_top) or sqz_fire ? 1.0 : 0.0
+
+// ═══════════════════════════════════════════════════════════════
+// ████  AXIS 4 — TREND MATURITY (bars since Hull flip)  ████
+// ═══════════════════════════════════════════════════════════════
+var int trend_age = 0
+trend_age := bull == bull[1] ? trend_age + 1 : 0
+float ax4_mat = trend_age >= mat_min and trend_age <= mat_max ? 1.0 : trend_age > mat_max and trend_age <= mat_late ? 0.5 : 0.0
+string trend_phase = trend_age < mat_min ? "FRESH" : trend_age <= mat_max ? "YOUNG" : trend_age <= mat_late ? "MATURE" : "AGING"
+
+// ═══════════════════════════════════════════════════════════════
+// ████  AXIS 5 — EXHAUSTION (dual %R confluence)  ████
+// ═══════════════════════════════════════════════════════════════
+// Both repos converge here: a fast (21) and slow (112) Williams %R. When
+// BOTH sit in the same extreme it's a confluence zone; the signal is the
+// RELEASE — confluence active last bar, gone this bar.
+float wr_fast = f_wr(exh_fast)
+float wr_slow = f_wr(exh_slow)
+if exh_fsm > 1
+    wr_fast := ta.ema(wr_fast, exh_fsm)
+if exh_ssm > 1
+    wr_slow := ta.ema(wr_slow, exh_ssm)
+
+bool conf_ob = wr_fast >= -exh_thr        and wr_slow >= -exh_thr          // both stretched up
+bool conf_os = wr_fast <= (-100 + exh_thr) and wr_slow <= (-100 + exh_thr) // both stretched down
+bool exh_bull_rev = conf_os[1] and not conf_os   // oversold release → bullish exhaustion
+bool exh_bear_rev = conf_ob[1] and not conf_ob   // overbought release → bearish exhaustion
+bool no_exhaust   = not conf_ob and not conf_os
+float ax5_exh = no_exhaust ? 1.0 : 0.0
+
+// ═══════════════════════════════════════════════════════════════
+// ████  GHOST GRADE V2 — 5 axes summed to 0..5  ████
+// ═══════════════════════════════════════════════════════════════
+float g_score = ax1_trend + ax2_flow + ax3_vol + ax4_mat + ax5_exh
+f_letter(float s) => s >= 4.5 ? "A+" : s >= 4.0 ? "A" : s >= 3.0 ? "B" : s >= 2.0 ? "C" : s >= 1.0 ? "D" : "F"
+string grade = f_letter(g_score)
+
+// ═══════════════════════════════════════════════════════════════
+// ████  WEEKLY CONFIRMATION GATE (single request.security)  ████
+// ═══════════════════════════════════════════════════════════════
+// A stateless mirror of the grade so it can be evaluated in the HTF context
+// (var-based trend_age can't cross the security boundary cleanly). Uses
+// lookahead_off + the last CONFIRMED HTF bar ([1]) so it never repaints.
+f_htf_grade() =>
+    float h   = f_hma(close, hull_len)
+    bool  hb  = h > h[2]
+    float cr  = high - low
+    float mf  = cr != 0 ? ((close - low) - (high - close)) / cr : 0.0
+    float vs  = ta.sma(volume, cmf_len)
+    float cm  = vs != 0 ? ta.sma(mf * volume, cmf_len) / vs : 0.0
+    float a   = ta.atr(atr_len)
+    float ab  = ta.sma(a, sqz_base)
+    float sr  = nz(ab) > 0 ? a / ab : 1.0
+    float wf0 = f_wr(exh_fast)
+    float ws0 = f_wr(exh_slow)
+    bool  ob  = wf0 >= -exh_thr and ws0 >= -exh_thr
+    bool  os  = wf0 <= (-100 + exh_thr) and ws0 <= (-100 + exh_thr)
+    float s1  = hb ? 1.0 : 0.0
+    float s2  = cm > cmf_strong ? 1.0 : cm > 0.0 ? 0.5 : 0.0
+    float s3  = (sr >= sqz_coil and sr <= sqz_top) ? 1.0 : 0.0
+    float s5  = (not ob and not os) ? 1.0 : 0.0
+    float s4  = close > ta.sma(close, 50) ? 1.0 : 0.0   // stateless maturity proxy: above mid-trend
+    float gg  = s1 + s2 + s3 + s4 + s5
+    gg[1]                                               // last CONFIRMED HTF bar → no repaint
+
+float htf_grade = htf_enable ? request.security(syminfo.tickerid, htf_tf, f_htf_grade(), lookahead=barmerge.lookahead_off) : na
+bool  htf_ok    = not htf_enable or (not na(htf_grade) and htf_grade >= htf_min)
+
+// A+ only fires when the chart grade is hot AND the higher timeframe agrees.
+bool grade_hot       = g_score >= htf_min
+bool aplus_confirmed = grade_hot and htf_ok
+bool aplus_new       = aplus_confirmed and not aplus_confirmed[1]
+
+// ═══════════════════════════════════════════════════════════════
+// ████  STRIKEFORGE VOL-PREMIUM LENS (multi-model RV blend)  ████
+// ═══════════════════════════════════════════════════════════════
+// Faithful port of scanner/volatility_models.py: a weighted blend of four
+// realized-vol estimators, then the regime classifier, then a rich/cheap
+// percentile read. Tells you whether vol is expensive (favor selling
+// premium) or cheap (favor buying) — StrikeForge's headline.
+float ln_cc = math.log(f_div(close, close[1]))
+float ln_hl = math.log(f_div(high, low))
+float ln_co = math.log(f_div(close, open))
+float ln_hc = math.log(f_div(high, close))
+float ln_ho = math.log(f_div(high, open))
+float ln_lc = math.log(f_div(low, close))
+float ln_lo = math.log(f_div(low, open))
+
+// Close-to-close
+float rv_cc = ta.stdev(ln_cc, rv_len) * ann_sqrt
+// Parkinson (high-low range)
+float rv_pk = math.sqrt(math.max(f_div(math.sum(ln_hl * ln_hl, rv_len), 4.0 * rv_len * math.log(2.0)), 0.0)) * ann_sqrt
+// Garman-Klass (OHLC)
+float gk_t  = 0.5 * ln_hl * ln_hl - (2.0 * math.log(2.0) - 1.0) * ln_co * ln_co
+float rv_gk = math.sqrt(math.max(f_div(math.sum(gk_t, rv_len), rv_len), 0.0)) * ann_sqrt
+// Rogers-Satchell (drift-independent — key for trending names)
+float rs_t  = ln_hc * ln_ho + ln_lc * ln_lo
+float rv_rs = math.sqrt(math.max(f_div(math.sum(rs_t, rv_len), rv_len), 0.0)) * ann_sqrt
+// Composite (StrikeForge weights: CC .15, Park .25, GK .25, RS .35)
+float rv = 0.15 * nz(rv_cc) + 0.25 * nz(rv_pk) + 0.25 * nz(rv_gk) + 0.35 * nz(rv_rs)
+
+// Regime (StrikeForge logic: current vs 10-bar avg, rising vs falling)
+float rv_avg   = ta.sma(rv, 10)
+bool  rv_rising= rv >= nz(rv[1])
+bool  rv_above = rv >= nz(rv_avg)
+string rv_regime = rv_above and rv_rising ? "HIGH" : rv_above and not rv_rising ? "COMPRESSING" : not rv_above and rv_rising ? "EXPANDING" : "LOW"
+
+// Rich/cheap percentile (proxy for IV percentile — no options feed in Pine).
+float rv_hi  = ta.highest(rv, rv_rank)
+float rv_lo  = ta.lowest(rv, rv_rank)
+float vol_pct = (rv_hi - rv_lo) != 0 ? f_div(rv - rv_lo, rv_hi - rv_lo) * 100.0 : 50.0
+string vol_read = vol_pct >= 70 ? "RICH" : vol_pct <= 30 ? "CHEAP" : "FAIR"
+
+// ═══════════════════════════════════════════════════════════════
+// ████  BOUNCE 2.0 — pullback-in-uptrend trigger  ████
+// ═══════════════════════════════════════════════════════════════
+[di_p, di_m, adx] = ta.dmi(14, 14)
+float stoch_k = ta.sma(ta.stoch(close, high, low, 14), 3)
+float rsi_val = ta.rsi(close, 14)
+float pct_e21 = f_div(close - ema21, ema21) * 100.0
+bool  near_e21 = not na(pct_e21) and pct_e21 >= b2_lo and pct_e21 <= b2_hi
+bool  bounce2 = b2_enable and ema_aligned and adx >= b2_adx and stoch_k <= b2_stoch and near_e21
+
+// ═══════════════════════════════════════════════════════════════
+// ████  RISK OVERLAY — ATR stop / R-target / position size  ████
+// ═══════════════════════════════════════════════════════════════
+// Anchored on EMA21 ± ATR (the repos' Keltner-stop convention). Only drawn
+// when a fresh long-side trigger prints, to keep the chart clean.
+bool long_signal = bounce2 or (exh_bull_rev and bull) or (sqz_fire and bull) or aplus_new
+float stop_lvl   = ema21 - atr * risk_mult
+float risk_dist  = close - stop_lvl
+float target_lvl = close + risk_dist * risk_rr
+int   pos_shares = atr > 0 ? int(math.floor(f_div(acct_risk, atr * risk_mult))) : 0
+
+var float plot_stop = na
+var float plot_tgt  = na
+if risk_show and long_signal
+    plot_stop := stop_lvl
+    plot_tgt  := target_lvl
+// Clear the levels once price TAGS either side intraday (hard-stop / limit-target
+// execution model — a wick that hits the stop ends the trade even if it closes back).
+// long_signal is long-only, so stop is below and target above.
+if not na(plot_stop) and (low < plot_stop or high >= nz(plot_tgt, high + 1))
+    plot_stop := na
+    plot_tgt  := na
+
+// ═══════════════════════════════════════════════════════════════
+// ████  PLOTTING — TREND  ████
+// ═══════════════════════════════════════════════════════════════
+color hull_col = bull ? color.new(C_BULL, 0) : color.new(C_BEAR, 0)
+p_h1 = plot(show_hull ? hull   : na, "Hull Fast", hull_col, linewidth=3)
+p_h2 = plot(show_hull ? hull_s : na, "Hull Slow", color.new(hull_col, 40), linewidth=1)
+fill(p_h1, p_h2, color=bull ? color.new(C_BULL, 88) : color.new(C_BEAR, 88), title="Hull Band")
+
+// EMA ribbon — thin, dim reference (only the stack state matters, so keep it quiet).
+color rib = stack_full ? color.new(C_BULL, 35) : ema_aligned ? color.new(C_BULL, 60) : color.new(C_NEUTRAL, 70)
+plot(show_ema ? ema8  : na, "EMA 8",  rib, 1)
+plot(show_ema ? ema21 : na, "EMA 21", color.new(C_FIRE, 30), 1)   // EMA21 = the bounce magnet, highlighted
+plot(show_ema ? ema34 : na, "EMA 34", rib, 1)
+plot(show_ema ? ema55 : na, "EMA 55", rib, 1)
+plot(show_ema ? ema89 : na, "EMA 89", color.new(C_NEUTRAL, 50), 1)
+
+// ═══════════════════════════════════════════════════════════════
+// ████  PLOTTING — CONFLUENCE ZONES + SIGNALS  ████
+// ═══════════════════════════════════════════════════════════════
+// Faint exhaustion-confluence shading (the StrikeForge %R zone read).
+bgcolor(show_zones and conf_os ? color.new(C_BULL, 92) : na, title="Oversold Confluence")
+bgcolor(show_zones and conf_ob ? color.new(C_BEAR, 92) : na, title="Overbought Confluence")
+bgcolor(sqz_coiled ? color.new(C_FIRE, 94) : na, title="Squeeze Coil")
+
+// Clean signal set — fewer, smarter markers (the brief's anti-clutter rule):
+//   ⚡ Bounce 2.0  ·  💥 Squeeze Fire  ·  🪫 %R Exhaustion release  ·  👻 A+ confirmed
+plotshape(bounce2,                "Bounce 2.0",       shape.labelup,   location.belowbar, color.new(C_BULL, 0),  text="⚡",  textcolor=color.white, size=size.small)
+plotshape(sqz_fire and bull,      "Squeeze Fire Up",  shape.diamond,   location.belowbar, color.new(C_FIRE, 0),  text="💥", textcolor=C_FIRE,      size=size.tiny)
+plotshape(sqz_fire and not bull,  "Squeeze Fire Dn",  shape.diamond,   location.abovebar, color.new(C_FIRE, 0),  text="💥", textcolor=C_FIRE,      size=size.tiny)
+plotshape(exh_bull_rev,           "Exhaustion Bull",  shape.triangleup,location.belowbar, color.new(C_BULL, 0),  text="🪫", textcolor=C_BULL,      size=size.tiny)
+plotshape(exh_bear_rev,           "Exhaustion Bear",  shape.triangledown,location.abovebar,color.new(C_HOT, 0),  text="🪫", textcolor=C_HOT,       size=size.tiny)
+plotshape(aplus_new,              "A+ Confirmed",     shape.labelup,   location.belowbar, color.new(C_CONF, 10), text="👻", textcolor=color.black, size=size.normal)
+
+// Risk overlay — stop (red) + target (green), step-lines, only while a trade is live.
+plot(plot_stop, "Stop",   color.new(C_HOT, 20),  1, style=plot.style_linebr)
+plot(plot_tgt,  "Target", color.new(C_BULL, 20), 1, style=plot.style_linebr)
+
+// ═══════════════════════════════════════════════════════════════
+// ████  DASHBOARD  ████
+// ═══════════════════════════════════════════════════════════════
+var table_pos = switch dash_pos
+    "Top Right"    => position.top_right
+    "Top Left"     => position.top_left
+    "Bottom Right" => position.bottom_right
+    => position.bottom_left
+var table_sz = switch dash_sz
+    "Tiny"   => size.tiny
+    "Normal" => size.normal
+    => size.small
+
+var table tbl = na
+if dash_on and barstate.isfirst
+    tbl := table.new(table_pos, 3, 12, bgcolor=C_DASH_BG, border_width=1, border_color=C_DASH_BD, frame_width=2, frame_color=C_DASH_BD)
+
+// Small helper to write a 3-column row.
+f_row(int r, string label, string val, color vc, string extra, color ec) =>
+    table.cell(tbl, 0, r, label, text_color=color.new(C_NEUTRAL, 0),  text_size=table_sz, text_halign=text.align_left)
+    table.cell(tbl, 1, r, val,   text_color=vc,                       text_size=table_sz, text_halign=text.align_center)
+    table.cell(tbl, 2, r, extra, text_color=ec,                       text_size=table_sz, text_halign=text.align_right)
+
+if dash_on and barstate.islast
+    color g_col = grade == "A+" ? C_CONF : grade == "A" ? C_BULL : grade == "B" ? color.new(C_BULL, 30) : grade == "C" ? C_FIRE : C_BEAR
+
+    // Header
+    table.cell(tbl, 0, 0, "👻 GHOST FLOW", text_color=C_CONF, text_size=table_sz, text_halign=text.align_center, bgcolor=color.new(C_DASH_BD, 30))
+    table.merge_cells(tbl, 0, 0, 2, 0)
+
+    // Grade + direction
+    f_row(1, "GRADE", grade + " (" + str.tostring(math.round(g_score * 10) / 10) + "/5)", g_col, bull ? "LONG ▲" : "SHORT ▼", bull ? C_BULL : C_BEAR)
+
+    // Higher-timeframe confirmation
+    string htf_txt = not htf_enable ? "OFF" : na(htf_grade) ? "—" : f_letter(htf_grade) + " (" + str.tostring(math.round(htf_grade * 10) / 10) + ")"
+    color  htf_col = not htf_enable ? C_NEUTRAL : htf_ok ? C_CONF : C_NEUTRAL
+    f_row(2, htf_tf + " GATE", htf_txt, htf_col, htf_ok and grade_hot ? "✓ CONFIRMED" : "WAIT", htf_ok and grade_hot ? C_CONF : color.new(C_NEUTRAL, 30))
+
+    // Axis breakdown (the 5 votes, lit/dim)
+    string ax_txt = (ax1_trend > 0 ? "T" : "·") + (ax2_flow >= 1 ? "F" : ax2_flow > 0 ? "f" : "·") + (ax3_vol > 0 ? "V" : "·") + (ax4_mat >= 1 ? "M" : ax4_mat > 0 ? "m" : "·") + (ax5_exh > 0 ? "X" : "·")
+    f_row(3, "AXES", ax_txt, C_BULL, trend_phase, color.new(C_NEUTRAL, 20))
+
+    // Money flow
+    f_row(4, "FLOW (CMF)", cmf > cmf_strong ? "STRONG ▲" : cmf > 0 ? "POS" : "NEG ▼", cmf > cmf_strong ? C_BULL : cmf > 0 ? color.new(C_BULL, 40) : C_BEAR, str.tostring(math.round(cmf * 100) / 100), color.new(C_NEUTRAL, 20))
+
+    // Squeeze
+    f_row(5, "SQUEEZE", sqz_fire ? "FIRE ⚡" : sqz_coiled ? "COILED ◉" : "NORMAL", sqz_fire ? C_FIRE : sqz_coiled ? C_BEAR : C_NEUTRAL, str.tostring(math.round(sqz_ratio * 100) / 100), color.new(C_NEUTRAL, 20))
+
+    // Exhaustion
+    string e_txt = exh_bear_rev ? "EXIT ▼" : exh_bull_rev ? "ENTRY ▲" : conf_ob ? "OVERBOUGHT" : conf_os ? "OVERSOLD" : "CLEAR"
+    color  e_col = (exh_bear_rev or conf_ob) ? C_BEAR : (exh_bull_rev or conf_os) ? C_BULL : C_NEUTRAL
+    f_row(6, "%R EXHAUST", e_txt, e_col, str.tostring(math.round(wr_fast)), color.new(C_NEUTRAL, 20))
+
+    // StrikeForge vol premium
+    if vol_enable
+        color v_col = vol_read == "RICH" ? C_BEAR : vol_read == "CHEAP" ? C_BULL : C_NEUTRAL
+        f_row(7, "VOL PREMIUM", vol_read + " " + str.tostring(math.round(vol_pct)) + "%", v_col, rv_regime, color.new(C_NEUTRAL, 20))
+
+    // Momentum (Bounce 2.0 inputs)
+    f_row(8, "MOMENTUM", "ADX " + str.tostring(math.round(adx)), adx >= b2_adx ? C_BULL : C_NEUTRAL, "RSI " + str.tostring(math.round(rsi_val)), rsi_val > 70 ? C_BEAR : (rsi_val >= 40 and rsi_val <= 65) ? C_BULL : C_NEUTRAL)
+
+    // Bounce 2.0 state
+    f_row(9, "BOUNCE 2.0", bounce2 ? "⚡ READY" : "waiting", bounce2 ? C_BULL : color.new(C_NEUTRAL, 30), "K " + str.tostring(math.round(stoch_k)), stoch_k <= b2_stoch ? C_BULL : C_NEUTRAL)
+
+    // Risk
+    f_row(10, "RISK", str.tostring(pos_shares) + " sh", C_CONF, "ATR " + str.tostring(math.round(atr * 100) / 100), color.new(C_NEUTRAL, 20))
+
+    // Compact AI payload (OCR-friendly, mirrors ghost_alpha.pine convention)
+    string ai = grade + "|" + (bull ? "L" : "S") + "|HTF:" + htf_txt + "|" + rv_regime + "|VOL:" + vol_read + "|SQZ:" + (sqz_fire ? "FIRE" : sqz_coiled ? "COIL" : "NORM")
+    table.merge_cells(tbl, 0, 11, 2, 11)
+    table.cell(tbl, 0, 11, ai, text_color=color.new(C_NEUTRAL, 40), text_size=size.tiny, text_halign=text.align_center)
+
+// ═══════════════════════════════════════════════════════════════
+// ████  ALERTS  ████
+// ═══════════════════════════════════════════════════════════════
+alertcondition(aplus_new,     "A+ Confirmed",       "👻 Ghost Flow A+ CONFIRMED on {{ticker}} (HTF-aligned)")
+alertcondition(bounce2,       "Bounce 2.0",         "⚡ Bounce 2.0 pullback entry on {{ticker}}")
+alertcondition(sqz_fire,      "Squeeze Fire",       "💥 Volatility squeeze released on {{ticker}}")
+alertcondition(exh_bull_rev,  "Bullish Exhaustion", "🪫 Bullish %R exhaustion (oversold release) on {{ticker}}")
+alertcondition(exh_bear_rev,  "Bearish Exhaustion", "🪫 Bearish %R exhaustion (overbought release) on {{ticker}}")
+alertcondition(flip_bull,     "Hull Bull Flip",     "🌊 Hull turned bullish on {{ticker}}")
+alertcondition(flip_bear,     "Hull Bear Flip",     "🌊 Hull turned bearish on {{ticker}}")
+
+// Export the grade so {{plot("Ghost Score")}} works inside alert messages / screeners.
+plot(g_score, "Ghost Score", display=display.none)
+plot(htf_enable ? htf_grade : na, "HTF Grade", display=display.none)
+
+// ── Consolidated JSON webhook for external systems (fires once per bar close) ──
+if barstate.isconfirmed
+    bool any_sig = aplus_new or bounce2 or sqz_fire or exh_bull_rev or exh_bear_rev or flip_bull or flip_bear
+    if any_sig
+        string sig = aplus_new ? "APLUS_CONFIRMED" : bounce2 ? "BOUNCE2" : sqz_fire ? "SQUEEZE_FIRE" : exh_bull_rev ? "EXHAUST_BULL" : exh_bear_rev ? "EXHAUST_BEAR" : flip_bull ? "HULL_BULL" : "HULL_BEAR"
+        // str.format keeps the JSON readable; literal braces are doubled ({{ }}).
+        string payload = str.format('{{"ticker":"{0}","tf":"{1}","grade":"{2}","score":{3},"htf":{4},"signal":"{5}","vol":"{6}","regime":"{7}","price":{8}}}', syminfo.ticker, timeframe.period, grade, math.round(g_score * 10) / 10, na(htf_grade) ? -1 : math.round(htf_grade * 10) / 10, sig, vol_read, rv_regime, close)
+        alert(payload, alert.freq_once_per_bar_close)
