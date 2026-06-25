@@ -81,15 +81,17 @@ from typing import Any, Iterable
 # legs. Regime is CONTEXT, never a leg.
 TREND = "trend"
 TRIANGLE = "triangle"
+DOWNTREND_BREAKOUT = "downtrend_breakout"
 FLOW = "flow"
 INSTITUTIONAL = "institutional"
 
-INDEPENDENT_LEGS = (TREND, TRIANGLE, FLOW, INSTITUTIONAL)
+INDEPENDENT_LEGS = (TREND, TRIANGLE, DOWNTREND_BREAKOUT, FLOW, INSTITUTIONAL)
 
 # Per-leg score contribution when the leg agrees bullishly.
 _LEG_WEIGHT = {
     TREND: 1.0,
     TRIANGLE: 1.2,   # decorrelated + structural → slightly heavier
+    DOWNTREND_BREAKOUT: 1.2,  # decorrelated structural reversal (Michael's edge)
     FLOW: 1.1,       # decorrelated smart-money read
     INSTITUTIONAL: 1.3,  # 13F conviction → heaviest single leg
 }
@@ -166,6 +168,7 @@ def compute_confluence(
     *,
     scanner_signals: list[dict] | None = None,
     triangle_signals: list[dict] | None = None,
+    downtrend_break_signals: list[dict] | None = None,
     options_flow_signals: list[dict] | None = None,
     institutional: dict | None = None,
     momentum_picks: dict | None = None,
@@ -196,6 +199,7 @@ def compute_confluence(
     try:
         scanner_signals = _as_list(scanner_signals)
         triangle_signals = _as_list(triangle_signals)
+        downtrend_break_signals = _as_list(downtrend_break_signals)
         options_flow_signals = _as_list(options_flow_signals)
         momentum_picks = momentum_picks if isinstance(momentum_picks, dict) else {}
         institutional = institutional if isinstance(institutional, dict) else {}
@@ -296,6 +300,29 @@ def compute_confluence(
             # confirmed breakouts carry a small magnitude bonus
             if pattern == "confirmed" or sig_type == "triangle_breakout":
                 cand(t)["extra"] += 0.3
+
+        # ── (b2) DOWNTREND-BREAKOUT leg — falling-trendline reversal (Michael's edge) ──
+        # Only the fresh-actionable tiers drive confluence: confirmed (just broke the
+        # multi-month falling line) and forming (coiling under it). extended (entry
+        # passed) and retest (sitting on the line) are detected + persisted upstream
+        # but NOT counted here — honors the "no extended names in the watchlist" rule.
+        # Bullish-only; never a standalone buy.
+        for db in downtrend_break_signals:
+            if not isinstance(db, dict):
+                continue
+            t = _ticker_of(db)
+            if not t:
+                continue
+            pattern = db.get("pattern") or ""
+            if pattern not in ("confirmed", "forming"):
+                continue
+            if pattern == "confirmed":
+                bd = db.get("break_date")
+                detail = f"downtrend breakout (confirmed{', broke ' + str(bd) if bd else ''})"
+                cand(t)["extra"] += 0.3  # fresh structural reversal → magnitude bonus
+            else:
+                detail = "downtrend breakout (forming — coiling under the line)"
+            add_leg(t, DOWNTREND_BREAKOUT, "bullish", detail)
 
         # ── (c) FLOW leg — bullish skew adds, bearish = conflict, SHORT_DATED trap ──
         for fl in options_flow_signals:
