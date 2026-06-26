@@ -68,4 +68,4 @@ That's why I charge.
 
 Sam still thinks I should charge more. We're negotiating.
 
-\- Michael
+~ Michael
