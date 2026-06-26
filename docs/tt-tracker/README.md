@@ -61,10 +61,40 @@ Pure static files, no build step. ES modules.
 | `index.html` / `css/app.css` | App shell + tastytrade theme |
 | `js/seed.js` | Verified seed data (auto-generated from the reconciled CSVs) |
 | `js/engine.js` | Realized-PnL + stats. Ported (semantics frozen) from the borrowed TS journal engine (`computeRealizedPnl`, `winRate`, `sumPnl`, tolerant coercion) + equity-curve / avg-win-loss / profit-factor recipe. Reconciles to +$20,299.62 / 73.1% / 5.18. |
-| `js/ocr.js` | Tesseract.js wrapper + layout detection + **gridline column/row segmentation** (ported from `tt_ocr.py`) + parsers (∞ glyph, bond-ticks, bottom-crop detection). Never fabricates. |
+| `js/ocr.js` | Tesseract.js wrapper + layout detection + **gridline column/row segmentation** (ported from `tt_ocr.py`) + parsers (∞ glyph, bond-ticks, bottom-crop detection). Records per-cell bbox + confidence and emits review items. Holds the in-session image registry (crops never persisted). Never fabricates. |
+| `js/validators.js` | Per-column validators (money/%/date/ticker/Core-Supp/Def-Undef + cross-foot). `confidence = min(OCR conf, validator pass)` — catches the dangerous high-confidence misreads (`1,250` → `1.250`). |
+| `js/review.js` | The crop-thumbnail confirmation queue: shows only flagged cells with the cropped source pixels + editable field + suggested fix. Keyboard-first. |
 | `js/charts.js` | Dependency-free inline-SVG equity curve (green/red payoff shading), strategy bars, BP gauges, mix donuts — so it works fully offline. |
-| `js/app.js` | State, localStorage, panels, drag/drop + paste ingest, editing. |
+| `js/card.js` | The Weekly Card export — a **deterministic Canvas 2D render** (1600×900, no external lib, works offline) → copy-to-clipboard / download PNG. |
+| `js/backup.js` | First-class JSON export/import with a `schemaVersion` stamp + migration shim + >7-day backup nudge. |
+| `js/app.js` | State, localStorage, panels, drag/drop + paste ingest, editing, review wiring, provisional ribbon, share. |
 | `manifest.json` / `sw.js` | PWA manifest + service worker (scoped to `/mphinance/tt-tracker/`), caching the app shell **and** the Tesseract WASM + `eng.traineddata` for offline OCR. |
+
+### Review loop, Weekly Card, backups (v0.2 additive)
+
+- **Crop-thumbnail review loop (the trust surface).** High-confidence cells auto-accept and
+  collapse; you only touch the flagged ones. Each flagged cell shows the **cropped source
+  pixels** from your screenshot beside an editable field + a suggested fix — you confirm a
+  picture, you don't re-read the source. Keyboard-first (Enter = accept, type = correct,
+  Tab/skip = next), a counter that ticks down, 🔴 must-confirm / 🟡 check severity. A
+  **"Provisional — N unconfirmed"** ribbon shows on every panel until the queue hits 0, and
+  CSV export warns while provisional, so a wrong number can't be exported silently. The crop
+  lives only in an in-session canvas registry — **image bytes are never written to disk or
+  localStorage**; only the parsed value + bbox metadata persist.
+- **Weekly Card.** A deterministic 1600×900 PNG: title + week-ending + your **handle**
+  (the hero), mini equity curve, KPI tiles (Win rate / Profit factor / Trades / Net P&L),
+  best/worst strategy. **Defaults to % + ratios with dollars OFF** (writers won't post
+  account size); one toggle reveals $. **Copy-to-clipboard** is the primary action;
+  Download PNG is the fallback. Muted `tt-tracker · mphinance` footer reads as a chart
+  credit. Card prefs (handle, $/%, week) persist to localStorage for a 20-second ritual.
+- **Backups.** JSON export/import is the lossless cross-device path; CSV stays for `build.py`
+  interop. A nudge appears if your last JSON backup is >7 days old.
+
+> **Engine-agnostic seam (intentionally NOT built).** The read path is `processScreenshot`
+> → per-cell `{value, bbox, confidence}` → validators → review items. A future "read with
+> vision (BYOK)" accelerator would consume the exact same crops (imageId + bbox) the review
+> UI already holds and emit the same cell shape — so it drops in behind the validators with
+> no UI change. Left as a clean seam per the open product decision; not implemented.
 
 The theme: near-black charcoal surfaces, dense data-forward grid, JetBrains Mono tabular
 numerics, green gains / red losses, a bright tasty-gold accent, and the platform's
@@ -116,6 +146,10 @@ Guiding rule throughout: **never fabricate.** Low-confidence or unreadable value
 - [x] Fee config (OFF by default, no-op).
 - [x] manifest + service worker (app shell + Tesseract WASM/traineddata offline cache).
 - [x] Privacy promise visible in the UI.
+- [x] **Crop-thumbnail review loop** — flagged-only queue with source-pixel crops, validators (`min(OCR conf, validator)`, catches `1,250`→`1.250`), keyboard-first, severity buckets, provisional ribbon, blank-cell suppression. Verified headless on a real sheet (163 flags → confirm ticks the counter; crops render).
+- [x] **Weekly Card** — deterministic Canvas PNG (1600×900), handle hero, %-default / $-toggle, copy-to-clipboard + download, muted footer, persisted prefs. Verified headless ($-off vs $-on render differently; copy succeeds; console clean).
+- [x] **JSON backup** — first-class export/import with `schemaVersion`, migration shim, >7-day nudge.
+- [x] Engine-agnostic read seam left clean for a future vision-LLM (BYOK) pass (not built — open decision).
 
 **Left / honest caveats**
 - [ ] **Browser-OCR character accuracy not benchmarked in CI** (no in-browser Tesseract in
@@ -129,6 +163,9 @@ Guiding rule throughout: **never fabricate.** Low-confidence or unreadable value
       → side/entry/exit engine exists (`computeRealizedPnl` / `chainRealizedPnl`) but the
       OCR doesn't yet emit clean per-leg rows to feed it; it books the chain Total P/L.
 - [ ] **Type F fill tickets** intentionally unsupported (no computed P/L).
+- [ ] **Weekly Card render is canvas, not html-to-image** — the brief suggested `html-to-image toPng`, but `chrome-headless-shell` drops its `<foreignObject>` HTML (only background/SVG rasterized → identical output regardless of content). Switched to a deterministic Canvas 2D render, which renders fully, validates headless, and works offline (no CDN). Same artifact, more robust path.
+- [ ] **Review crops are session-only by design** — after a page reload the flag counts persist (metadata) but the crop image is gone (image bytes never stored). You can still edit/confirm from your own copy; the crop only shows during the import session.
+- [ ] **Two product decisions deferred to Michael** (left untouched per instructions): (a) the vision-LLM BYOK read path — clean seam left, not built; (b) final product name + a "not affiliated with tastytrade" footer — current naming/theme kept for Ryan's gift.
 - [ ] Icons are generated placeholders (gold payoff mark on charcoal); swap for branded art if desired.
 
 ---

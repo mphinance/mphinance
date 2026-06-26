@@ -2,7 +2,10 @@
 import { SEED } from "./seed.js";
 import { computeTrackRecord, deriveBookSummary, deriveRiskType } from "./engine.js";
 import { drawEquityCurve, drawStrategyBars, gaugeHtml, drawDonut, money, moneyInt } from "./charts.js";
-import { processScreenshot, mergeMonitorRows } from "./ocr.js";
+import { processScreenshot, mergeMonitorRows, forgetImages } from "./ocr.js";
+import { renderQueue, pending as reviewPending, counts as reviewCounts } from "./review.js";
+import { renderCardCanvas, copyCanvasToClipboard, downloadCanvas } from "./card.js";
+import { exportJson, parseImport, readFileText, shouldNudge, daysSinceBackup } from "./backup.js";
 
 const LS_KEY = "tt-tracker-state-v2";
 const POS = "#27c19a", NEG = "#f6465c", GOLD = "#ffcb05", BLUE = "#4a90e2", VIOLET = "#9b6bff";
@@ -16,7 +19,9 @@ function defaults() {
     openBook: structuredClone(SEED.openBook),
     summary: structuredClone(SEED.summary),
     monitor: [],
+    review: [],
     fees: { enabled: false, perContractOpen: 1.0, perContractClose: 0, clearingReg: 0.15 },
+    cardPrefs: { handle: "@yourhandle", showDollars: false, weekEnding: "" },
   };
 }
 function load() {
@@ -32,7 +37,7 @@ function save() {
 }
 function resetSeed() {
   if (!confirm("Reset everything back to Ryan's verified seed data? Your edits and OCR'd rows will be cleared.")) return;
-  state = defaults(); save(); renderAll();
+  state = defaults(); forgetImages(); save(); renderAll();
 }
 
 // --- tabs -------------------------------------------------------------------
@@ -43,7 +48,14 @@ function initTabs() {
     t.classList.add("active");
     document.getElementById("panel-" + t.dataset.tab).classList.add("active");
     if (t.dataset.tab === "track") renderTrack();
+    if (t.dataset.tab === "review") renderReview();
+    if (t.dataset.tab === "share") renderShare();
   }));
+}
+
+function goToTab(name) {
+  const t = document.querySelector(`.tab[data-tab="${name}"]`);
+  if (t) t.click();
 }
 
 // --- TRACK RECORD panel -----------------------------------------------------
@@ -162,8 +174,10 @@ function commitBookEdit(cell) {
       if (d) { o.risk_type = d; o.risk_type_source = "derived"; }
     }
   }
-  delete o.needsReview;
-  save(); renderBook();
+  // editing a cell inline also resolves any pending review item for it
+  (state.review || []).forEach((it) => { if (it.rowId === o.id && it.field === f) { it.confirmed = true; it.value = o[f]; } });
+  if (!(state.review || []).some((it) => it.rowId === o.id && !it.confirmed)) delete o.needsReview;
+  save(); renderBook(); refreshReviewUI();
 }
 
 function renderSummary() {
@@ -275,22 +289,26 @@ async function handleFiles(files) {
 
 function ingestResult(res, name) {
   const flagTxt = (res.flags && res.flags.length) ? " — " + res.flags.join(" ") : "";
+  const addReview = (items) => { if (items && items.length) { state.review.push(...items); } };
   if (res.layout === "spreadsheet") {
     if (res.positions.length) {
       // merge: replace book with OCR'd rows (user's authoritative current sheet)
       state.openBook = res.positions.map((p) => ({ ...p, bp_pct: p.bp_pct ?? null }));
-      save(); renderBook();
-      logLine(`✓ ${name}: Type A spreadsheet → ${res.positions.length} positions loaded into Live Book.${flagTxt}`, "ok");
+      addReview(res.reviewItems);
+      save(); renderBook(); refreshReviewUI();
+      const nrev = (res.reviewItems || []).length;
+      logLine(`✓ ${name}: Type A spreadsheet → ${res.positions.length} positions loaded${nrev ? `, ${nrev} cell(s) to confirm` : ""}.${flagTxt}`, nrev ? "warn" : "ok");
     } else logLine(`✗ ${name}: Type A detected but grid not segmented.${flagTxt}`, "err");
   } else if (res.layout === "order_chains") {
     if (res.bookable) {
       state.trades.push({
-        id: "ocr-" + Math.random().toString(36).slice(2, 8),
+        id: res.tradeId || ("ocr-" + Math.random().toString(36).slice(2, 8)),
         date_opened: "", date_closed: new Date().toISOString().slice(0, 10),
         ticker: res.ticker || "?", strategy: res.strategy || "Uncategorized",
         type: "", pl: res.total_pl, notes: "OCR'd CLSD chain" + flagTxt, src: "ocr",
       });
-      save(); renderTrack();
+      addReview(res.reviewItems);
+      save(); renderTrack(); refreshReviewUI();
       logLine(`✓ ${name}: ${res.ticker || "?"} CLSD chain → realized ${money(res.total_pl, true)} booked.${flagTxt}`, "ok");
     } else {
       logLine(`• ${name}: order chain not booked (${res.is_closed === false ? "still open" : "status unclear"}).${flagTxt}`, "warn");
@@ -316,23 +334,122 @@ function setProgress(t) { document.getElementById("ocr-progress").textContent = 
 // --- util -------------------------------------------------------------------
 function escapeHtml(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
-function renderAll() { renderTrack(); renderBook(); renderMonitor(); initFees(); }
+// --- REVIEW panel + provisional ribbon -------------------------------------
+function renderReview() {
+  const c = document.getElementById("review-queue");
+  if (!c) return;
+  renderQueue(c, state, { save, refresh: refreshReviewUI });
+}
 
-// --- boot -------------------------------------------------------------------
-function boot() {
-  initTabs();
-  initIngest();
-  document.getElementById("reset-seed").addEventListener("click", resetSeed);
-  document.getElementById("export-csv").addEventListener("click", exportCsv);
-  renderAll();
-  window.addEventListener("resize", () => { if (document.querySelector(".tab.active").dataset.tab === "track") renderTrack(); });
-  // register service worker (scoped to this subpath)
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js", { scope: "./" }).catch(() => {});
+// Keep the badge, ribbon, and (if open) the queue + dashboards in sync.
+function refreshReviewUI() {
+  const ct = reviewCounts(state);
+  // nav badge
+  const badge = document.getElementById("review-badge");
+  if (badge) {
+    badge.textContent = ct.total;
+    badge.classList.toggle("show", ct.total > 0);
+    badge.classList.toggle("must", ct.must > 0);
+  }
+  // provisional ribbon
+  const ribbon = document.getElementById("provisional");
+  if (ribbon) {
+    ribbon.classList.toggle("show", ct.total > 0);
+    if (ct.total > 0) ribbon.querySelector("b").textContent = ct.total;
+  }
+  // if review tab is open, re-render the queue
+  const active = document.querySelector(".tab.active");
+  if (active && active.dataset.tab === "review") renderReview();
+  // book/track rows may have changed via confirmations
+  renderBook(); renderTrack();
+}
+
+// --- SHARE panel: Weekly Card + JSON backup --------------------------------
+function renderShare() {
+  const p = state.cardPrefs || (state.cardPrefs = { handle: "@yourhandle", showDollars: false, weekEnding: "" });
+  const handle = document.getElementById("card-handle");
+  const dollars = document.getElementById("card-dollars");
+  const week = document.getElementById("card-week");
+  if (handle) handle.value = p.handle || "";
+  if (dollars) dollars.checked = !!p.showDollars;
+  if (week) week.value = p.weekEnding || "";
+  // backup status
+  const bs = document.getElementById("backup-status");
+  if (bs) {
+    const d = daysSinceBackup();
+    bs.textContent = d === Infinity ? "No JSON backup yet." : `Last JSON backup ${d < 1 ? "today" : Math.floor(d) + "d ago"}.`;
+    bs.classList.toggle("nudge", shouldNudge());
+  }
+  buildCardPreview();
+}
+
+function cardOpts() {
+  const p = state.cardPrefs;
+  return {
+    handle: p.handle, weekEnding: p.weekEnding, showDollars: p.showDollars,
+    metrics: computeTrackRecord(state.trades, state.fees), provisional: reviewCounts(state).total,
+  };
+}
+
+async function buildCardPreview() {
+  const wrap = document.getElementById("card-preview");
+  if (!wrap) return;
+  const cv = await renderCardCanvas(cardOpts(), 1);
+  cv.style.width = "100%"; cv.style.height = "auto"; cv.style.display = "block";
+  wrap.innerHTML = "";
+  wrap.appendChild(cv);
+  wrap.style.height = "auto";
+}
+
+async function exportCard(action) {
+  const status = document.getElementById("card-status");
+  status.textContent = "Rendering…";
+  try {
+    const ct = reviewCounts(state);
+    const cv = await renderCardCanvas(cardOpts(), 2);
+    if (action === "copy") {
+      await copyCanvasToClipboard(cv);
+      status.textContent = ct.total ? `Copied (⚠ ${ct.total} cells still unconfirmed).` : "Copied to clipboard ✓";
+    } else {
+      downloadCanvas(cv, "track-record-card.png");
+      status.textContent = "Downloaded ✓";
+    }
+  } catch (err) {
+    status.textContent = "✗ " + err.message + " — try Download instead.";
   }
 }
 
+function initShare() {
+  const onPref = () => {
+    state.cardPrefs.handle = document.getElementById("card-handle").value || "@yourhandle";
+    state.cardPrefs.showDollars = document.getElementById("card-dollars").checked;
+    state.cardPrefs.weekEnding = document.getElementById("card-week").value || "";
+    save(); buildCardPreview();
+  };
+  ["card-handle", "card-dollars", "card-week"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("input", onPref);
+  });
+  document.getElementById("card-copy").addEventListener("click", () => exportCard("copy"));
+  document.getElementById("card-download").addEventListener("click", () => exportCard("download"));
+  document.getElementById("json-export").addEventListener("click", () => { exportJson(state); renderShare(); });
+  document.getElementById("json-import").addEventListener("click", () => document.getElementById("json-file").click());
+  document.getElementById("json-file").addEventListener("change", async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const txt = await readFileText(f);
+    const r = parseImport(txt);
+    const status = document.getElementById("json-status");
+    if (!r.ok) { status.textContent = "✗ " + r.error; return; }
+    if (!confirm("Replace current data with the imported backup?")) return;
+    state = { ...defaults(), ...r.state }; forgetImages(); save(); renderAll();
+    status.textContent = "Imported ✓" + (r.warning ? " (" + r.warning + ")" : "");
+  });
+}
+
+// --- CSV export (build.py interop) -----------------------------------------
 function exportCsv() {
+  const ct = reviewCounts(state);
+  if (ct.total && !confirm(`${ct.total} cell(s) are still unconfirmed (provisional). Export anyway?`)) return;
   const m = computeTrackRecord(state.trades, state.fees);
   const head = "date_closed,date_opened,ticker,strategy,type,realized_pl,notes";
   const rows = m.trades.map((t) => [t.date_closed, t.date_opened, t.ticker, t.strategy, t.type, state.fees.enabled ? t.plNet : t.gross, `"${(t.notes || "").replace(/"/g, '""')}"`].join(","));
@@ -341,6 +458,32 @@ function exportCsv() {
   a.href = URL.createObjectURL(blob);
   a.download = "tt-track-record.csv";
   a.click();
+}
+
+function renderAll() {
+  renderTrack(); renderBook(); renderMonitor(); initFees(); refreshReviewUI();
+}
+
+// --- boot -------------------------------------------------------------------
+function boot() {
+  initTabs();
+  initIngest();
+  initShare();
+  document.getElementById("reset-seed").addEventListener("click", resetSeed);
+  document.getElementById("export-csv").addEventListener("click", exportCsv);
+  const goRev = document.getElementById("provisional-go");
+  if (goRev) goRev.addEventListener("click", () => goToTab("review"));
+  renderAll();
+  window.addEventListener("resize", () => {
+    const a = document.querySelector(".tab.active");
+    if (!a) return;
+    if (a.dataset.tab === "track") renderTrack();
+    if (a.dataset.tab === "share") buildCardPreview();
+  });
+  // register service worker (scoped to this subpath)
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js", { scope: "./" }).catch(() => {});
+  }
 }
 
 document.addEventListener("DOMContentLoaded", boot);

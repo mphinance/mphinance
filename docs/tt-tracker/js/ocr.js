@@ -6,6 +6,30 @@
 // emit null + a "needs review" flag.
 
 import { numOrNull, deriveRiskType } from "./engine.js";
+import { validateCell, cellConfidence, severityFor } from "./validators.js";
+
+// In-session image registry: imageId -> source canvas. Lets the review UI show
+// the exact cropped SOURCE PIXELS a value came from. NEVER persisted to disk or
+// localStorage — lives only in memory for the current session.
+const _imageRegistry = new Map();
+let _imgSeq = 0;
+export function getImage(id) { return _imageRegistry.get(id) || null; }
+export function forgetImages() { _imageRegistry.clear(); }
+export function cropToDataUrl(id, bbox, pad = 4, scale = 3) {
+  const canvas = _imageRegistry.get(id);
+  if (!canvas || !bbox) return null;
+  const sx = Math.max(0, Math.floor(bbox.left - pad));
+  const sy = Math.max(0, Math.floor(bbox.top - pad));
+  const sw = Math.min(canvas.width - sx, Math.ceil(bbox.width + pad * 2));
+  const sh = Math.min(canvas.height - sy, Math.ceil(bbox.height + pad * 2));
+  if (sw <= 1 || sh <= 1) return null;
+  const c = document.createElement("canvas");
+  c.width = sw * scale; c.height = sh * scale;
+  const cx = c.getContext("2d");
+  cx.imageSmoothingEnabled = false;
+  cx.drawImage(canvas, sx, sy, sw, sh, 0, 0, c.width, c.height);
+  return c.toDataURL("image/png");
+}
 
 const TESS_VERSION = "5.1.1";
 const TESS_CDN = `https://cdn.jsdelivr.net/npm/tesseract.js@${TESS_VERSION}/dist/tesseract.min.js`;
@@ -203,9 +227,10 @@ const LOW_CONF = 55; // below this, treat numeric reads as "needs review"
 // ---------------------------------------------------------------------------
 // TIER 1 — Type A Positions Spreadsheet
 // ---------------------------------------------------------------------------
-async function extractSpreadsheet(worker, canvas, gray) {
+async function extractSpreadsheet(worker, canvas, gray, imageId) {
   const w = canvas.width, h = canvas.height;
   const flags = [];
+  const reviewItems = [];
   // Grid lives left of the Portfolio Summary side card. Detect ROW lines first
   // (they span the table width well), then scan COLUMN lines only within the
   // table's vertical band — robust to short / bottom-cropped sheets.
@@ -218,7 +243,7 @@ async function extractSpreadsheet(worker, canvas, gray) {
   const nCols = SPREADSHEET_COLUMNS.length;
   if (vlines.length < nCols + 1 || hlines.length < 3) {
     flags.push(`GRID_NOT_FOUND: found ${vlines.length} vlines / ${hlines.length} hlines (need ${nCols + 1}/3+). Try a sharper, full-width crop.`);
-    return { layout: "spreadsheet", positions: [], geometry: { vlines, hlines }, flags };
+    return { layout: "spreadsheet", positions: [], reviewItems, geometry: { vlines, hlines }, flags };
   }
   const xedges = vlines.slice(0, nCols + 1);
 
@@ -227,31 +252,28 @@ async function extractSpreadsheet(worker, canvas, gray) {
   const bottomGap = h - hlines[hlines.length - 1];
   if (bottomGap > h * 0.08) flags.push("BOTTOM_CROPPED: sheet appears cut off; rows below the last gridline are missing from this screenshot.");
 
+  const moneyCols = new Set(["credit_rcvd", "debit_paid", "max_profit", "max_loss", "bp_usd", "bp_pct"]);
   const positions = [];
   for (let ri = 1; ri < hlines.length - 1; ri++) {
     const y0 = hlines[ri], y1 = hlines[ri + 1];
     if (y1 - y0 < 8) continue;
     const rec = { id: "ocr-" + Math.random().toString(36).slice(2, 8) };
-    let lowConf = false, anyText = false;
+    const cellMeta = {}; // per-field {bbox, conf, raw} for the review crops
+    let anyText = false;
     for (let ci = 0; ci < nCols; ci++) {
       const col = SPREADSHEET_COLUMNS[ci];
       const cx0 = xedges[ci], cx1 = xedges[ci + 1];
       const isText = col === "trade_description" || col === "position_type" || col === "risk_type";
       const isDate = col === "date_opened";
-      const { text, confidence } = await ocrRect(worker, canvas, {
-        left: cx0 + 1, top: y0 + 1, width: cx1 - cx0 - 2, height: y1 - y0 - 2,
-      }, {
+      const bbox = { left: cx0 + 1, top: y0 + 1, width: cx1 - cx0 - 2, height: y1 - y0 - 2 };
+      const { text, confidence } = await ocrRect(worker, canvas, bbox, {
         dark: false, psm: 7,
         whitelist: isText ? null : (isDate ? "0123456789/-" : "0123456789.,∞-/%"),
       });
       if (text) anyText = true;
-      const moneyCols = ["credit_rcvd", "debit_paid", "max_profit", "max_loss", "bp_usd", "bp_pct"];
-      if (moneyCols.includes(col)) {
-        rec[col] = parseInf(text);
-        if (text && confidence < LOW_CONF) lowConf = true;
-      } else {
-        rec[col] = text || null;
-      }
+      const parsed = moneyCols.has(col) ? parseInf(text) : (text || null);
+      rec[col] = parsed;
+      cellMeta[col] = { bbox, conf: confidence, raw: text };
     }
     if (!anyText) continue;
     // auto-derive Risk Type if the column read blank
@@ -261,12 +283,37 @@ async function extractSpreadsheet(worker, canvas, gray) {
     }
     rec.position_type = normPos(rec.position_type);
     rec.risk_type = normRisk(rec.risk_type);
-    if (lowConf) rec.needsReview = true;
     rec.src = "ocr";
+
+    // validate every cell; confidence = min(ocr, validator). Build review items
+    // only for cells that don't auto-accept (green). Keep the OCR value for revert.
+    rec._ocr = {};
+    for (const col of SPREADSHEET_COLUMNS) {
+      const meta = cellMeta[col];
+      if (!meta) continue;
+      rec._ocr[col] = rec[col];
+      const validation = validateCell(col, meta.raw, rec[col]);
+      const conf = cellConfidence(meta.conf, validation);
+      const sev = severityFor(conf, validation);
+      // A blank cell that validates fine (e.g. credit XOR debit) is an
+      // intentional empty, not a misread — don't clog the queue with it.
+      const isBlank = !meta.raw || !meta.raw.trim();
+      if (sev && !(isBlank && validation.ok)) {
+        rec.needsReview = true;
+        reviewItems.push({
+          id: "rv-" + Math.random().toString(36).slice(2, 9),
+          kind: "book", rowId: rec.id, field: col,
+          desc: rec.trade_description || "(row)",
+          value: rec[col], suggested: validation.suggested,
+          confidence: Math.round(conf), severity: sev, msg: validation.msg,
+          imageId, bbox: meta.bbox, confirmed: false,
+        });
+      }
+    }
     positions.push(rec);
   }
-  if (positions.some((p) => p.needsReview)) flags.push("LOW_CONFIDENCE: one or more numeric cells read with low confidence — flagged for review (highlighted).");
-  return { layout: "spreadsheet", positions, geometry: { vlines, hlines }, flags };
+  if (reviewItems.length) flags.push(`REVIEW: ${reviewItems.length} cell(s) need confirmation (open the Review tab).`);
+  return { layout: "spreadsheet", positions, reviewItems, geometry: { vlines, hlines }, flags };
 }
 
 function normPos(v) {
@@ -291,14 +338,17 @@ const ORDER_CHAINS_REGIONS = {
   body:      { left: 0.0, top: 0.36, right: 1.0, bottom: 1.0 },
 };
 
-async function extractOrderChains(worker, canvas) {
+async function extractOrderChains(worker, canvas, imageId) {
   const w = canvas.width, h = canvas.height;
   const flags = [];
+  const reviewItems = [];
   const rel = (r) => ({ left: r.left * w, top: r.top * h, width: (r.right - r.left) * w, height: (r.bottom - r.top) * h });
+  const tickerBox = rel(ORDER_CHAINS_REGIONS.ticker);
+  const totalBox = rel(ORDER_CHAINS_REGIONS.total_pl);
 
-  const tk = await ocrRect(worker, canvas, rel(ORDER_CHAINS_REGIONS.ticker), { dark: true, psm: 7 });
+  const tk = await ocrRect(worker, canvas, tickerBox, { dark: true, psm: 7 });
   let ticker = parseTicker(tk.text);
-  const tot = await ocrRect(worker, canvas, rel(ORDER_CHAINS_REGIONS.total_pl), { dark: true, psm: 7, whitelist: "0123456789.,'-()" });
+  const tot = await ocrRect(worker, canvas, totalBox, { dark: true, psm: 7, whitelist: "0123456789.,'-()" });
   const body = await ocrRect(worker, canvas, rel(ORDER_CHAINS_REGIONS.body), { dark: true, psm: 6 });
 
   let totalPl = parseMoney(tot.text);
@@ -324,12 +374,34 @@ async function extractOrderChains(worker, canvas) {
   // strategy guess from body keywords
   const strat = guessStrategy(bodyText);
 
+  // Only a CLSD chain produces a bookable realized number — review THAT number.
+  const bookable = isClosed === true && totalPl !== null;
+  const tradeId = "ocr-" + Math.random().toString(36).slice(2, 8);
+  if (bookable) {
+    const vTot = validateCell("total_pl", tot.text, totalPl);
+    const cTot = cellConfidence(tot.confidence, vTot);
+    const sTot = severityFor(cTot, vTot);
+    if (sTot) reviewItems.push({
+      id: "rv-" + Math.random().toString(36).slice(2, 9), kind: "trade", rowId: tradeId,
+      field: "pl", desc: `${ticker || "?"} realized P/L`, value: totalPl, suggested: vTot.suggested,
+      confidence: Math.round(cTot), severity: sTot, msg: vTot.msg || (bondTick ? `bond-tick ${bondTick.raw}` : ""),
+      imageId, bbox: totalBox, confirmed: false,
+    });
+    const vTk = validateCell("ticker", tk.text, ticker);
+    const cTk = cellConfidence(tk.confidence, vTk);
+    const sTk = severityFor(cTk, vTk);
+    if (sTk) reviewItems.push({
+      id: "rv-" + Math.random().toString(36).slice(2, 9), kind: "trade", rowId: tradeId,
+      field: "ticker", desc: "Order Chain ticker", value: ticker, suggested: vTk.suggested,
+      confidence: Math.round(cTk), severity: sTk, msg: vTk.msg, imageId, bbox: tickerBox, confirmed: false,
+    });
+  }
+
   return {
-    layout: "order_chains",
+    layout: "order_chains", tradeId,
     ticker, total_pl: totalPl, is_closed: isClosed,
     strategy: strat, bondTick, confidence: Math.min(tk.confidence, tot.confidence),
-    bookable: isClosed === true && totalPl !== null,
-    flags,
+    bookable, reviewItems, flags,
   };
 }
 
@@ -390,6 +462,10 @@ export async function processScreenshot(blob, progressCb) {
   const gray = grayscale(canvas.getContext("2d"), canvas.width, canvas.height);
   const worker = await ensureTesseract(progressCb);
 
+  // Keep the source canvas in memory (only) so the review UI can show crops.
+  const imageId = "img-" + (++_imgSeq);
+  _imageRegistry.set(imageId, canvas);
+
   // cheap full-image hint OCR for layout detection
   let hint = "";
   try {
@@ -400,11 +476,15 @@ export async function processScreenshot(blob, progressCb) {
 
   const layout = detectLayout(canvas, gray, hint);
   let result;
-  if (layout === "spreadsheet") result = await extractSpreadsheet(worker, canvas, gray);
-  else if (layout === "order_chains") result = await extractOrderChains(worker, canvas);
+  if (layout === "spreadsheet") result = await extractSpreadsheet(worker, canvas, gray, imageId);
+  else if (layout === "order_chains") result = await extractOrderChains(worker, canvas, imageId);
   else if (layout === "monitor") result = await extractMonitor(worker, canvas);
-  else result = { layout, flags: [`SKIPPED: '${layout}' layout carries no track-record data (context only).`] };
+  else {
+    result = { layout, flags: [`SKIPPED: '${layout}' layout carries no track-record data (context only).`] };
+    _imageRegistry.delete(imageId); // nothing references it
+  }
 
+  result.imageId = imageId;
   result.layout = layout;
   result.detectedFrom = hint ? "keyword+geometry" : "geometry";
   return result;

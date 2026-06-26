@@ -3,7 +3,7 @@
    First load fetches Tesseract.js + eng.traineddata (~12MB); they are then
    cached so OCR works fully offline afterward. */
 
-const VERSION = "tt-tracker-v1";
+const VERSION = "tt-tracker-v2";
 const SHELL = "shell-" + VERSION;
 const RUNTIME = "runtime-" + VERSION;
 
@@ -18,6 +18,10 @@ const SHELL_ASSETS = [
   "./js/charts.js",
   "./js/ocr.js",
   "./js/seed.js",
+  "./js/validators.js",
+  "./js/review.js",
+  "./js/card.js",
+  "./js/backup.js",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
   "./assets/favicon-32.png",
