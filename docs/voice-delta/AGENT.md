@@ -48,4 +48,44 @@ auto-merge, because the whole point is his "is this reading me right?" review.
 - Never call the pusher, `--publish`, or any Substack write endpoint. Read-only on
   the live site (public `/api/v1/posts`, `/api/v1/archive` only).
 - Never edit a `given.md` or a `shipped.md` after capture — they are evidence.
-- Stay inside `docs/voice-delta/` and `/VOICE-DELTA.md`. No other files.
+- Stay inside `docs/voice-delta/`, `/VOICE-DELTA.md`, and `/ACCURACY.md`. No other files.
+
+## Accuracy harness (the "prove VOICE-DELTA can be accurate" loop)
+
+The corpus is the evidence; the harness turns it into numbers.
+
+- `score.py` is **deterministic**. It computes (a) token Jaccard between
+  `given.md` and `shipped.md` (baseline edit budget), (b) the same for
+  `predicted.md` vs `shipped.md` if a prediction exists (the accuracy metric),
+  and (c) a rule-hit matrix detecting whether each rule in `/VOICE-DELTA.md`
+  fired in the actual diff.  Output: `/ACCURACY.md`.
+
+- `predict.py` is **LLM-driven**.  It packages `given.md` + `/VOICE-DELTA.md`
+  into a prompt and asks a model to emit what Michael would most plausibly
+  ship.  Uses the `anthropic` SDK + `ANTHROPIC_API_KEY` when available; falls
+  back to printing the prompt for hand-piping.  Output: `pairs/<name>/predicted.md`.
+
+- Workflow each refresh: `python3 predict.py --all`, then `python3 score.py`.
+  Two new numbers move per pair: `j(P,S)` (accuracy) and `Δ` (gain vs baseline).
+  Positive Δ = the rules helped.  The aggregate Δ is the headline.
+
+The harness deliberately scopes the prediction to **editable rules**, not net-new
+content.  A pair where the ship added a whole personal-story section the
+machine couldn't have written will still get rule-edit credit; the rules are
+not blamed for content they cannot generate.
+
+## Diagnosis: capture is the bottleneck, again
+
+v0 wired capture into the publish skill's step 7.  Two cached drafts since
+(06-22, 06-23) shipped without ever being committed to the corpus — the cloud
+routine saw an empty `origin/main` delta and (correctly) opened no PR.  Root
+cause: step 7 didn't run, or its `|| true` swallowed a silent failure.
+
+**Mitigation:** `refresh.py --commit` is now idempotent and self-committing.
+Any path that touches `~/.mph-substack-cache/<date>_<slug>/post.md` can call
+it as a one-liner and the capture lands in the corpus regardless of which
+publish skill (or no skill at all) was used.
+
+If a Sunday refresh has 0 newly-complete pairs and a non-empty
+`~/.mph-substack-cache`, the chain to investigate is: was step 7 / the
+fallback `refresh.py --commit` ever called for those drafts?
