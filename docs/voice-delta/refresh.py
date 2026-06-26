@@ -17,8 +17,13 @@ refresh the rules. Safe to run repeatedly; it never overwrites an existing file.
 
     python3 refresh.py            # capture + index + report
     python3 refresh.py --report   # report only (no network, no writes)
+    python3 refresh.py --commit   # capture + index + report, then git add/commit
+                                  # any newly-captured given drafts.  Idempotent:
+                                  # no new files → no commit.  Use this from the
+                                  # pusher or anywhere outside the publish skill
+                                  # so a capture never silently goes uncommitted.
 """
-import json, os, re, sys, glob, hashlib, urllib.request
+import json, os, re, sys, glob, hashlib, subprocess, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PAIRS = os.path.join(HERE, "pairs")
@@ -122,11 +127,40 @@ def report():
     return unmatched
 
 
+def commit_captures(captured):
+    """If any new given.md files were captured, git add + commit them.  Safe to
+    call when nothing changed (becomes a no-op).  Always returns the captured
+    list unchanged for chaining."""
+    if not captured:
+        return captured
+    repo = subprocess.run(["git", "-C", HERE, "rev-parse", "--show-toplevel"],
+                          capture_output=True, text=True)
+    if repo.returncode != 0:
+        print("  ! not in a git repo, skipping commit", file=sys.stderr)
+        return captured
+    root = repo.stdout.strip()
+    paths = [os.path.join("docs", "voice-delta", "pairs", n, "given.md") for n in captured]
+    subprocess.run(["git", "-C", root, "add", *paths], check=False)
+    # If nothing actually changed (already committed earlier), staged diff is
+    # empty and we skip the commit instead of erroring.
+    diff = subprocess.run(["git", "-C", root, "diff", "--cached", "--quiet"])
+    if diff.returncode == 0:
+        print("  · no staged changes, skipping commit")
+        return captured
+    msg = f"voice-delta: capture {len(captured)} given draft(s)\n\n" + "\n".join(f"- {n}" for n in captured)
+    subprocess.run(["git", "-C", root, "commit", "-m", msg], check=False)
+    return captured
+
+
 if __name__ == "__main__":
-    report_only = "--report" in sys.argv[1:]
+    args = sys.argv[1:]
+    report_only = "--report" in args
+    do_commit = "--commit" in args
     if not report_only:
         new = capture()
         print(f"captured {len(new)} new given draft(s): {new or '—'}")
         n = index()
         print(f"indexed {n} recent published posts → pairs/_archive.tsv")
+        if do_commit:
+            commit_captures(new)
     report()

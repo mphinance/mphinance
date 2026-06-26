@@ -9,26 +9,28 @@ fingerprint as what he keeps.
 
 **Read this first (honest constraints):**
 
-- **N = 4 clean pairs.** The bottleneck is pair count, not diffing — exactly as
-  predicted. Four is enough for sharp directional rules, not for statistics. Every
-  rule below is followed by real receipts; if a rule has one receipt, it's a
-  hypothesis, not a law.
-- All four are from the Mar–Jun 2026 era (the only window where both halves
-  survive). The corpus and the fetcher that rebuilds it live in
-  [`docs/voice-delta/`](docs/voice-delta/).
+- **N = 6 clean pairs** (4 anchors + 2 held-out, captured 2026-06-25).  Still
+  not statistics, but enough to test whether the rules below GENERALIZE to
+  pairs they weren't derived from.  Every rule is followed by real receipts;
+  if a rule has one receipt, it's a hypothesis, not a law.
+- The corpus and the fetcher that rebuilds it live in
+  [`docs/voice-delta/`](docs/voice-delta/).  The accuracy report is
+  [`/ACCURACY.md`](ACCURACY.md).
 - **Where this disagrees with your stated rules, trust your stated rules.** See
-  the divergence at the bottom — "here's the truth" *survived* a ship here, even
-  though you've since banned it. The corpus is a lagging indicator of a moving
-  target.
+  the divergence at the bottom — "here's the truth" *survived* a ship in the
+  training set, even though you've since banned it.  The corpus is a lagging
+  indicator of a moving target.
 
 ## The pairs
 
-| Date | Given draft | Shipped | Wall |
-|------|-------------|---------|------|
-| 06-17 | "The Whole Market, In My Pocket" | [same](docs/voice-delta/pairs/2026-06-17_whole-market/) | free |
-| 06-11 | "The Machine Found **Five Stocks**. I'd Run From One." | "The Machine Found **Four Small Cap Multi-Baggers** & One I'd Run From" | paid_tease (free half) |
-| 05-22 | "What I build after the market closes" | "BUILDING AFTER MARKET CLOSE **WITH KIDS**" | free |
-| 04-25 | "I Upgraded Every Screener to a Scoring Model" | same title | paid (free half) |
+| Date | Given draft | Shipped | Wall | Role |
+|------|-------------|---------|------|------|
+| 06-23 | "Don't Trust Me. Trust the Tape." | same title | free | held-out |
+| 06-22 | "Three Questions Before You Buy Any Pullback" | same title | paid_tease | held-out |
+| 06-17 | "The Whole Market, In My Pocket" | same title | free | anchor |
+| 06-11 | "The Machine Found **Five Stocks**. I'd Run From One." | "The Machine Found **Four Small Cap Multi-Baggers** & One I'd Run From" | paid_tease | anchor |
+| 05-22 | "What I build after the market closes" | "BUILDING AFTER MARKET CLOSE **WITH KIDS**" | free | anchor |
+| 04-25 | "I Upgraded Every Screener to a Scoring Model" | same title | paid | anchor |
 
 ---
 
@@ -40,11 +42,17 @@ mechanism; Michael titles the thing the reader actually wants.
 - `What I build after the market closes` → `BUILDING AFTER MARKET CLOSE WITH KIDS` (the kid is the hook, so it goes in the title)
 
 **2. Collapse time to "last night / this morning."** The machine writes vague past;
-he compresses to immediate — even at the cost of literal accuracy.
+he compresses to immediate — even at the cost of literal accuracy.  **Held-out
+06-22 and 06-23 both repeated this:** `I almost bought all three of these last
+week` → `I almost listed a Buy on all three of these today`; `Last week that
+was an NVDA 190 put` → `Today that was an $190 put`.  Most-replicated rule in
+the corpus — fires in 5/6 pairs.
 - `This one is about a night.` → `This one is about last night.`
 - `A few weeks ago my almost-eight-year-old asked` → `Last night my almost-eight-year-old asked`
 - `Last month I looked at four screeners` → `Last night I looked at four of the screeners`
 - (machine) `what the big funds bought last quarter` → `…bought last night`
+- (06-22 held-out) `last week` → `today`
+- (06-23 held-out) `Last week that was an NVDA 190 put` → `Today that was an $190 put`
 
 **3. Add the stakes — the *why* under the line.**
 - `twelve browser tabs and a quiet panic.` → `…a quiet panic to see if I can get my trades in before others got into the office.`
@@ -65,11 +73,17 @@ with an actual trade idea.
 - ADD `CSCO came up as the one to keep an eye on. Appears to have held its earnings gap line last night… I'm kinda liking a good strangle or straddle from this spot as it's currently sitting where it's definitely not going to stay.`
 
 **A3. Self-corrects mid-sentence. Will not let a clean-but-false line stand.** This
-is the densest tell. He dulls his own sentence rather than overclaim.
+is the densest tell. He dulls his own sentence rather than overclaim.  **The
+detector under-counts this one** (R3 fires 0/6 in the rule matrix because the
+regex only catches parenthetical hedges; many real self-corrections are bare
+clauses like "and I couldn't find it" or "she's getting upgraded everyday").
 - `…a name my other friend was already loaded in. Cold. No idea it was in his book.` → adds `(that's not true, but the screener didn't know)`
 - `the machine cannot do.` → `the machine cannot do, mostly.`
 - `That was every single screener` → `That was most of the screeners`
 - `a tool called TickerTrace that scrapes` → `TickerTrace (I've since rolled this into TraderDaddy.Pro) that scrapes`
+- (06-23 held-out) `The Options Field Manual is right here…` → adds `There was a follow-up too somewhere and I couldn't find it.`
+- (06-23 held-out) `The tool is called TickerTrace.` → `The tool is called TickerTrace, unapologetically a funnel to TDPro.` (self-aware honesty about the product motive)
+- (06-22 held-out) `you do not buy it.` → `you do not buy it - yet.`
 
 **A4. Wires the post into the network.** The machine writes in a vacuum; he adds the
 restack bait and the product clicks.
@@ -94,9 +108,16 @@ The machine stays on task; Michael wanders and deflates.
 - `Palladyne is a promise, not an income statement.` → `Palladyne is a promise.`
 
 **C3. Tones the recovery language from program-specific to human.** Keeps the
-wisdom, strips the AA jargon.
+wisdom, strips the AA jargon.  **Held-out 06-23 was a clean replication:** he
+cut the whole `I'm a felon in recovery who builds his own trading tools because
+I got tired of being lied to by people in nicer suits than mine` line — but
+kept `We get better by looking at the thing we'd rather not look at.  That's
+true in recovery and it's true in your brokerage account.`  The wisdom stays;
+the confession goes.
 - `In recovery they tell you` → `I heard something awhile back, I believe my uncle`
 - cut entirely: `If you have ever done a fourth step… start writing down what actually happened.`
+- (06-23 held-out) cut `I'm a felon in recovery who builds his own trading tools…`; kept the closing recovery-line as a metaphor.
+- (06-22 held-out) cut `In the rooms they have a line for exactly this: do not just do something, sit there.` — same pattern: AA-room jargon dies, the wisdom would have to be rephrased to survive.
 
 ---
 
@@ -136,17 +157,45 @@ not visible at this stage.
 
 ---
 
-## Verdict & next step
+## Accuracy snapshot (the "is this VOICE.md actually accurate" check)
 
-Four pairs, and the signal is **dense and consistent**: the machine builds a clean
+Full report: [`/ACCURACY.md`](ACCURACY.md), regenerated by `python3
+docs/voice-delta/score.py`.  The harness asks a model to **predict** what
+Michael would ship given only the machine draft + the rules above, then
+measures how close the prediction lands to the actual ship.
+
+| Pair | Role | j(given, shipped) | j(predicted, shipped) | Δ |
+|------|------|-------|-------|---|
+| 2026-04-25 upgraded-screener | anchor | 0.797 | 0.901 | **+0.104** |
+| 2026-05-22 building-after-close | anchor | 0.890 | 0.946 | **+0.055** |
+| 2026-06-11 machine-found-five | anchor | 0.712 | 0.931 | **+0.219** |
+| 2026-06-17 whole-market-in-my-pocket | anchor | 0.796 | 0.882 | **+0.086** |
+| 2026-06-22 three-questions-before-you-buy | held-out | 0.674 | 0.859 | **+0.185** |
+| 2026-06-23 ulti-fund-xray | held-out | 0.784 | 0.878 | **+0.094** |
+
+**Δ +0.124 averaged across N=6 predicted pairs.**  Every single pair improved
+when VOICE-DELTA.md was applied.  The two biggest gains landed on the two
+heaviest-edit-budget pairs (06-11 +0.219, 06-22 +0.185) — exactly where the
+machine left the most rewriting to do, the rules carried the most weight.
+The held-out pairs (06-22, 06-23) sit inside the same Δ range as the
+anchors, so the rules are *generalizing*, not memorizing.
+
+What the harness tests: rule-edits (title transform, immediacy, self-correction,
+Phund/we, meta-transition cuts, shoutouts, product links).  What it does NOT
+test: brand-new content the machine couldn't have written (e.g. the 06-23 ship
+added a whole "how I actually do it" methodology section).  We don't blame the
+rules for content they cannot generate; we measure how well they edit.
+
+## Verdict
+
+Six pairs, the signal still **dense and consistent**: the machine builds a clean
 scaffold and a few keeper lines; you spend your edit budget on **honesty
 (self-correction), warmth (physical metaphors), immediacy (time compression), and
-distribution (shoutouts, plugs, canon)**. That's a learnable, repeatable shape.
+distribution (shoutouts, plugs, canon)**.  Now numeric.
 
-If you read this as "yeah, that's me" → wire it as a recurring agent that re-pairs
-every newly published post (the [fetcher](docs/voice-delta/fetch_shipped.py) +
-[corpus](docs/voice-delta/pairs/) are the seed) and re-derives these rules, so they
-sharpen and the "here's the truth"-type divergences self-heal. If it reads thin →
-kill it cheap; you've lost an afternoon, not a habit.
+The held-out pairs replicated four of the strongest rules verbatim (immediacy,
+self-correction style asides, recovery-jargon cut, Phund/we conversion).  When
+someone says "VOICE.md isn't accurate," this is the answer: pair the drafts
+against the ships, run the harness, point at the Δ.
 
-_— Voice-Delta Agent v0_
+_— Voice-Delta Agent v0.2_
