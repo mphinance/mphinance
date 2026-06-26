@@ -160,7 +160,19 @@ def money(v, sign=False):
     return f"{s}${v:,.2f}".replace("$-", "-$")
 
 
-def render(m, openp, out_path):
+def fmt_book_money(v):
+    """Book cells: int dollars with commas, the infinity glyph, or blank."""
+    if v in (None, ""):
+        return ""
+    if str(v).lower() in ("inf", "infinity", "∞"):
+        return "&infin;"
+    try:
+        return f"{float(v):,.0f}"
+    except (ValueError, TypeError):
+        return str(v)
+
+
+def render(m, openp, out_path, book=None, summary=None):
     payload = {
         "equity": m["equity"],
         "strategies": m["strategies"],
@@ -200,17 +212,97 @@ def render(m, openp, out_path):
                      f'<td class="r">{s["win_rate"]}%</td>'
                      f'<td class="r {cls}">{money(s["total"], sign=True)}</td></tr>')
 
-    # open positions
-    if openp:
+    # ---- Live Book & Risk panel (mirrors Ryan's own spreadsheet) -----------
+    if book:
+        book_tr = ""
+        for o in book:
+            def pill(val, kind):
+                v = (o.get(val) or "").strip()
+                if not v:
+                    return "&mdash;"
+                klass = ""
+                if v.lower().startswith("core"):
+                    klass = "core"
+                elif v.lower().startswith("supp"):
+                    klass = "supp"
+                elif v.lower().startswith("def"):
+                    klass = "defr"
+                elif v.lower().startswith("undef"):
+                    klass = "undefr"
+                return f'<span class="bpill {klass}">{v}</span>'
+            book_tr += (
+                f'<tr><td class="desc">{o.get("trade_description","")}</td>'
+                f'<td class="r pos">{fmt_book_money(o.get("credit_rcvd"))}</td>'
+                f'<td class="r neg">{fmt_book_money(o.get("debit_paid"))}</td>'
+                f'<td class="r">{fmt_book_money(o.get("max_profit"))}</td>'
+                f'<td class="r">{fmt_book_money(o.get("max_loss"))}</td>'
+                f'<td class="r">{fmt_book_money(o.get("bp_usd"))}</td>'
+                f'<td class="r">{(o.get("bp_pct") or "")}{"%" if o.get("bp_pct") else ""}</td>'
+                f'<td>{pill("position_type","")}</td>'
+                f'<td>{pill("risk_type","")}</td>'
+                f'<td class="r">{o.get("date_opened","")}</td></tr>')
+
+        summ = summary or {}
+        pm = summ.get("position_mix", {})
+        bp = summ.get("buying_power", {})
+
+        def gauge(label, pct):
+            try:
+                p = float(pct)
+            except (TypeError, ValueError):
+                p = 0
+            return (f'<div class="g-row"><span>{label}</span>'
+                    f'<span class="g-val">{pct}%</span></div>'
+                    f'<div class="g-bar"><i style="width:{min(p,100)}%"></i></div>')
+
+        def mixrow(label, pct):
+            return (f'<div class="mix-row"><span>{label}</span>'
+                    f'<b>{pct}%</b></div>')
+
+        summary_card = ""
+        if summ:
+            summary_card = f"""
+      <aside class="summary">
+        <h3>Portfolio Summary</h3>
+        <div class="s-label">Position Mix</div>
+        {mixrow("Core", pm.get("core_pct","&mdash;"))}
+        {mixrow("Supplemental", pm.get("supplemental_pct","&mdash;"))}
+        <div class="mix-gap"></div>
+        {mixrow("Undefined", pm.get("undefined_pct","&mdash;"))}
+        {mixrow("Defined", pm.get("defined_pct","&mdash;"))}
+        <div class="s-label">Buying Power</div>
+        {gauge("BP Target", bp.get("bp_target_pct","&mdash;"))}
+        {gauge("BP Usage", bp.get("bp_usage_pct","&mdash;"))}
+        {gauge("Trading Usage", bp.get("trading_usage_pct","&mdash;"))}
+        {gauge("Stock Usage", bp.get("stock_usage_pct","&mdash;"))}
+      </aside>"""
+
+        open_section = f"""
+  <section class="card srclabel" data-src="SOURCE 2 &middot; LIVE OPEN BOOK (from spreadsheet OCR)">
+    <h2>Live Book &amp; Risk <span class="muted">/ {len(book)} open positions &mdash; an upgraded, auto-filled mirror of Ryan's own sheet</span></h2>
+    <div class="book-wrap">
+      <div class="scroll book-scroll"><table class="book">
+        <thead><tr>
+          <th>Trade Description</th><th class="r">Credit Rcv'd</th><th class="r">Debit Paid</th>
+          <th class="r">Max Profit</th><th class="r">Max Loss</th><th class="r">BP $</th>
+          <th class="r">BP %</th><th>Position</th><th>Risk</th><th class="r">Opened</th>
+        </tr></thead>
+        <tbody>{book_tr}</tbody>
+      </table></div>
+      {summary_card}
+    </div>
+    <p class="privacy">&#128274; In the browser version, this is OCR'd from your tastytrade screenshots entirely on your device &mdash; your screenshots never leave your computer and no broker login is required. Risk Type is auto-derived (long options &amp; spreads = Defined; naked shorts &amp; long futures = Undefined) and stays editable; Position Type (Core/Supp) is your call.</p>
+  </section>"""
+    elif openp:
         open_tr = ""
         for o in openp:
             mp = money(o["max_profit"]) if o["max_profit"] is not None else "&mdash;"
             ml = money(o["max_loss"]) if o["max_loss"] is not None else "&mdash;"
-            bp = money(o["bp_used"]) if o["bp_used"] is not None else "&mdash;"
+            bpv = money(o["bp_used"]) if o["bp_used"] is not None else "&mdash;"
             open_tr += (f'<tr><td>{o["date_opened"]}</td><td class="tk">{o["ticker"]}</td>'
                         f'<td>{o["strategy"]}</td><td>{o["type"]}</td>'
                         f'<td class="r">{mp}</td><td class="r neg">{ml}</td>'
-                        f'<td class="r">{bp}</td><td class="nt">{o["notes"]}</td></tr>')
+                        f'<td class="r">{bpv}</td><td class="nt">{o["notes"]}</td></tr>')
         open_section = f"""
   <section class="card">
     <h2>Open Positions <span class="muted">/ {len(openp)} disclosed in prose</span></h2>
@@ -241,7 +333,7 @@ def render(m, openp, out_path):
     font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background-image:radial-gradient(900px 400px at 12% -8%, rgba(91,140,255,.12), transparent 60%),
       radial-gradient(800px 380px at 92% -10%, rgba(155,107,255,.10), transparent 60%); }}
-  .wrap {{ max-width:1100px; margin:0 auto; padding:34px 22px 70px; }}
+  .wrap {{ max-width:1200px; margin:0 auto; padding:34px 22px 70px; }}
   header.hero {{ display:flex; justify-content:space-between; align-items:flex-end;
     flex-wrap:wrap; gap:14px; margin-bottom:24px; }}
   .hero h1 {{ font-size:25px; margin:0 0 4px; letter-spacing:-.4px; }}
@@ -274,9 +366,38 @@ def render(m, openp, out_path):
   .scroll {{ max-height:520px; overflow:auto; border-radius:10px; }}
   .pill {{ font-size:11px; padding:2px 8px; border-radius:999px; border:1px solid var(--line); }}
   .pill.credit {{ color:var(--pos); }} .pill.debit {{ color:var(--accent); }}
+  /* source ribbons so the two data sources are unmistakable */
+  .srclabel {{ position:relative; }}
+  .srclabel::before, .card.track::before {{ content:attr(data-src); position:absolute; top:-9px; left:16px;
+    font-size:10px; letter-spacing:.7px; font-weight:700; color:#0b0f17;
+    background:var(--accent2); padding:2px 9px; border-radius:6px; }}
+  .card.track::before {{ background:var(--accent); }}
+  /* Live Book panel */
+  .book-wrap {{ display:grid; grid-template-columns:1fr 190px; gap:14px; align-items:start; }}
+  table.book th, table.book td {{ padding:5px 6px; font-size:11.5px; }}
+  table.book td.desc {{ font-weight:600; white-space:normal; min-width:150px; max-width:210px; line-height:1.25; }}
+  table.book .bpill {{ padding:1px 7px; font-size:10px; }}
+  .bpill {{ font-size:10.5px; padding:2px 9px; border-radius:999px; border:1px solid var(--line); color:var(--mut); }}
+  .bpill.core {{ color:#7fb0ff; border-color:#2c4a7a; }}
+  .bpill.supp {{ color:#c4a6ff; border-color:#4a3a7a; }}
+  .bpill.defr {{ color:var(--pos); border-color:#1f6e57; }}
+  .bpill.undefr {{ color:#ffb86b; border-color:#7a5a2c; }}
+  .summary {{ background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:15px 16px; }}
+  .summary h3 {{ font-size:13px; margin:0 0 12px; }}
+  .s-label {{ color:var(--mut); font-size:10.5px; text-transform:uppercase; letter-spacing:.6px; margin:14px 0 7px; }}
+  .mix-row {{ display:flex; justify-content:space-between; font-size:12.5px; padding:3px 0; }}
+  .mix-row b {{ font-weight:700; }}
+  .mix-gap {{ height:6px; }}
+  .g-row {{ display:flex; justify-content:space-between; font-size:12px; margin-top:9px; }}
+  .g-val {{ color:var(--ink); font-weight:600; }}
+  .g-bar {{ height:6px; background:#0b1119; border-radius:6px; overflow:hidden; margin-top:3px; }}
+  .g-bar i {{ display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); }}
+  .privacy {{ color:var(--mut); font-size:11.5px; margin:14px 0 0; line-height:1.6;
+    border-top:1px dashed var(--line); padding-top:12px; }}
   footer {{ color:var(--mut); font-size:12px; margin-top:26px; line-height:1.7; }}
   footer a {{ color:var(--accent); text-decoration:none; }}
-  @media (max-width:820px) {{ .kpis{{grid-template-columns:repeat(2,1fr);}} .grid2{{grid-template-columns:1fr;}} }}
+  @media (max-width:820px) {{ .kpis{{grid-template-columns:repeat(2,1fr);}} .grid2{{grid-template-columns:1fr;}}
+    .book-wrap{{grid-template-columns:1fr;}} }}
 </style>
 </head>
 <body>
@@ -291,7 +412,7 @@ def render(m, openp, out_path):
 
   <div class="kpis">{kpis}</div>
 
-  <section class="card">
+  <section class="card track" data-src="SOURCE 1 &middot; REALIZED TRACK RECORD (from recap prose)">
     <h2>Cumulative Realized P/L <span class="muted">/ equity curve, each step = one closed trade</span></h2>
     <canvas id="equity" height="120"></canvas>
   </section>
@@ -423,10 +544,22 @@ def main():
     rows = load_rows(in_path)
     closed, openp = clean(rows)
     m = compute(closed)
-    render(m, openp, out_path)
+
+    # Optional second source: the live open-book / risk panel (spreadsheet OCR)
+    book, summary = None, None
+    book_path = os.path.join(HERE, "data", "open_book.csv")
+    summ_path = os.path.join(HERE, "data", "portfolio_summary.json")
+    if os.path.exists(book_path):
+        book = load_rows(book_path)
+    if os.path.exists(summ_path):
+        with open(summ_path) as f:
+            summary = json.load(f)
+
+    render(m, openp, out_path, book=book, summary=summary)
 
     print(f"Read    : {in_path}")
-    print(f"Closed  : {m['n']} trades   Open: {len(openp)} positions")
+    print(f"Closed  : {m['n']} trades   Open(prose): {len(openp)}   "
+          f"Live book: {len(book) if book else 0} positions")
     print(f"Realized: ${m['total']:,.2f}   Win rate: {m['win_rate']}%   "
           f"Profit factor: {m['profit_factor']}")
     print(f"Wrote   : {out_path}")

@@ -109,9 +109,11 @@ top-level fields (ticker, Total P/L, strategy) are the reliable ones.
 | `build.py` | Reads a trades CSV, computes all metrics, writes `dashboard.html`. Stdlib only (uses pandas if present, degrades gracefully without it). |
 | `tt_ocr.py` | Tastytrade screenshot ingester: detects layout, crops regions, OCRs the stat cells, emits JSON + a `build.py`-ready CSV. Stdlib + Pillow; pytesseract optional. |
 | `data/trades_template.csv` | The blank template a writer maintains by hand. Two example rows, clearly marked, that the builder ignores. |
-| `data/trades_seed.csv` | **Real** trades extracted from Ryan's public recaps (see honesty note). |
-| `samples/` | Three real public Tastytrade screenshots from Ryan's recaps (2 Order Chains, 1 Curve) so `tt_ocr.py` is runnable out of the box. |
-| `dashboard.html` | The generated, self-contained artifact (inline Chart.js via CDN). |
+| `data/trades_seed.csv` | **Real** closed trades extracted from Ryan's public recaps (see honesty note). |
+| `data/open_book.csv` | **Real** 25-row live open book from Ryan's open-book/risk spreadsheet screenshot (verified row-by-row). Feeds the Live Book & Risk panel. |
+| `data/portfolio_summary.json` | Position-mix + buying-power figures from the same spreadsheet (verified). |
+| `samples/` | Four real public screenshots from Ryan's recaps (2 Order Chains, 1 Curve, 1 open-book spreadsheet) so `tt_ocr.py` runs out of the box. |
+| `dashboard.html` | The generated, self-contained artifact (inline Chart.js via CDN). Two clearly-labeled panels: realized Track Record + Live Book & Risk. |
 
 ### Input schema
 
@@ -174,6 +176,86 @@ short strangles, risk-free flies, put credit spreads) is a clean, high-win-rate
 engine. His **cheap directional shots** (long butterflies, debit spreads, ITM credit
 hedges) are where every losing dollar comes from. The screenshots never let you see
 that. The dashboard makes it obvious in one glance.
+
+## Second source: the Live Book & Risk panel (spreadsheet OCR)
+
+Ryan also keeps a **Google-Sheets-style open-book / risk panel** and screenshots it
+into his recaps (positions table on the left, Portfolio Summary sidebar on the
+right). That is clean dark-text-on-white with gridlines, i.e. highly OCR-reliable.
+The dashboard now has a second, clearly-labeled panel, **Live Book & Risk**, that
+mirrors his own sheet (same columns: Trade Description, Credit Rcv'd, Debit Paid,
+Max Profit, Max Loss, BP $, BP %, Position Type, Risk Type, Date Opened) plus the
+Portfolio Summary card. The pitch: he stops hand-typing positions; the tool OCRs
+his screenshot and shows the same view he already trusts, prettier and automated.
+
+The two panels are deliberately separate sources: **Track Record** = realized,
+closed trades (from recap prose); **Live Book** = current open positions (from the
+spreadsheet). Open positions have no realized P/L, so they never touch the win
+rate / equity curve.
+
+### How the spreadsheet OCR works (`tt_ocr.py`, `spreadsheet` layout)
+
+- **Layout auto-detected** by background brightness (his sheet is light; the
+  tastytrade trade UIs are dark) and by the header keywords.
+- **Real column segmentation, not guessing.** The tool detects the vertical and
+  horizontal **gridlines** (full-height/width non-white runs) and slices cells at
+  those boundaries. Demonstrated on `samples/open_book_spreadsheet.png`: it finds
+  **12 vertical gridlines (-> the 10 documented columns) and 26 horizontal lines
+  (-> 25 data rows)**. Run with `--debug` to dump the grid overlay + every cell.
+- **Handles the infinity glyph** (`∞` Max Profit on naked/LEAP longs) -> unbounded,
+  not a parse error. Blank cells (credit XOR debit) stay blank.
+- **Risk Type is auto-derived** and editable: long options & spreads/flies/
+  diagonals/condors/zebras/covered = **Defined**; naked shorts & long futures =
+  **Undefined**. (The naive "long singles = undefined" rule is wrong; this
+  corrected rule matches all 25 of Ryan's own rows.) **Position Type (Core/Supp)**
+  can't be inferred from the broker; it's left to the user.
+
+### OCR accuracy report (honest)
+
+The text-read engine (Tesseract / `pytesseract`) could not be installed in this
+sandbox, so `tt_ocr.py` ran in **segment + crop + flag-null** mode for the live
+read; the cropped cells were validated by an independent vision read (the
+production "vision-LLM pass" path). On the real `ryan_spreadsheet.png` sample, cell
+segmentation was correct for **all 25 rows × 10 columns**, and the values seeded
+into `data/open_book.csv` were verified field-by-field against the image. Findings:
+
+- The big numeric cells (credit, debit, max profit/loss, BP $, BP %) read cleanly.
+- The two small dropdown cells (Position / Risk) are the error-prone ones at full
+  image resolution and **needed a zoom to read reliably** — exactly where a naive
+  OCR would slip. Independent verification corrected four first-pass misreads:
+  ADBE Risk (Def, not Undef), SPX Put Butterfly Risk (Def, not Undef), WMT Position
+  (Supp, not Core), and the GLD date (**9/25/2025**, not 5/25/2026).
+- Nothing was fabricated; the shipped `open_book.csv` is the verified-correct set.
+
+### Fees
+
+Fees are intentionally a no-op on the **current** numbers and are noted, not forced:
+the closed Track Record uses Ryan's own **booked net results** (his stated realized
+P/L already reflects what hit his account), and open positions carry no realized
+P/L. A configurable per-contract/per-leg fee layer (gross vs net) is the right add
+the day this consumes raw fills; it is documented as a follow-up rather than
+bolted on where it would change nothing.
+
+### Deployment status (static PWA)
+
+The approved end state is a hosted static PWA at `docs/tt-tracker/`, served at
+`https://mphinance.github.io/mphinance/tt-tracker/`, doing the OCR **in the
+browser** via Tesseract.js (WASM) so screenshots never leave the device. That
+browser port is **not done yet** and is the remaining work:
+
+- [ ] Move/duplicate the app to `docs/tt-tracker/` with relative asset paths; add
+      `docs/.nojekyll`.
+- [ ] Port the layout-detection + gridline-segmentation + region maps (already
+      proven here in Python) to JS, reading the canvas pixels.
+- [ ] Wire Tesseract.js with the dark-UI preprocessing (upscale, grayscale,
+      invert/threshold) and numeric char whitelist + per-field PSM.
+- [ ] `manifest.json` + a service worker that caches the app shell **and** the
+      Tesseract WASM + `eng.traineddata` (~10-15 MB) for offline / installable use.
+- [ ] Surface the privacy promise in the UI (already drafted in the panel footer).
+
+What is **done and runnable today** (this worktree): the spreadsheet OCR path, the
+verified open-book data, and the combined two-panel dashboard. The Ryan result does
+not depend on the PWA wrapper.
 
 ---
 

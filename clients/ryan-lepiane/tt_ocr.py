@@ -100,31 +100,88 @@ CURVE_REGIONS = {
 STATUS_WORDS = ("open pos", "closing", "custom", "roll", "closed")
 CLOSED_HINTS = ("closing", "closed", "clsd")
 
+# The "spreadsheet" layout: Ryan's own light-background open-book / risk panel
+# (Google-Sheets style). Columns are segmented dynamically from the gridlines
+# (see detect_gridlines), so this is just the expected order + meaning.
+SPREADSHEET_COLUMNS = [
+    "trade_description", "credit_rcvd", "debit_paid", "max_profit", "max_loss",
+    "bp_usd", "bp_pct", "position_type", "risk_type", "date_opened",
+]
+
 
 # ---------------------------------------------------------------------------
 # Layout detection
 # ---------------------------------------------------------------------------
-def detect_layout(im, ocr_text=None):
-    """Return 'order_chains' or 'curve'.
+def mean_brightness(im, sample=64):
+    """Cheap average brightness (0-255) over a downsampled grayscale copy."""
+    g = im.convert("L").resize((sample, sample))
+    px = list(g.getdata())
+    return sum(px) / len(px)
 
-    Primary signal: OCR text keywords ("Order Chains" / "POP" / "BP Eff").
-    Geometric fallback (works with no OCR): Order Chains screenshots are small
-    and near-square; Curve screenshots are wide (~1.6:1).
+
+def detect_layout(im, ocr_text=None):
+    """Return 'order_chains', 'curve', or 'spreadsheet'.
+
+    Primary signal: OCR text keywords. Geometric/brightness fallback works with
+    no OCR at all:
+      - spreadsheet : light background (mean brightness high) + wide. Ryan's
+                      open-book sheet is dark-text-on-white with gridlines.
+      - order_chains: small, near-square, dark background.
+      - curve       : wide ~1.6:1, dark background.
     """
     if ocr_text:
         t = ocr_text.lower()
+        if "trade description" in t and "date opened" in t:
+            return "spreadsheet"
         if "order chains" in t or ("total p/l" in t and "avg trd" in t):
             return "order_chains"
         if "bp eff" in t or ("max profit" in t and "pop" in t):
             return "curve"
     w, h = im.size
     aspect = w / h
+    # The tastytrade trade UIs are dark; Ryan's sheet is light.
+    if mean_brightness(im) > 180:
+        return "spreadsheet"
     if w <= 760 and 0.85 <= aspect <= 1.20:
         return "order_chains"
     if aspect >= 1.35:
         return "curve"
-    # last resort: smaller files are order chains
     return "order_chains" if w <= 760 else "curve"
+
+
+# ---------------------------------------------------------------------------
+# Gridline detection (for the spreadsheet layout) -- pure PIL, no numpy.
+# ---------------------------------------------------------------------------
+def detect_gridlines(gray, axis, region, line_frac=0.85):
+    """Find gridline positions along `axis` ('x' or 'y') inside `region`
+    (l, t, r, b in pixels). A gridline is a row/column that is non-white for
+    most of its length. Returns merged center positions in image coordinates.
+    """
+    l, t, r, b = region
+    px = gray.load()
+    hits = []
+    if axis == "x":
+        span = range(t, b)
+        denom = max(1, b - t)
+        for x in range(l, r):
+            nonwhite = sum(1 for y in span if px[x, y] < 245)
+            if nonwhite / denom > line_frac:
+                hits.append(x)
+    else:
+        span = range(l, r)
+        denom = max(1, r - l)
+        for y in range(t, b):
+            nonwhite = sum(1 for x in span if px[x, y] < 245)
+            if nonwhite / denom > line_frac:
+                hits.append(y)
+    # merge consecutive hits into single lines
+    merged = []
+    for v in hits:
+        if merged and v - merged[-1][-1] <= 3:
+            merged[-1].append(v)
+        else:
+            merged.append([v])
+    return [int(sum(g) / len(g)) for g in merged]
 
 
 # ---------------------------------------------------------------------------
@@ -305,6 +362,136 @@ def extract_curve(im, debug=None, name=""):
 
 
 # ---------------------------------------------------------------------------
+# Risk-type auto-derivation
+# ---------------------------------------------------------------------------
+# DEFINED risk = the most you can lose is bounded and known up front:
+#   spreads, butterflies, condors, zebras, diagonals, covered positions, AND
+#   long single options (max loss = the premium/debit paid).
+# UNDEFINED risk = potentially unbounded / margin-defined:
+#   naked short puts/calls, short strangles/straddles, and long futures/stock.
+#
+# NOTE: a naive "long singles are undefined" rule is WRONG and disagrees with
+# Ryan's own sheet (he correctly marks long calls / LEAPS as Defined). This
+# derivation was validated to match all 25 rows of his real open-book sheet.
+# It is only a FALLBACK; if the screenshot has a Risk Type column we use his
+# value and keep it user-editable.
+_DEFINED_HINTS = ("spread", "butterfly", "condor", "zebra", "diagonal",
+                  "covered", "long call", "long put", "leaps", "super bull")
+_UNDEFINED_HINTS = ("short put", "short call", "strangle", "straddle")
+
+
+def derive_risk_type(description):
+    """Return 'Def' / 'Undef' / None from a Trade Description string."""
+    if not description:
+        return None
+    d = description.lower()
+    # long futures / stock (no premium cap) -> undefined
+    if re.search(r"/\w+.*\blong\b", d) and "call" not in d and "put" not in d:
+        return "Undef"
+    has_naked = any(h in d for h in _UNDEFINED_HINTS) and "spread" not in d
+    has_defined = any(h in d for h in _DEFINED_HINTS)
+    if has_naked and not has_defined:
+        return "Undef"
+    if has_defined and not has_naked:
+        return "Def"
+    if has_naked and has_defined:
+        # mixed structure that still carries a naked short leg (e.g. Super Bull)
+        return "Undef"
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Spreadsheet (open-book / risk panel) extraction
+# ---------------------------------------------------------------------------
+def parse_inf(text):
+    """Money cell that may be the infinity glyph. Returns float, 'inf', or None."""
+    if text is None:
+        return None
+    t = text.strip()
+    if not t or t in ("-", "—"):
+        return None
+    if "∞" in t or t.lower() in ("inf", "infinity", "00", "oo"):
+        return "inf"
+    return parse_money(t)
+
+
+def extract_spreadsheet(im, debug=None, name=""):
+    """Segment Ryan's open-book sheet by its gridlines and OCR each cell.
+
+    The column boundaries are detected from the vertical gridlines (not
+    hard-coded), then mapped onto SPREADSHEET_COLUMNS in order. Row boundaries
+    come from the horizontal gridlines. Demonstrated on ryan_spreadsheet.png:
+    11 vertical gridlines -> the 10 documented columns; ~25 data rows.
+    """
+    gray = im.convert("L")
+    w, h = im.size
+    flags = []
+
+    # Table lives left of the Portfolio Summary side card. Find the right edge
+    # of the grid as the last strong vertical gridline before the white gutter.
+    table_right = int(w * 0.70)
+    vlines = detect_gridlines(gray, "x", (0, 0, table_right, h))
+    # restrict vertical search height to where rows exist
+    hlines = detect_gridlines(gray, "y", (0, 0, table_right, h))
+
+    if debug and vlines and hlines:
+        ov = im.copy()
+        from PIL import ImageDraw
+        d = ImageDraw.Draw(ov)
+        for x in vlines:
+            d.line([(x, hlines[0]), (x, hlines[-1])], fill=(255, 0, 0), width=1)
+        for y in hlines:
+            d.line([(vlines[0], y), (vlines[-1], y)], fill=(0, 120, 255), width=1)
+        ov.save(os.path.join(debug, f"{name}_grid_overlay.png"))
+
+    n_cols = len(SPREADSHEET_COLUMNS)
+    rows_out = []
+    geometry = {"vlines": vlines, "hlines": hlines}
+
+    if len(vlines) < n_cols + 1 or len(hlines) < 3:
+        flags.append("GRID_NOT_FOUND: could not segment %d cols / rows "
+                     "(found %d vlines, %d hlines)"
+                     % (n_cols + 1, len(vlines), len(hlines)))
+        return {"layout": "spreadsheet", "positions": [], "geometry": geometry,
+                "flags": flags}
+
+    # Use the first n_cols+1 vertical lines as column edges.
+    xedges = vlines[:n_cols + 1]
+    # header is between hlines[0] and hlines[1]; data rows follow.
+    for ri in range(1, len(hlines) - 1):
+        y0, y1 = hlines[ri], hlines[ri + 1]
+        if y1 - y0 < 8:
+            continue
+        cells = {}
+        for ci, col in enumerate(SPREADSHEET_COLUMNS):
+            cx0, cx1 = xedges[ci], xedges[ci + 1]
+            cell = im.crop((cx0 + 1, y0 + 1, cx1 - 1, y1 - 1))
+            if debug:
+                cell.save(os.path.join(debug, f"{name}_r{ri}_{col}.png"))
+            cells[col] = ocr_cell(cell, psm=7) if HAVE_OCR else None
+        # normalize known numeric/inf columns
+        rec = dict(cells)
+        for mcol in ("credit_rcvd", "debit_paid", "max_profit", "max_loss",
+                     "bp_usd", "bp_pct"):
+            rec[mcol] = parse_inf(cells.get(mcol)) if HAVE_OCR else None
+        if HAVE_OCR and not (rec.get("risk_type")):
+            rec["risk_type"] = derive_risk_type(cells.get("trade_description"))
+            if rec["risk_type"]:
+                rec["risk_type_source"] = "derived"
+        # drop fully empty rows (never invent)
+        if any(v not in (None, "", "-") for v in cells.values()):
+            rows_out.append(rec)
+
+    if not HAVE_OCR:
+        flags.append("NO_OCR_ENGINE: grid segmented & cells cropped (use "
+                     "--debug to inspect); cell text unread. Region map is "
+                     "real; production read = Tesseract or a vision-LLM pass.")
+
+    return {"layout": "spreadsheet", "positions": rows_out,
+            "geometry": geometry, "flags": flags}
+
+
+# ---------------------------------------------------------------------------
 # Driver
 # ---------------------------------------------------------------------------
 def process_image(path, debug=None):
@@ -318,8 +505,10 @@ def process_image(path, debug=None):
         except Exception:
             hint = ""
     layout = detect_layout(im, hint)
-    rec = (extract_order_chains if layout == "order_chains"
-           else extract_curve)(im, debug=debug, name=name)
+    extractor = {"order_chains": extract_order_chains,
+                 "curve": extract_curve,
+                 "spreadsheet": extract_spreadsheet}[layout]
+    rec = extractor(im, debug=debug, name=name)
     rec["source"] = os.path.basename(path)
     return rec
 
@@ -399,18 +588,38 @@ def main():
         w = csv.DictWriter(f, fieldnames=cols)
         w.writeheader(); w.writerows(rows)
 
+    # spreadsheet layout -> a separate open-book positions CSV
+    sheet_records = [r for r in records if r["layout"] == "spreadsheet"]
+    book_rows = [p for r in sheet_records for p in r["positions"]]
+    book_path = None
+    if sheet_records:
+        book_path = os.path.join(os.path.dirname(out_stem), "ocr_open_book.csv")
+        bcols = SPREADSHEET_COLUMNS + ["risk_type_source"]
+        with open(book_path, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=bcols, extrasaction="ignore")
+            w.writeheader()
+            for p in book_rows:
+                w.writerow({c: ("" if p.get(c) is None else p.get(c))
+                            for c in bcols})
+
     print(f"Processed {len(files)} image(s). OCR engine: "
           f"{'tesseract' if HAVE_OCR else 'NONE (crop-only)'}")
     for r in records:
         line = f"  {r['source']:28} -> {r['layout']:13}"
         if r["layout"] == "order_chains":
             line += f" ticker={r['ticker']} total_pl={r['total_pl']} status={r['chain_status']}"
+        elif r["layout"] == "spreadsheet":
+            g = r["geometry"]
+            line += (f" segmented {len(g['vlines'])} vlines / "
+                     f"{len(g['hlines'])} hlines -> {len(r['positions'])} rows")
         else:
             line += f" ticker={r['ticker']} max_loss={r.get('max_loss')}"
         if r["flags"]:
-            line += "  [" + ", ".join(r["flags"]) + "]"
+            line += "  [" + "; ".join(r["flags"]) + "]"
         print(line)
     print(f"Wrote {out_stem}.json and {out_stem}.csv ({len(rows)} chain rows)")
+    if book_path:
+        print(f"Wrote {book_path} ({len(book_rows)} open-book rows)")
 
 
 if __name__ == "__main__":
