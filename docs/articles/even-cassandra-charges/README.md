@@ -28,7 +28,7 @@ I could. That's the honest answer. I've got the tools, the system, the setups. I
 
 And that is exactly the version of me I don't trust.
 
-Here's the thing recovery taught me that the market only confirmed. The stuff you do alone, in private, with nobody watching, is the stuff that gets you. Not because I'm reckless with money. I'm almost annoyingly not. I barely spend. My colorful past cost me a fortune in legal fees and roughly nothing in bad decisions at the checkout.
+Recovery taught me something the market only confirmed. The stuff you do alone, in private, with nobody watching, is the stuff that gets you. Not because I'm reckless with money. I'm almost annoyingly not. I barely spend. My colorful past cost me a fortune in legal fees and roughly nothing in bad decisions at the checkout.
 
 It's that trading alone all day, answering to no one, helping no one, slowly turns a person into someone who measures a year in basis points and a life in nothing. I've met that guy. I've been versions of him.
 
