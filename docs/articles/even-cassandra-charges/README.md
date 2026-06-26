@@ -8,7 +8,7 @@ There's a question that follows every paid trader around like a bad smell.
 
 It's a fair question. It's also already answered, and the guy who answers it sits two doors down from me in the same Substack feed.
 
-Michael Burry runs a paid stack called Cassandra Unchained.
+Michael Burry runs a paid stack called [Cassandra Unchained](https://michaeljburry.substack.com/).
 
 That's *the* Cassandra. The man who saw 2008 when nobody else did, the patron saint of the giant lonely bet, the most credentialed doomsayer alive. He charges. So whatever your theory is about why charging means a trader secretly can't trade, it has to also explain him, and it can't.
 
