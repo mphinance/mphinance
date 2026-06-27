@@ -24,6 +24,16 @@ prediction = analyzer.predict_price_range(model_info, current_price=150.0)
 insights = generate_market_analysis(data, ticker="AAPL")
 ```
 
+## Requirements
+
+Needs `pandas` and `scikit-learn`. Run with the repo-root venv, NOT bare `python3`:
+```
+.venv/bin/python -c "from stock_analyzer import StockAnalyzer, generate_market_analysis"
+```
+Verified: `./.venv/bin/python` has both. Bare `python3` does not, and the resulting
+`ModuleNotFoundError: No module named 'pandas'` is the "skill seems broken" symptom,
+not a code fault.
+
 ## Indicators
 
 | Category | Indicators |
