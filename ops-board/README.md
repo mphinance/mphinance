@@ -45,6 +45,9 @@ countdown** (CPI / NFP / earnings), an ET clock, and a LIVE/CLOSED LED.
 - `data.json` — the data the board reads. `refresh.py` overwrites it on a timer.
 - `refresh.py` — the local refresher (stdlib only, no pip). Reads `keys.env`, pulls
   live data, writes `data.json`. Runs ON the Pi.
+- `serve.py` — local web server (stdlib only). Serves the board + a `/api/spy` live
+  price tap so the SPY candle ticks in near-real-time. Run this instead of a plain
+  static server.
 - `keys.env.example` — copy to `keys.env` and drop your keys in **before first boot**.
 - `kiosk.sh` — Chromium kiosk launcher for Raspberry Pi OS Lite (manual path).
 
@@ -151,7 +154,7 @@ python3 refresh.py                               # writes data.json once — try
 | Source | Feeds |
 |--------|-------|
 | TraderDaddy Pro (`TD_API_KEY`) | flow tape, convergence radar, gamma pin map, sentiment, events |
-| Tradier (`TRADIER_TOKEN`)      | real-time index band, **SPY hero-chart candles**, + **your positions & day P&L** |
+| Tradier (`TRADIER_TOKEN`)      | real-time index band, **SPY hero-chart candles**, + the **live SPY price tap** (`/api/spy`) |
 
 Run it every 90s during market hours with a **systemd timer** on the Pi
 (`/etc/systemd/system/opsboard-refresh.{service,timer}`):
@@ -175,17 +178,41 @@ WantedBy=timers.target
 sudo systemctl enable --now opsboard-refresh.timer
 ```
 
+And a long-running service for the web server (`opsboard-serve.service`):
+
+```ini
+[Service]
+WorkingDirectory=/home/pi/ops-board
+ExecStart=/usr/bin/python3 /home/pi/ops-board/serve.py
+Restart=always
+[Install]
+WantedBy=multi-user.target
+```
+```bash
+sudo systemctl enable --now opsboard-serve
+```
+
 `refresh.py` self-detects whether the market is open (Tradier clock, or a weekday
 9:30–16:00 ET fallback) and idles cheaply off-hours. A blunt every-90s timer is fine.
 
-**Appliance wiring:** serve the folder locally and point the kiosk at it —
-`python3 -m http.server 8077` in `~/ops-board`, kiosk URL `http://localhost:8077/`.
-The refresher overwrites `data.json` in place (atomic write); the page re-pulls it
-every 60s. No GH Pages, no pushes, all local.
+**Appliance wiring:** run `python3 serve.py` in `~/ops-board` (kiosk URL
+`http://localhost:8077/`). `serve.py` serves the static board **and** a `/api/spy`
+endpoint that returns the latest SPY quote from Tradier (cached ~2s) — the page polls
+it every 4s to keep the SPY candle live between the slower `data.json` refreshes. The
+refresher overwrites `data.json` in place (atomic write); the page re-pulls it every
+60s. The Tradier token stays server-side in `serve.py`/`refresh.py` — never the browser.
+No GH Pages, no pushes, all local.
+
+### Real-time SPY tap
+
+`serve.py` is what makes SPY tick live across the room. The slow path (`refresh.py` →
+`data.json`, every ~90s) carries the candles + walls; the fast path (`/api/spy`, every
+4s) nudges the latest candle's close so price moves in near-real-time. With no token,
+`/api/spy` returns `{"error": …}` and the board just stays on the 90s candles — no
+breakage. Market data only: no account or position access.
 
 `data.json` schema: `meta`, `indices[]`, `regime`, `sentiment[]`, `events[]`,
-`flow[]`, `convergence[]`, `pinmap[]`, `chart.spy{bars[],levels[],spot}`,
-`positions[]`, `sam_lines[]`.
+`flow[]`, `convergence[]`, `pinmap[]`, `chart.spy{bars[],levels[],spot}`, `sam_lines[]`.
 
 ### Real-time futures number (optional)
 
@@ -201,6 +228,6 @@ number needs a paid real-time feed; Tradier covers SPY/QQQ/IWM.
 ```bash
 # Just open it — the baked snapshot renders without a server:
 xdg-open index.html
-# …or serve so live data.json overrides kick in:
-python3 -m http.server -d . 8080   # → http://localhost:8080
+# …or run the real server so data.json overrides + the live SPY tap kick in:
+python3 serve.py                   # → http://localhost:8077
 ```
