@@ -8,7 +8,7 @@ data.json — the API keys NEVER leave this process or touch the page.
 
 Hybrid feed:
   • TraderDaddy Pro  (X-API-Key)  → flow tape, convergence, gamma pin map, sentiment
-  • Tradier          (Bearer)     → real-time index band + YOUR positions & P&L
+  • Tradier          (Bearer)     → real-time index band + SPY hero-chart candles (market data only)
 
 Zero dependencies — standard library only. Python 3.9+.
 
@@ -356,9 +356,10 @@ def main():
     tmp = OUT + ".tmp"
     json.dump(data, open(tmp, "w"), indent=2)
     os.replace(tmp, OUT)  # atomic — the kiosk never reads a half-written file
+    spy_bars = len((data.get('chart', {}).get('spy', {}) or {}).get('bars', []))
     print(f"[refresh] wrote {OUT} · open={market_open} · "
           f"flow={len(data.get('flow',[]))} conv={len(data.get('convergence',[]))} "
-          f"pos={len(data.get('positions',[]))}")
+          f"spy_bars={spy_bars}")
 
 
 if __name__ == "__main__":
