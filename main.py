@@ -5,6 +5,7 @@ import asbury_metrics
 import fundamental_metrics
 import options_flow
 import wheel_scanner_service
+import stock_analyzer
 import plotly.graph_objects as go
 import pandas as pd
 import yfinance as yf
@@ -581,8 +582,13 @@ async def run_audit_async(ticker, container=None):
         if model_info:
             current_price = float(data['Close'].iloc[-1])
             prediction = analyzer.predict_price_range(model_info, current_price)
-            
-            if prediction:
+
+        # Reliability gate: a Random Forest can't extrapolate on a strongly
+        # trending name — it reverts to the stale mean while reporting high tree
+        # agreement. Only show the prediction card when the model is reliable;
+        # otherwise fall back to the technicals below.
+        if model_info and model_info.get('reliable') and prediction:
+            if True:
                 horizon = prediction['horizon']
                 confidence = model_info['test_score']
                 
@@ -645,6 +651,13 @@ async def run_audit_async(ticker, container=None):
                             ui.label(f"{display_name}: {importance:.1%}").classes('bg-gray-800 px-3 py-1 rounded text-sm text-gray-300')
             else:
                 ui.label("⚠️ Could not generate prediction range").classes('text-yellow-400')
+        elif model_info and not model_info.get('reliable'):
+            # Model trained but failed the reliability gate (negative R² or
+            # extrapolation on a trending name). Don't show a confident-but-wrong
+            # target — explain why and lean on the technicals below.
+            with ui.column().classes('w-full'):
+                ui.label("⚠️ ML price target hidden — model unreliable for this name").classes('text-yellow-400')
+                ui.label(model_info.get('unreliable_reason', 'Out-of-sample fit too weak to trust.')).classes('text-gray-400 text-sm ml-4')
         else:
             with ui.row().classes('w-full'):
                 ui.label("⚠️ Insufficient historical data for reliable ML prediction").classes('text-yellow-400')
