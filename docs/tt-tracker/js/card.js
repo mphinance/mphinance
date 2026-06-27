@@ -1,15 +1,23 @@
 // card.js — the Weekly Card PNG export (the weekly ritual / share artifact).
 // DETERMINISTIC Canvas 2D render (no foreignObject / no external lib) → renders
 // identically everywhere, works offline, and is fully validatable headless.
-// 1600x900 dark. Defaults to % + ratios with DOLLARS OFF (writers won't post
-// account size); one toggle reveals $. Copy-to-clipboard is the default action;
-// download is the fallback. Muted footer reads as a chart credit.
+// Brand-aware: reads palette + footer text from brand.js so the card matches
+// the active whitelabel skin. Defaults to % + ratios with DOLLARS OFF
+// (writers won't post account size); one toggle reveals $. Copy-to-clipboard
+// is the default action; download is the fallback.
+
+import { getBrand, ACTIVE_BRAND, loadLogoImage } from './brand.js';
 
 const W = 1600, H = 900, PAD = 72;
-const C = {
-  bg: "#0a0a0b", ink: "#f2f3f5", ink2: "#c7c9cf", muted: "#82838d", dim: "#5c5d66",
-  pos: "#27c19a", neg: "#f6465c", gold: "#ffcb05", line: "#28282f", surface: "#141417",
-};
+
+// Build the canvas color palette from the active brand.
+// card.* values are raw hex strings (CSS vars do not apply on <canvas>).
+const _brand = getBrand(ACTIVE_BRAND);
+const C = { ..._brand.card };
+
+// Convenience alias: "gold" is the accent slot in brand.card; paint() uses C.gold.
+// If brand defines it as "accent", map it through. (Both key names are fine.)
+if (!C.gold && C.accent) C.gold = C.accent;
 
 function fmtMoney(v) {
   if (v == null || Number.isNaN(v)) return "—";
@@ -17,15 +25,30 @@ function fmtMoney(v) {
   return `${s}$${Math.abs(v).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
+// Preloaded logo image for canvas draw (null if not applicable).
+let _logoImg = null;
+
 async function ensureFonts() {
   if (!document.fonts || !document.fonts.load) return;
   try {
-    await Promise.all([
-      document.fonts.load("800 30px Archivo"), document.fonts.load("600 15px Archivo"),
-      document.fonts.load("700 46px 'JetBrains Mono'"), document.fonts.load("500 18px 'JetBrains Mono'"),
-    ]);
+    const toLoad = [
+      document.fonts.load("700 46px 'JetBrains Mono'"),
+      document.fonts.load("500 18px 'JetBrains Mono'"),
+    ];
+    // Load whichever display font the active brand uses.
+    if (_brand.id === 'lpLedger') {
+      toLoad.push(document.fonts.load("800 36px 'Playfair Display'"));
+      toLoad.push(document.fonts.load("700 15px 'Playfair Display'"));
+    } else {
+      toLoad.push(document.fonts.load("800 36px Archivo"));
+      toLoad.push(document.fonts.load("600 15px Archivo"));
+    }
+    await Promise.all(toLoad);
     await document.fonts.ready;
   } catch (e) { /* fall back to system fonts */ }
+
+  // Preload logo image for canvas
+  _logoImg = await loadLogoImage(_brand);
 }
 
 function rr(ctx, x, y, w, h, r) {
@@ -68,31 +91,54 @@ function hexA(hex, a) {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
 }
 
+// Brand-specific canvas helpers
+const DISPLAY_FONT = _brand.id === 'lpLedger'
+  ? "'Playfair Display', Georgia, serif"
+  : "Archivo, sans-serif";
+
 // Draw the whole card into a context already scaled to logical 1600x900 coords.
 function paint(ctx, opts) {
   const m = opts.metrics, showD = !!opts.showDollars;
   // background
   ctx.fillStyle = C.bg; ctx.fillRect(0, 0, W, H);
-  let g = ctx.createRadialGradient(W * 0.86, -120, 0, W * 0.86, -120, 700);
-  g.addColorStop(0, "rgba(255,203,5,.10)"); g.addColorStop(1, "rgba(255,203,5,0)");
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  g = ctx.createRadialGradient(W * 0.04, -100, 0, W * 0.04, -100, 620);
-  g.addColorStop(0, "rgba(74,144,226,.10)"); g.addColorStop(1, "rgba(74,144,226,0)");
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  // Ambient glow (brand-appropriate)
+  let g;
+  if (_brand.id === 'lpLedger') {
+    // Subtle warm cream gradient -- barely visible
+    g = ctx.createRadialGradient(W * 0.86, -80, 0, W * 0.86, -80, 600);
+    g.addColorStop(0, "rgba(27,42,74,.06)"); g.addColorStop(1, "rgba(27,42,74,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  } else {
+    g = ctx.createRadialGradient(W * 0.86, -120, 0, W * 0.86, -120, 700);
+    g.addColorStop(0, "rgba(255,203,5,.10)"); g.addColorStop(1, "rgba(255,203,5,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    g = ctx.createRadialGradient(W * 0.04, -100, 0, W * 0.04, -100, 620);
+    g.addColorStop(0, "rgba(74,144,226,.10)"); g.addColorStop(1, "rgba(74,144,226,0)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+
+  // Logo image (top-left, if brand has one)
+  let titleX = PAD;
+  if (_logoImg) {
+    const logoSz = 48;
+    ctx.drawImage(_logoImg, PAD, PAD + 4, logoSz, logoSz);
+    titleX = PAD + logoSz + 14;
+  }
 
   // title + subtitle
   ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
-  ctx.fillStyle = C.ink; ctx.font = "800 36px Archivo, sans-serif";
-  ctx.fillText("Options Track Record", PAD, PAD + 30);
+  ctx.fillStyle = C.ink; ctx.font = `800 36px ${DISPLAY_FONT}`;
+  ctx.fillText("Options Track Record", titleX, PAD + 30);
   ctx.fillStyle = C.muted; ctx.font = "500 18px 'JetBrains Mono', monospace";
   const sub = (opts.weekEnding ? "week ending " + opts.weekEnding + " · " : "") + (m.firstDate || "") + " → " + (m.lastDate || "");
-  ctx.fillText(sub, PAD, PAD + 64);
+  ctx.fillText(sub, titleX, PAD + 64);
 
   // handle (hero) top-right
   ctx.textAlign = "right";
-  ctx.fillStyle = C.gold; ctx.font = "800 36px Archivo, sans-serif";
+  ctx.fillStyle = C.gold; ctx.font = `800 36px ${DISPLAY_FONT}`;
   ctx.fillText(opts.handle || "@yourhandle", W - PAD, PAD + 30);
-  ctx.fillStyle = C.muted; ctx.font = "600 14px Archivo, sans-serif";
+  ctx.fillStyle = C.muted; ctx.font = `600 14px ${DISPLAY_FONT}`;
   ctx.fillText("VERIFIED TRACK RECORD", W - PAD, PAD + 56);
   ctx.textAlign = "left";
 
@@ -118,7 +164,7 @@ function paint(ctx, opts) {
     ctx.fillStyle = t.accent; rr(ctx, tx, ty, 5, th, 3); ctx.fill();
     ctx.fillStyle = t.c; ctx.font = "700 48px 'JetBrains Mono', monospace";
     ctx.fillText(t.v, tx + 28, ty + 70);
-    ctx.fillStyle = C.muted; ctx.font = "600 15px Archivo, sans-serif";
+    ctx.fillStyle = C.muted; ctx.font = `600 15px ${DISPLAY_FONT}`;
     ctx.fillText(t.l.toUpperCase(), tx + 28, ty + 108);
   });
 
@@ -140,9 +186,10 @@ function paint(ctx, opts) {
     ctx.fillStyle = C.neg; ctx.fillText(txt, lx, lyy);
   }
 
-  // footer credit (muted ~40%)
-  ctx.fillStyle = "rgba(255,255,255,.4)"; ctx.font = "500 15px 'JetBrains Mono', monospace";
-  ctx.fillText("tt-tracker · mphinance", PAD, H - 36);
+  // footer credit (muted ~40% -- brand's footer string)
+  const footerAlpha = _brand.id === 'lpLedger' ? "rgba(27,42,74,.40)" : "rgba(255,255,255,.40)";
+  ctx.fillStyle = footerAlpha; ctx.font = "500 15px 'JetBrains Mono', monospace";
+  ctx.fillText(C.footer || "built with mphinance", PAD, H - 36);
 
   // provisional tag
   if (opts.provisional) {

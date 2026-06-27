@@ -8,6 +8,7 @@ import { renderCardCanvas, copyCanvasToClipboard, downloadCanvas } from "./card.
 import { exportJson, parseImport, readFileText, shouldNudge, daysSinceBackup } from "./backup.js";
 import { validateCell, cellConfidence, severityFor } from "./validators.js";
 import { PROVIDERS, DEFAULT_PROVIDER, getProvider, getKey, setKey, readCropWithVision } from "./vision.js";
+import { ACTIVE_BRAND, getBrand, applyBrand } from "./brand.js";
 
 const LS_KEY = "tt-tracker-state-v2";
 const POS = "#27c19a", NEG = "#f6465c", GOLD = "#ffcb05", BLUE = "#4a90e2", VIOLET = "#9b6bff";
@@ -584,6 +585,9 @@ function renderAll() {
 
 // --- boot -------------------------------------------------------------------
 function boot() {
+  // Apply brand config first -- sets CSS vars, data-brand attr, DOM chrome.
+  applyBrand(getBrand(ACTIVE_BRAND));
+
   initTabs();
   initIngest();
   initShare();
