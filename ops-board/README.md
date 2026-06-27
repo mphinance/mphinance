@@ -9,6 +9,8 @@ serves the board to itself on `localhost` and refreshes its own data. No cloud, 
 external host required. (Want a public show-off URL too? Copy this folder into
 `docs/` and GitHub Pages will serve it at `…github.io/mphinance/ops-board/`.)
 
+![Ops Board — full display](screenshots/board.png)
+
 ## The four panels
 
 | Panel | What it shows | Source |
@@ -20,6 +22,13 @@ external host required. (Want a public show-off URL too? Copy this folder into
 
 Header carries the **gamma regime** chip, **put/call** sentiment, a live **next-event
 countdown** (CPI / NFP / earnings), an ET clock, and a LIVE/CLOSED LED.
+
+| Smart-Money Flow Tape | Convergence Radar + Gamma Pin Map | Discipline Mirror |
+|:---:|:---:|:---:|
+| ![flow tape](screenshots/flow-tape.png) | ![radar + pin map](screenshots/radar-pinmap.png) | ![discipline mirror](screenshots/discipline.png) |
+
+> Screenshots are the live board on a closed-market Saturday (trailing-week flow).
+> During RTH the tape fills with the day's sweeps and the LED flips to **LIVE**.
 
 ## Files
 
