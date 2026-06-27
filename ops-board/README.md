@@ -17,11 +17,18 @@ external host required. (Want a public show-off URL too? Copy this folder into
 |-------|---------------|--------|
 | ⚡ **Smart-Money Flow Tape** | Scrolling feed of the biggest sweeps/blocks + pre-earnings flow | `get_unusual_activity`, `get_earnings_flow`, `get_market_stats` |
 | 🎯 **Convergence Radar** | Names multiple screeners (+flow +earnings) agree on, with source badges | `run_screener` (bullish-pullback, momentum, …) |
-| 🧲 **Gamma Pin Map** | SPX/SPY/QQQ spot riding between the call/put gamma walls + regime | `get_gex_overview` |
+| 🧲 **Gamma Pin Map** | Live **SPY candlestick** (KLineChart) with the call/put gamma walls drawn across it, plus SPX/QQQ wall ladders + regime | `get_gex_overview` + Tradier `timesales` |
 | 🪞 **Discipline Mirror** | Put/call sentiment, a rules checklist, and Sam keeping you honest | `get_market_stats` + Sam |
 
 Header carries the **gamma regime** chip, **put/call** sentiment, a live **next-event
 countdown** (CPI / NFP / earnings), an ET clock, and a LIVE/CLOSED LED.
+
+> **SPY hero chart:** real candles from Tradier `timesales` with the GEX walls overlaid
+> as horizontal lines (gold pin, red call wall, green put wall) — watch price ride the
+> walls in real time. SPY is an ETF, so on a **funded Tradier token the candles are
+> real-time** (the 15-min delay only hits CME futures like NQ). The walls themselves
+> refresh on the GEX cadence (~5–15 min), which is correct — dealer gamma doesn't move
+> tick-to-tick.
 
 | Smart-Money Flow Tape | Convergence Radar + Gamma Pin Map | Discipline Mirror |
 |:---:|:---:|:---:|
@@ -144,7 +151,7 @@ python3 refresh.py                               # writes data.json once — try
 | Source | Feeds |
 |--------|-------|
 | TraderDaddy Pro (`TD_API_KEY`) | flow tape, convergence radar, gamma pin map, sentiment, events |
-| Tradier (`TRADIER_TOKEN`)      | real-time index band + **your positions & day P&L** |
+| Tradier (`TRADIER_TOKEN`)      | real-time index band, **SPY hero-chart candles**, + **your positions & day P&L** |
 
 Run it every 90s during market hours with a **systemd timer** on the Pi
 (`/etc/systemd/system/opsboard-refresh.{service,timer}`):
@@ -177,7 +184,8 @@ The refresher overwrites `data.json` in place (atomic write); the page re-pulls 
 every 60s. No GH Pages, no pushes, all local.
 
 `data.json` schema: `meta`, `indices[]`, `regime`, `sentiment[]`, `events[]`,
-`flow[]`, `convergence[]`, `pinmap[]`, `positions[]`, `sam_lines[]`.
+`flow[]`, `convergence[]`, `pinmap[]`, `chart.spy{bars[],levels[],spot}`,
+`positions[]`, `sam_lines[]`.
 
 ### Real-time futures number (optional)
 
