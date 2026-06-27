@@ -2,6 +2,8 @@
 
 *Tags: acceptance, recovery, momentum, trend following, urge surfing, circle of competence, ADHD, finding your work, lemonade out of lemons*
 
+![A green momentum wave on a dark HUD background: rising candlesticks build into the swell and a surfer rides the crest.](hero.png)
+
 Put a guy who can't swim in the ocean and a wave knocks him flat. Put a surfer in the exact same water, in front of the exact same wave, and it carries him a hundred yards down the beach grinning like an idiot.
 
 Same ocean. Same wave. Same force. The only difference is one of them is fighting it and the other one accepted it and turned his board.
