@@ -53,7 +53,7 @@ def load_keys():
             if line and not line.startswith("#") and "=" in line:
                 k, v = line.split("=", 1)
                 keys[k.strip()] = v.strip().strip('"').strip("'")
-    for k in ("TD_API_KEY", "TRADIER_TOKEN", "TRADIER_ACCOUNT_ID", "TRADIER_BASE"):
+    for k in ("TD_API_KEY", "TRADIER_TOKEN", "TRADIER_BASE"):
         if os.environ.get(k):
             keys[k] = os.environ[k]
     # repo fallback for the TD key
@@ -284,30 +284,6 @@ def tr_timesales(h, sym="SPY", interval="5min"):
     return bars
 
 
-def tr_positions(h, acct):
-    if not acct:
-        prof = get_json(f"{TR_BASE}/v1/user/profile", h)
-        a = (prof.get("profile") or {}).get("account")
-        acct = (a[0] if isinstance(a, list) else a).get("account_number")
-    d = get_json(f"{TR_BASE}/v1/accounts/{acct}/positions", h)
-    pos = (d.get("positions") or {})
-    if pos in ("null", None) or pos.get("position") in ("null", None):
-        return []
-    items = pos.get("position")
-    items = items if isinstance(items, list) else [items]
-    syms = ",".join(p["symbol"] for p in items)
-    qd = get_json(f"{TR_BASE}/v1/markets/quotes?symbols={syms}", h)
-    last = {q["symbol"]: q.get("last") for q in _quote_list(qd)}
-    out = []
-    for p in items:
-        sym, qty, cb = p["symbol"], p.get("quantity", 0), p.get("cost_basis", 0)
-        lp = last.get(sym) or 0
-        mv = qty * lp
-        upl = mv - cb
-        out.append({"ticker": sym, "qty": qty, "avg": round(cb / qty, 2) if qty else 0,
-                    "last": lp, "upl": round(upl, 2),
-                    "uplPct": round((upl / cb * 100), 2) if cb else 0})
-    return out
 
 
 # ── assemble ──────────────────────────────────────────────────────────────────
@@ -351,8 +327,6 @@ def main():
     if have_tr:
         try: data["indices"] = tr_indices(tr_h)
         except Exception as e: warn("indices", e)
-        try: data["positions"] = tr_positions(tr_h, keys.get("TRADIER_ACCOUNT_ID"))
-        except Exception as e: warn("positions", e)
         try:
             bars = tr_timesales(tr_h, "SPY")
             if bars:
