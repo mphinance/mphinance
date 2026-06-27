@@ -58,12 +58,83 @@ function openaiCompat({ id, label, defaultModel, endpoint, custom = false }) {
   };
 }
 
-// Clean registry slots for native adapters — built next pass.
-function stubAdapter({ id, label, defaultModel, family }) {
+// Anthropic / Claude native adapter.
+// Sends ONLY the cropped cell. Key goes in x-api-key header, never persisted.
+// The anthropic-dangerous-direct-browser-access header is required for browser
+// direct calls per Anthropic's CORS policy.
+function anthropicAdapter() {
+  const id = "anthropic";
+  const defaultModel = "claude-sonnet-4-20250514";
   return {
-    id, label, defaultModel, family, stub: true,
-    buildRequest() { throw new Error(`${label} adapter ships next pass (native ${family} request shape).`); },
-    parseResponse() { return ""; },
+    id, label: "Anthropic / Claude", defaultModel, family: "anthropic",
+    buildRequest(dataUrl, prompt, cfg = {}) {
+      const model = cfg.model || defaultModel;
+      const key = cfg.key || "";
+      // Strip the data URI prefix — Anthropic wants raw base64 only.
+      const b64 = String(dataUrl).replace(/^data:[^;]+;base64,/, "");
+      const url = "https://api.anthropic.com/v1/messages";
+      const headers = {
+        "Content-Type": "application/json",
+        "x-api-key": key,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      };
+      const body = {
+        model,
+        max_tokens: 120,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: "image/png", data: b64 } },
+            { type: "text", text: prompt },
+          ],
+        }],
+      };
+      return { url, headers, body };
+    },
+    parseResponse(json) {
+      return (json && json.content && json.content[0] && json.content[0].text) || "";
+    },
+  };
+}
+
+// Google / Gemini native adapter.
+// Model name goes in the URL path; API key goes in the ?key= query param.
+// Only the cropped cell is sent; no key is written to localStorage.
+function geminiAdapter() {
+  const id = "gemini";
+  const defaultModel = "gemini-2.0-flash";
+  return {
+    id, label: "Google / Gemini", defaultModel, family: "gemini",
+    buildRequest(dataUrl, prompt, cfg = {}) {
+      const model = cfg.model || defaultModel;
+      const key = cfg.key || "";
+      // Strip the data URI prefix — Gemini wants raw base64 only.
+      const b64 = String(dataUrl).replace(/^data:[^;]+;base64,/, "");
+      const url =
+        `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`;
+      const headers = { "Content-Type": "application/json" };
+      const body = {
+        contents: [{
+          parts: [
+            { inline_data: { mime_type: "image/png", data: b64 } },
+            { text: prompt },
+          ],
+        }],
+      };
+      return { url, headers, body };
+    },
+    parseResponse(json) {
+      return (
+        json &&
+        json.candidates &&
+        json.candidates[0] &&
+        json.candidates[0].content &&
+        json.candidates[0].content.parts &&
+        json.candidates[0].content.parts[0] &&
+        json.candidates[0].content.parts[0].text
+      ) || "";
+    },
   };
 }
 
@@ -71,9 +142,8 @@ export const PROVIDERS = [
   openaiCompat({ id: "openrouter", label: "OpenRouter", endpoint: "https://openrouter.ai/api/v1/chat/completions", defaultModel: "openai/gpt-4o-mini" }),
   openaiCompat({ id: "openai", label: "OpenAI / ChatGPT", endpoint: "https://api.openai.com/v1/chat/completions", defaultModel: "gpt-4o-mini" }),
   openaiCompat({ id: "custom", label: "Custom / local (Ollama · LM Studio · vLLM)", endpoint: "", defaultModel: "llama3.2-vision", custom: true }),
-  // --- next-pass stubs (registry slots present, not selectable for live send) ---
-  stubAdapter({ id: "anthropic", label: "Anthropic / Claude", defaultModel: "claude-sonnet-4-20250514", family: "anthropic" }),
-  stubAdapter({ id: "gemini", label: "Google / Gemini", defaultModel: "gemini-2.0-flash", family: "gemini" }),
+  anthropicAdapter(),
+  geminiAdapter(),
 ];
 
 export const DEFAULT_PROVIDER = "openrouter";
