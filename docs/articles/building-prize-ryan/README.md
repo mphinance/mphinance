@@ -46,17 +46,17 @@ Here is how each of the three services shows up in what I shipped.
 
 **Knowledge Recovery in action.** LP Ledger's in-browser OCR reads Ryan's trapped tastytrade screenshots and indexes each trade into a searchable, on-device brain. Nothing leaves his machine. The screenshots stop being a pile of images and start being a database he can query.
 
-![SCREENSHOT: Track Record panel showing trade history from OCR'd broker screenshots](TODO)
+![SCREENSHOT: Track Record panel showing trade history from OCR'd broker screenshots](track_record.png)
 
 **Reskinning in action.** Ryan was hand-maintaining a spreadsheet. LP Ledger reskins that into an automated, branded web app with a one-click Weekly Card he can paste directly into his recaps. Same data he already had. Now it has a front door and a name.
 
-![SCREENSHOT: Live Book panel](TODO)
+![SCREENSHOT: Live Book panel](live_book.png)
 
-![SCREENSHOT: Weekly Card output](TODO)
+![SCREENSHOT: Weekly Card output](weekly_card.png)
 
 **Fractional Architecture in action.** Somewhere in the build I caught that we were OCR'ing the output (his spreadsheet) instead of the source (his actual broker screens). Pointed it back at the right thing. The BYOK layer (bring-your-own-key: OpenRouter, OpenAI, Claude, Gemini, local) sits on top as an optional accelerator. Plain deterministic OCR does the core job. The AI is a bonus, not a requirement. Right tool.
 
-![SCREENSHOT: Settings/BYOK panel](TODO)
+![SCREENSHOT: Settings/BYOK panel](settings.png)
 
 **The Leash in practice.** The whole thing is open source. The numbers reconcile to the penny.
 
