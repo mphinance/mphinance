@@ -1,20 +1,21 @@
 ---
 name: stock-recap
 description: >-
-  Daily market recap + convergence-ranked stock shortlist for TraderDaddy Pro.
-  Runs ALL screeners at default settings, pulls the biggest options flows / smart
-  money, new CBOE option listings, and hedge-fund (13F) activity, then finds the
-  short list of names that multiple independent sources agree on — with technicals.
-  Use when the user asks to "find good stocks", wants a "market recap", "what's
-  flowing", "what are the funds doing", "run the screeners", "any setups", or
-  "what should I be looking at" for trading ideas.
+  Daily/weekend market recap + convergence-ranked stock shortlist for TraderDaddy
+  Pro. Runs ALL screeners, pulls the biggest options flows / smart money (today, or
+  the trailing week on a closed market), new CBOE listings, hedge-fund (13F)
+  activity, downtrend-breakout setups, GEX walls, and relative strength, then finds
+  the names multiple independent sources agree on — with technicals + charts. Use
+  when the user asks to "find good stocks", wants a "market recap", "what to watch
+  this week", "what's flowing", "what are the funds doing", "run the screeners",
+  "any setups / breakouts", or "what should I be looking at" for trading ideas.
 ---
 
 # Stock Recap — convergence-ranked picks
 
 This skill produces a market recap and a **short list of stocks the data agrees on**,
-each with technicals. It pulls four independent legs and ranks names by how many of
-them point at the same ticker (equal-blend convergence):
+each with technicals. It pulls several independent legs and **quality-weight ranks**
+names by how many of them point at the same ticker (convergence):
 
 1. **Screeners** — all 10 TraderDaddy Pro screeners at their default settings
    (Momentum Pullback, Gamma Scan, Coiled Springs, Daily Cuts, CSP Wheel, LEAPS,
@@ -22,26 +23,51 @@ them point at the same ticker (equal-blend convergence):
    momentum-chase lists (**Leveraged**, **Volatility Surge**) are recorded for
    context but do **not** earn a convergence leg — they surface already-running
    names that aren't the pullback/reversal setups we rank for.
-2. **Options flow** — the biggest premium / smart-money unusual activity today,
-   including the `INSTITUTIONAL_ALPHA` tier and repeat-strike conviction.
+2. **Options flow** — the biggest premium / smart-money unusual activity, including
+   the `INSTITUTIONAL_ALPHA` tier and repeat-strike conviction. **Intraday it's
+   today's flow; on a closed market it switches to the trailing week** (the biggest
+   prints of the last ~5 sessions, not a recent slice — see notes).
 3. **New CBOE option listings** — names that just became optionable.
 4. **Hedge funds (13F)** — TickerTrace top buys/sells, **cross-fund convergence**
    (multiple funds into the same name), and divergences.
+5. **Downtrend-breakout** (Mike's #1 setup) — a `dtb_break` leg from
+   `scripts/detectors/downtrend.mjs`, which fits the descending resistance line of
+   lower-highs from a major peak on **300-day OHLC** and fires only on a **fresh**
+   break + reclaim (also a 🪤 spring / failed-breakdown flag).
+6. **Relative strength vs SPY** — an `rs_leader` flag (leads SPY over 20d **and**
+   60d). It's a **rank booster only**, deliberately excluded from the
+   "multiple-independent-sources" gate (it's derived off the same price series).
 
-It also **renders candlestick charts** (from our own 90-day OHLC data) for the
-top picks + reversal names and a **dedicated under-$100 section** so the list
-isn't all $700+ mega-caps.
+Two more legs **enrich** the shortlist (they don't gate it): **GEX** (gamma walls +
+flip — room-to-call-wall, above/below the dealer-gamma flip) and an **earnings
+blackout** (names reporting within 7 days are flagged 📅 and rank-capped, so a fresh
+long isn't surfaced into a print).
 
-> **Mike's edge:** his best picks come from **Momentum Pullback names once they
-> START reversing out** of the pullback. The **Reversal Watch** section flags
-> pullback names whose stoch is **climbing out of oversold (StochK ~12–45)** with
-> price **reclaiming the 21-EMA** and a bullish RSI zone / A-B grade — detected
-> from the live read, **not** the screener's `stochCrossover` flag (which is
-> ~always "No" because the screener surfaces names while still IN the pullback,
-> before the cross prints — gating on it made this section fire ~never). It marks
-> which of those already have bullish flow and fund buying behind them. Always
-> call this out. Names tagged **🚀 extended** already ran (2-of-3 of: >8% over
-> EMA21, RSI>78, big week/month/day move) — don't chase them.
+It also **renders candlestick charts** (90-day candles from our own OHLC data) for the
+top picks + reversal + downtrend-breakout names and a **dedicated under-$100 section**
+so the list isn't all $700+ mega-caps.
+
+> **Mike's edges (call these out first):**
+> - **🔻→🟢 Downtrend-Breakout** (his #1) — break + reclaim of a multi-month falling
+>   trendline of lower-highs from a major peak (NKE ~5/20 is the template). Its own
+>   report section; only **fresh** breaks (≤5 bars, still near the line) are
+>   actionable — `extended`/`forming` tiers are backward-looking context, marked
+>   not-actionable. Always render+read its chart before trusting it.
+> - **🔄 Reversal Watch** — Momentum Pullback names **starting to reverse out**:
+>   stoch climbing out of oversold (StochK ~12–45), price **reclaiming the 21-EMA**,
+>   bullish RSI zone / A-B grade. Detected from the live read, **not** the screener's
+>   `stochCrossover` flag (≈always "No" because the screener surfaces names while
+>   still IN the pullback). The flag is **reconciled against the chart's fresh last
+>   bar** — a name that printed a hard down day or sits below the 21-EMA is
+>   suppressed (kills screener-lag false positives like a -6% knife mislabeled
+>   "reversing"). Marks which turns already have flow 🟢 / fund ✅ behind them.
+> - **💎 Smart-Money-Early** (forced to the top) — the dream join: a fresh
+>   downtrend-break **and** funds accumulating on 13F **and** fresh bullish weekly
+>   flow, with no earnings landmine. Often legitimately empty (rare setup) — the
+>   empty-state is honest, not a bug.
+>
+> Names tagged **🚀 extended** already ran (2-of-3 of: >8% over EMA21, RSI>78, big
+> week/month/day move) — don't chase them. Fresh breakouts/reversals are exempt.
 
 ## How to run it
 
@@ -82,17 +108,20 @@ isn't all $700+ mega-caps.
 
 4. **Present a tight, plain-English recap to Mike** — don't just dump the file.
    Lead with what matters:
-   - The 2–4 **highest-conviction names** (most aligned legs, no conflict), with
-     their key technicals, **what their chart shows**, and why they're interesting.
-   - The **Reversal Watch** — any Momentum Pullback names turning up, especially
-     ones with flow 🟢 and fund ✅ confirmation (his setup). Use the charts to
-     confirm the turn is real.
-   - The **💵 Under-$100** picks — Mike specifically wants accessible names, not
-     just $700+ mega-caps. Always surface a few.
-   - A one-line **flow/fund tone** read (net bullish vs bearish premium; what the
-     funds are buying/selling; any notable cross-fund convergence).
-   - **⚠️ Conflicts** — names where bullish sources disagree with bearish flow or
-     fund selling (e.g. funds buying but options heavily bearish). Flag, don't bury.
+   - **💎 Smart-Money-Early** first if it's non-empty — that's the dream join.
+   - Any **🔻→🟢 Downtrend-Breakout** names (his #1), but only the **fresh** ones,
+     and only after you've read the chart to confirm the line break is real.
+   - The 2–4 **highest-conviction convergence names** (most aligned independent
+     legs, no conflict), with their key technicals, **what their chart shows**, GEX
+     posture (room to the call wall, above/below the gamma flip), and why.
+   - The **🔄 Reversal Watch** — Momentum Pullback names turning up, especially with
+     flow 🟢 and fund ✅. Use the charts to confirm the turn is real.
+   - The **💵 Under-$100** picks — Mike wants accessible names. Remember small/mid
+     caps mostly live here, in the backfill, and in Reversal Watch (they rarely get
+     a flow/fund second leg), so treat them as single-signal ideas to confirm.
+   - A one-line **flow/fund tone** read (net bullish vs bearish weekly premium; what
+     the funds are buying/selling; any notable cross-fund convergence).
+   - **⚠️ Conflicts** and **📅 earnings-this-week** names — flag, don't bury.
    - New CBOE listings only if there's something worth noting.
 
 5. Point Mike at the saved `report.md` for the full tables/charts, and mention the
@@ -103,9 +132,18 @@ isn't all $700+ mega-caps.
 - `RECAP_SHORTLIST=20` — shortlist size (default 15).
 - `RECAP_MAX_PRICE=50` — cutoff for the under-$N affordable section (default 100).
 - `RECAP_TIMEOUT_MS=90000` — per-request timeout (default 60s).
+- `RECAP_FLOW_WINDOW=5d` — flow window on a closed market (default `week`; the script
+  uses `today` automatically while the market is open). Other values: `5d`/`7d`/`month`.
+- `RECAP_GEX=0` — disable the GEX enrich/re-sort (default on).
 - `TD_API_URL` / `TD_NEW_API_URL` / `TICKERTRACE_API_URL` — override base URLs.
 - `TD_API_KEY` (new dev API, `X-API-Key`) / `AGENT_API_KEY` (old Railway, `Bearer`)
   — override the keys; otherwise read from `.env_td_api` and `.env_agent_api`.
+
+Non-env constants worth knowing (top of `gather.mjs`): `OHLC_DAYS=300` (history for
+the trendline detector; chart-data hard-caps ~350), `OHLC_MAX_NAMES=40` (detectors
+run on the shortlist + reversal + pullback candidates, not the whole universe),
+`EARNINGS_BLACKOUT_DAYS=7`, `RS_SHORT/RS_LONG=20/60`, and the weekly-flow thresholds
+`FLOW_WEEKLY_MIN_SCORE=85` / `FLOW_WEEKLY_MIN_PREMIUM=250000`.
 
 ## Notes / gotchas
 
@@ -122,6 +160,25 @@ isn't all $700+ mega-caps.
   reversal gets a strong boost so a clean turn can outrank a weak multi-leg pair.
   Bearish flow or fund selling against a bullish name is a **conflict** (penalised,
   never agreement). Extended/already-run names are penalised too. Long-idea finder.
+- **Weekly flow captures the biggest prints, not a recent slice.** The flow feed is
+  time-ordered and ignores sort params, so on the weekly window we tighten thresholds
+  (score≥85 / premium≥$250k) to collapse the qualifying set to a few hundred biggest
+  prints that fully page; whole-week `bullish/bearishPremium` aggregates come off
+  page 1. If a busy week exceeds the page budget, the per-ticker table degrades to a
+  recent slice and the health row says so (the header totals stay whole-week).
+- **Downtrend-breakout detector** (`scripts/detectors/downtrend.mjs`) runs on 300-day
+  OHLC (`chart-data?days=300`, old API). It builds the descending resistance line
+  from the convex hull of lower-highs off the major peak, gates on span/touches/
+  decline, and only fires a `dtb_break` leg on a **fresh** close-through still near
+  the line. On a broad-uptrend weekend it's often empty (most names' peak is recent,
+  so there's no multi-month downtrend to break) — that's a legitimate empty-state.
+- **GEX / earnings** are enrichers, not gates: GEX runs on the ranked shortlist only
+  (per-symbol calls are pricey) as a bounded tie-breaker; earnings-blackout names are
+  rank-capped (and the cap is re-applied after the GEX bump). A `gex_sample.json` is
+  saved to `raw/` as a shape-drift tripwire.
+- **"Small Cap Rockets" screener fails upstream every run** (vendor-side crash, hence
+  9/10). Small/mid caps still come through the other pullback/squeeze/coiled screeners
+  and surface in the Under-$100 + backfill + Reversal Watch sections.
 - **Technicals enrichment:** names that arrive via flow/funds only (no technical
   screener) are back-filled from `/api/agent/ticker/:symbol` (RSI, ADX, EMA stack,
   call/put walls, expected move). Stochastic isn't available there, so the Stoch
