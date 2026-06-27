@@ -11,7 +11,7 @@
 // A book row keeps the 10 spreadsheet field names (so the seed + the existing
 // render + JSON backups all still work) and ADDS live + lifecycle fields.
 
-import { deriveRiskType, numOrNull } from "./engine.js";
+import { deriveRiskType, derivePositionType, numOrNull } from "./engine.js";
 
 const STATIC_FIELDS = ["credit_rcvd", "debit_paid", "max_profit", "max_loss", "bp_usd", "bp_pct"];
 const LIVE_FIELDS = ["pl_open", "pl_open_pct", "mark", "trade_price", "days_open", "dte"];
@@ -71,8 +71,8 @@ export function bookRowFromMonitor(mp, captureDate) {
     mark: mp.mark ?? null, trade_price: mp.trade_price ?? null,
     days_open: mp.days_open ?? null, dte: mp.dte ?? null,
     live_updated: captureDate || new Date().toISOString().slice(0, 10),
-    // user tags / lifecycle
-    position_type: "Core",
+    // user tags / lifecycle — Core/Supp defaulted by his real definition, editable.
+    position_type: derivePositionType(mp.symbol || trade_description),
     risk_type: risk_type || null,
     risk_type_source: risk_type ? "derived" : null,
     date_opened: isoDateMinusDays(captureDate, mp.days_open),

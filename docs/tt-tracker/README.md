@@ -7,10 +7,12 @@ broker login, no upload.
 
 **Live:** https://mphinance.github.io/mphinance/tt-tracker/
 
-It ships seeded with **Ryan LePiane's** verified public recap data so it looks alive on
-first load: **52 closed trades, +$20,299.62 realized, 73.1% win rate, 5.18 profit factor**,
-plus **25 open positions** and his portfolio-summary card. It generalizes to **any
-tastytrade user** — drop your own screenshots and they replace the seed.
+It ships seeded with **Ryan LePiane's** full verified public record (clearly watermarked
+**SAMPLE** in-app) so it looks alive on first load: **88 closed trades, +$33,520.37 realized,
+81.8% win rate, 6.67 profit factor over Feb–Jun 2026 (18 weeks)**, plus **12 open positions**
+in the live book. The Track Record panel and the Weekly Card both carry an honest range label
+(`Feb–Jun 2026 · 18 weeks · 88 trades`) so the number never reads as all-time. It generalizes
+to **any tastytrade user** — drop your own screenshots and they replace the sample.
 
 A free gift for Ryan, and a portfolio piece for [Momentum Phinance](https://momentumphinance.substack.com).
 Go subscribe to [**Ryan LePiane — LP Options Academy**](https://ryanlepiane.substack.com).
@@ -68,7 +70,7 @@ Pure static files, no build step. ES modules.
 |---|---|
 | `index.html` / `css/app.css` | App shell + tastytrade theme |
 | `js/seed.js` | Verified seed data (auto-generated from the reconciled CSVs) |
-| `js/engine.js` | Realized-PnL + stats. Ported (semantics frozen) from the borrowed TS journal engine (`computeRealizedPnl`, `winRate`, `sumPnl`, tolerant coercion) + equity-curve / avg-win-loss / profit-factor recipe. Reconciles to +$20,299.62 / 73.1% / 5.18. |
+| `js/engine.js` | Realized-PnL + stats (`computeTrackRecord`, `winRate`, tolerant coercion) + equity-curve / avg-win-loss / profit-factor recipe, plus `deriveRiskType` (Def/Undef), `derivePositionType` (Core/Supp smart default), and `rangeLabel`. Reconciles to +$33,520.37 / 81.8% / 6.67 over 88 closed trades. |
 | `js/ocr.js` | Tesseract.js wrapper + layout detection + **gridline column/row segmentation** (ported from `tt_ocr.py`) + parsers (∞ glyph, bond-ticks, bottom-crop detection). Records per-cell bbox + confidence and emits review items. Holds the in-session image registry (crops never persisted). Never fabricates. |
 | `js/validators.js` | Per-column validators (money/%/date/ticker/Core-Supp/Def-Undef + cross-foot). `confidence = min(OCR conf, validator pass)` — catches the dangerous high-confidence misreads (`1,250` → `1.250`). |
 | `js/review.js` | The crop-thumbnail confirmation queue: shows only flagged cells with the cropped source pixels + editable field + suggested fix. Keyboard-first. |
@@ -166,14 +168,14 @@ Guiding rule throughout: **never fabricate.** Low-confidence or unreadable value
 **Done**
 - [x] Static client-side PWA under `docs/tt-tracker/`, relative paths, SW scoped to the subpath.
 - [x] `docs/.nojekyll` created.
-- [x] Track Record panel: equity curve, win rate, avg win/loss, profit factor, per-strategy, best/worst — **reconciles to +$20,299.62 / 73.1% / 5.18** (verified in a headless-browser run).
+- [x] Track Record panel: equity curve, win rate, avg win/loss, profit factor, per-strategy, best/worst — **reconciles to +$33,520.37 / 81.8% / 6.67 over 88 closed trades** (Feb–Jun 2026, verified headless in `js/repoint.test.mjs`). Honest range label on the panel + Weekly Card; sign/arrow glyph (▲/▼) on gains/losses for colorblind readability.
 - [x] Live Book & Risk panel mirroring Ryan's 10-column sheet + Portfolio Summary (mix/risk donuts, BP gauges).
 - [x] Monitor panel (Type E) — PRIMARY structured parser feeding the persistent position store.
 - [x] In-browser OCR (Tesseract.js) with layout detection, Type-A gridline segmentation, Type-B chain gating, ∞/bond-tick/crop handling.
 - [x] Auto-derived Risk Type (validated vs Ryan's sheet), editable; Core/Supp editable.
 - [x] Editable + localStorage-persistent; Reset-to-seed; CSV export.
 - [x] Fee config (OFF by default, no-op).
-- [x] manifest + service worker (app shell + Tesseract WASM/traineddata offline cache).
+- [x] manifest + service worker (app shell incl. all JS modules + Tesseract WASM/traineddata runtime cache). **Offline caveat (honest):** the ~12MB OCR engine is fetched from a CDN on first OCR and cached cache-first by the SW for offline use thereafter; a COLD first visit while offline cannot OCR. The SW caches the jsdelivr/wasm/`traineddata`/Tesseract CDN URLs on first use; `ensureTesseract` surfaces a clear "connect for your first OCR, then it works offline" message instead of a stack trace.
 - [x] Privacy promise visible in the UI.
 - [x] **Crop-thumbnail review loop** — flagged-only queue with source-pixel crops, validators (`min(OCR conf, validator)`, catches `1,250`→`1.250`), keyboard-first, severity buckets, provisional ribbon, blank-cell suppression. **Over-flagging fixed**: a passing validator is now trusted at a much lower OCR-conf gate (auto-accept >=50, was >=70), so a clean sheet flags a handful, not ~160 (simulated 150-cell clean sheet: 150 → 0; validator FAILS and <38-conf reads still flag). Verified in `js/repoint.test.mjs`.
 - [x] **Weekly Card** — deterministic Canvas PNG (1600×900), handle hero, %-default / $-toggle, copy-to-clipboard + download, muted footer, persisted prefs. Verified headless ($-off vs $-on render differently; copy succeeds; console clean).
@@ -188,9 +190,10 @@ Guiding rule throughout: **never fabricate.** Low-confidence or unreadable value
       strategy → legs) and futures micro-decimal marks are not fully structured yet.
 - [ ] **Low-contrast Type-A sheets** (1 of 7 in the corpus) under-segment and flag rather
       than read. A future pass could fall back to OCR-word-cluster column inference.
-- [ ] **Type B → row mapping is chain-total level**, not per-leg. The per-leg BTO/STO/BTC/STC
-      → side/entry/exit engine exists (`computeRealizedPnl` / `chainRealizedPnl`) but the
-      OCR doesn't yet emit clean per-leg rows to feed it; it books the chain Total P/L.
+- [ ] **Type B → row mapping is chain-total level**, not per-leg. It books the chain Total P/L
+      (deduped cross-week by position key: ticker|strategy|P/L|close-date, so re-dropping the
+      same CLSD chain never double-books). The unused per-leg `computeRealizedPnl` /
+      `chainRealizedPnl` / `buildOccSymbol` ports were pruned this pass to cut surface area.
 - [ ] **Type F fill tickets** intentionally unsupported (no computed P/L).
 - [ ] **Weekly Card render is canvas, not html-to-image** — the brief suggested `html-to-image toPng`, but `chrome-headless-shell` drops its `<foreignObject>` HTML (only background/SVG rasterized → identical output regardless of content). Switched to a deterministic Canvas 2D render, which renders fully, validates headless, and works offline (no CDN). Same artifact, more robust path.
 - [ ] **Review crops are session-only by design** — after a page reload the flag counts persist (metadata) but the crop image is gone (image bytes never stored). You can still edit/confirm from your own copy; the crop only shows during the import session.

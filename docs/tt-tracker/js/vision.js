@@ -64,7 +64,7 @@ function openaiCompat({ id, label, defaultModel, endpoint, custom = false }) {
 // direct calls per Anthropic's CORS policy.
 function anthropicAdapter() {
   const id = "anthropic";
-  const defaultModel = "claude-sonnet-4-20250514";
+  const defaultModel = "claude-sonnet-4-6"; // current Claude vision model (use the bare id, no date suffix)
   return {
     id, label: "Anthropic / Claude", defaultModel, family: "anthropic",
     buildRequest(dataUrl, prompt, cfg = {}) {
@@ -103,7 +103,7 @@ function anthropicAdapter() {
 // Only the cropped cell is sent; no key is written to localStorage.
 function geminiAdapter() {
   const id = "gemini";
-  const defaultModel = "gemini-2.0-flash";
+  const defaultModel = "gemini-2.5-flash"; // current Gemini flash vision model
   return {
     id, label: "Google / Gemini", defaultModel, family: "gemini",
     buildRequest(dataUrl, prompt, cfg = {}) {

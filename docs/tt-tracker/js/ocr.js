@@ -37,17 +37,31 @@ const TESS_CDN = `https://cdn.jsdelivr.net/npm/tesseract.js@${TESS_VERSION}/dist
 let _worker = null;
 let _tessLoaded = false;
 
+// The on-device OCR engine (Tesseract.js core/wasm + eng.traineddata, ~12MB) is
+// fetched from a CDN on first use, then cached by the service worker for offline
+// use. A COLD first visit while offline therefore can't OCR — surface that
+// honestly instead of a cryptic "Failed to load" stack.
+const OFFLINE_MSG =
+  "OCR engine isn't cached yet (~12MB). It downloads once on first use, then works offline. " +
+  "You appear to be offline — connect to the internet for your first OCR, then it's available offline afterward.";
+
 export async function ensureTesseract(progressCb) {
   if (_worker) return _worker;
-  if (!_tessLoaded) {
-    await loadScript(TESS_CDN);
-    _tessLoaded = true;
+  try {
+    if (!_tessLoaded) {
+      await loadScript(TESS_CDN);
+      _tessLoaded = true;
+    }
+    // eslint-disable-next-line no-undef
+    _worker = await Tesseract.createWorker("eng", 1, {
+      logger: (m) => progressCb && progressCb(m),
+    });
+    return _worker;
+  } catch (err) {
+    // distinguish "couldn't fetch the engine" (offline / CDN down) from a real bug
+    if (typeof navigator !== "undefined" && navigator.onLine === false) throw new Error(OFFLINE_MSG);
+    throw new Error(OFFLINE_MSG + " (" + (err && err.message ? err.message : "load failed") + ")");
   }
-  // eslint-disable-next-line no-undef
-  _worker = await Tesseract.createWorker("eng", 1, {
-    logger: (m) => progressCb && progressCb(m),
-  });
-  return _worker;
 }
 
 function loadScript(src) {
@@ -425,11 +439,21 @@ async function extractOrderChains(worker, canvas, imageId) {
 }
 
 function guessStrategy(t) {
+  // ORDER MATTERS — most specific first (e.g. "double calendar" before "calendar",
+  // "iron fly" before "fly"/"butterfly", "risk-free fly" before "fly").
   const map = [
-    ["broken-wing", "Broken-Wing Butterfly"], ["butterfly", "Butterfly"], ["condor", "Iron Condor"],
-    ["strangle", "Short Strangle"], ["straddle", "Short Straddle"], ["calendar", "Calendar"],
-    ["diagonal", "Diagonal"], ["vertical", "Vertical Spread"], ["ratio", "Ratio Spread"],
-    ["zebra", "Zebra"], ["super bull", "Super Bull"], ["futures option", "Futures Option"],
+    ["risk-free fly", "Risk-Free Fly"], ["risk free fly", "Risk-Free Fly"],
+    ["super bull", "Super Bull"],
+    ["broken-wing", "Broken-Wing Butterfly"], ["broken wing", "Broken-Wing Butterfly"],
+    ["iron butterfly", "Iron Fly"], ["iron fly", "Iron Fly"],
+    ["butterfly", "Butterfly"],
+    ["iron condor", "Iron Condor"], ["condor", "Iron Condor"],
+    ["double calendar", "Double Calendar"], ["call calendar", "Call Calendar"], ["calendar", "Calendar"],
+    ["poor man", "Poor Man's Covered Call"], ["pmcc", "Poor Man's Covered Call"],
+    ["call diagonal", "Call Diagonal"], ["put diagonal", "Put Diagonal"], ["diagonal", "Diagonal"],
+    ["strangle", "Short Strangle"], ["straddle", "Short Straddle"],
+    ["vertical", "Vertical Spread"], ["ratio", "Ratio Spread"],
+    ["zebra", "Zebra"], ["futures option", "Futures Option"],
     ["custom", "Custom"], ["option", "Option"],
   ];
   for (const [k, v] of map) if (t.includes(k)) return v;
@@ -447,7 +471,7 @@ function guessStrategy(t) {
 //   3. Leg row             chip: qty | expiry(Mon DD) | DTE(##d) | strike | P/C
 // ---------------------------------------------------------------------------
 
-const STRATEGY_WORDS = /^(contracts|option|vertical|butterfly|calendar|diagonal|custom|ratio|strangle|straddle|zebra|condor|received|futures\s+option|super\s+bull)/i;
+const STRATEGY_WORDS = /^(contracts|option|vertical|butterfly|calendar|diagonal|custom|ratio|strangle|straddle|zebra|condor|covered|fly|received|futures\s+option|super\s+bull)/i;
 const MONTHS = "jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec";
 const LEG_RE = new RegExp(`(-?\\d+)\\s+(${MONTHS})\\s+(\\d{1,2})\\b`, "i");
 // futures (/6EU6, /MESU6 — digit can follow the slash) OR an equity ticker.

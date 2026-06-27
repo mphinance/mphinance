@@ -15,7 +15,7 @@ import {
   mergeMonitorIntoBook, reconcileClosed, applyTicketToBook,
   importSpreadsheetIntoBook, positionKey, bookRowFromMonitor, activeBook,
 } from "./store.js";
-import { computeTrackRecord } from "./engine.js";
+import { computeTrackRecord, rangeLabel, derivePositionType, deriveRiskType, isAdjustmentOutcome } from "./engine.js";
 import { validateCell, cellConfidence, severityFor } from "./validators.js";
 import { SEED } from "./seed.js";
 
@@ -193,12 +193,32 @@ section("over-flagging fix — flag count on a CLEAN sheet");
   assert("very-low-conf valid still flagged", !!severityFor(cellConfidence(30, validateCell("credit_rcvd", "1035", 1035)), validateCell("credit_rcvd", "1035", 1035)), "");
 }
 
-section("regression — seed Track Record still reconciles");
+section("reconciliation — FULL record Track Record");
 {
   const m = computeTrackRecord(SEED.trades, { enabled: false });
-  near("realized total +$20,299.62", m.grossTotal, 20299.62, 0.01);
-  near("win rate 73.1%", m.winRate, 73.1, 0.05);
-  near("profit factor 5.18", m.profitFactor, 5.18, 0.01);
+  eq("88 closed trades", m.n, 88);
+  near("realized total +$33,520.37", m.grossTotal, 33520.37, 0.01);
+  near("win rate 81.8%", m.winRate, 81.8, 0.05);
+  near("profit factor 6.67", m.profitFactor, 6.67, 0.01);
+  eq("12 open positions in the live book", SEED.openBook.length, 12);
+  // honest range label, not all-time
+  eq("range covers Feb-Jun 2026", rangeLabel(m.firstDate, m.lastDate, m.n), "Feb–Jun 2026 · 18 weeks · 88 trades");
+}
+
+section("Core/Supp smart default + strategy vocab + adjustment outcome");
+{
+  eq("futures → Core", derivePositionType("/ESU6"), "Core");
+  eq("GLD metals ETF → Core", derivePositionType("GLD"), "Core");
+  eq("SPX index → Core", derivePositionType("SPX 7/17 Put Butterfly"), "Core");
+  eq("plain equity → Supp (user promotes)", derivePositionType("AVGO"), "Supp");
+  // Super Bull carries a naked short put → Undefined (NOT Defined)
+  eq("Super Bull → Undef", deriveRiskType("AVGO 7/17 Super Bull"), "Undef");
+  // Zebra kept; new vocab classified
+  eq("Zebra → Def", deriveRiskType("ONDS Call Zebra"), "Def");
+  eq("Risk-Free Fly → Def (zero-cost lock-in)", deriveRiskType("SPX Risk-Free Fly"), "Def");
+  eq("Risk-Free Fly is an adjustment outcome", isAdjustmentOutcome("Risk-Free Fly"), true);
+  eq("PMCC / Poor Man's = defined diagonal", deriveRiskType("AAPL Poor Man's Covered Call"), "Def");
+  eq("Iron Fly → Def", deriveRiskType("SPX Iron Fly"), "Def");
 }
 
 section("regression — spreadsheet import is back-fill (does not wipe live)");

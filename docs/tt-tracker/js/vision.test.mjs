@@ -91,7 +91,7 @@ assert("no providers disabled in picker", disabledProviders.length === 0,
 section("Anthropic buildRequest");
 
 const antReq = anthropicProv.buildRequest(SAMPLE_DATA_URL, VISION_PROMPT, {
-  model: "claude-sonnet-4-20250514",
+  model: "claude-sonnet-4-6",
   key: FAKE_KEY,
 });
 
@@ -166,12 +166,12 @@ assert("anthropic parseResponse flows into parseVisionText → type",
 section("Gemini buildRequest");
 
 const gemReq = geminiProv.buildRequest(SAMPLE_DATA_URL, VISION_PROMPT, {
-  model: "gemini-2.0-flash",
+  model: "gemini-2.5-flash",
   key: FAKE_KEY,
 });
 
 assert("gemini URL contains model in path",
-  gemReq.url.includes("models/gemini-2.0-flash:generateContent"), gemReq.url);
+  gemReq.url.includes("models/gemini-2.5-flash:generateContent"), gemReq.url);
 assert("gemini URL contains ?key= param",
   gemReq.url.includes("?key="), gemReq.url);
 assert("gemini ?key= contains the actual key",
@@ -323,7 +323,7 @@ const antRefuseBody = JSON.stringify({ content: [{ type: "text", text: '{"value"
 global.fetch = async () => ({ ok: true, json: async () => JSON.parse(antRefuseBody) });
 setKey("anthropic", FAKE_KEY);
 const antRefuseResult = await readCropWithVision(SAMPLE_DATA_URL, {
-  provider: "anthropic", model: "claude-sonnet-4-20250514", key: FAKE_KEY,
+  provider: "anthropic", model: "claude-sonnet-4-6", key: FAKE_KEY,
 });
 clearAllKeys();
 assert("anthropic refuse-to-guess passes through as null value",
@@ -337,7 +337,7 @@ global.fetch = async () => ({
 });
 setKey("gemini", FAKE_KEY);
 const gemErrResult = await readCropWithVision(SAMPLE_DATA_URL, {
-  provider: "gemini", model: "gemini-2.0-flash", key: FAKE_KEY,
+  provider: "gemini", model: "gemini-2.5-flash", key: FAKE_KEY,
 });
 clearAllKeys();
 assert("gemini HTTP error propagates as ok=false",
@@ -351,7 +351,7 @@ section("buildVisionRequest export");
 
 setKey("anthropic", FAKE_KEY);
 const antBuilt = buildVisionRequest(SAMPLE_DATA_URL, {
-  provider: "anthropic", model: "claude-sonnet-4-20250514", key: FAKE_KEY,
+  provider: "anthropic", model: "claude-sonnet-4-6", key: FAKE_KEY,
 });
 assert("buildVisionRequest anthropic returns url", typeof antBuilt.url === "string" && antBuilt.url.length > 0);
 assert("buildVisionRequest anthropic returns headers", typeof antBuilt.headers === "object");
@@ -359,10 +359,10 @@ assert("buildVisionRequest anthropic returns body", typeof antBuilt.body === "ob
 
 setKey("gemini", FAKE_KEY);
 const gemBuilt = buildVisionRequest(SAMPLE_DATA_URL, {
-  provider: "gemini", model: "gemini-2.0-flash", key: FAKE_KEY,
+  provider: "gemini", model: "gemini-2.5-flash", key: FAKE_KEY,
 });
 assert("buildVisionRequest gemini returns url", typeof gemBuilt.url === "string" && gemBuilt.url.length > 0);
-assert("buildVisionRequest gemini URL embeds model", gemBuilt.url.includes("gemini-2.0-flash"));
+assert("buildVisionRequest gemini URL embeds model", gemBuilt.url.includes("gemini-2.5-flash"));
 assert("buildVisionRequest gemini URL embeds key", gemBuilt.url.includes(FAKE_KEY));
 clearAllKeys();
 

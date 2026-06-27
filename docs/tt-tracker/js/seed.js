@@ -1,10 +1,407 @@
-// AUTO-GENERATED from Ryan LePiane's verified public recap data (52 closed trades,
-// 25 open positions, portfolio summary). Reconciled: +$20,299.62 / 73.1% / 5.18 PF.
-// Edit via the app UI (persisted to localStorage), not here.
+// AUTO-GENERATED from Ryan LePiane's full verified public record
+// (88 closed trades Feb-Jun 2026, 12 open positions). This is SAMPLE data.
+// Reconciled: +$33,520.37 realized over 88 closed trades (18 weeks).
+// Win rate 81.8%, profit factor 6.67. Edit via the app UI (localStorage), not here.
 export const SEED = {
   "trades": [
     {
       "id": "seed-0",
+      "date_opened": "2026-02-17",
+      "date_closed": "2026-02-17",
+      "ticker": "SPX",
+      "strategy": "Iron Condor",
+      "type": "credit",
+      "pl": 120.0,
+      "notes": "0DTE; closed at 25% of max profit",
+      "src": "seed"
+    },
+    {
+      "id": "seed-1",
+      "date_opened": "2026-02-18",
+      "date_closed": "2026-02-18",
+      "ticker": "SPX",
+      "strategy": "Iron Condor",
+      "type": "credit",
+      "pl": 130.0,
+      "notes": "0DTE; closed at 25% of max profit",
+      "src": "seed"
+    },
+    {
+      "id": "seed-2",
+      "date_opened": "2026-02-18",
+      "date_closed": "2026-02-19",
+      "ticker": "WMT",
+      "strategy": "Short Put",
+      "type": "credit",
+      "pl": 130.0,
+      "notes": "Earnings trade; closed at 51% of max profit next morning",
+      "src": "seed"
+    },
+    {
+      "id": "seed-3",
+      "date_opened": "2026-02-19",
+      "date_closed": "2026-02-19",
+      "ticker": "SPX",
+      "strategy": "Iron Condor",
+      "type": "credit",
+      "pl": 120.0,
+      "notes": "0DTE; closed at 25% of max profit",
+      "src": "seed"
+    },
+    {
+      "id": "seed-4",
+      "date_opened": "2026-01-23",
+      "date_closed": "2026-02-20",
+      "ticker": "/CLJ6",
+      "strategy": "Short Strangle",
+      "type": "credit",
+      "pl": 640.0,
+      "notes": "Crude Oil; closed at 50% of max profit",
+      "src": "seed"
+    },
+    {
+      "id": "seed-5",
+      "date_opened": "2026-02-13",
+      "date_closed": "2026-02-20",
+      "ticker": "RBLX",
+      "strategy": "Short Strangle",
+      "type": "credit",
+      "pl": 110.0,
+      "notes": "Closed at 31% of max profit",
+      "src": "seed"
+    },
+    {
+      "id": "seed-6",
+      "date_opened": "",
+      "date_closed": "2026-02-20",
+      "ticker": "SPX",
+      "strategy": "Risk-Free Fly",
+      "type": "credit",
+      "pl": 160.0,
+      "notes": "Put BWB converted to risk-free; locked-in premium at expiration",
+      "src": "seed"
+    },
+    {
+      "id": "seed-7",
+      "date_opened": "",
+      "date_closed": "2026-02-25",
+      "ticker": "/ZSK6",
+      "strategy": "Call Debit Spread",
+      "type": "debit",
+      "pl": 106.25,
+      "notes": "Soybeans; closed at 39% gain",
+      "src": "seed"
+    },
+    {
+      "id": "seed-8",
+      "date_opened": "2026-02-12",
+      "date_closed": "2026-02-25",
+      "ticker": "/ESH6",
+      "strategy": "Short Put",
+      "type": "credit",
+      "pl": 1250.0,
+      "notes": "Closed at 50% of max profit via GTC",
+      "src": "seed"
+    },
+    {
+      "id": "seed-9",
+      "date_opened": "",
+      "date_closed": "2026-02-26",
+      "ticker": "/MNQH6",
+      "strategy": "Put Diagonal",
+      "type": "debit",
+      "pl": 486.0,
+      "notes": "Bearish delta hedge; 95% gain",
+      "src": "seed"
+    },
+    {
+      "id": "seed-10",
+      "date_opened": "2026-01-30",
+      "date_closed": "2026-02-26",
+      "ticker": "IONQ",
+      "strategy": "Short Put",
+      "type": "credit",
+      "pl": 130.0,
+      "notes": "Closed at 51% of max profit",
+      "src": "seed"
+    },
+    {
+      "id": "seed-11",
+      "date_opened": "",
+      "date_closed": "2026-02-27",
+      "ticker": "/NGH6",
+      "strategy": "Risk-Free Fly",
+      "type": "credit",
+      "pl": 120.0,
+      "notes": "Put BWB converted to risk-free; locked-in premium at expiration",
+      "src": "seed"
+    },
+    {
+      "id": "seed-12",
+      "date_opened": "2026-01-30",
+      "date_closed": "2026-03-02",
+      "ticker": "ONDS",
+      "strategy": "Short Put",
+      "type": "credit",
+      "pl": 22.0,
+      "notes": "Closed at 50% of max profit via GTC",
+      "src": "seed"
+    },
+    {
+      "id": "seed-13",
+      "date_opened": "2026-01-22",
+      "date_closed": "2026-03-03",
+      "ticker": "/MESH6",
+      "strategy": "Long Put",
+      "type": "debit",
+      "pl": 397.5,
+      "notes": "Downside hedge; closed at 113% gain during large down move",
+      "src": "seed"
+    },
+    {
+      "id": "seed-14",
+      "date_opened": "2026-01-30",
+      "date_closed": "2026-03-04",
+      "ticker": "ASTS",
+      "strategy": "Short Put",
+      "type": "credit",
+      "pl": 220.0,
+      "notes": "Closed at 50% of max profit via GTC",
+      "src": "seed"
+    },
+    {
+      "id": "seed-15",
+      "date_opened": "2026-01-29",
+      "date_closed": "2026-03-04",
+      "ticker": "/NQH6",
+      "strategy": "Put Credit Spread",
+      "type": "credit",
+      "pl": 1310.0,
+      "notes": "Closed at 40% of max profit",
+      "src": "seed"
+    },
+    {
+      "id": "seed-16",
+      "date_opened": "2026-01-30",
+      "date_closed": "2026-03-06",
+      "ticker": "RKLB",
+      "strategy": "Short Put",
+      "type": "credit",
+      "pl": 200.0,
+      "notes": "Closed at 50% of max profit via GTC",
+      "src": "seed"
+    },
+    {
+      "id": "seed-17",
+      "date_opened": "2026-01-30",
+      "date_closed": "2026-03-06",
+      "ticker": "RGTI",
+      "strategy": "Short Put",
+      "type": "credit",
+      "pl": 50.0,
+      "notes": "Closed at 51% of max profit via GTC",
+      "src": "seed"
+    },
+    {
+      "id": "seed-18",
+      "date_opened": "2026-03-06",
+      "date_closed": "2026-03-06",
+      "ticker": "/NQM6",
+      "strategy": "Short Put",
+      "type": "credit",
+      "pl": 1010.0,
+      "notes": "Closed at 21% of max profit intraday; VIX hit 28; large up move",
+      "src": "seed"
+    },
+    {
+      "id": "seed-19",
+      "date_opened": "2026-03-03",
+      "date_closed": "2026-03-10",
+      "ticker": "SPX",
+      "strategy": "Iron Condor",
+      "type": "credit",
+      "pl": 215.0,
+      "notes": "Closed at 25% of max profit via GTC",
+      "src": "seed"
+    },
+    {
+      "id": "seed-20",
+      "date_opened": "2026-03-06",
+      "date_closed": "2026-03-10",
+      "ticker": "SPX",
+      "strategy": "Iron Condor",
+      "type": "credit",
+      "pl": 145.0,
+      "notes": "Closed at 25% of max profit via GTC",
+      "src": "seed"
+    },
+    {
+      "id": "seed-21",
+      "date_opened": "2026-03-10",
+      "date_closed": "2026-03-10",
+      "ticker": "SPX",
+      "strategy": "Iron Fly",
+      "type": "credit",
+      "pl": -400.0,
+      "notes": "0DTE; expired fully ITM on put side (max loss)",
+      "src": "seed"
+    },
+    {
+      "id": "seed-22",
+      "date_opened": "2026-03-11",
+      "date_closed": "2026-03-11",
+      "ticker": "SPX",
+      "strategy": "Call Credit Spread",
+      "type": "credit",
+      "pl": 145.0,
+      "notes": "1DTE trade; closed at 40% of max profit",
+      "src": "seed"
+    },
+    {
+      "id": "seed-23",
+      "date_opened": "2026-01-30",
+      "date_closed": "2026-03-12",
+      "ticker": "QBTS",
+      "strategy": "Short Put",
+      "type": "credit",
+      "pl": 65.0,
+      "notes": "Closed at 52% of max profit via GTC",
+      "src": "seed"
+    },
+    {
+      "id": "seed-24",
+      "date_opened": "",
+      "date_closed": "2026-03-12",
+      "ticker": "/MNQH6",
+      "strategy": "Long Futures",
+      "type": "debit",
+      "pl": 57.0,
+      "notes": "Directional scalp; fading down moves",
+      "src": "seed"
+    },
+    {
+      "id": "seed-25",
+      "date_opened": "2026-03-05",
+      "date_closed": "2026-03-13",
+      "ticker": "EWY",
+      "strategy": "Short Strangle",
+      "type": "credit",
+      "pl": 175.0,
+      "notes": "Closed at 26% of max profit in one week",
+      "src": "seed"
+    },
+    {
+      "id": "seed-26",
+      "date_opened": "2026-03-05",
+      "date_closed": "2026-03-13",
+      "ticker": "WMT",
+      "strategy": "Short Put",
+      "type": "credit",
+      "pl": 110.0,
+      "notes": "Closed at 50% of max profit via GTC",
+      "src": "seed"
+    },
+    {
+      "id": "seed-27",
+      "date_opened": "2026-03-12",
+      "date_closed": "2026-03-13",
+      "ticker": "ADBE",
+      "strategy": "Calendar",
+      "type": "debit",
+      "pl": 50.0,
+      "notes": "Double calendar post-earnings; 14% gain; closed next morning",
+      "src": "seed"
+    },
+    {
+      "id": "seed-28",
+      "date_opened": "2026-03-05",
+      "date_closed": "2026-03-17",
+      "ticker": "/ESM6",
+      "strategy": "Short Strangle",
+      "type": "credit",
+      "pl": 2125.0,
+      "notes": "Closed at 50% of max profit via GTC",
+      "src": "seed"
+    },
+    {
+      "id": "seed-29",
+      "date_opened": "2026-02-26",
+      "date_closed": "2026-03-20",
+      "ticker": "CRWV",
+      "strategy": "Short Put",
+      "type": "credit",
+      "pl": 222.0,
+      "notes": "Earnings trade; closed at 24% of max profit",
+      "src": "seed"
+    },
+    {
+      "id": "seed-30",
+      "date_opened": "",
+      "date_closed": "2026-03-20",
+      "ticker": "SPX",
+      "strategy": "Risk-Free Fly",
+      "type": "credit",
+      "pl": 175.0,
+      "notes": "Locked-in premium; expired Friday",
+      "src": "seed"
+    },
+    {
+      "id": "seed-31",
+      "date_opened": "",
+      "date_closed": "2026-03-20",
+      "ticker": "/RTYH6",
+      "strategy": "Call Debit Spread",
+      "type": "debit",
+      "pl": -660.0,
+      "notes": "Expired worthless; positioned for higher highs from January",
+      "src": "seed"
+    },
+    {
+      "id": "seed-32",
+      "date_opened": "",
+      "date_closed": "2026-03-20",
+      "ticker": "PLTR",
+      "strategy": "Risk-Free Fly",
+      "type": "credit",
+      "pl": 150.0,
+      "notes": "Earnings trade; locked-in credit realized at expiration",
+      "src": "seed"
+    },
+    {
+      "id": "seed-33",
+      "date_opened": "2025-12-17",
+      "date_closed": "2026-03-25",
+      "ticker": "XSP",
+      "strategy": "Short Strangle",
+      "type": "credit",
+      "pl": 1010.0,
+      "notes": "Closed at 50% of max profit; held ~3 months",
+      "src": "seed"
+    },
+    {
+      "id": "seed-34",
+      "date_opened": "2026-03-16",
+      "date_closed": "2026-03-27",
+      "ticker": "/NQM6",
+      "strategy": "Put Debit Spread",
+      "type": "debit",
+      "pl": 1350.0,
+      "notes": "245% gain; closed during market sell-off",
+      "src": "seed"
+    },
+    {
+      "id": "seed-35",
+      "date_opened": "2026-03-16",
+      "date_closed": "2026-03-27",
+      "ticker": "/ESM6",
+      "strategy": "Put Debit Spread",
+      "type": "debit",
+      "pl": 1575.0,
+      "notes": "252% gain; closed during market sell-off",
+      "src": "seed"
+    },
+    {
+      "id": "seed-36",
       "date_opened": "2026-03-27",
       "date_closed": "2026-04-02",
       "ticker": "/NQM6",
@@ -15,7 +412,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-1",
+      "id": "seed-37",
       "date_opened": "2026-03-19",
       "date_closed": "2026-04-02",
       "ticker": "/ESM6",
@@ -26,7 +423,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-2",
+      "id": "seed-38",
       "date_opened": "2026-03-10",
       "date_closed": "2026-04-10",
       "ticker": "/RTYM6",
@@ -37,7 +434,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-3",
+      "id": "seed-39",
       "date_opened": "2026-02-25",
       "date_closed": "2026-04-10",
       "ticker": "NVDA",
@@ -48,7 +445,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-4",
+      "id": "seed-40",
       "date_opened": "2026-04-01",
       "date_closed": "2026-04-10",
       "ticker": "GLD",
@@ -59,7 +456,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-5",
+      "id": "seed-41",
       "date_opened": "",
       "date_closed": "2026-04-10",
       "ticker": "ORCL",
@@ -70,7 +467,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-6",
+      "id": "seed-42",
       "date_opened": "",
       "date_closed": "2026-04-10",
       "ticker": "/ESM6",
@@ -81,7 +478,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-7",
+      "id": "seed-43",
       "date_opened": "",
       "date_closed": "2026-04-10",
       "ticker": "/NQM6",
@@ -92,7 +489,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-8",
+      "id": "seed-44",
       "date_opened": "",
       "date_closed": "2026-04-10",
       "ticker": "SPX",
@@ -103,7 +500,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-9",
+      "id": "seed-45",
       "date_opened": "",
       "date_closed": "2026-04-17",
       "ticker": "/MESM6",
@@ -114,7 +511,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-10",
+      "id": "seed-46",
       "date_opened": "",
       "date_closed": "2026-04-17",
       "ticker": "/METJ6",
@@ -125,7 +522,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-11",
+      "id": "seed-47",
       "date_opened": "",
       "date_closed": "2026-04-17",
       "ticker": "ASTS",
@@ -136,7 +533,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-12",
+      "id": "seed-48",
       "date_opened": "",
       "date_closed": "2026-04-17",
       "ticker": "SPX",
@@ -147,7 +544,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-13",
+      "id": "seed-49",
       "date_opened": "",
       "date_closed": "2026-04-17",
       "ticker": "AVGO",
@@ -158,7 +555,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-14",
+      "id": "seed-50",
       "date_opened": "",
       "date_closed": "2026-04-24",
       "ticker": "/ZC",
@@ -169,7 +566,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-15",
+      "id": "seed-51",
       "date_opened": "",
       "date_closed": "2026-04-24",
       "ticker": "/ZS",
@@ -180,7 +577,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-16",
+      "id": "seed-52",
       "date_opened": "",
       "date_closed": "2026-04-24",
       "ticker": "/ZW",
@@ -191,7 +588,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-17",
+      "id": "seed-53",
       "date_opened": "",
       "date_closed": "2026-05-01",
       "ticker": "BE",
@@ -202,7 +599,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-18",
+      "id": "seed-54",
       "date_opened": "2026-04-21",
       "date_closed": "2026-05-01",
       "ticker": "UAL",
@@ -213,7 +610,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-19",
+      "id": "seed-55",
       "date_opened": "",
       "date_closed": "2026-05-01",
       "ticker": "RDDT",
@@ -224,7 +621,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-20",
+      "id": "seed-56",
       "date_opened": "",
       "date_closed": "2026-05-01",
       "ticker": "/NQM6",
@@ -235,7 +632,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-21",
+      "id": "seed-57",
       "date_opened": "2026-04-30",
       "date_closed": "2026-05-08",
       "ticker": "/ZCN6",
@@ -246,7 +643,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-22",
+      "id": "seed-58",
       "date_opened": "",
       "date_closed": "2026-05-08",
       "ticker": "RKLB",
@@ -257,7 +654,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-23",
+      "id": "seed-59",
       "date_opened": "",
       "date_closed": "2026-05-15",
       "ticker": "/ZCN6",
@@ -268,7 +665,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-24",
+      "id": "seed-60",
       "date_opened": "",
       "date_closed": "2026-05-15",
       "ticker": "NBIS",
@@ -279,7 +676,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-25",
+      "id": "seed-61",
       "date_opened": "2026-05-06",
       "date_closed": "2026-05-15",
       "ticker": "IONQ",
@@ -290,7 +687,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-26",
+      "id": "seed-62",
       "date_opened": "",
       "date_closed": "2026-05-15",
       "ticker": "AMAT",
@@ -301,7 +698,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-27",
+      "id": "seed-63",
       "date_opened": "",
       "date_closed": "2026-05-15",
       "ticker": "MU",
@@ -312,7 +709,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-28",
+      "id": "seed-64",
       "date_opened": "",
       "date_closed": "2026-05-15",
       "ticker": "MU",
@@ -323,7 +720,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-29",
+      "id": "seed-65",
       "date_opened": "",
       "date_closed": "2026-05-15",
       "ticker": "SPX",
@@ -334,7 +731,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-30",
+      "id": "seed-66",
       "date_opened": "",
       "date_closed": "2026-05-15",
       "ticker": "/NQ",
@@ -345,7 +742,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-31",
+      "id": "seed-67",
       "date_opened": "2026-05-11",
       "date_closed": "2026-05-22",
       "ticker": "ASTS",
@@ -356,7 +753,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-32",
+      "id": "seed-68",
       "date_opened": "",
       "date_closed": "2026-05-22",
       "ticker": "/RTYU6",
@@ -367,7 +764,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-33",
+      "id": "seed-69",
       "date_opened": "2026-05-15",
       "date_closed": "2026-05-22",
       "ticker": "/ZBU6",
@@ -378,7 +775,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-34",
+      "id": "seed-70",
       "date_opened": "2026-05-11",
       "date_closed": "2026-05-22",
       "ticker": "QBTS",
@@ -389,7 +786,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-35",
+      "id": "seed-71",
       "date_opened": "2026-05-11",
       "date_closed": "2026-05-22",
       "ticker": "RGTI",
@@ -400,7 +797,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-36",
+      "id": "seed-72",
       "date_opened": "",
       "date_closed": "2026-05-22",
       "ticker": "UMAC",
@@ -411,7 +808,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-37",
+      "id": "seed-73",
       "date_opened": "",
       "date_closed": "2026-05-22",
       "ticker": "SNDK",
@@ -422,7 +819,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-38",
+      "id": "seed-74",
       "date_opened": "",
       "date_closed": "2026-05-29",
       "ticker": "/NGM6",
@@ -433,7 +830,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-39",
+      "id": "seed-75",
       "date_opened": "2026-05-04",
       "date_closed": "2026-05-29",
       "ticker": "PLTR",
@@ -444,7 +841,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-40",
+      "id": "seed-76",
       "date_opened": "2026-04-28",
       "date_closed": "2026-05-29",
       "ticker": "HOOD",
@@ -455,7 +852,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-41",
+      "id": "seed-77",
       "date_opened": "2026-02-24",
       "date_closed": "2026-06-05",
       "ticker": "/CLN6",
@@ -466,7 +863,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-42",
+      "id": "seed-78",
       "date_opened": "2026-05-07",
       "date_closed": "2026-06-05",
       "ticker": "CRWV",
@@ -477,7 +874,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-43",
+      "id": "seed-79",
       "date_opened": "",
       "date_closed": "2026-06-05",
       "ticker": "/LEQ6",
@@ -488,7 +885,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-44",
+      "id": "seed-80",
       "date_opened": "",
       "date_closed": "2026-06-05",
       "ticker": "AVGO",
@@ -499,7 +896,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-45",
+      "id": "seed-81",
       "date_opened": "2026-06-05",
       "date_closed": "2026-06-12",
       "ticker": "/RTYU6",
@@ -510,18 +907,18 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-46",
+      "id": "seed-82",
       "date_opened": "2026-04-23",
       "date_closed": "2026-06-12",
       "ticker": "INTC",
       "strategy": "Short Strangle",
       "type": "credit",
       "pl": 110.0,
-      "notes": "Earnings trade; managed ITM",
+      "notes": "Earnings trade; managed ITM; closed at 12% of max profit",
       "src": "seed"
     },
     {
-      "id": "seed-47",
+      "id": "seed-83",
       "date_opened": "2026-06-05",
       "date_closed": "2026-06-19",
       "ticker": "/NQU6",
@@ -532,7 +929,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-48",
+      "id": "seed-84",
       "date_opened": "2026-06-05",
       "date_closed": "2026-06-19",
       "ticker": "/ESU6",
@@ -543,7 +940,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-49",
+      "id": "seed-85",
       "date_opened": "2026-05-01",
       "date_closed": "2026-06-19",
       "ticker": "/NQM6",
@@ -554,7 +951,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-50",
+      "id": "seed-86",
       "date_opened": "2026-05-01",
       "date_closed": "2026-06-19",
       "ticker": "SPX",
@@ -565,7 +962,7 @@ export const SEED = {
       "src": "seed"
     },
     {
-      "id": "seed-51",
+      "id": "seed-87",
       "date_opened": "2026-04-17",
       "date_closed": "2026-06-19",
       "ticker": "NFLX",
@@ -579,367 +976,177 @@ export const SEED = {
   "openBook": [
     {
       "id": "book-0",
-      "trade_description": "/1OZQ6 Long (5 Contracts) @ $5418.4",
+      "trade_description": "META Jan-2028 $500C LEAPS",
       "credit_rcvd": null,
-      "debit_paid": null,
-      "max_profit": null,
-      "max_loss": 26756.0,
-      "bp_usd": 1347.0,
-      "bp_pct": 0.2,
+      "debit_paid": 19250.0,
+      "max_profit": "inf",
+      "max_loss": 19250.0,
+      "bp_usd": 8565.0,
+      "bp_pct": null,
       "position_type": "Core",
-      "risk_type": "Undef",
-      "date_opened": "2026-01-29",
+      "risk_type": "Def",
+      "date_opened": "2026-04-30",
       "src": "seed"
     },
     {
       "id": "book-1",
-      "trade_description": "/6EU6 8/7 Short Put",
-      "credit_rcvd": 575.0,
-      "debit_paid": null,
-      "max_profit": 575.0,
-      "max_loss": 143800.0,
-      "bp_usd": 2280.0,
-      "bp_pct": 0.3,
+      "trade_description": "CBOE Jan-2028 $250C LEAPS",
+      "credit_rcvd": null,
+      "debit_paid": 7470.0,
+      "max_profit": "inf",
+      "max_loss": 7470.0,
+      "bp_usd": 3767.0,
+      "bp_pct": null,
       "position_type": "Core",
-      "risk_type": "Undef",
-      "date_opened": "2026-05-28",
+      "risk_type": "Def",
+      "date_opened": "2026-06-03",
       "src": "seed"
     },
     {
       "id": "book-2",
-      "trade_description": "/6JU6 7/2 Call Debit Spread",
+      "trade_description": "CME Jan-2028 $220C LEAPS",
       "credit_rcvd": null,
-      "debit_paid": 288.0,
-      "max_profit": 963.0,
-      "max_loss": 288.0,
-      "bp_usd": 59.0,
-      "bp_pct": 0.0,
+      "debit_paid": 5450.0,
+      "max_profit": "inf",
+      "max_loss": 5450.0,
+      "bp_usd": 3458.0,
+      "bp_pct": null,
       "position_type": "Core",
       "risk_type": "Def",
-      "date_opened": "2026-05-20",
+      "date_opened": "2026-06-03",
       "src": "seed"
     },
     {
       "id": "book-3",
-      "trade_description": "/MESU6 6/30 Short Put (2 Contracts)",
-      "credit_rcvd": 1035.0,
-      "debit_paid": null,
-      "max_profit": 1035.0,
-      "max_loss": 72800.0,
-      "bp_usd": 3198.0,
-      "bp_pct": 0.4,
-      "position_type": "Core",
-      "risk_type": "Undef",
-      "date_opened": "2026-05-15",
-      "src": "seed"
-    },
-    {
-      "id": "book-4",
-      "trade_description": "/MESU6 Long (5 Contracts) @ $7605.25",
-      "credit_rcvd": null,
-      "debit_paid": null,
-      "max_profit": null,
-      "max_loss": 190131.0,
-      "bp_usd": 13767.0,
-      "bp_pct": 1.9,
-      "position_type": "Core",
-      "risk_type": "Undef",
-      "date_opened": "2026-06-18",
-      "src": "seed"
-    },
-    {
-      "id": "book-5",
-      "trade_description": "/MNQU6 6/30 Short Put",
-      "credit_rcvd": 1092.0,
-      "debit_paid": null,
-      "max_profit": 1092.0,
-      "max_loss": 56732.0,
-      "bp_usd": 1089.0,
-      "bp_pct": 0.2,
-      "position_type": "Core",
-      "risk_type": "Undef",
-      "date_opened": "2026-05-15",
-      "src": "seed"
-    },
-    {
-      "id": "book-6",
-      "trade_description": "/SICN6 Long (1 Contract) @ 95.55",
-      "credit_rcvd": null,
-      "debit_paid": null,
-      "max_profit": null,
-      "max_loss": 9500.0,
-      "bp_usd": 871.0,
-      "bp_pct": 0.1,
-      "position_type": "Core",
-      "risk_type": "Undef",
-      "date_opened": "2026-03-01",
-      "src": "seed"
-    },
-    {
-      "id": "book-7",
-      "trade_description": "/ZCU6 7/24 Short Put",
-      "credit_rcvd": 538.0,
-      "debit_paid": null,
-      "max_profit": 538.0,
-      "max_loss": 22088.0,
-      "bp_usd": 1564.0,
-      "bp_pct": 0.2,
-      "position_type": "Core",
-      "risk_type": "Undef",
-      "date_opened": "2026-05-14",
-      "src": "seed"
-    },
-    {
-      "id": "book-8",
-      "trade_description": "/ZWU6 7/24 Short Put",
-      "credit_rcvd": 806.0,
-      "debit_paid": null,
-      "max_profit": 806.0,
-      "max_loss": 30344.0,
-      "bp_usd": 2574.0,
-      "bp_pct": 0.4,
-      "position_type": "Core",
-      "risk_type": "Undef",
-      "date_opened": "2026-05-14",
-      "src": "seed"
-    },
-    {
-      "id": "book-9",
-      "trade_description": "ADBE 8/21 Long Call",
-      "credit_rcvd": null,
-      "debit_paid": 900.0,
-      "max_profit": null,
-      "max_loss": 900.0,
-      "bp_usd": 275.0,
-      "bp_pct": 0.0,
-      "position_type": "Supp",
-      "risk_type": "Def",
-      "date_opened": "2026-06-11",
-      "src": "seed"
-    },
-    {
-      "id": "book-10",
-      "trade_description": "AVGO 7/17 Super Bull",
+      "trade_description": "AVGO Jul Super Bull",
       "credit_rcvd": 815.0,
       "debit_paid": null,
       "max_profit": 1815.0,
       "max_loss": 37185.0,
-      "bp_usd": 3225.0,
-      "bp_pct": 0.4,
+      "bp_usd": 2954.0,
+      "bp_pct": null,
       "position_type": "Supp",
       "risk_type": "Undef",
       "date_opened": "2026-06-04",
       "src": "seed"
     },
     {
-      "id": "book-11",
-      "trade_description": "CBOE 1/21/28 LEAPS",
-      "credit_rcvd": null,
-      "debit_paid": 7470.0,
-      "max_profit": "inf",
-      "max_loss": 7470.0,
-      "bp_usd": 5275.0,
-      "bp_pct": 0.7,
-      "position_type": "Supp",
-      "risk_type": "Def",
-      "date_opened": "2026-06-03",
-      "src": "seed"
-    },
-    {
-      "id": "book-12",
-      "trade_description": "CME 1/21/28 LEAPS",
-      "credit_rcvd": null,
-      "debit_paid": 5450.0,
-      "max_profit": "inf",
-      "max_loss": 5450.0,
-      "bp_usd": 3258.0,
-      "bp_pct": 0.5,
-      "position_type": "Supp",
-      "risk_type": "Def",
-      "date_opened": "2026-06-03",
-      "src": "seed"
-    },
-    {
-      "id": "book-13",
-      "trade_description": "GLD 7/17 Short Straddle (Covered)",
-      "credit_rcvd": 2400.0,
+      "id": "book-4",
+      "trade_description": "/ESU6 Jul $7250 Short Put",
+      "credit_rcvd": 3750.0,
       "debit_paid": null,
-      "max_profit": 2400.0,
-      "max_loss": "inf",
-      "bp_usd": 11179.0,
-      "bp_pct": 1.5,
+      "max_profit": 3750.0,
+      "max_loss": 358750.0,
+      "bp_usd": 16073.0,
+      "bp_pct": null,
       "position_type": "Core",
       "risk_type": "Undef",
-      "date_opened": "2025-09-25",
+      "date_opened": "2026-06-05",
       "src": "seed"
     },
     {
-      "id": "book-14",
-      "trade_description": "META 1/21/2028 LEAPS",
-      "credit_rcvd": null,
-      "debit_paid": 19250.0,
-      "max_profit": "inf",
-      "max_loss": 19250.0,
-      "bp_usd": 9631.0,
-      "bp_pct": 1.3,
-      "position_type": "Supp",
-      "risk_type": "Def",
-      "date_opened": "2026-04-30",
-      "src": "seed"
-    },
-    {
-      "id": "book-15",
-      "trade_description": "MSFT 6/17/27 LEAPS",
-      "credit_rcvd": null,
-      "debit_paid": 9800.0,
-      "max_profit": "inf",
-      "max_loss": 9800.0,
-      "bp_usd": 6765.0,
-      "bp_pct": 0.9,
-      "position_type": "Supp",
-      "risk_type": "Def",
-      "date_opened": "2026-01-29",
-      "src": "seed"
-    },
-    {
-      "id": "book-16",
-      "trade_description": "NOW 7/17 & 8/21 Call Diagonal",
+      "id": "book-5",
+      "trade_description": "NOW Jul/Aug Call Diagonal",
       "credit_rcvd": null,
       "debit_paid": 560.0,
       "max_profit": 440.0,
       "max_loss": 560.0,
-      "bp_usd": 305.0,
-      "bp_pct": 0.0,
+      "bp_usd": 555.0,
+      "bp_pct": null,
       "position_type": "Supp",
       "risk_type": "Def",
       "date_opened": "2026-06-15",
       "src": "seed"
     },
     {
-      "id": "book-17",
-      "trade_description": "NVDA 7/17 Long Call",
+      "id": "book-6",
+      "trade_description": "/MESU6 Long Futures (5 contracts)",
       "credit_rcvd": null,
-      "debit_paid": 731.0,
+      "debit_paid": null,
       "max_profit": "inf",
-      "max_loss": 731.0,
-      "bp_usd": 731.0,
-      "bp_pct": 0.1,
+      "max_loss": 190131.0,
+      "bp_usd": 18808.0,
+      "bp_pct": null,
+      "position_type": "Core",
+      "risk_type": "Undef",
+      "date_opened": "2026-06-16",
+      "src": "seed"
+    },
+    {
+      "id": "book-7",
+      "trade_description": "ADBE Jul/Aug Call Diagonal",
+      "credit_rcvd": null,
+      "debit_paid": 859.0,
+      "max_profit": 1141.0,
+      "max_loss": 859.0,
+      "bp_usd": 863.0,
+      "bp_pct": null,
       "position_type": "Supp",
+      "risk_type": "Def",
+      "date_opened": "2026-06-11",
+      "src": "seed"
+    },
+    {
+      "id": "book-8",
+      "trade_description": "/6EU6 Euro FX Short Put",
+      "credit_rcvd": 475.0,
+      "debit_paid": null,
+      "max_profit": 475.0,
+      "max_loss": 144525.0,
+      "bp_usd": 1991.0,
+      "bp_pct": null,
+      "position_type": "Core",
+      "risk_type": "Undef",
+      "date_opened": "2026-05-28",
+      "src": "seed"
+    },
+    {
+      "id": "book-9",
+      "trade_description": "/6JU6 Japanese Yen Call Debit Spread",
+      "credit_rcvd": null,
+      "debit_paid": 288.0,
+      "max_profit": 963.0,
+      "max_loss": 288.0,
+      "bp_usd": 281.0,
+      "bp_pct": null,
+      "position_type": "Core",
       "risk_type": "Def",
       "date_opened": "2026-05-20",
       "src": "seed"
     },
     {
-      "id": "book-18",
-      "trade_description": "NVDA 7/17 Short Put",
-      "credit_rcvd": 1200.0,
+      "id": "book-10",
+      "trade_description": "/ZCN6 Corn Short Put",
+      "credit_rcvd": 413.0,
       "debit_paid": null,
-      "max_profit": 1200.0,
-      "max_loss": 20300.0,
-      "bp_usd": 2028.0,
-      "bp_pct": 0.3,
-      "position_type": "Supp",
-      "risk_type": "Undef",
-      "date_opened": "2026-05-22",
-      "src": "seed"
-    },
-    {
-      "id": "book-19",
-      "trade_description": "ONDS 1/15/27 Call Zebra",
-      "credit_rcvd": null,
-      "debit_paid": 370.0,
-      "max_profit": "inf",
-      "max_loss": 370.0,
-      "bp_usd": 608.0,
-      "bp_pct": 0.1,
-      "position_type": "Supp",
-      "risk_type": "Def",
-      "date_opened": "2025-09-05",
-      "src": "seed"
-    },
-    {
-      "id": "book-20",
-      "trade_description": "SLV 7/17 Short Straddle",
-      "credit_rcvd": 1750.0,
-      "debit_paid": null,
-      "max_profit": 1750.0,
-      "max_loss": "inf",
-      "bp_usd": 872.0,
-      "bp_pct": 0.1,
+      "max_profit": 413.0,
+      "max_loss": 22088.0,
+      "bp_usd": 942.0,
+      "bp_pct": null,
       "position_type": "Core",
       "risk_type": "Undef",
-      "date_opened": "2025-12-09",
+      "date_opened": "2026-05-14",
       "src": "seed"
     },
     {
-      "id": "book-21",
-      "trade_description": "SMH 7/17 Short Put",
-      "credit_rcvd": 3305.0,
+      "id": "book-11",
+      "trade_description": "/ZWN6 Wheat Short Put",
+      "credit_rcvd": 656.0,
       "debit_paid": null,
-      "max_profit": 3305.0,
-      "max_loss": "inf",
-      "bp_usd": 6465.0,
-      "bp_pct": 0.9,
+      "max_profit": 656.0,
+      "max_loss": 30344.0,
+      "bp_usd": 1704.0,
+      "bp_pct": null,
       "position_type": "Core",
       "risk_type": "Undef",
-      "date_opened": "2026-03-20",
-      "src": "seed"
-    },
-    {
-      "id": "book-22",
-      "trade_description": "SPX 7/17 Put Butterfly",
-      "credit_rcvd": null,
-      "debit_paid": 605.0,
-      "max_profit": 9395.0,
-      "max_loss": 605.0,
-      "bp_usd": 659.0,
-      "bp_pct": 0.1,
-      "position_type": "Core",
-      "risk_type": "Def",
-      "date_opened": "2026-05-26",
-      "src": "seed"
-    },
-    {
-      "id": "book-23",
-      "trade_description": "UNH 7/17 LEAPS",
-      "credit_rcvd": null,
-      "debit_paid": 8350.0,
-      "max_profit": "inf",
-      "max_loss": 8350.0,
-      "bp_usd": 6019.0,
-      "bp_pct": 0.8,
-      "position_type": "Supp",
-      "risk_type": "Def",
-      "date_opened": "2025-05-15",
-      "src": "seed"
-    },
-    {
-      "id": "book-24",
-      "trade_description": "WMT 7/17 Short Put",
-      "credit_rcvd": 500.0,
-      "debit_paid": null,
-      "max_profit": 500.0,
-      "max_loss": 12500.0,
-      "bp_usd": 1755.0,
-      "bp_pct": 0.2,
-      "position_type": "Supp",
-      "risk_type": "Undef",
-      "date_opened": "2026-05-20",
+      "date_opened": "2026-05-14",
       "src": "seed"
     }
   ],
   "summary": {
-    "position_mix": {
-      "core_pct": 52.0,
-      "supplemental_pct": 48.0,
-      "undefined_pct": 56.0,
-      "defined_pct": 44.0
-    },
+    "position_mix": {},
     "buying_power": {
-      "bp_target_pct": 30.0,
-      "bp_usage_pct": 28.6,
-      "trading_usage_pct": 11.6,
-      "stock_usage_pct": 17.0
+      "bp_target_pct": 30.0
     }
   }
 };

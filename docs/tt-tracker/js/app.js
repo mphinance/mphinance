@@ -1,6 +1,6 @@
 // app.js — orchestrator: state, persistence, panels, OCR ingest, editing.
 import { SEED } from "./seed.js";
-import { computeTrackRecord, deriveBookSummary, deriveRiskType } from "./engine.js";
+import { computeTrackRecord, deriveBookSummary, deriveRiskType, rangeLabel } from "./engine.js";
 import { drawEquityCurve, drawStrategyBars, gaugeHtml, drawDonut, money, moneyInt } from "./charts.js";
 import { processScreenshot, mergeMonitorParts, forgetImages, cropToDataUrl } from "./ocr.js";
 import { mergeMonitorIntoBook, reconcileClosed, applyTicketToBook, importSpreadsheetIntoBook, activeBook } from "./store.js";
@@ -69,21 +69,25 @@ function goToTab(name) {
 function renderTrack() {
   const m = computeTrackRecord(state.trades, state.fees);
   const grid = document.getElementById("kpis");
-  const matches = Math.abs(m.grossTotal - 20299.62) < 0.5;
+  // Reconciles to the FULL verified record: +$33,520.37 over 88 closed trades.
+  const matches = Math.abs(m.grossTotal - 33520.37) < 0.5 && m.n === 88;
+  const range = rangeLabel(m.firstDate, m.lastDate, m.n);
   grid.innerHTML = [
     kpi("Realized P/L", money(state.fees.enabled ? m.total : m.grossTotal, true), m.total >= 0 ? "pos" : "neg", state.fees.enabled ? "net of fees" : "gross"),
     kpi("Win Rate", m.winRate != null ? m.winRate + "%" : "—", "", `${m.wins}W · ${m.losses}L`),
     kpi("Profit Factor", m.profitFactor != null ? m.profitFactor.toFixed(2) : "—", "gold", "gross win ÷ gross loss"),
-    kpi("Closed Trades", m.n, "", `${m.firstDate} → ${m.lastDate}`),
+    kpi("Closed Trades", m.n, "", range || `${m.firstDate} → ${m.lastDate}`),
     kpi("Avg Win", money(m.avgWin), "pos"),
     kpi("Avg Loss", money(m.avgLoss), "neg"),
-    kpi("Best", m.best ? money(m.best.pl, true) : "—", "pos", m.best ? m.best.ticker : ""),
-    kpi("Worst", m.worst ? money(m.worst.pl, true) : "—", "neg", m.worst ? m.worst.ticker : ""),
+    kpi("Best", m.best ? glyphMoney(m.best.pl) : "—", "pos", m.best ? m.best.ticker : ""),
+    kpi("Worst", m.worst ? glyphMoney(m.worst.pl) : "—", "neg", m.worst ? m.worst.ticker : ""),
   ].join("");
 
-  document.getElementById("seed-check").innerHTML = matches
-    ? `<span class="ok">✓ reconciles to verified seed</span> +$20,299.62 · 73.1% · 5.18 PF`
-    : `<span class="warn">edited</span> gross now ${money(m.grossTotal, true)}`;
+  // Honest range label — never reads as all-time. Shows even when reconciled.
+  const rangeTag = range ? `<span class="rangelbl" title="track-record window">${range}</span>` : "";
+  document.getElementById("seed-check").innerHTML = (matches
+    ? `<span class="ok">✓ reconciles to verified sample</span> +$33,520.37 · ${m.winRate}% · ${m.profitFactor.toFixed(2)} PF`
+    : `<span class="warn">edited</span> realized now ${money(m.grossTotal, true)}`) + rangeTag;
 
   // equity curve
   const tipBox = document.getElementById("eq-tip");
@@ -108,7 +112,7 @@ function renderTrack() {
       <td class="tk">${t.ticker}</td>
       <td>${t.strategy}</td>
       <td>${t.type ? `<span class="chip ${t.type}">${t.type}</span>` : ""}</td>
-      <td class="mono r ${v >= 0 ? "pos" : "neg"}">${money(v, true)}</td>
+      <td class="mono r ${v >= 0 ? "pos" : "neg"}">${glyphMoney(v)}</td>
       <td class="note">${escapeHtml(t.notes || "")}</td>
     </tr>`;
   }).join("");
@@ -117,6 +121,18 @@ function renderTrack() {
 
 function kpi(label, val, cls = "", sub = "") {
   return `<div class="kpi"><div class="kpi-v ${cls}">${val}</div><div class="kpi-l">${label}</div>${sub ? `<div class="kpi-s">${sub}</div>` : ""}</div>`;
+}
+
+// Colorblind aid: a sign/arrow glyph so gain vs loss reads WITHOUT color.
+// ▲ gain · ▼ loss · = flat. Paired with the existing +/- in money().
+function signGlyph(v) {
+  if (v == null || Number.isNaN(v)) return "";
+  return v > 0 ? "▲" : v < 0 ? "▼" : "=";
+}
+function glyphMoney(v) {
+  if (v == null || Number.isNaN(v)) return "—";
+  const g = signGlyph(v);
+  return `<span class="glyph" aria-hidden="true">${g}</span> ${money(v, true)}`;
 }
 
 // --- LIVE BOOK panel --------------------------------------------------------
@@ -343,15 +359,30 @@ function ingestResult(res, name) {
     }
   } else if (res.layout === "order_chains") {
     if (res.bookable) {
-      state.trades.push({
-        id: res.tradeId || ("ocr-" + Math.random().toString(36).slice(2, 8)),
-        date_opened: "", date_closed: new Date().toISOString().slice(0, 10),
-        ticker: res.ticker || "?", strategy: res.strategy || "Uncategorized",
-        type: "", pl: res.total_pl, notes: "OCR'd CLSD chain" + flagTxt, src: "ocr",
-      });
-      addReview(res.reviewItems);
-      save(); renderTrack(); refreshReviewUI();
-      logLine(`✓ ${name}: ${res.ticker || "?"} CLSD chain → realized ${money(res.total_pl, true)} booked.${flagTxt}`, "ok");
+      // Cross-week realized DEDUPE by position key: re-dropping the same CLSD
+      // chain (e.g. the same weekly screenshot twice) must never double-book.
+      // Key = ticker | strategy | realized P/L | close date.
+      const closeDate = new Date().toISOString().slice(0, 10);
+      const rkey = [
+        (res.ticker || "?").toUpperCase(),
+        (res.strategy || "Uncategorized").toLowerCase(),
+        res.total_pl,
+        closeDate,
+      ].join("|");
+      if ((state.trades || []).some((t) => t.realized_key === rkey)) {
+        logLine(`• ${name}: ${res.ticker || "?"} CLSD chain already booked today (${money(res.total_pl, true)}) — skipped to avoid double-booking.${flagTxt}`, "warn");
+      } else {
+        state.trades.push({
+          id: res.tradeId || ("ocr-" + Math.random().toString(36).slice(2, 8)),
+          date_opened: "", date_closed: closeDate,
+          ticker: res.ticker || "?", strategy: res.strategy || "Uncategorized",
+          type: "", pl: res.total_pl, notes: "OCR'd CLSD chain" + flagTxt,
+          realized_key: rkey, src: "ocr",
+        });
+        addReview(res.reviewItems);
+        save(); renderTrack(); refreshReviewUI();
+        logLine(`✓ ${name}: ${res.ticker || "?"} CLSD chain → realized ${money(res.total_pl, true)} booked.${flagTxt}`, "ok");
+      }
     } else {
       logLine(`• ${name}: order chain not booked (${res.is_closed === false ? "still open" : "status unclear"}).${flagTxt}`, "warn");
     }
@@ -474,7 +505,7 @@ function refreshReviewUI() {
   const active = document.querySelector(".tab.active");
   if (active && active.dataset.tab === "review") renderReview();
   // book/track rows may have changed via confirmations
-  renderBook(); renderTrack();
+  renderBook(); renderTrack(); refreshSampleBanner();
 }
 
 // --- SHARE panel: Weekly Card + JSON backup --------------------------------
@@ -498,9 +529,12 @@ function renderShare() {
 
 function cardOpts() {
   const p = state.cardPrefs;
+  const metrics = computeTrackRecord(state.trades, state.fees);
   return {
     handle: p.handle, weekEnding: p.weekEnding, showDollars: p.showDollars,
-    metrics: computeTrackRecord(state.trades, state.fees), provisional: reviewCounts(state).total,
+    metrics, provisional: reviewCounts(state).total,
+    range: rangeLabel(metrics.firstDate, metrics.lastDate, metrics.n),
+    sample: isSampleData(),
   };
 }
 
@@ -626,8 +660,21 @@ function exportCsv() {
   a.click();
 }
 
+// SAMPLE watermark: true while the book/record is still entirely the seeded
+// demo (nothing OCR'd, imported, or live yet). Once the user adds their own
+// data, the badge disappears so they never mistake Ryan's seed for their own.
+function isSampleData() {
+  const t = state.trades || [], b = state.openBook || [];
+  if (!t.length && !b.length) return false;
+  return t.every((x) => x.src === "seed") && b.every((x) => x.src === "seed");
+}
+function refreshSampleBanner() {
+  const bar = document.getElementById("samplebar");
+  if (bar) bar.hidden = !isSampleData();
+}
+
 function renderAll() {
-  renderTrack(); renderBook(); renderMonitor(); initFees(); refreshReviewUI();
+  renderTrack(); renderBook(); renderMonitor(); initFees(); refreshReviewUI(); refreshSampleBanner();
 }
 
 // --- boot -------------------------------------------------------------------

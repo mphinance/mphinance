@@ -131,7 +131,9 @@ function paint(ctx, opts) {
   ctx.fillStyle = C.ink; ctx.font = `800 36px ${DISPLAY_FONT}`;
   ctx.fillText("Options Track Record", titleX, PAD + 30);
   ctx.fillStyle = C.muted; ctx.font = "500 18px 'JetBrains Mono', monospace";
-  const sub = (opts.weekEnding ? "week ending " + opts.weekEnding + " · " : "") + (m.firstDate || "") + " → " + (m.lastDate || "");
+  // Honest range label (never reads as all-time), e.g. "Feb-Jun 2026 · 18 weeks · 88 trades".
+  const sub = (opts.weekEnding ? "week ending " + opts.weekEnding + " · " : "") +
+    (opts.range || ((m.firstDate || "") + " → " + (m.lastDate || "")));
   ctx.fillText(sub, titleX, PAD + 64);
 
   // handle (hero) top-right
@@ -139,8 +141,22 @@ function paint(ctx, opts) {
   ctx.fillStyle = C.gold; ctx.font = `800 36px ${DISPLAY_FONT}`;
   ctx.fillText(opts.handle || "@yourhandle", W - PAD, PAD + 30);
   ctx.fillStyle = C.muted; ctx.font = `600 14px ${DISPLAY_FONT}`;
-  ctx.fillText("VERIFIED TRACK RECORD", W - PAD, PAD + 56);
+  ctx.fillText(opts.sample ? "SAMPLE DATA" : "VERIFIED TRACK RECORD", W - PAD, PAD + 56);
   ctx.textAlign = "left";
+
+  // SAMPLE watermark — unmistakable so a new user never posts the demo as their
+  // own. Big translucent diagonal band across the card body when sample data.
+  if (opts.sample) {
+    ctx.save();
+    ctx.translate(W / 2, H / 2);
+    ctx.rotate(-Math.atan2(H, W));
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = `800 150px ${DISPLAY_FONT}`;
+    ctx.fillStyle = _brand.id === "lpLedger" ? "rgba(27,42,74,.07)" : "rgba(255,255,255,.06)";
+    ctx.fillText("SAMPLE", 0, 0);
+    ctx.restore();
+    ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  }
 
   // equity curve
   drawCurve(ctx, m.equity, PAD, 168, W - PAD * 2, 260);

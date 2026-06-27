@@ -1,12 +1,10 @@
 // engine.js — realized-PnL + track-record stats.
 // Ported (semantics frozen) from the borrowed TS journal engine
-//   - pnl.ts::computeRealizedPnl
 //   - stats.ts::winRate / sumPnl / group-aggregate
 //   - rowMapper.ts::numOrNull / strOrNull (tolerant OCR coercion)
-// plus the equity-curve / avg-win-loss / profit-factor recipe from INTEGRATION_BRIEF.md,
-// and build.py::compute() which reconciles the seed to +$20,299.62 / 73.1% / 5.18.
-
-const OPTION_MULTIPLIER = 100;
+// plus the equity-curve / avg-win-loss / profit-factor recipe from INTEGRATION_BRIEF.md.
+// The seed now reconciles to the FULL record: +$33,520.37 over 88 closed trades
+// (Feb-Jun 2026, 18 weeks); win rate 81.8%, profit factor 6.67.
 
 // --- tolerant coercion (OCR + Postgres-string safe) -------------------------
 export function numOrNull(v) {
@@ -25,30 +23,6 @@ export function strOrNull(v) {
   if (v === null || v === undefined) return null;
   const s = String(v).trim();
   return s === "" ? null : s;
-}
-
-// --- realized P&L for a single per-leg row (BTO/STO/BTC/STC mapped to side) --
-// side='short' profits when entry>exit; long profits when exit>entry. ×100 for options.
-export function computeRealizedPnl(t) {
-  if (t.status !== "closed") return null;
-  const entry = numOrNull(t.entry_price);
-  const exit_ = numOrNull(t.exit_price);
-  const size = numOrNull(t.size);
-  if (entry === null || exit_ === null || size === null) return null;
-  const directional = t.side === "short" ? entry - exit_ : exit_ - entry;
-  const multiplier = t.instrument_type === "option" ? OPTION_MULTIPLIER : 1;
-  return directional * size * multiplier;
-}
-
-// Net a chain (array of leg rows sharing a chain) → realized total (null if any leg open).
-export function chainRealizedPnl(legs) {
-  let total = 0, sawClosed = false;
-  for (const leg of legs) {
-    const p = computeRealizedPnl(leg);
-    if (p === null) return null; // an open leg => chain not fully realized
-    total += p; sawClosed = true;
-  }
-  return sawClosed ? total : null;
 }
 
 // --- fee model (default no-op) ---------------------------------------------
@@ -153,9 +127,26 @@ function sum(a) { return a.reduce((x, y) => x + y, 0); }
 function round2(n) { return Math.round((n + Number.EPSILON) * 100) / 100; }
 function round1(n) { return Math.round((n + Number.EPSILON) * 10) / 10; }
 
-// --- risk-type auto-derivation (matches Ryan's own sheet; port of tt_ocr.py) -
-const DEFINED_HINTS = ["spread", "butterfly", "condor", "zebra", "diagonal", "covered", "long call", "long put", "leaps", "super bull"];
-const UNDEFINED_HINTS = ["short put", "short call", "strangle", "straddle"];
+// --- risk-type auto-derivation (matches Ryan's own sheet; "max loss known at
+// entry = Defined") -----------------------------------------------------------
+// Strategy vocab from his book. Risk-Free Fly is an adjustment OUTCOME (a BWB
+// converted to zero cost basis) — locked-in premium, no remaining downside → Def.
+// Super Bull is a short put financing a call debit spread → carries a naked
+// short put → Undef (it lives in UNDEFINED_HINTS, NOT DEFINED_HINTS).
+const DEFINED_HINTS = [
+  "spread", "butterfly", "iron fly", "iron butterfly", "fly", "condor",
+  "zebra", "diagonal", "poor man", "covered", "long call", "long put",
+  "leaps", "calendar", "risk-free fly",
+];
+const UNDEFINED_HINTS = ["short put", "short call", "strangle", "straddle", "super bull"];
+
+// Strategies that are an adjustment OUTCOME / zero-cost-basis lock-in rather
+// than a normal entry. They still realize P/L (and count in the track record),
+// but they carry no remaining risk — treat as Defined, never as a naked entry.
+export const ADJUSTMENT_STRATEGIES = ["Risk-Free Fly"];
+export function isAdjustmentOutcome(strategy) {
+  return ADJUSTMENT_STRATEGIES.some((s) => (strategy || "").toLowerCase() === s.toLowerCase());
+}
 
 export function deriveRiskType(description) {
   if (!description) return null;
@@ -170,13 +161,34 @@ export function deriveRiskType(description) {
   return null;
 }
 
-// OCC symbol build/parse (port of marks.ts::buildOccSymbol + inverse)
-export function buildOccSymbol(ticker, expiry, type, strike) {
-  const d = new Date(expiry);
-  const yy = String(d.getUTCFullYear()).slice(2);
-  const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(d.getUTCDate()).padStart(2, "0");
-  const cp = type === "call" ? "C" : "P";
-  const k = String(Math.round(strike * 1000)).padStart(8, "0");
-  return `${ticker.toUpperCase()}${yy}${mm}${dd}${cp}${k}`;
+// --- Core/Supp smart default (his portfolio-building definition) -------------
+// Core = futures (symbols starting "/"), index options, metals ETFs (GLD/SLV),
+// and stocks he wants to own; everything else = Supp. Default the tag this way;
+// it stays user-editable. (The "stocks he wants to own" set is discretionary, so
+// the algorithmic default puts plain equities in Supp for the user to promote.)
+const INDEX_TICKERS = new Set(["SPX", "SPY", "QQQ", "NDX", "RUT", "XSP", "VIX", "DIA", "IWM"]);
+const METALS_ETFS = new Set(["GLD", "SLV"]);
+
+export function derivePositionType(symbolOrDesc) {
+  const raw = String(symbolOrDesc || "").trim().toUpperCase();
+  if (!raw) return "Supp";
+  if (raw.startsWith("/")) return "Core";                 // futures
+  const sym = (raw.match(/^[A-Z]{1,6}/) || [""])[0];
+  if (INDEX_TICKERS.has(sym)) return "Core";              // index options
+  if (METALS_ETFS.has(sym)) return "Core";                // metals ETFs
+  return "Supp";                                          // discretionary; user promotes
+}
+
+// --- honest range label for the Track Record panel + Weekly Card ------------
+// e.g. "Feb-Jun 2026 · 18 weeks · 88 trades" — never reads as all-time.
+const MONTHS_ABBR = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+export function rangeLabel(firstDate, lastDate, n) {
+  if (!firstDate || !lastDate) return n ? `${n} trades` : "";
+  const a = new Date(firstDate + "T00:00:00Z"), b = new Date(lastDate + "T00:00:00Z");
+  if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return n ? `${n} trades` : "";
+  const mA = MONTHS_ABBR[a.getUTCMonth()], mB = MONTHS_ABBR[b.getUTCMonth()];
+  const yA = a.getUTCFullYear(), yB = b.getUTCFullYear();
+  const months = mA === mB && yA === yB ? `${mA} ${yB}` : (yA === yB ? `${mA}–${mB} ${yB}` : `${mA} ${yA}–${mB} ${yB}`);
+  const weeks = Math.max(1, Math.ceil((b - a) / (7 * 864e5)));
+  return `${months} · ${weeks} weeks · ${n} trades`;
 }
