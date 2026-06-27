@@ -97,12 +97,19 @@ export function cellConfidence(ocrConf, validation) {
   return Math.min(Number.isFinite(ocrConf) ? ocrConf : 0, passConf);
 }
 
-// confidence → severity bucket. >70 & valid → auto-accept (green).
+// confidence → severity bucket.
+// TRUST THE VALIDATOR. A cell that passes its column validator is structurally
+// correct (right shape, in range, cross-foots). Tesseract routinely reports
+// per-cell confidence of 55-69 on small, valid grid text, so gating auto-accept
+// at the old conf>=70 flagged the majority of a CLEAN sheet (~65%) — the exact
+// opposite of the "confirm a few" promise. So: when validation.ok, auto-accept
+// at a much lower OCR-conf gate (>=50); reserve flags for validator FAILS or
+// genuinely low confidence (<~38, where the glyphs themselves are unreliable).
 export function severityFor(conf, validation) {
   if (!validation.ok) return validation.severity || "must";
-  if (conf >= 70) return null;        // auto-accept
-  if (conf >= 40) return "check";     // 🟡
-  return "must";                      // 🔴
+  if (conf >= 50) return null;        // valid + legible → auto-accept (green)
+  if (conf >= 38) return "check";     // valid but faint → 🟡 quick look
+  return "must";                      // valid yet barely legible → 🔴 confirm
 }
 
 // --- helpers ---

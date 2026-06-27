@@ -29,10 +29,18 @@ the service worker for offline use).
 
 1. Open the app. It loads with Ryan's verified seed so you can see the shape of it.
 2. Go to **Import**. Drag, paste (Ctrl/Cmd-V), or click to add tastytrade screenshots.
-3. The app detects the layout, OCRs it on-device, and routes the data:
-   - **Type A Positions Spreadsheet** → replaces the **Live Book**.
-   - **Type B Order Chains** (fully CLSD only) → books a realized trade onto the **Track Record**.
-   - **Type E Active Monitor** → fills the **Monitor** (unrealized cross-check, beta).
+3. The app detects the layout, OCRs it on-device, and routes the data. The inputs are
+   the tastytrade BROKER screens; the 10-column spreadsheet is the OUTPUT the app
+   assembles for you (it replaces the sheet, so it never reads it as a live input):
+   - **Active / Positions Monitor (Type E)** → the **PRIMARY open book**. Drop it weekly
+     (usually 3 stitched images), hit **Merge stitched**, and it refreshes the LIVE fields
+     (P/L Open, P/L Opn%, Mark, Trade Price, Days Open, DTE) on every position. New names are
+     added and flagged for a one-time ticket capture.
+   - **Order ticket / Curve (Type C)** → the per-trade **STATIC detail** captured once at open:
+     Max Profit, Max Loss, BP $/%, Credit/Debit. These don't change after entry.
+   - **Order Chains, fully CLSD (Type B)** → books a realized trade onto the **Track Record**.
+   - **Type A Positions Spreadsheet** → **optional one-time history import** (back-fill). It no
+     longer drives the live book; it just seeds your past.
 4. **Edit anything.** Every Live Book cell is click-to-edit; Position (Core/Supp) and Risk
    (Def/Undef) are dropdowns. Low-confidence OCR cells are highlighted "needs review".
 5. **Reset** restores Ryan's seed. **Export** downloads your track record as CSV.
@@ -122,21 +130,31 @@ CI here — what was validated is the **layout-detection and geometric segmentat
 JS pixel logic was replicated against the real images), which is what makes or breaks the
 read. Honest status by layout:
 
-- **TIER 1 — Type A Positions Spreadsheet (PRIMARY):** layout detection of the white grid
-  is reliable (brightness gate). Gridline column/row segmentation cleanly isolates the 10
-  columns on **6 of 7** real Type-A sheets (exactly 12 vertical lines → 11 column edges).
-  The 7th is a low-contrast capture with dropdown carets that under-segments — it honestly
-  emits a `GRID_NOT_FOUND` flag and reads zero rows rather than guessing. Bottom-cropped
-  sheets are detected and flagged ("rows below the fold missing"). The ∞ glyph → `null`,
-  blank credit-XOR-debit cells handled. **This is the strongest path.**
-- **TIER 2 — Type B Order Chains:** ticker / Total P/L / status regions are cropped and
-  OCR'd. **Gated correctly**: any "Open Pos" block ⇒ the chain is treated as live and is
-  **not** booked as realized. Bond-tick notation (`109'12`) is parsed as 32nds, not decimal.
-  Cropped headers (ticker scrolled off) flag low-confidence so you set the symbol manually.
-- **TIER 3 — Type E Active Monitor:** **beta / heuristic.** It has no fixed grid, so this is
-  a line-based parse used only as an unrealized cross-check. Stitched-image de-dup is
-  implemented (merge button). Treat as rough, not source-of-truth.
-- **SKIPPED:** Type C curves and Type F fill tickets (context only).
+> **2026-06 re-point (Option A):** the data flow was corrected. LP Ledger REPLACES the
+> hand-kept spreadsheet, so the spreadsheet is the OUTPUT, not the input. The Monitor is now
+> the PRIMARY source and the spreadsheet is a one-time history import. Tiers below reflect that.
+
+- **PRIMARY — Type E Active / Positions Monitor:** the live open book. A real structured
+  parser anchors each row's numeric tail on the single `P/L Opn%` token (the one reliable
+  landmark — all price-chip numbers sit left of it), then reads P/L Open / Mark / Trade Price
+  / D's Opn / DTE off it; the chip's own `##d` never leaks into a column. Three-level hierarchy
+  (underlying → strategy → leg) is reconstructed, and the 3 stitched images are concatenated +
+  de-duped at the seam (a position split across the seam is unioned; repeated legs are dropped).
+  The pure parser is validated headless against transcribed real lines (`js/repoint.test.mjs`).
+- **STATIC — Type C order ticket / Curve:** captured once at open for Max Profit, Max Loss,
+  BP $/%, Credit/Debit. No longer skipped. `parseInf` now keeps a real `$0` as `0` (only the
+  ∞ glyph / the word "infinity" means Unlimited).
+- **REALIZED — Type B Order Chains:** ticker / Total P/L / status regions are cropped and
+  OCR'd. **Gated correctly**: any "Open Pos" block ⇒ live, **not** booked. Bond-tick (`109'12`)
+  parsed as 32nds. Cropped headers flag low-confidence so you set the symbol manually.
+- **ONE-TIME IMPORT — Type A Positions Spreadsheet:** demoted to a back-fill path. Gridline
+  segmentation still isolates the 10 columns; it now MERGES into the store (enriching live
+  rows' static fields, appending unseen history) instead of replacing the book.
+
+The persistent open-positions store (`js/store.js`, localStorage, parsed data only — never
+images) keys each position by symbol + option-leg signature (or symbol + open date for
+futures/stock). Static fields come from the ticket capture; live fields refresh on every
+Monitor drop; a position that drops off the Monitor is reconciled closed.
 
 Guiding rule throughout: **never fabricate.** Low-confidence or unreadable values emit
 `null` + a visible "needs review" flag.
@@ -150,14 +168,14 @@ Guiding rule throughout: **never fabricate.** Low-confidence or unreadable value
 - [x] `docs/.nojekyll` created.
 - [x] Track Record panel: equity curve, win rate, avg win/loss, profit factor, per-strategy, best/worst — **reconciles to +$20,299.62 / 73.1% / 5.18** (verified in a headless-browser run).
 - [x] Live Book & Risk panel mirroring Ryan's 10-column sheet + Portfolio Summary (mix/risk donuts, BP gauges).
-- [x] Monitor panel (Type E, beta).
+- [x] Monitor panel (Type E) — PRIMARY structured parser feeding the persistent position store.
 - [x] In-browser OCR (Tesseract.js) with layout detection, Type-A gridline segmentation, Type-B chain gating, ∞/bond-tick/crop handling.
 - [x] Auto-derived Risk Type (validated vs Ryan's sheet), editable; Core/Supp editable.
 - [x] Editable + localStorage-persistent; Reset-to-seed; CSV export.
 - [x] Fee config (OFF by default, no-op).
 - [x] manifest + service worker (app shell + Tesseract WASM/traineddata offline cache).
 - [x] Privacy promise visible in the UI.
-- [x] **Crop-thumbnail review loop** — flagged-only queue with source-pixel crops, validators (`min(OCR conf, validator)`, catches `1,250`→`1.250`), keyboard-first, severity buckets, provisional ribbon, blank-cell suppression. Verified headless on a real sheet (163 flags → confirm ticks the counter; crops render).
+- [x] **Crop-thumbnail review loop** — flagged-only queue with source-pixel crops, validators (`min(OCR conf, validator)`, catches `1,250`→`1.250`), keyboard-first, severity buckets, provisional ribbon, blank-cell suppression. **Over-flagging fixed**: a passing validator is now trusted at a much lower OCR-conf gate (auto-accept >=50, was >=70), so a clean sheet flags a handful, not ~160 (simulated 150-cell clean sheet: 150 → 0; validator FAILS and <38-conf reads still flag). Verified in `js/repoint.test.mjs`.
 - [x] **Weekly Card** — deterministic Canvas PNG (1600×900), handle hero, %-default / $-toggle, copy-to-clipboard + download, muted footer, persisted prefs. Verified headless ($-off vs $-on render differently; copy succeeds; console clean).
 - [x] **JSON backup** — first-class export/import with `schemaVersion`, migration shim, >7-day nudge.
 - [x] **BYOK vision accelerator (HYBRID)** — provider-agnostic adapter; OpenRouter (default) / OpenAI / Custom-local in one OpenAI-compatible path; opt-in, crop-only, key in sessionStorage, per-use consent; results re-enter the same validators + review item with human confirm. Verified headless: request shapes for all 3, key-never-in-localStorage, consent gate, and a mocked vision response flowing into the review item (re-validated).

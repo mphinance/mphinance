@@ -2,7 +2,8 @@
 import { SEED } from "./seed.js";
 import { computeTrackRecord, deriveBookSummary, deriveRiskType } from "./engine.js";
 import { drawEquityCurve, drawStrategyBars, gaugeHtml, drawDonut, money, moneyInt } from "./charts.js";
-import { processScreenshot, mergeMonitorRows, forgetImages, cropToDataUrl } from "./ocr.js";
+import { processScreenshot, mergeMonitorParts, forgetImages, cropToDataUrl } from "./ocr.js";
+import { mergeMonitorIntoBook, reconcileClosed, applyTicketToBook, importSpreadsheetIntoBook, activeBook } from "./store.js";
 import { renderQueue, pending as reviewPending, counts as reviewCounts } from "./review.js";
 import { renderCardCanvas, copyCanvasToClipboard, downloadCanvas } from "./card.js";
 import { exportJson, parseImport, readFileText, shouldNudge, daysSinceBackup } from "./backup.js";
@@ -22,6 +23,7 @@ function defaults() {
     openBook: structuredClone(SEED.openBook),
     summary: structuredClone(SEED.summary),
     monitor: [],
+    pendingTickets: [], // static captures awaiting a matching position
     review: [],
     fees: { enabled: false, perContractOpen: 1.0, perContractClose: 0, clearingReg: 0.15 },
     cardPrefs: { handle: "@yourhandle", showDollars: false, weekEnding: "" },
@@ -119,10 +121,12 @@ function kpi(label, val, cls = "", sub = "") {
 
 // --- LIVE BOOK panel --------------------------------------------------------
 function renderBook() {
-  const book = state.openBook;
   const tb = document.querySelector("#book-table tbody");
-  tb.innerHTML = book.map((o, i) => bookRow(o, i)).join("");
-  document.getElementById("book-count").textContent = book.length;
+  // render the ACTIVE book (closed positions drop off), but keep data-i pointing
+  // at the real index in state.openBook so inline edits target the right row.
+  const rows = state.openBook.map((o, i) => [o, i]).filter(([o]) => !o.closed);
+  tb.innerHTML = rows.map(([o, i]) => bookRow(o, i)).join("");
+  document.getElementById("book-count").textContent = rows.length;
 
   // wire editable cells
   tb.querySelectorAll("[data-edit]").forEach((cell) => {
@@ -141,10 +145,12 @@ function renderBook() {
 }
 
 function bookRow(o, i) {
-  const reviewed = o.needsReview ? " review" : "";
+  const cls = [o.needsReview ? "review" : "", o.needsStatic ? "needstatic" : ""].filter(Boolean).join(" ");
   const riskDerived = o.risk_type_source === "derived";
-  return `<tr data-i="${i}" class="${reviewed.trim()}">
-    <td class="desc" data-edit data-field="trade_description" contenteditable="true">${escapeHtml(o.trade_description || "")}</td>
+  const liveTip = o.pl_open != null ? ` title="live P/L Open ${money(o.pl_open, true)}${o.pl_open_pct != null ? ` (${o.pl_open_pct}%)` : ""} · mark ${o.mark ?? "—"} · ${o.dte != null ? o.dte + "d to exp" : ""}"` : "";
+  const needsTag = o.needsStatic ? ` <span class="needs" title="open the order ticket / Curve once to capture Max P/L, BP and credit/debit">⊕ ticket</span>` : "";
+  return `<tr data-i="${i}" class="${cls}"${liveTip}>
+    <td class="desc" data-edit data-field="trade_description" contenteditable="true">${escapeHtml(o.trade_description || "")}${needsTag}</td>
     <td class="mono r pos" data-edit data-field="credit_rcvd" contenteditable="true">${moneyInt(o.credit_rcvd)}</td>
     <td class="mono r neg" data-edit data-field="debit_paid" contenteditable="true">${moneyInt(o.debit_paid)}</td>
     <td class="mono r" data-edit data-field="max_profit" contenteditable="true">${moneyInt(o.max_profit)}</td>
@@ -189,7 +195,7 @@ function renderSummary() {
   const s = state.summary || {};
   const pm = s.position_mix || {};
   const bp = s.buying_power || {};
-  const derived = deriveBookSummary(state.openBook);
+  const derived = deriveBookSummary(activeBook(state.openBook));
 
   drawDonut(document.getElementById("mix-core"), [
     { pct: pm.core_pct ?? derived.core_pct ?? 0, color: BLUE },
@@ -218,14 +224,19 @@ function fmtp(v) { return v != null ? v + "%" : "—"; }
 // --- MONITOR panel ----------------------------------------------------------
 function renderMonitor() {
   const tb = document.querySelector("#monitor-table tbody");
-  if (!state.monitor.length) {
-    tb.innerHTML = `<tr><td colspan="3" class="empty">Drop the dark "Active / Positions Monitor" screenshots (Type E) to populate live unrealized P/L. Type E parsing is beta — a rough cross-check only.</td></tr>`;
+  const mon = state.monitor || [];
+  if (!mon.length) {
+    tb.innerHTML = `<tr><td colspan="7" class="empty">Drop the dark "Active / Positions Monitor" screenshots (usually 3 stitched), then "Merge stitched". This is the primary open-book source — it refreshes the live P/L on every position.</td></tr>`;
     return;
   }
-  tb.innerHTML = state.monitor.map((r) => `<tr>
-    <td class="tk">${escapeHtml(r.symbol)}</td>
-    <td class="mono r ${r.plOpen >= 0 ? "pos" : "neg"}">${money(r.plOpen, true)}</td>
-    <td class="note dim">${escapeHtml(r.raw || "")}</td>
+  tb.innerHTML = mon.map((p) => `<tr>
+    <td class="tk">${escapeHtml(p.symbol || "?")}${p.legs && p.legs.length ? ` <span class="dim">·${p.legs.length}L</span>` : ""}</td>
+    <td>${escapeHtml(p.strategy || "")}</td>
+    <td class="mono r ${(p.pl_open ?? 0) >= 0 ? "pos" : "neg"}">${p.pl_open != null ? money(p.pl_open, true) : "—"}</td>
+    <td class="mono r dim">${p.pl_open_pct != null ? p.pl_open_pct + "%" : ""}</td>
+    <td class="mono r dim">${p.mark ?? ""}</td>
+    <td class="mono r dim">${p.days_open != null ? p.days_open + "d" : ""}</td>
+    <td class="mono r dim">${p.dte != null ? p.dte + "d" : ""}</td>
   </tr>`).join("");
 }
 
@@ -266,11 +277,23 @@ function initIngest() {
     if (imgs.length) handleFiles(imgs);
   });
   document.getElementById("monitor-merge").addEventListener("click", () => {
-    if (!monitorParts.length) return;
-    state.monitor = mergeMonitorRows(monitorParts);
+    if (!monitorParts.length) { logLine("No monitor parts dropped yet.", "warn"); return; }
+    const captureDate = new Date().toISOString().slice(0, 10);
+    // 1) stitch + de-dup the parts into one position list
+    const positions = mergeMonitorParts(monitorParts);
+    state.monitor = positions;
     monitorParts = [];
-    save(); renderMonitor();
-    logLine(`Merged ${state.monitor.length} de-duped monitor rows.`, "ok");
+    // 2) merge LIVE fields into the persistent store (update in place / add new)
+    const { book, updated, added, seenKeys } = mergeMonitorIntoBook(state.openBook, positions, captureDate);
+    state.openBook = book;
+    // 3) positions that dropped off the blotter are closed
+    const closed = reconcileClosed(state.openBook, seenKeys);
+    // 4) retry any tickets captured before their position appeared
+    retryPendingTickets();
+    save(); renderMonitor(); renderBook(); renderTrack();
+    document.getElementById("monitor-merge").classList.remove("show");
+    logLine(`Merged ${positions.length} positions → book: ${updated} updated, ${added} new${closed ? `, ${closed} closed` : ""}.`, "ok");
+    if (added) logLine(`${added} new position(s) need a one-time ticket/Curve capture (Max P/L, BP, credit/debit). Drop those screens to fill them.`, "warn");
   });
 }
 
@@ -296,14 +319,28 @@ function ingestResult(res, name) {
   const flagTxt = (res.flags && res.flags.length) ? " — " + res.flags.join(" ") : "";
   const addReview = (items) => { if (items && items.length) { state.review.push(...items); } };
   if (res.layout === "spreadsheet") {
+    // DEMOTED: the spreadsheet is the OUTPUT we generate, not the ongoing input.
+    // Treat a dropped Type A as a one-time HISTORY IMPORT / back-fill — merge it
+    // into the store without wiping live (monitor/ticket) positions.
     if (res.positions.length) {
-      // merge: replace book with OCR'd rows (user's authoritative current sheet)
-      state.openBook = res.positions.map((p) => ({ ...p, bp_pct: p.bp_pct ?? null }));
+      const { book, added, enriched } = importSpreadsheetIntoBook(state.openBook, res.positions);
+      state.openBook = book;
       addReview(res.reviewItems);
       save(); renderBook(); refreshReviewUI();
       const nrev = (res.reviewItems || []).length;
-      logLine(`✓ ${name}: Type A spreadsheet → ${res.positions.length} positions loaded${nrev ? `, ${nrev} cell(s) to confirm` : ""}.${flagTxt}`, nrev ? "warn" : "ok");
+      logLine(`✓ ${name}: history import (Type A) → ${added} added, ${enriched} enriched${nrev ? `, ${nrev} cell(s) to confirm` : ""}. Back-fill only; your live book comes from the Monitor.${flagTxt}`, nrev ? "warn" : "ok");
     } else logLine(`✗ ${name}: Type A detected but grid not segmented.${flagTxt}`, "err");
+  } else if (res.layout === "curve") {
+    // STATIC detail capture (Type C / ticket): fill Max P/L, BP, credit/debit.
+    const r = applyTicketToBook(state.openBook, res.ticket, new Date().toISOString().slice(0, 10));
+    if (r.matched) {
+      save(); renderBook(); renderSummary();
+      logLine(`✓ ${name}: ticket/Curve for ${res.ticket.symbol || "?"} → ${r.filled} static field(s) captured.${flagTxt}`, "ok");
+    } else {
+      state.pendingTickets.push(res.ticket);
+      save();
+      logLine(`• ${name}: ticket/Curve for ${res.ticket.symbol || "?"} held; no open position matches yet. Drop the Monitor and it will attach.${flagTxt}`, "warn");
+    }
   } else if (res.layout === "order_chains") {
     if (res.bookable) {
       state.trades.push({
@@ -321,10 +358,20 @@ function ingestResult(res, name) {
   } else if (res.layout === "monitor") {
     monitorParts.push(res);
     document.getElementById("monitor-merge").classList.add("show");
-    logLine(`• ${name}: Type E monitor part (${res.rows.length} rows). Drop all 3, then "Merge stitched".${flagTxt}`, "warn");
+    logLine(`• ${name}: Monitor part (${(res.positions || []).length} positions). Drop all parts, then "Merge stitched" to refresh the live book.${flagTxt}`, "warn");
   } else {
     logLine(`• ${name}: ${res.layout} — skipped (context only).${flagTxt}`, "warn");
   }
+}
+
+// Re-attempt static captures that arrived before their position showed up.
+function retryPendingTickets() {
+  const still = [];
+  for (const t of state.pendingTickets || []) {
+    const r = applyTicketToBook(state.openBook, t, new Date().toISOString().slice(0, 10));
+    if (!r.matched) still.push(t);
+  }
+  state.pendingTickets = still;
 }
 
 function logLine(msg, cls) {

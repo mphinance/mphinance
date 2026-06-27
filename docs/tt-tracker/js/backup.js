@@ -15,6 +15,7 @@ export function exportJson(state) {
       openBook: state.openBook,
       summary: state.summary,
       monitor: state.monitor,
+      pendingTickets: state.pendingTickets || [],
       fees: state.fees,
       review: (state.review || []).map(stripCrop), // metadata only; no image bytes
       cardPrefs: state.cardPrefs || null,
@@ -44,6 +45,7 @@ export function parseImport(text) {
     openBook: Array.isArray(s.openBook) ? s.openBook : [],
     summary: s.summary || {},
     monitor: Array.isArray(s.monitor) ? s.monitor : [],
+    pendingTickets: Array.isArray(s.pendingTickets) ? s.pendingTickets : [],
     fees: s.fees || { enabled: false, perContractOpen: 1, perContractClose: 0, clearingReg: 0.15 },
     review: Array.isArray(s.review) ? s.review : [],
     cardPrefs: s.cardPrefs || null,
