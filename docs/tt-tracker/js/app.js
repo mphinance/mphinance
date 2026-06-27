@@ -2,10 +2,12 @@
 import { SEED } from "./seed.js";
 import { computeTrackRecord, deriveBookSummary, deriveRiskType } from "./engine.js";
 import { drawEquityCurve, drawStrategyBars, gaugeHtml, drawDonut, money, moneyInt } from "./charts.js";
-import { processScreenshot, mergeMonitorRows, forgetImages } from "./ocr.js";
+import { processScreenshot, mergeMonitorRows, forgetImages, cropToDataUrl } from "./ocr.js";
 import { renderQueue, pending as reviewPending, counts as reviewCounts } from "./review.js";
 import { renderCardCanvas, copyCanvasToClipboard, downloadCanvas } from "./card.js";
 import { exportJson, parseImport, readFileText, shouldNudge, daysSinceBackup } from "./backup.js";
+import { validateCell, cellConfidence, severityFor } from "./validators.js";
+import { PROVIDERS, DEFAULT_PROVIDER, getProvider, getKey, setKey, readCropWithVision } from "./vision.js";
 
 const LS_KEY = "tt-tracker-state-v2";
 const POS = "#27c19a", NEG = "#f6465c", GOLD = "#ffcb05", BLUE = "#4a90e2", VIOLET = "#9b6bff";
@@ -22,6 +24,8 @@ function defaults() {
     review: [],
     fees: { enabled: false, perContractOpen: 1.0, perContractClose: 0, clearingReg: 0.15 },
     cardPrefs: { handle: "@yourhandle", showDollars: false, weekEnding: "" },
+    // BYOK vision config (NEVER the key — that lives in sessionStorage only).
+    vision: { enabled: false, provider: DEFAULT_PROVIDER, model: "", baseUrl: "" },
   };
 }
 function load() {
@@ -338,7 +342,68 @@ function escapeHtml(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&am
 function renderReview() {
   const c = document.getElementById("review-queue");
   if (!c) return;
-  renderQueue(c, state, { save, refresh: refreshReviewUI });
+  renderQueue(c, state, { save, refresh: refreshReviewUI, ai: aiHooks() });
+}
+
+// --- BYOK vision accelerator (opt-in, crop-only, key in sessionStorage) -----
+let _visionConsented = false; // per-session; resets on reload
+
+function visionCfg() {
+  const v = state.vision;
+  const prov = getProvider(v.provider);
+  return { provider: v.provider, model: v.model || prov.defaultModel, baseUrl: v.baseUrl, key: getKey(v.provider) };
+}
+
+// AI is offered only when: enabled + provider not a stub + (a key exists OR a
+// custom/local endpoint that may need none). Default OFF keeps privacy literal.
+function aiReady() {
+  const v = state.vision;
+  if (!v.enabled) return false;
+  const prov = getProvider(v.provider);
+  if (prov.stub) return false;
+  if (prov.custom) return !!v.baseUrl; // local may need no key
+  return !!getKey(v.provider);
+}
+
+function aiHooks() {
+  if (!aiReady()) return null;
+  const prov = getProvider(state.vision.provider);
+  const cfg = visionCfg();
+  return {
+    enabled: true,
+    providerLabel: prov.label + (cfg.model ? " · " + cfg.model : ""),
+    readOne: async (item) => { if (!confirmVisionConsent(prov.label)) return; await visionReadItem(item); save(); refreshReviewUI(); },
+    readAll: async () => {
+      if (!confirmVisionConsent(prov.label)) { refreshReviewUI(); return; }
+      for (const it of reviewPending(state)) { await visionReadItem(it); }
+      save(); refreshReviewUI();
+    },
+  };
+}
+
+function confirmVisionConsent(label) {
+  if (_visionConsented) return true;
+  const ok = confirm(`Send the cropped cell(s) to ${label} using your key?\n\nOnly the cropped cell is sent — never the full screenshot. Your key stays in this browser session and is sent only to that endpoint.`);
+  if (ok) _visionConsented = true;
+  return ok;
+}
+
+// Read ONE flagged cell's crop with vision; result re-enters the SAME review
+// loop (re-validated, still requires human confirm; refuse-to-guess on null).
+async function visionReadItem(item) {
+  const dataUrl = cropToDataUrl(item.imageId, item.bbox, 8, 4); // generous pad/scale for the model
+  const r = await readCropWithVision(dataUrl, visionCfg());
+  item.engine = r.engine || item.engine;
+  if (!r.ok) { item.msg = "AI: " + (r.error || "failed"); item.severity = item.severity || "check"; return r; }
+  if (r.value == null) { item.msg = "AI unsure — confirm manually"; item.severity = "check"; return r; }
+  // vision value becomes the proposed value; re-run the SAME validators.
+  item.value = r.value;
+  const validation = validateCell(item.field, r.value, r.value);
+  item.suggested = validation.suggested;
+  item.confidence = cellConfidence(85, validation); // vision nominal conf, gated by validator
+  item.severity = "check"; // always keep human-in-the-loop for a vision read
+  item.msg = validation.ok ? `AI read (${item.engine}) — confirm` : validation.msg;
+  return r;
 }
 
 // Keep the badge, ribbon, and (if open) the queue + dashboards in sync.
@@ -446,6 +511,59 @@ function initShare() {
   });
 }
 
+// --- BYOK vision settings UI ------------------------------------------------
+function initVision() {
+  const sel = document.getElementById("vision-provider");
+  if (!sel) return;
+  sel.innerHTML = PROVIDERS.map((p) => `<option value="${p.id}" ${p.stub ? "disabled" : ""}>${p.label}${p.stub ? " (next pass)" : ""}</option>`).join("");
+
+  const enabled = document.getElementById("vision-enabled");
+  const model = document.getElementById("vision-model");
+  const baseUrl = document.getElementById("vision-baseurl");
+  const baseWrap = document.getElementById("vision-baseurl-wrap");
+  const keyEl = document.getElementById("vision-key");
+
+  const syncFromState = () => {
+    const v = state.vision;
+    enabled.checked = !!v.enabled;
+    sel.value = v.provider;
+    const prov = getProvider(v.provider);
+    model.value = v.model || "";
+    model.placeholder = prov.defaultModel;
+    baseUrl.value = v.baseUrl || "";
+    baseWrap.style.display = prov.custom ? "" : "none";
+    keyEl.value = getKey(v.provider); // from sessionStorage (this session only)
+    paintVisionState();
+  };
+
+  const paintVisionState = () => {
+    const v = state.vision;
+    const prov = getProvider(v.provider);
+    const st = document.getElementById("vision-state");
+    const status = document.getElementById("vision-status");
+    if (!v.enabled) { st.textContent = "off · default engine is on-device Tesseract"; }
+    else { st.textContent = `on · ${prov.label}${aiReady() ? "" : " (needs " + (prov.custom ? "base URL" : "API key") + ")"}`; }
+    if (status) {
+      const keyHeld = !!getKey(v.provider);
+      status.innerHTML = v.enabled
+        ? `Crops only → <b>${prov.label}</b>. Key ${keyHeld ? "held in sessionStorage (this session)" : "not set"}. ${aiReady() ? '"Read with AI" is live in the queue below.' : "Add the missing field to enable."}`
+        : "Disabled. Tesseract on-device remains the only engine.";
+    }
+    refreshReviewUI();
+  };
+
+  enabled.addEventListener("change", () => { state.vision.enabled = enabled.checked; save(); paintVisionState(); });
+  sel.addEventListener("change", () => {
+    state.vision.provider = sel.value; state.vision.model = ""; save(); syncFromState();
+  });
+  model.addEventListener("input", () => { state.vision.model = model.value.trim(); save(); paintVisionState(); });
+  baseUrl.addEventListener("input", () => { state.vision.baseUrl = baseUrl.value.trim(); save(); paintVisionState(); });
+  // KEY → sessionStorage ONLY, never state/localStorage.
+  keyEl.addEventListener("input", () => { setKey(state.vision.provider, keyEl.value.trim()); paintVisionState(); });
+
+  syncFromState();
+}
+
 // --- CSV export (build.py interop) -----------------------------------------
 function exportCsv() {
   const ct = reviewCounts(state);
@@ -469,6 +587,7 @@ function boot() {
   initTabs();
   initIngest();
   initShare();
+  initVision();
   document.getElementById("reset-seed").addEventListener("click", resetSeed);
   document.getElementById("export-csv").addEventListener("click", exportCsv);
   const goRev = document.getElementById("provisional-go");

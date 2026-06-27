@@ -90,11 +90,22 @@ Pure static files, no build step. ES modules.
 - **Backups.** JSON export/import is the lossless cross-device path; CSV stays for `build.py`
   interop. A nudge appears if your last JSON backup is >7 days old.
 
-> **Engine-agnostic seam (intentionally NOT built).** The read path is `processScreenshot`
-> → per-cell `{value, bbox, confidence}` → validators → review items. A future "read with
-> vision (BYOK)" accelerator would consume the exact same crops (imageId + bbox) the review
-> UI already holds and emit the same cell shape — so it drops in behind the validators with
-> no UI change. Left as a clean seam per the open product decision; not implemented.
+### BYOK vision accelerator (HYBRID OCR — opt-in, `js/vision.js`)
+
+The default read path stays **pure on-device Tesseract** (privacy literal). The vision
+accelerator is an **opt-in, provider-agnostic BYOK layer** offered only on flagged cells,
+plugged into the same review-loop seam (`processScreenshot` → per-cell
+`{value, bbox, confidence}` → validators → review items).
+
+- **Adapter interface:** `{ id, label, defaultModel, family, stub?, custom?, buildRequest(dataUrl, prompt, cfg) → {url, headers, body}, parseResponse(json) → text }`.
+- **Providers wired now (one OpenAI-compatible code path):**
+  - **OpenRouter** (`openrouter.ai/api/v1/chat/completions`) — the **default**, editable model.
+  - **OpenAI / ChatGPT** (`api.openai.com/v1/chat/completions`).
+  - **Custom / local** — supply a base URL + model → **Ollama** (`http://localhost:11434/v1`), **LM Studio** (`http://localhost:1234/v1`), **vLLM**, **llama.cpp** with open-source vision models (llama3.2-vision, qwen2-VL…). No key required for local.
+  - All three use the OpenAI vision message format (`content` array, `type:image_url`, data-URL base64 of the crop).
+- **Next-pass stubs (registry slots present, not selectable for live send):** native **Anthropic** (messages API + `anthropic-dangerous-direct-browser-access`) and **Google Gemini** (`generateContent` / `inline_data`) — shown disabled in the picker, labelled "(next pass)".
+- **Privacy + key handling:** vision is **OFF by default**. Only the **cropped cell** is ever sent — never the full screenshot. The API key lives in **sessionStorage only** — never localStorage, never persisted, sent only to the chosen endpoint (verified headless: absent from localStorage, present in sessionStorage). An explicit **per-use consent line names the provider**, plus a first-use confirm.
+- **Re-enters the same loop:** a vision read flows back through the **same validators**, fills the proposed value, tags the item with the engine (`read by openrouter:<model>`), and **still requires human confirm/override** — never auto-booked. Refuse-to-guess preserved (model unsure → null + flag); the tight `{value,type}` JSON prompt makes `parseResponse` deterministic.
 
 The theme: near-black charcoal surfaces, dense data-forward grid, JetBrains Mono tabular
 numerics, green gains / red losses, a bright tasty-gold accent, and the platform's
@@ -149,7 +160,7 @@ Guiding rule throughout: **never fabricate.** Low-confidence or unreadable value
 - [x] **Crop-thumbnail review loop** — flagged-only queue with source-pixel crops, validators (`min(OCR conf, validator)`, catches `1,250`→`1.250`), keyboard-first, severity buckets, provisional ribbon, blank-cell suppression. Verified headless on a real sheet (163 flags → confirm ticks the counter; crops render).
 - [x] **Weekly Card** — deterministic Canvas PNG (1600×900), handle hero, %-default / $-toggle, copy-to-clipboard + download, muted footer, persisted prefs. Verified headless ($-off vs $-on render differently; copy succeeds; console clean).
 - [x] **JSON backup** — first-class export/import with `schemaVersion`, migration shim, >7-day nudge.
-- [x] Engine-agnostic read seam left clean for a future vision-LLM (BYOK) pass (not built — open decision).
+- [x] **BYOK vision accelerator (HYBRID)** — provider-agnostic adapter; OpenRouter (default) / OpenAI / Custom-local in one OpenAI-compatible path; opt-in, crop-only, key in sessionStorage, per-use consent; results re-enter the same validators + review item with human confirm. Verified headless: request shapes for all 3, key-never-in-localStorage, consent gate, and a mocked vision response flowing into the review item (re-validated).
 
 **Left / honest caveats**
 - [ ] **Browser-OCR character accuracy not benchmarked in CI** (no in-browser Tesseract in
@@ -165,7 +176,9 @@ Guiding rule throughout: **never fabricate.** Low-confidence or unreadable value
 - [ ] **Type F fill tickets** intentionally unsupported (no computed P/L).
 - [ ] **Weekly Card render is canvas, not html-to-image** — the brief suggested `html-to-image toPng`, but `chrome-headless-shell` drops its `<foreignObject>` HTML (only background/SVG rasterized → identical output regardless of content). Switched to a deterministic Canvas 2D render, which renders fully, validates headless, and works offline (no CDN). Same artifact, more robust path.
 - [ ] **Review crops are session-only by design** — after a page reload the flag counts persist (metadata) but the crop image is gone (image bytes never stored). You can still edit/confirm from your own copy; the crop only shows during the import session.
-- [ ] **Two product decisions deferred to Michael** (left untouched per instructions): (a) the vision-LLM BYOK read path — clean seam left, not built; (b) final product name + a "not affiliated with tastytrade" footer — current naming/theme kept for Ryan's gift.
+- [ ] **BYOK adapters validated against MOCKS, not live APIs** — request construction, key handling, consent gate, and the mocked-response → review-item flow are verified headless; real calls to OpenRouter/OpenAI/your-local-endpoint need a one-time manual smoke (enable AI assist, paste a key or point at `http://localhost:11434/v1`, click "Read with AI" on a flagged cell). No network calls happen in CI.
+- [ ] **Native Anthropic + Gemini adapters are stubs** — registry slots exist (disabled in the picker, "(next pass)"); their bespoke request/response shapes ship next pass. Selecting them throws a clear error rather than sending.
+- [ ] **Whitelabel / rename deferred** (DECISION 2, next pass): no "LP Ledger" rebrand, brand-config abstraction, or "not affiliated with tastytrade" footer yet — current tastytrade-gold theme + naming kept, repo stays `tt-tracker`.
 - [ ] Icons are generated placeholders (gold payoff mark on charcoal); swap for branded art if desired.
 
 ---

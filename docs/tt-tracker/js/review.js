@@ -73,6 +73,7 @@ export function renderQueue(container, state, hooks) {
       <span class="rv-sev check">${counts(state).check}🟡</span>
     </div>
     <div class="rv-prog"><i style="width:${totalEver ? (done / totalEver) * 100 : 0}%"></i></div>
+    ${hooks.ai && hooks.ai.enabled ? `<button class="btn ghost small show" id="rv-ai-all" title="Sends each flagged crop to ${esc(hooks.ai.providerLabel)}">✨ Read all flagged with AI</button>` : ""}
     <button class="btn ghost small show" id="rv-acceptall">Accept all remaining</button>`;
   container.appendChild(head);
 
@@ -82,10 +83,12 @@ export function renderQueue(container, state, hooks) {
   const crop = cropToDataUrl(active.imageId, active.bbox);
   const dispVal = active.value === "inf" ? "∞" : (active.value == null ? "" : active.value);
   const sug = active.suggested != null ? String(active.suggested) : null;
+  const aiOn = !!(hooks.ai && hooks.ai.enabled);
   card.innerHTML = `
     <div class="rv-card-h">
       <span class="rv-pill ${active.severity}">${active.severity === "must" ? "🔴 confirm" : "🟡 check"}</span>
       <span class="rv-desc">${esc(active.desc)} · <b>${fieldLabel(active.field)}</b></span>
+      ${active.engine ? `<span class="rv-engine">read by ${esc(active.engine)}</span>` : ""}
       <span class="rv-conf">conf ${active.confidence}%</span>
     </div>
     <div class="rv-crop">${crop ? `<img src="${crop}" alt="source crop"/>` : `<div class="rv-nocrop">source image not in this session — read from your own copy and type the value</div>`}</div>
@@ -96,6 +99,10 @@ export function renderQueue(container, state, hooks) {
       <button class="btn small show" id="rv-skip">skip</button>
       <button class="btn primary" id="rv-accept">Accept ⏎</button>
     </div>
+    ${aiOn ? `<div class="rv-ai">
+      <button class="btn small show" id="rv-ai-one">✨ Read with AI</button>
+      <span class="rv-ai-consent">→ this crop only will be sent to <b>${esc(hooks.ai.providerLabel)}</b> with your key</span>
+    </div>` : ""}
     <div class="rv-hint">Enter to accept · type to correct · Tab for next · this confirms a <b>picture</b>, not the source</div>`;
   container.appendChild(card);
 
@@ -129,6 +136,16 @@ export function renderQueue(container, state, hooks) {
   head.querySelector("#rv-acceptall").addEventListener("click", () => {
     for (const it of pending(state)) applyValue(state, it, it.value);
     hooks.save(); hooks.refresh();
+  });
+  const aiOneBtn = card.querySelector("#rv-ai-one");
+  if (aiOneBtn && hooks.ai) aiOneBtn.addEventListener("click", async () => {
+    aiOneBtn.disabled = true; aiOneBtn.textContent = "✨ reading…";
+    await hooks.ai.readOne(active); // app re-renders the queue on completion
+  });
+  const aiAllBtn = head.querySelector("#rv-ai-all");
+  if (aiAllBtn && hooks.ai) aiAllBtn.addEventListener("click", async () => {
+    aiAllBtn.disabled = true; aiAllBtn.textContent = "✨ reading all…";
+    await hooks.ai.readAll();
   });
   input.addEventListener("keydown", (e) => {
     if (e.key === "Enter") { e.preventDefault(); commit(input.value); }
