@@ -1,6 +1,6 @@
 # You're Not Drowning. You're Fighting the Wave.
 
-*Tags: acceptance, recovery, momentum, urge surfing, circle of competence, ADHD, finding your work, lemonade out of lemons*
+*Tags: acceptance, recovery, momentum, trend following, urge surfing, circle of competence, ADHD, finding your work, lemonade out of lemons*
 
 Put a guy who can't swim in the ocean and a wave knocks him flat. Put a surfer in the exact same water, in front of the exact same wave, and it carries him a hundred yards down the beach grinning like an idiot.
 
@@ -67,6 +67,10 @@ And here's the lemonade one, the one that makes people wince before they laugh. 
 ## Don't fight the tape. It's the same prayer.
 
 There's a rule in trading older than I am: don't fight the tape. The market is bigger than your opinion. When the wave is going one way, you can stand in front of it being correct in your head while it runs you over in your account, or you can accept where it's actually going and position with it. Being right and being flattened at the same time is the most expensive feeling in the world, and I've paid for it plenty.
+
+Watch what most people actually do, though. They spend all day trying to call the reversal. Shorting the top, catching the falling knife, selling because "it can't go any higher" and buying because "it has to bounce." Picking tops and bottoms is the most crowded trade there is, and it's the exact same instinct as a swimmer trying to stop a wave with his hands. Look at what NVDA did to everyone who spent two years calling its top. Every overbought reading, every "this is finally the blowoff," another perma-bear paddling straight into the swell and getting held under for the privilege of being early. The people who just accepted the trend was real and rode it, even when it felt too high, even when it felt stupid, got carried the whole way. A trend is just a wave with a direction. You don't fade it because you think it's gone far enough. You ride it until it actually breaks, and you'll know it broke because the water tells you, not because you decided it was time.
+
+Here's the part that closes the loop. Trying to reverse your own nature is the same losing trade as shorting a trend that hasn't broken yet. Most people spend their lives trying to call the top on themselves, betting against the exact thing they're built to do because it doesn't look respectable from the outside. Quit fading yourself. Find the direction you already trend, and ride it.
 
 You also can't have the ride without the water moving. Traders who are scared of volatility are scared of the only thing that pays them. A dead flat market has nothing to give you. No wave, no surf. The turbulent life, the chaotic wiring, the messy history, that's volatility, and volatility is not the problem. It's the fuel. The people who get good at reading rough water are the ones who grew up in it.
 
