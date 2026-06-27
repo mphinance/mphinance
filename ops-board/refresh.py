@@ -261,6 +261,29 @@ def tr_indices(h):
     return out
 
 
+def tr_timesales(h, sym="SPY", interval="5min"):
+    """Today's intraday OHLC bars for the SPY hero chart (KLineChart format).
+    Real-time on a funded Tradier token; 15-min delayed on a sandbox token."""
+    today = datetime.now(ET).strftime("%Y-%m-%d")
+    d = get_json(f"{TR_BASE}/v1/markets/timesales?symbol={sym}&interval={interval}"
+                 f"&start={today}%2009:30&end={today}%2016:00&session_filter=open", h)
+    series = (d.get("series") or {})
+    if not series or series == "null":
+        return []
+    rows = series.get("data", [])
+    rows = rows if isinstance(rows, list) else [rows]
+    bars = []
+    for r in rows:
+        ts = r.get("timestamp")
+        if ts is None:
+            continue
+        bars.append({"timestamp": int(ts) * 1000,
+                     "open": r.get("open"), "high": r.get("high"),
+                     "low": r.get("low"), "close": r.get("close"),
+                     "volume": r.get("volume", 0)})
+    return bars
+
+
 def tr_positions(h, acct):
     if not acct:
         prof = get_json(f"{TR_BASE}/v1/user/profile", h)
@@ -330,6 +353,19 @@ def main():
         except Exception as e: warn("indices", e)
         try: data["positions"] = tr_positions(tr_h, keys.get("TRADIER_ACCOUNT_ID"))
         except Exception as e: warn("positions", e)
+        try:
+            bars = tr_timesales(tr_h, "SPY")
+            if bars:
+                data.setdefault("chart", {})["spy"] = {"bars": bars}
+        except Exception as e: warn("chart", e)
+
+    # SPY hero chart: bars from Tradier (above), gamma walls from the GEX pin map.
+    spy_pin = next((p for p in data.get("pinmap", []) if p["sym"] == "SPY"), None)
+    if spy_pin:
+        chart = data.setdefault("chart", {})
+        spy = chart.setdefault("spy", {})
+        spy["spot"] = spy_pin["spot"]
+        spy["levels"] = spy_pin["levels"]
 
     if flow:
         flow.sort(key=lambda r: r["premium"], reverse=True)
