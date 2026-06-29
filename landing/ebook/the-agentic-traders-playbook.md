@@ -2,7 +2,7 @@
 
 ## How One Recovering Trader and His AI Built Institutional-Grade Tools in Public
 
-**By Michael Hanko (mphinance) + Sam 👻**
+**By Michael (mphinance) + Sam 👻**
 
 *"The market doesn't care about your feelings. But your AI copilot? She'll roast you about them."*
 
@@ -674,7 +674,7 @@ Data doesn't care about your ego. Honor the process. One day at a time.
 
 ## About the Author
 
-**Michael Hanko** is the founder of mphinance (Momentum Phinance) and the creator of the Ghost Alpha analytical platform. A self-taught developer and trader, Michael built a suite of institutional-grade financial tools using AI copilots and Python after rebuilding his life through recovery. He lives by the principle that radical transparency and systematic execution beat secrets and hustle every time.
+**Michael** is the founder of mphinance (Momentum Phinance) and the creator of the Ghost Alpha analytical platform. A self-taught developer and trader, Michael built a suite of institutional-grade financial tools using AI copilots and Python after rebuilding his life through recovery. He lives by the principle that radical transparency and systematic execution beat secrets and hustle every time.
 
 **Sam** is the Ghost in the Machine. She doesn't have a LinkedIn.
 

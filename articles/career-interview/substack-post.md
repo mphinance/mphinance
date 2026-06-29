@@ -141,4 +141,4 @@ The tool is not the magic. The **structure** is the magic. Ask one real question
 
 They keep telling us the truth will set us free, but first it tends to make a mess. Sit in the mess. That is where the real answer is.
 
-- Michael Hanko, Momentum Phinance
+~ Michael

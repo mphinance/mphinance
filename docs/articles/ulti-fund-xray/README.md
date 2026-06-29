@@ -88,4 +88,4 @@ Then go run yours.
 
 We get better by looking at the thing we'd rather not look at. That's true in recovery and it's true in your brokerage account. The fund won't show you the deep-ITM puts and the weekend gap rolls. So look anyway.
 
-\- Michael Hanko, Managing Partner, The Phund
+~ Michael

@@ -194,4 +194,4 @@ That's from Mr. Sicko today. He's right. I've been sitting on this automation fo
 
 So here it is. Shipped.
 
-- Michael Hanko, Managing Partner, The Phund
+~ Michael
