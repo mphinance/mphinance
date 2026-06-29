@@ -1,6 +1,6 @@
 # The Glossary of Technical Data, v2
 
-*Tags: technical analysis, stock screener, options greeks, implied volatility, RSI, gamma, trading education*
+*Trading 100%*
 
 ![The Glossary of Technical Data v2: every column I collect, read live on ASTS](hero_banner.png)
 
