@@ -6,7 +6,7 @@
 
 **A green candle is not a signal. It's a rumor.** The data is what tells you whether to believe it.
 
-The first version of this post did one job: it pinned down what the acronyms in my daily screens actually mean. It worked. It also read like a textbook a robot wrote for another robot. A few of you told me as much. One of you said your wife read it, got to "non-directional volatility derivative," and asked if you were having a stroke. Fair.
+[The first version of this post](https://mphinance.substack.com/p/the-glossary-of-technical-data) did one job: it pinned down what the acronyms in my daily screens actually mean. It worked. It also read like a textbook a robot wrote for another robot. A few of you told me as much. One of you said your wife read it, got to "non-directional volatility derivative," and asked if you were having a stroke. Fair.
 
 So here's v2. Two things changed.
 
@@ -251,4 +251,4 @@ I'll keep this one pinned and update it as the screens evolve. If there's a colu
 
 If this saved you from chasing one green candle, that's the whole job. Subscribe and I'll keep showing you the receipts.
 
-- Michael Hanko, Managing Partner, The Phund
+~ Michael
