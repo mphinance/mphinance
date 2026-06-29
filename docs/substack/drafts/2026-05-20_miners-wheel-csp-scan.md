@@ -1,6 +1,5 @@
 # I Scanned 41 Gold Miners for Cash-Secured Puts. Only 9 Had Weekly Options. Here's What Pays.
 
-*by Michael Hanko, Managing Partner, The Phund*
 
 ![Gold mine meets options chain](../../../articles/miners-csp-scan/miners_hero.png)
 
@@ -144,4 +143,4 @@ Drink water. Sell premium. Call your sponsor. Stack gold.
 
 **Subscribe to Momentum Phinance for weekly CSP scans, wheel trade updates, and the ongoing BTG saga. The scanner runs before market open every week and subscribers get first look.**
 
-- Michael Hanko
+~ Michael

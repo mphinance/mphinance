@@ -30,7 +30,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 PAIRS = os.path.join(HERE, "pairs")
 RULES = os.path.normpath(os.path.join(HERE, "..", "..", "VOICE-DELTA.md"))
 
-SYSTEM = """You are the Voice-Delta predictor for Michael Hanko's writing.
+SYSTEM = """You are the Voice-Delta predictor for Michael's writing.
 
 Your job: apply the documented edit rules in VOICE-DELTA.md to the machine's
 GIVEN draft and output what Michael would most plausibly SHIP. You are an

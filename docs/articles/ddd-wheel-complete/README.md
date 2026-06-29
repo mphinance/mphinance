@@ -1,6 +1,5 @@
 # I Made $140.93 Wheeling a $2 Stock. Here's Every Single Transaction.
 
-*by Michael Hanko, Managing Partner, The Phund*
 
 Most people hear "options trading" and think of some guy on Reddit turning $500 into $80,000 on a Wednesday. Good for that guy. This is not that story.
 
@@ -194,4 +193,4 @@ Drink water. Sell premium. Call your sponsor.
 
 **Subscribe to Momentum Phinance for the live wheel tracker, weekly premium updates, and whatever degenerate money glitch I'm building next. Every subscriber accelerates the machine.**
 
-- Michael Hanko
+~ Michael

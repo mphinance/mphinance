@@ -160,4 +160,4 @@ Build the foundation. The penthouse comes last. It always comes last.
 
 **Subscribe to Momentum Phinance for the live position tracker, the weekly premium tally, and every layer of the book as it gets built in real time. Half of every paid subscription goes straight into the brokerage account. You are literally funding the foundation.**
 
-- Michael Hanko, Managing Partner, The Phund
+~ Michael

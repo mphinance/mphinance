@@ -249,7 +249,7 @@ doc_content = [
     p("\"You can only gain clarity by execution.\""),
     p("That's from Mr. Sicko today. He's right. I've been sitting on this automation for weeks because I kept thinking it needed to be more polished. It didn't. It needed to ship."),
     p("So here it is. Shipped."),
-    p("- Michael Hanko, Managing Partner, The Phund"),
+    p("~ Michael"),
 ]
 
 doc = {"type": "doc", "content": doc_content}
