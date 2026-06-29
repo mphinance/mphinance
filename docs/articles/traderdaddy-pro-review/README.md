@@ -1,6 +1,6 @@
 # A Member's Account Is Up 69%. We Built the Tools He Used.
 
-*Tags: traderdaddy pro, options flow, GEX, unusual activity, screeners, trading tools, review*
+*Business 60% | Trading 40%*
 
 <!--
 HERO IMAGE PROMPT (16:9) — generate in Substack:

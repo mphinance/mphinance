@@ -33,6 +33,23 @@ The brand is **Phinance** / **The Phund**. The name is **Michael**.
 
 ---
 
+## The Subtitle (the line under the title)
+
+The subtitle is a **category mix with percentages**, not a tagline or a keyword list:
+
+```
+*Trading 60% | Mindset 40%*
+```
+
+- One to three categories from the working set: **Trading, Business, Mindset, AI, Research**.
+- Percentages sum to about 100, separated by ` | ` (space-pipe-space).
+- It signals the blend of the post up front. A pure setup breakdown is `*Trading 100%*`; a recovery-and-markets piece might be `*Mindset 70% | Trading 30%*`.
+- Shipped examples: `*AI 100%*`, `*AI 50% | Mindset 35% | Business 15%*`, `*Business 45% | AI 35% | Trading 20%*`.
+- This is NOT the old `*Tags: keyword, keyword*` format. Don't use that. And never a byline here.
+- Substack's real discovery tags (the `AI` / `investing` chips) are a separate, small, hand-added set in the editor. Not driven by the markdown.
+
+---
+
 ## Tone
 
 - **Irreverent educator.** Teaches complex finance like a friend at a bar, not a professor at a lectern.
