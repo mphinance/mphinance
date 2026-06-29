@@ -165,4 +165,4 @@ Don't bet the farm. The farm is how you eat next year.
 
 *God, grant me the serenity to accept the trades I cannot change, the courage to cut the ones I should, and the wisdom to tell the damn difference.*
 
-**- Michael Hanko, Managing Partner, The Phund**
+~ Michael

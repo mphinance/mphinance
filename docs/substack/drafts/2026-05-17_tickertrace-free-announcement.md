@@ -1,6 +1,5 @@
 # TickerTrace Is Free Now. Here's Why.
 
-*by Michael Hanko, Managing Partner, The Phund*
 
 I spent eight months building a tool that scrapes what ETFs are actually buying and selling every single day. Then I put it behind a paywall. Then I tore the paywall down.
 
@@ -140,4 +139,4 @@ Drink water. Check the heatmap. Call your sponsor.
 
 **Subscribe to Momentum Phinance for the wheel series, the daily dossier, and whatever I build next. Half of every paid subscription goes directly into the brokerage account. You are literally funding the machine.**
 
-- Michael Hanko
+~ Michael

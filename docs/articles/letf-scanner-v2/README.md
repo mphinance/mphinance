@@ -162,4 +162,4 @@ It's like they say in the rooms: "progress, not perfection." Sometimes progress 
 
 *God, grant me the serenity to accept the trades I cannot change, the courage to cut the ones I should, and the wisdom to see the volume divergence before it costs me money.*
 
-**- Michael Hanko**
+~ Michael
