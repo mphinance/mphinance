@@ -6,9 +6,10 @@ body_html are broken). Text renders; the 4 images are uploaded to Substack's S3 
 embedded as safe link nodes (a wrong inline-image node type crashes the whole draft,
 so we don't gamble the post on it — drop the PNGs in the editor, set the paywall).
 
-A `*Tags: a, b, c*` line under the H1 is parsed into real Substack post tags and
-applied via the API after the draft is created (instead of being dumped into the
-subtitle). The subtitle is left for Michael to set by hand in the editor.
+The italic line under the H1 is the subtitle. Current convention is a category
+mix with percentages, `*Trading 60% | Mindset 40%*` (see VOICE.md / SUBSTACK.md);
+it is passed straight through as the Substack subtitle. Substack's real discovery
+tags are a separate manual step in the editor and are not driven from here.
 
   python3 tools/push_substack.py <workspace>/post.md [--dry-run]
 """
@@ -81,31 +82,18 @@ def code_block(text):
     return {"type": "code_block", "content": [{"type": "text", "text": _ascii_safe(text)}]}
 
 
-def parse_tags(subtitle_line):
-    """A `*Tags: a, b, c*` line carries real Substack tags, not a subtitle.
-    Strip the 'Tags:' prefix and split on commas. Returns [] for a normal subtitle."""
-    s = subtitle_line.strip().strip("*").strip()
-    if not s.lower().startswith("tags:"):
-        return []
-    return [t.strip() for t in s[len("tags:"):].split(",") if t.strip()]
-
-
 def build_doc(md_path, client, dry):
     lines = open(md_path, encoding="utf-8").read().split("\n")
-    title, subtitle, tags, nodes, i = "", "", [], [], 0
+    title, subtitle, nodes, i = "", "", [], 0
     while i < len(lines):
         ln = lines[i].rstrip()
         s = ln.strip()
         if not title and s.startswith("# "):
             title = _ascii_safe(s[2:].strip()); i += 1; continue
-        # The line under the H1 is either a tags line (-> real Substack tags, not
-        # shown as subtitle) or a genuine subtitle. Consume it either way.
-        if title and not subtitle and not tags and s.startswith("*") and s.endswith("*") and len(s) > 2:
-            parsed = parse_tags(s)
-            if parsed:
-                tags = parsed
-            else:
-                subtitle = _ascii_safe(s.strip("*").strip())
+        # The italic line under the H1 is the subtitle (current convention is a
+        # category mix like "*Trading 60% | Mindset 40%*"). Pass it straight through.
+        if title and not subtitle and s.startswith("*") and s.endswith("*") and len(s) > 2:
+            subtitle = _ascii_safe(s.strip("*").strip())
             i += 1; continue
         # Fenced code block: collect verbatim lines (preserve indentation) until the
         # closing fence. Must run BEFORE the blank-line skip so blank code lines survive.
@@ -145,32 +133,7 @@ def build_doc(md_path, client, dry):
         else:
             nodes.append(p(*inline(s)))
         i += 1
-    return title, subtitle, tags, {"type": "doc", "content": nodes}
-
-
-def apply_tags(client, post_id, tags):
-    """Attach the parsed keywords as real Substack post tags, one POST each.
-    Defensive on purpose: a tag failure logs a warning and is never allowed to
-    take down the (already-created) draft. If the endpoint ever changes, the
-    full response prints so we can re-point it."""
-    if not tags:
-        return
-    ok, fail = [], []
-    for tag in tags:
-        try:
-            r = client.session.post(
-                f"https://{client.pub}/api/v1/post/{post_id}/tag",
-                json={"name": tag}, headers=client.headers, timeout=20)
-            if r.status_code in (200, 201):
-                ok.append(tag)
-            else:
-                fail.append(f"{tag} [{r.status_code}: {r.text[:80]}]")
-        except Exception as e:
-            fail.append(f"{tag} [err: {e}]")
-    if ok:
-        print(f"TAGS OK:  {', '.join(ok)}")
-    if fail:
-        print(f"TAGS FAILED (add these by hand in the editor): {'; '.join(fail)}")
+    return title, subtitle, {"type": "doc", "content": nodes}
 
 
 def main():
@@ -182,16 +145,14 @@ def main():
     if not dry:
         if not client.authenticate():
             print("AUTH FAILED — check SUBSTACK_SID in secrets.env"); sys.exit(2)
-    title, subtitle, tags, doc = build_doc(md_path, client, dry)
+    title, subtitle, doc = build_doc(md_path, client, dry)
     print(f"TITLE:    {title}")
     print(f"SUBTITLE: {subtitle or '(none — set by hand in editor)'}")
-    print(f"TAGS:     {', '.join(tags) if tags else '(none)'}")
     print(f"NODES:    {len(doc['content'])}  (images: {sum(n.get('type') == 'captionedImage' for n in doc['content'])})")
     if dry:
         print("DRY RUN — no API call."); return
     res = client.create_draft(title, subtitle, doc)
     if res and res.get("id"):
-        apply_tags(client, res["id"], tags)
         print(f"DRAFT: https://mphinance.substack.com/publish/post/{res['id']}")
     else:
         print(f"CREATE FAILED: {res}")

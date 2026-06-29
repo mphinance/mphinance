@@ -1,6 +1,6 @@
 # How to Lose Money on the SpaceX IPO While Being Completely Right
 
-*Tags: SpaceX IPO, momentum trading, lockup expiration, NASDAQ 100, Elon Musk, sympathy stocks, index rebalancing*
+*Trading 100%*
 
 ![Everyone Has a Plan for the SpaceX IPO. That's the Problem.](hero_banner.png)
 

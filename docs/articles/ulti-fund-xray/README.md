@@ -1,6 +1,6 @@
 # Your Income ETF Won't Show You This. I Built a Tool That Does.
 
-*Tags: option income ETF, ULTI, REX Shares, covered calls, cash secured puts, fund analytics, tickertrace*
+*Trading 80% | Business 20%*
 
 <!--
 HERO IMAGE PROMPT (16:9) — generate in Substack:
