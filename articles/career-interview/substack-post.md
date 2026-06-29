@@ -1,6 +1,6 @@
 # Let a robot interview you about your own life
 
-*Tags: career, AI, Gemini Live, finding your work, displacement, self-honesty, voice interview*
+*Mindset 60% | AI 40%*
 
 Most people have never once been asked what they actually want. Not really. Not in a way that waited for the real answer.
 

@@ -1,6 +1,6 @@
 # SpaceX Just Ate Half the Aerospace Sector in Four Days. It Lost $4.9 Billion Doing It.
 
-*Tags: SpaceX, SPCX, market cap, aerospace and defense, Starlink, bubble valuation, Elon Musk*
+*Trading 70% | Business 30%*
 
 ![SpaceX Ate The Sector](hero_banner.png)
 

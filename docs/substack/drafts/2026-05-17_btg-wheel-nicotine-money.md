@@ -1,6 +1,6 @@
 # Retail Buys Shares. Institutions Build Positions.
 
-*Tags: options, covered calls, LEAPS, cash-secured puts, position sizing, options income, risk management*
+*Trading 100%*
 
 ![The Four-Layer Position](institutional_hero.png)
 

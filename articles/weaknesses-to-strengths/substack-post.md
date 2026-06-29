@@ -1,6 +1,6 @@
 # You're Not Drowning. You're Fighting the Wave.
 
-*Tags: acceptance, recovery, momentum, trend following, urge surfing, circle of competence, ADHD, finding your work, lemonade out of lemons*
+*Mindset 70% | Trading 30%*
 
 ![A green momentum wave on a dark HUD background: rising candlesticks build into the swell and a surfer rides the crest.](hero.png)
 

@@ -19,7 +19,8 @@ The Q1 Earnings Report is the gold standard. It pulled the highest engagement be
 - **NO EM DASHES (—). EVER.** Restructure the sentence. Use periods, commas, colons, or semicolons instead. This is Michael's #1 pet peeve. The previous agent used exactly zero em dashes and that's the correct number.
 - **NO MARKDOWN TABLES.** Substack will render them as garbage text. Generate an image instead. Dark theme. Bloomberg aesthetic. Every single time.
 - **Images inline in markdown.** `![Alt text](filename.png)` format so Michael can copy-paste the whole article from the GitHub preview. All images must be generated and saved in the article directory alongside the README.md.
-- **TAGS LINE, NOT A BYLINE.** The line directly under the H1 title is a comma-separated tags line. Format: `*Tags: keyword one, keyword two, keyword three*`. NEVER put a byline there ("by Michael", "Momentum Phinance", any name). The author is credited once, in the `~ Michael` signature at the very end. Pull 5 to 7 tags from the article's actual topic, not from the brand or the author name. The pusher (`tools/push_substack.py`) reads this line and applies the keywords as real Substack post tags automatically, so they "go over" without a manual step. Set the human-facing subtitle by hand in the editor.
+- **CATEGORY-MIX SUBTITLE, NOT A BYLINE.** The line directly under the H1 is the subtitle, and the current convention for it is a category mix with percentages: `*Category X% | Category Y% | Category Z%*`. One to three categories from the working set (**Trading, Business, Mindset, AI, Research**), percentages summing to ~100, separated by ` | `. Real examples that shipped: `*AI 100%*`, `*Mindset 70% | Trading 30%*`, `*Business 45% | AI 35% | Trading 20%*`. It tells the reader the blend of the post at a glance. NEVER put a byline there ("by Michael", "Momentum Phinance", any name) and do NOT use the old `*Tags: keyword, keyword*` format. The author is credited once, in the `~ Michael` signature at the very end. The pusher (`tools/push_substack.py`) passes this line straight through as the Substack subtitle.
+- **POST TAGS are separate and manual.** Substack's real discovery tags (e.g. `AI`, `investing`, `Research`) are a small curated set added by hand in the editor. They are not driven by the markdown and not every post has them.
 
 ### Voice
 - Open with the strongest, most controversial take. Not "In this article, we will discuss..."
@@ -34,7 +35,7 @@ Every Substack article follows this skeleton:
 
 ```
 1. Title (the H1 headline)
-2. Tags line (the subtitle slot: `*Tags: keyword, keyword, keyword*`. NOT a byline. Never "by Michael Hanko".)
+2. Category-mix subtitle (`*Trading 60% | Mindset 40%*` style. NOT a byline. Not the old `Tags:` format.)
 3. Hero image (generated, dark theme, article title + key stat)
 4. Bold opener (1-2 paragraphs, hook the reader immediately)
 5. Context section (what's happening in the market RIGHT NOW)
