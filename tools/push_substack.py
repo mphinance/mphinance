@@ -56,20 +56,30 @@ def image_node(up, alt):
     }]}
 
 
+def code(text):
+    """Native Substack inline code mark (monospace `like this`). The article uses
+    these heavily for column names (`ema8`, `rsi`); without this they rendered as
+    literal backticks and had to be fixed by hand."""
+    return {"type": "text", "text": _ascii_safe(text), "marks": [{"type": "code"}]}
+
+
 def inline(text):
-    """Split a line into PM text nodes honoring **bold**, [text](url) links, and
-    *italic* runs."""
+    """Split a line into PM text nodes honoring `code` spans, **bold**, [text](url)
+    links, and *italic* runs. Code is matched first so its contents are not
+    re-interpreted as bold/italic."""
     out, pos = [], 0
-    pat = re.compile(r"\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)]+)\)|\*([^*\n]+?)\*")
+    pat = re.compile(r"`([^`]+)`|\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)]+)\)|\*([^*\n]+?)\*")
     for m in pat.finditer(text):
         if m.start() > pos:
             out.append(_ascii_safe(text[pos:m.start()]))
         if m.group(1) is not None:
-            out.append(bold(_ascii_safe(m.group(1))))
+            out.append(code(m.group(1)))
         elif m.group(2) is not None:
-            out.append(link(_ascii_safe(m.group(2)), m.group(3)))
+            out.append(bold(_ascii_safe(m.group(2))))
+        elif m.group(3) is not None:
+            out.append(link(_ascii_safe(m.group(3)), m.group(4)))
         else:
-            out.append(italic(_ascii_safe(m.group(4))))
+            out.append(italic(_ascii_safe(m.group(5))))
         pos = m.end()
     if pos < len(text):
         out.append(_ascii_safe(text[pos:]))
