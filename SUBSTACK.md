@@ -19,7 +19,7 @@ The Q1 Earnings Report is the gold standard. It pulled the highest engagement be
 - **NO EM DASHES (—). EVER.** Restructure the sentence. Use periods, commas, colons, or semicolons instead. This is Michael's #1 pet peeve. The previous agent used exactly zero em dashes and that's the correct number.
 - **NO MARKDOWN TABLES.** Substack will render them as garbage text. Generate an image instead. Dark theme. Bloomberg aesthetic. Every single time.
 - **Images inline in markdown.** `![Alt text](filename.png)` format so Michael can copy-paste the whole article from the GitHub preview. All images must be generated and saved in the article directory alongside the README.md.
-- **TAGS LINE, NOT A BYLINE.** The line directly under the H1 title is a comma-separated tags line. It fills the Substack subtitle slot. Format: `*Tags: keyword one, keyword two, keyword three*`. NEVER put "by Michael Hanko", "Momentum Phinance", or any byline there. The author is credited once, in the signature at the very end. Pull 5 to 7 tags from the article's actual topic, not from the brand or the author name.
+- **TAGS LINE, NOT A BYLINE.** The line directly under the H1 title is a comma-separated tags line. Format: `*Tags: keyword one, keyword two, keyword three*`. NEVER put a byline there ("by Michael", "Momentum Phinance", any name). The author is credited once, in the `~ Michael` signature at the very end. Pull 5 to 7 tags from the article's actual topic, not from the brand or the author name. The pusher (`tools/push_substack.py`) reads this line and applies the keywords as real Substack post tags automatically, so they "go over" without a manual step. Set the human-facing subtitle by hand in the editor.
 
 ### Voice
 - Open with the strongest, most controversial take. Not "In this article, we will discuss..."
@@ -39,12 +39,12 @@ Every Substack article follows this skeleton:
 4. Bold opener (1-2 paragraphs, hook the reader immediately)
 5. Context section (what's happening in the market RIGHT NOW)
 6. The meat (data + generated infographics + personality)
-7. "Here's the truth..." pivot (where you teach something real)
+7. The turn (where you teach the real thing. Just teach it. NEVER announce it with "Here's the truth," "Real talk," or "Let me be honest." Those are banned.)
 8. <!--paywall--> (if applicable)
 9. Paid-only deep dive (live data, next trades, insider view)
 10. CTA (subscribe nudge, never desperate)
 11. Recovery wisdom closer
-12. Signature: "- Michael Hanko" or "- Michael Hanko, Managing Partner, The Phund"
+12. Signature: exactly `~ Michael` on its own line. Tilde, space, first name. NEVER a last name, NEVER a title ("Managing Partner," "The Phund," "Momentum Phinance"), NEVER a `-` or `—`. See VOICE.md.
 ```
 
 ### Image Generation Rules

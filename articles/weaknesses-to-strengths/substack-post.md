@@ -98,4 +98,4 @@ You're probably not drowning. You're probably just fighting the wave, getting po
 
 Quit fighting it. Turn your board. Go find your spot on the beach.
 
-- Michael Hanko, Momentum Phinance
+~ Michael

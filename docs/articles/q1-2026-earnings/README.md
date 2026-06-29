@@ -18,7 +18,7 @@ Here are your receipts.
 
 ---
 
-Good morning. Welcome to the Momentum Phinance first quarter 2026 earnings call. I'm Michael Hanko. I'm the CEO, the janitor, and the guy currently sweating because I realized the IRS doesn't accept "I was busy coding" as an excuse for late estimated taxes. Sam the Quant Ghost is on the line as Chief Sarcasm Officer.
+Good morning. Welcome to the Momentum Phinance first quarter 2026 earnings call. I'm Michael. I'm the CEO, the janitor, and the guy currently sweating because I realized the IRS doesn't accept "I was busy coding" as an excuse for late estimated taxes. Sam the Quant Ghost is on the line as Chief Sarcasm Officer.
 
 When I launched this thing in November, I made you a promise: **50% of every dollar you pay goes straight into a Tastytrade brokerage account.** Real money. Real trades. Real P&L. No paper trading, no "hypothetical returns," no hiding behind backtests. Your subscription funds a live trading operation, and I show you every single position, every win, every loss.
 
@@ -261,4 +261,4 @@ Every ticker Sam called in Q1. TER, AVGO, RR, DDD, BITF, the whole watchlist. Gr
 
 *God, grant me the serenity to accept the trades I cannot change, the courage to cut the ones I should, and the wisdom to tell the damn difference.*
 
-**- Michael Hanko, Managing Partner, The Phund**
+~ Michael

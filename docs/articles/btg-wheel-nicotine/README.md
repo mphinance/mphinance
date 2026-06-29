@@ -1,6 +1,5 @@
 # I've Made $591 Wheeling a $5 Stock. And It's Not Done Yet.
 
-*by Michael Hanko, Managing Partner, The Phund*
 
 Last month I showed you every transaction from my DDD wheel. 113 days, $140.93 in profit, 32% return on a $2 stock. Clean entry, clean exit, zero drama.
 
@@ -216,4 +215,4 @@ Drink water. Sell premium. Call your sponsor. Buy Zyns.
 
 **Subscribe to Momentum Phinance for the live wheel tracker, weekly premium updates, and the ongoing BTG saga. Half of every paid subscription goes directly into the brokerage account. You are literally funding the machine.**
 
-- Michael Hanko
+~ Michael

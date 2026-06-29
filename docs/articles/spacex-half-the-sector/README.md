@@ -135,4 +135,4 @@ The market will hand you a thousand true numbers this year. The edge was never h
 
 *God, grant me the serenity to accept the prices I cannot change, the courage to skip the trades I shouldn't chase, and the wisdom to read the chart before the chart reads me.*
 
-**- Michael Hanko, Managing Partner, The Phund**
+~ Michael
