@@ -1110,6 +1110,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] TAO screen failed: {e}")
 
+    # ── Stage 10d: VCP (Volatility Contraction Pattern) Screen ──
+    print("\n[10d/16] VCP SCREEN (coiling-spring setups)")
+    vcp_results: list[dict] = []
+    with timer.stage("VCP Screen"):
+        try:
+            import time as _vcp_time
+            from dossier.vcp_screener import score_vcp, _save_api_output as _vcp_save
+            _vcp_pool = [t for t in dict.fromkeys(
+                scanned_tickers[:30] + list(CORE_WATCHLIST)
+            ) if not _is_junk(t)][:50]
+            for _t in _vcp_pool:
+                _r = score_vcp(_t)
+                if _r:
+                    vcp_results.append(_r)
+                _vcp_time.sleep(0.05)
+            vcp_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _vcp_save(vcp_results)
+            _top_vcp = [r for r in vcp_results if r["grade"] in ("A+", "A")]
+            print(f"  🌀 {len(vcp_results)} VCP setups — {len(_top_vcp)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['score']})" for r in _top_vcp[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] VCP screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
