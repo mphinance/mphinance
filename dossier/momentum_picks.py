@@ -199,6 +199,7 @@ def score_momentum(payload: dict) -> dict:
         "adx": round(adx, 1),
         "stoch_k": round(stoch_k, 1),
         "rel_vol": round(rel_vol, 2),
+        "sector": payload.get("sector") or "Other",
     }
 
 
