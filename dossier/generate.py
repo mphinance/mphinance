@@ -1022,6 +1022,19 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Momentum picks failed: {e}")
 
+    # ── Stage 10a: Momentum Breadth Index ──
+    # Pure surfacing on top of momentum_picks' `all_ranked` scan universe —
+    # checks whether the podium picks are backed by a broad move or a thin one.
+    try:
+        from dossier.breadth_index import compute_breadth, format_breadth_text, record_breadth
+        breadth = compute_breadth(momentum_picks.get("all_ranked", []))
+        breadth["date"] = date
+        bh_path = PROJECT_ROOT / "landing" / "data" / "breadth_history.json"
+        record_breadth(bh_path, breadth)
+        print(f"  {format_breadth_text(breadth)}")
+    except Exception as e:
+        print(f"  [WARN] Breadth index failed: {e}")
+
     # ── Stage 10b: Confluence + Day-over-Day Migration (the synthesis) ──
     # Rank tickers by how many INDEPENDENT, directionally-agreeing legs fire
     # (trend ∪ triangle ∪ flow ∪ 13F), then detect what MATURED since yesterday.
@@ -1591,6 +1604,17 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
                 print(f"  ✓ Regime history synced → docs/data/")
         except Exception as _sync_e:
             print(f"  [WARN] Regime history sync failed: {_sync_e}")
+
+        # ── Sync breadth history to docs/ for the dashboard (GH Pages) ──
+        _bh_landing = PROJECT_ROOT / "landing" / "data" / "breadth_history.json"
+        _bh_docs = PROJECT_ROOT / "docs" / "data" / "breadth_history.json"
+        try:
+            if _bh_landing.exists():
+                _bh_docs.parent.mkdir(parents=True, exist_ok=True)
+                _shutil.copy2(_bh_landing, _bh_docs)
+                print(f"  ✓ Breadth history synced → docs/data/")
+        except Exception as _sync_e:
+            print(f"  [WARN] Breadth history sync failed: {_sync_e}")
 
         print("\n[16/16] GIT PUSH")
         print("  Committing to Git...")
