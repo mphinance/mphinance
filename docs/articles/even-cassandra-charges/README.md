@@ -78,13 +78,17 @@ New prices, and they land on Fibonacci levels, because of course they do. Thirty
 
 You didn't get a price increase. You got a promotion.
 
-Everyone who was already paying when I flipped this switch is a Founder now. I moved you up myself, and it didn't cost you a dollar. Your rate stays locked where it was for as long as you stay, and you get the Founder treatment from here on: every tool, build, and raw prompt I ship, and a direct line to me.
+Everyone who was already paying when I flipped this switch is a Founder now. It didn't cost you a dollar, and nothing you get changes, because you've already been getting all of it: every setup, every tool, every build and raw prompt I ship, the live portfolio, a direct line to me. Now it just has a name on it, and your rate is locked there for as long as you stay.
 
 That isn't a discount. It's a thank-you. You were here when it was just me, a spreadsheet, and a felony record, betting my own money out loud. Being early was the whole price of admission, and you already paid it.
 
 Founder is a paid tier now. You got in for free by getting in first.
 
 ## If you've been reading free
+
+You've had the philosophy for free. The trades are what's behind the wall.
+
+The actual names, when I buy them, with my own money riding in the same boat as yours, sized by risk and written up in plain words. The live portfolio you can follow position by position. The setups, the entries, the exits. Not hot takes. Positions you can actually put on.
 
 This is the part where I stop being subtle.
 
