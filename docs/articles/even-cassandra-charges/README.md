@@ -70,15 +70,25 @@ Sam thought I should charge more. We finished negotiating. She won.
 
 ## The new menu
 
-Here's what changed, and I'm going to show you the actual screen instead of describing it, because receipts are the whole point of this letter.
-
 New prices, and they land on Fibonacci levels, because of course they do. Thirty-four a month. Two-thirty-three a year. Six-ten for Founders, who get every tool, build, and raw prompt I ship, plus a direct line to me.
 
 ![New pricing on Fibonacci levels: $34 monthly, $233 annual, $610 Founders](pricing-fib-ladder.png)
 
-If you've been reading free, this is the part where I stop being subtle.
+## If you already pay me, read this first
 
-Through July 4th, everyone gets 34% off. Forever. Not a first-year teaser that jumps on you in twelve months. The rate you lock is the rate you keep for as long as you stay. It ends at 11:59pm on the 4th, and it does not come back at this number.
+You didn't get a price increase. You got a promotion.
+
+Everyone who was already paying when I flipped this switch is a Founder now. I moved you up myself, and it didn't cost you a dollar. Your rate stays locked where it was for as long as you stay, and you get the Founder treatment from here on: every tool, build, and raw prompt I ship, and a direct line to me.
+
+That isn't a discount. It's a thank-you. You were here when it was just me, a spreadsheet, and a felony record, betting my own money out loud. Being early was the whole price of admission, and you already paid it.
+
+Founder is a paid tier now. You got in for free by getting in first.
+
+## If you've been reading free
+
+This is the part where I stop being subtle.
+
+Through July 4th, you get 34% off. Forever. Not a first-year teaser that jumps on you in twelve months. The rate you lock is the rate you keep for as long as you stay. It ends at 11:59pm on the 4th, and it does not come back at this number.
 
 ![34% off forever, ends July 4 at 11:59pm](offer-july4.png)
 
