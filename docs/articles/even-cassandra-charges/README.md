@@ -2,6 +2,8 @@
 
 *Business 50% | Mindset 30% | Trading 20%*
 
+![Even Cassandra Charges](hero_banner.png)
+
 > *Something new: I'm tagging every post by what it's actually made of, by weight. That line up top is the recipe, so you know what you're walking into before you spend a minute on it.*
 
 There's a dumb way to ask why I charge and a smart way.
