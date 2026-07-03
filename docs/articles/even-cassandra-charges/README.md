@@ -66,6 +66,26 @@ The fee isn't the thing I take from you. It's the leash I keep on me.
 
 That's why I charge.
 
-Sam still thinks I should charge more. We're negotiating.
+Sam thought I should charge more. We finished negotiating. She won.
+
+## The new menu
+
+Here's what changed, and I'm going to show you the actual screen instead of describing it, because receipts are the whole point of this letter.
+
+New prices, and they land on Fibonacci levels, because of course they do. Thirty-four a month. Two-thirty-three a year. Six-ten for Founders, who get every tool, build, and raw prompt I ship, plus a direct line to me.
+
+![New pricing on Fibonacci levels: $34 monthly, $233 annual, $610 Founders](pricing-fib-ladder.png)
+
+If you've been reading free, this is the part where I stop being subtle.
+
+Through July 4th, everyone gets 34% off. Forever. Not a first-year teaser that jumps on you in twelve months. The rate you lock is the rate you keep for as long as you stay. It ends at 11:59pm on the 4th, and it does not come back at this number.
+
+![34% off forever, ends July 4 at 11:59pm](offer-july4.png)
+
+The math on that isn't an accident either. Thirty-four percent off a thirty-four dollar month. I told you the levels were real.
+
+[Lock in 34% off forever, before the 4th](https://mphinance.substack.com/July4)
+
+You've watched me put my own cash in the same names, on a schedule, in public, getting paid more only if you're still standing here next year. That's the leash. If that's the kind of person you want in the trade next to you, the door is open until the 4th.
 
 ~ Michael
