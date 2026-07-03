@@ -2,6 +2,8 @@
 
 *Business 50% | Mindset 30% | Trading 20%*
 
+![Even Cassandra Charges](hero_banner.png)
+
 > *Something new: I'm tagging every post by what it's actually made of, by weight. That line up top is the recipe, so you know what you're walking into before you spend a minute on it.*
 
 There's a dumb way to ask why I charge and a smart way.
@@ -66,6 +68,40 @@ The fee isn't the thing I take from you. It's the leash I keep on me.
 
 That's why I charge.
 
-Sam still thinks I should charge more. We're negotiating.
+Sam thought I should charge more. We finished negotiating. She won.
+
+## The new menu
+
+New prices, and they land on Fibonacci levels, because of course they do. Thirty-four a month. Two-thirty-three a year. Six-ten for Founders, who get every tool, build, and raw prompt I ship, plus a direct line to me.
+
+![New pricing on Fibonacci levels: $34 monthly, $233 annual, $610 Founders](pricing-fib-ladder.png)
+
+## If you already pay me, read this first
+
+You didn't get a price increase. You got a promotion.
+
+Everyone who was already paying when I flipped this switch is a Founder now. It didn't cost you a dollar, and nothing you get changes, because you've already been getting all of it: every setup, every tool, every build and raw prompt I ship, the live portfolio, a direct line to me. Now it just has a name on it, and your rate is locked there for as long as you stay.
+
+That isn't a discount. It's a thank-you. You were here when it was just me, a spreadsheet, and a felony record, betting my own money out loud. Being early was the whole price of admission, and you already paid it.
+
+Founder is a paid tier now. You got in for free by getting in first.
+
+## If you've been reading free
+
+You've had the philosophy for free. The trades are what's behind the wall.
+
+The actual names, when I buy them, with my own money riding in the same boat as yours, sized by risk and written up in plain words. The live portfolio you can follow position by position. The setups, the entries, the exits. Not hot takes. Positions you can actually put on.
+
+This is the part where I stop being subtle.
+
+Through July 4th, you get 34% off. Forever. Not a first-year teaser that jumps on you in twelve months. The rate you lock is the rate you keep for as long as you stay. It ends at 11:59pm on the 4th, and it does not come back at this number.
+
+![34% off forever, ends July 4 at 11:59pm](offer-july4.png)
+
+The math on that isn't an accident either. Thirty-four percent off a thirty-four dollar month. I told you the levels were real.
+
+[Lock in 34% off forever, before the 4th](https://mphinance.substack.com/July4)
+
+You've watched me put my own cash in the same names, on a schedule, in public, getting paid more only if you're still standing here next year. That's the leash. If that's the kind of person you want in the trade next to you, the door is open until the 4th.
 
 ~ Michael
