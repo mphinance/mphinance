@@ -1147,6 +1147,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] VCP screen failed: {e}")
 
+    # ── Stage 10e: PEAD (Post-Earnings Drift) Screen ──
+    print("\n[10e/16] PEAD SCREEN (post-earnings drift)")
+    pead_results: list[dict] = []
+    with timer.stage("PEAD Screen"):
+        try:
+            import time as _pead_time
+            from dossier.pead_screener import score_pead, _save_api_output as _pead_save
+            _pead_pool = [t for t in dict.fromkeys(
+                scanned_tickers[:30] + list(CORE_WATCHLIST)
+            ) if not _is_junk(t)][:50]
+            for _t in _pead_pool:
+                _r = score_pead(_t)
+                if _r:
+                    pead_results.append(_r)
+                _pead_time.sleep(0.05)
+            pead_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _pead_save(pead_results)
+            _top_pead = [r for r in pead_results if r["grade"] in ("A+", "A")]
+            print(f"  🌊 {len(pead_results)} PEAD setups — {len(_top_pead)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['score']})" for r in _top_pead[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] PEAD screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
