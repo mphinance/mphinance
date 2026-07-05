@@ -1035,6 +1035,20 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Breadth index failed: {e}")
 
+    # ── Stage 10a2: Factor Leaderboard ──
+    # Same `all_ranked` scan universe as breadth, but asks a different
+    # question: not "how broad is the move" but "which of the 10 scoring
+    # factors is actually driving today's picks."
+    try:
+        from dossier.factor_leaderboard import compute_leaderboard, format_leaderboard_text, record_leaderboard
+        leaderboard = compute_leaderboard(momentum_picks.get("all_ranked", []))
+        leaderboard["date"] = date
+        fl_path = PROJECT_ROOT / "landing" / "data" / "factor_leaderboard_history.json"
+        record_leaderboard(fl_path, leaderboard)
+        print(f"  {format_leaderboard_text(leaderboard)}")
+    except Exception as e:
+        print(f"  [WARN] Factor leaderboard failed: {e}")
+
     # ── Stage 10b: Confluence + Day-over-Day Migration (the synthesis) ──
     # Rank tickers by how many INDEPENDENT, directionally-agreeing legs fire
     # (trend ∪ triangle ∪ flow ∪ 13F), then detect what MATURED since yesterday.
