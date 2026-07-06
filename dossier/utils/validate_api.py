@@ -12,6 +12,7 @@ Usage:
         check_yfinance_info,
         is_tradier_null,
         safe_json,
+        safe_tradier_quote,
     )
 """
 
@@ -90,3 +91,32 @@ def safe_json(response, context: str = ""):
             file=sys.stderr,
         )
         return None
+
+
+def safe_tradier_quote(response, ticker: str = "") -> dict | None:
+    """
+    Parse a Tradier `/markets/quotes` response into a single quote dict.
+
+    Three call sites (options_flow.py, sf_gex.py, gamma_pin_screener.py) used
+    to do `response.json().get("quotes", {}).get("quote", {})` directly. That
+    breaks with an AttributeError when Tradier returns the *string* "null"
+    for `quotes` (the same quirk `is_tradier_null` was built for), and it
+    doesn't normalize the single-symbol dict vs multi-symbol list shape of
+    `quote`. Returns None (with a logged warning) instead of raising.
+    """
+    data = safe_json(response, context=f"Tradier quotes[{ticker}]" if ticker else "Tradier quotes")
+    if not isinstance(data, dict):
+        return None
+    quotes = data.get("quotes")
+    if is_tradier_null(quotes) or not isinstance(quotes, dict):
+        print(
+            f"    [WARN] Tradier quotes empty for {ticker or '?'}",
+            file=sys.stderr,
+        )
+        return None
+    quote = quotes.get("quote")
+    if isinstance(quote, list):
+        quote = quote[0] if quote else None
+    if is_tradier_null(quote) or not isinstance(quote, dict):
+        return None
+    return quote
