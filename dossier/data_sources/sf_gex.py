@@ -55,6 +55,22 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Optional
 
+try:
+    from dossier.utils.validate_api import safe_tradier_quote
+except ImportError:
+    def safe_tradier_quote(response, ticker: str = ""):
+        try:
+            data = response.json()
+        except Exception:
+            return None
+        quotes = data.get("quotes") if isinstance(data, dict) else None
+        if not isinstance(quotes, dict):
+            return None
+        quote = quotes.get("quote")
+        if isinstance(quote, list):
+            quote = quote[0] if quote else None
+        return quote if isinstance(quote, dict) else None
+
 CONTRACT_MULTIPLIER = 100
 
 
@@ -388,9 +404,9 @@ def _fetch_spot(ticker: str) -> Optional[float]:
             headers=_tradier_headers(), timeout=10)
         if resp.status_code != 200:
             return None
-        q = resp.json().get("quotes", {}).get("quote", {})
-        if isinstance(q, list):
-            q = q[0] if q else {}
+        q = safe_tradier_quote(resp, ticker)
+        if not q:
+            return None
         price = q.get("last") or q.get("close")
         return float(price) if price else None
     except Exception:
