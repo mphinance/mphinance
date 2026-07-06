@@ -62,6 +62,22 @@ except Exception as _imp_err:  # pragma: no cover — import guard, never fatal
     get_options_expirations = None  # type: ignore[assignment]
     TRADIER_BASE = "https://api.tradier.com/v1"
 
+try:
+    from dossier.utils.validate_api import safe_tradier_quote
+except ImportError:
+    def safe_tradier_quote(response, ticker: str = ""):
+        try:
+            data = response.json()
+        except Exception:
+            return None
+        quotes = data.get("quotes") if isinstance(data, dict) else None
+        if not isinstance(quotes, dict):
+            return None
+        quote = quotes.get("quote")
+        if isinstance(quote, list):
+            quote = quote[0] if quote else None
+        return quote if isinstance(quote, dict) else None
+
 
 # ═══════════════════════════════════════════════════════════════════
 # ████  TIERED FILTER FLOORS — ported from filterConfig.ts  ████
@@ -122,9 +138,7 @@ def _get_underlying_quote(ticker: str) -> dict | None:
         )
         if resp.status_code != 200:
             return None
-        q = resp.json().get("quotes", {}).get("quote", {})
-        if isinstance(q, list):
-            q = q[0] if q else {}
+        q = safe_tradier_quote(resp, ticker)
         if not q:
             return None
         last = q.get("last")
