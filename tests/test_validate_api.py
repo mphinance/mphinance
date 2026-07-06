@@ -19,6 +19,7 @@ from dossier.utils.validate_api import (
     check_yfinance_info,
     is_tradier_null,
     safe_json,
+    safe_tradier_quote,
 )
 
 
@@ -187,3 +188,44 @@ class TestSafeJson:
         resp = _FakeResponse('[1, 2, 3]')
         result = safe_json(resp)
         assert result == [1, 2, 3]
+
+
+# ── safe_tradier_quote ────────────────────────────────────────────────
+
+class TestSafeTradierQuote:
+    def test_single_symbol_dict_quote(self):
+        resp = _FakeResponse('{"quotes": {"quote": {"symbol": "AAPL", "last": 200.5}}}')
+        result = safe_tradier_quote(resp, "AAPL")
+        assert result == {"symbol": "AAPL", "last": 200.5}
+
+    def test_multi_symbol_list_quote(self):
+        resp = _FakeResponse(
+            '{"quotes": {"quote": ['
+            '{"symbol": "AAPL", "last": 200.5}, {"symbol": "MSFT", "last": 410.0}'
+            "]}}"
+        )
+        result = safe_tradier_quote(resp, "AAPL")
+        assert result == {"symbol": "AAPL", "last": 200.5}
+
+    def test_empty_list_quote_returns_none(self):
+        resp = _FakeResponse('{"quotes": {"quote": []}}')
+        assert safe_tradier_quote(resp, "ZZZZ") is None
+
+    def test_tradier_null_string_quotes(self, capsys):
+        # The documented Tradier quirk: "quotes": "null" for an empty result.
+        resp = _FakeResponse('{"quotes": "null"}')
+        result = safe_tradier_quote(resp, "ZZZZ")
+        assert result is None
+        assert "ZZZZ" in capsys.readouterr().err
+
+    def test_missing_quotes_key(self):
+        resp = _FakeResponse('{}')
+        assert safe_tradier_quote(resp) is None
+
+    def test_invalid_json_returns_none(self):
+        resp = _FakeResponse("<html>rate limited</html>", status_code=429)
+        assert safe_tradier_quote(resp, "AAPL") is None
+
+    def test_quote_null_value(self):
+        resp = _FakeResponse('{"quotes": {"quote": null}}')
+        assert safe_tradier_quote(resp) is None
