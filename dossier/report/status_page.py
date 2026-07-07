@@ -318,6 +318,9 @@ def generate_status_page(pipeline_stats: dict = None):
                     <a href="reports/latest.html" class="px-3 py-1.5 bg-neon-blue/10 text-neon-blue border border-neon-blue/30 text-[10px] font-mono uppercase hover:bg-neon-blue/20 transition-colors rounded">
                         Latest Report →
                     </a>
+                    <a href="setups-radar.html" class="px-3 py-1.5 bg-gray-800 text-gray-400 border border-gray-700 text-[10px] font-mono uppercase hover:text-white transition-colors rounded">
+                        Setups Radar
+                    </a>
                     <a href="index.html" class="px-3 py-1.5 bg-gray-800 text-gray-400 border border-gray-700 text-[10px] font-mono uppercase hover:text-white transition-colors rounded">
                         Archive
                     </a>
