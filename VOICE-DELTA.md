@@ -9,10 +9,16 @@ fingerprint as what he keeps.
 
 **Read this first (honest constraints):**
 
-- **N = 6 clean pairs** (4 anchors + 2 held-out, captured 2026-06-25).  Still
-  not statistics, but enough to test whether the rules below GENERALIZE to
-  pairs they weren't derived from.  Every rule is followed by real receipts;
-  if a rule has one receipt, it's a hypothesis, not a law.
+- **N = 7 clean pairs** (4 anchors + 2 held-out captured 2026-06-25, + 1 live
+  ship captured 2026-07-07).  Still not statistics, but enough to test whether
+  the rules below GENERALIZE to pairs they weren't derived from.  Every rule is
+  followed by real receipts; if a rule has one receipt, it's a hypothesis, not
+  a law.
+- **The 07-07 pair is the first Business-category ship** (the daddy-* SDK
+  funnel manifesto).  The corpus was trading-heavy; watch whether these rules
+  hold on non-trading posts.  Early read: immediacy, self-correcting
+  parentheticals, and the meta-transition cut all fired again — the voice is
+  content-independent.
 - The corpus and the fetcher that rebuilds it live in
   [`docs/voice-delta/`](docs/voice-delta/).  The accuracy report is
   [`/ACCURACY.md`](ACCURACY.md).
@@ -25,6 +31,7 @@ fingerprint as what he keeps.
 
 | Date | Given draft | Shipped | Wall | Role |
 |------|-------------|---------|------|------|
+| 07-07 | "Give Away the App. Sell the Key." | same title | free | live (Business) |
 | 06-23 | "Don't Trust Me. Trust the Tape." | same title | free | held-out |
 | 06-22 | "Three Questions Before You Buy Any Pullback" | same title | paid_tease | held-out |
 | 06-17 | "The Whole Market, In My Pocket" | same title | free | anchor |
@@ -53,6 +60,9 @@ the corpus — fires in 5/6 pairs.
 - (machine) `what the big funds bought last quarter` → `…bought last night`
 - (06-22 held-out) `last week` → `today`
 - (06-23 held-out) `Last week that was an NVDA 190 put` → `Today that was an $190 put`
+- (07-07) `First commit went in at 3:26 in the morning. The last one went in that same afternoon. In one day` → `First commit went in at 3:26 this morning, and I'm just now taking a break to tell you about some of them` (past → live, "this morning", writing mid-build)
+- (07-07) `I vibe-coded the whole family in a day.` → `…in the last 8 hours.` (round "a day" → the specific, load-bearing number)
+- (07-07) `I'm barely one.` → `I'm barely one anymore.` (the extra word is the whole self-deprecating arc)
 
 **3. Add the stakes — the *why* under the line.**
 - `twelve browser tabs and a quiet panic.` → `…a quiet panic to see if I can get my trades in before others got into the office.`
@@ -84,6 +94,8 @@ clauses like "and I couldn't find it" or "she's getting upgraded everyday").
 - (06-23 held-out) `The Options Field Manual is right here…` → adds `There was a follow-up too somewhere and I couldn't find it.`
 - (06-23 held-out) `The tool is called TickerTrace.` → `The tool is called TickerTrace, unapologetically a funnel to TDPro.` (self-aware honesty about the product motive)
 - (06-22 held-out) `you do not buy it.` → `you do not buy it - yet.`
+- (07-07) `he gives me the look.` → `I still get the look (at least I'm pretty sure I do - we are virtual after all).` (undercuts his own certainty; spaced-hyphen aside)
+- (07-07) `once he stops giving me the look.` → `…once he stops giving me the look (he already has - this time, I actually asked permission!).` (won't let the "co-founder resists me" frame stand unqualified — confesses he already got the yes)
 
 **A4. Wires the post into the network.** The machine writes in a vacuum; he adds the
 restack bait and the product clicks.
@@ -102,6 +114,7 @@ The machine stays on task; Michael wanders and deflates.
 **C1. The meta-transition / windup** — the announce-before-you-say-it line.
 - `Now the confession. This isn't a Bloomberg terminal…` → `This isn't a Bloomberg terminal…`
 - `Here is the part that made me sit up. I built this machine…` → `So here's the conviction. I built this machine…`
+- (07-07) cut the two windup lines whole: `So here's the argument I've been losing at dinner, finally written down as the thing that wins it.` and `That's the whole thesis. The rest of this is proof that it's already running.` — he refuses to announce the thesis before making it; the claims just start.
 
 **C2. The doubled metaphor / the extra clause.** Keeps one image, kills the spare.
 - cut the whole "casting director" paragraph (he already had "light money on fire")
@@ -128,7 +141,9 @@ the confession goes.
 - **Solo `I/my` → branded `Phund/we`** when it's about the account: `my own brokerage account… what I'm holding` → `the Momentum Phund's brokerage account… what we're holding`.
 - **Generic → named brand:** `options flow in another` → `TradingView in another`; `I built a button` → `The Claude button`.
 - **Disclaimer moves to the TOP and becomes a bit:** bottom-of-post `Not financial advice…` → top, rewritten: `Hi! I'm a super legit "not financial advice" disclaimer that you've read so you're not going to sue me now. Good talk.`
-- **Typos ship.** `my my uncle`, `it slightly up` survive. He does not sand the post to corporate-smooth; the small imperfections read as a human was here.
+- **Typos ship.** `my my uncle`, `it slightly up` survive (07-07 added `an TraderDaddy SDK` and `TL,DR;`). He does not sand the post to corporate-smooth; the small imperfections read as a human was here.
+- **Direct reader-address, unhedged.** He turns third-person copy at the reader mid-line: `a sales team that works for free.` → `…for free. I hope (hint, that's you).` and closes the piece by talking to the co-founder AND the reader: `Art, I solved it. Again.` → `…Again. You might wanna pick up the mic I'm about to drop.` **(07-07 only — single pair, not yet a law.)**
+- **Adds the credibility clause on the product.** `the thing that's actually expensive to build and run.` → `…to build and run, and were designed by a team of professional traders with years of experience.` — when the post is the funnel, he slips the sell in as a subordinate clause, never a sentence of its own. **(07-07 only — watch on next Business post.)**
 
 ## What the machine already nails — don't "fix" these
 
@@ -188,14 +203,16 @@ rules for content they cannot generate; we measure how well they edit.
 
 ## Verdict
 
-Six pairs, the signal still **dense and consistent**: the machine builds a clean
+Seven pairs, the signal still **dense and consistent**: the machine builds a clean
 scaffold and a few keeper lines; you spend your edit budget on **honesty
 (self-correction), warmth (physical metaphors), immediacy (time compression), and
 distribution (shoutouts, plugs, canon)**.  Now numeric.
 
 The held-out pairs replicated four of the strongest rules verbatim (immediacy,
-self-correction style asides, recovery-jargon cut, Phund/we conversion).  When
-someone says "VOICE.md isn't accurate," this is the answer: pair the drafts
-against the ships, run the harness, point at the Δ.
+self-correction style asides, recovery-jargon cut, Phund/we conversion).  The
+first Business ship (07-07) replicated three more on non-trading content
+(immediacy/specificity, self-correcting parentheticals, meta-transition cut) —
+the voice travels.  When someone says "VOICE.md isn't accurate," this is the
+answer: pair the drafts against the ships, run the harness, point at the Δ.
 
-_— Voice-Delta Agent v0.2_
+_— Voice-Delta Agent v0.3_
