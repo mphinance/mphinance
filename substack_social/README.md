@@ -19,6 +19,7 @@ See `../vendor/substack-api/` for the full source.
 ```bash
 cd substack_social
 npm install   # resolves substack-api from ../vendor/substack-api
+export SUBSTACK_SID="s%3A..."   # 'substack.sid' cookie from substack.com, required by all scripts
 ```
 
 ## ⚠️ Build status of the vendored fork
