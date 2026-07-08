@@ -2,7 +2,11 @@ import { SubstackClient } from 'substack-api';
 import * as fs from 'fs';
 import { withRetry } from './retry';
 
-const sid = "s%3AbOEIouthsRC1PWBVi8Jl07qP4-pMjLiz.8aqscWSVtI65wqmEAsGMfJpWSxHXyaIJgcYadK%2BoG7k";
+const sid = process.env.SUBSTACK_SID;
+if (!sid) {
+  console.error("SUBSTACK_SID not set. Export it (Windows: User-scope env var) and re-run.");
+  process.exit(1);
+}
 
 async function run() {
   const client = new SubstackClient({
