@@ -1185,6 +1185,24 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] PEAD screen failed: {e}")
 
+    # ── Stage 10f: Screener Overlap (TAO/VCP/PEAD agreement) ──
+    # Pure post-processing over the three result lists just computed above —
+    # no extra API calls. Surfaces names that clear the bar on 2+ independent
+    # setup screens the same day, which is the highest-signal subset of any
+    # single screen's output.
+    print("\n[10f/16] SCREENER OVERLAP (TAO/VCP/PEAD agreement)")
+    with timer.stage("Screener Overlap"):
+        try:
+            from dossier.screener_overlap import compute_screener_overlap, _save_api_output as _overlap_save
+            overlap = compute_screener_overlap(tao_results, vcp_results, pead_results)
+            if not dry_run:
+                _overlap_save(overlap)
+            _top_overlap = overlap["tickers"][:3]
+            print(f"  🎯 {overlap['overlap_count']} tickers in 2+ screens: "
+                  + (", ".join(f"{e['ticker']} ({'+'.join(e['screens'])})" for e in _top_overlap) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Screener overlap failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
