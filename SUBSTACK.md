@@ -55,6 +55,19 @@ Every Substack article follows this skeleton:
 - **Size:** Landscape orientation (roughly 1200x600 to 1200x800). Substack renders these well.
 - **Save location:** Same directory as the article README.md.
 
+### Candlestick charts (Vero segments)
+When an article needs a real intraday chart (a pattern that played out, a "call it" quiz card), don't hand-build it. Use the Vero segment renderer. It takes a PatternPulse / Vero segment JSON and emits a landscape dark-theme candlestick PNG in the house KLineChart style (green #00d68f / red #ff4d6d, EMA + volume), so it drops straight into a draft and matches the Image Generation Rules above.
+
+```bash
+# teaser card ("Up or Down? You've got 3 seconds") — masks the future, hides the pattern label
+.venv/bin/python tools/vero_segment_chart.py seg.json --out docs/articles/<slug>
+
+# teaching card — appends the hidden continuation behind a REVEAL divider + labels the outcome and pattern
+.venv/bin/python tools/vero_segment_chart.py seg.json --reveal --out docs/articles/<slug>
+```
+
+`seg.json` is a Vero `/segments/{id}/full` response (or any dump with `visible_candles` and, for `--reveal`, `hidden_candles`). The chart library is vendored under `tools/vendor/`, so rendering needs no network (works in CI and web sessions); it only needs Playwright + Chromium, same as `tools/kline_chart.py`. Output PNG lands in `--out`; inline it in the article with `![alt](chart.png)` like any other generated image.
+
 ### Article Directory Structure
 ```
 docs/articles/{article-slug}/
