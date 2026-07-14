@@ -2,24 +2,50 @@ import yfinance as yf
 import json
 import time
 
+try:
+    from dossier.utils.validate_api import check_yfinance_history
+except ImportError:
+    def check_yfinance_history(df, ticker, min_rows=2):
+        if df is None or df.empty:
+            return False, f"{ticker}: empty history"
+        if len(df) < min_rows:
+            return False, f"{ticker}: only {len(df)} row(s)"
+        missing = {"Close", "High", "Low", "Volume"} - set(df.columns)
+        if missing:
+            return False, f"{ticker}: missing columns {sorted(missing)}"
+        return True, ""
+
+
 def detect_regime():
     """
     Classifies the current market environment based on VIX metrics and SPY price action.
+
+    Every fetch is validated before use — a malformed or NaN-riddled yfinance
+    response degrades to the ticker's default (data[t] = None) instead of
+    crashing the whole pipeline stage with a KeyError/IndexError downstream.
     """
     tickers_to_fetch = ['^VIX', '^VIX3M', '^VVIX', 'SPY']
-    
+
     data = {}
     for t in tickers_to_fetch:
+        hist = None
         try:
             ticker = yf.Ticker(t)
-            hist = ticker.history(period='1y')
-            if hist.empty:
-                # Try a smaller period if 1y fails
-                hist = ticker.history(period='1mo')
-            data[t] = hist
+            for period in ('1y', '1mo'):
+                candidate = ticker.history(period=period)
+                ok, reason = check_yfinance_history(candidate, t, min_rows=2)
+                if not ok:
+                    print(f"Warning: {reason}")
+                    continue
+                candidate = candidate.dropna(subset=["Close"])
+                if candidate.empty:
+                    print(f"Warning: {t}: all Close values NaN")
+                    continue
+                hist = candidate
+                break
         except Exception as e:
             print(f"Warning: Could not fetch data for {t}: {e}")
-            data[t] = None
+        data[t] = hist
 
     # --- VIX Level & Change ---
     vix_hist = data.get('^VIX')
