@@ -1049,6 +1049,20 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Factor leaderboard failed: {e}")
 
+    # ── Stage 10a3: Score Dispersion Index ──
+    # Same `all_ranked` scan universe again, but asks a third question: not
+    # "how broad" or "which factor" but "is today's leadership a lone
+    # standout pulling away from the pack, or a broad, evenly-strong tape."
+    try:
+        from dossier.score_dispersion import compute_dispersion, format_dispersion_text, record_dispersion
+        dispersion = compute_dispersion(momentum_picks.get("all_ranked", []))
+        dispersion["date"] = date
+        sd_path = PROJECT_ROOT / "landing" / "data" / "score_dispersion_history.json"
+        record_dispersion(sd_path, dispersion)
+        print(f"  {format_dispersion_text(dispersion)}")
+    except Exception as e:
+        print(f"  [WARN] Score dispersion failed: {e}")
+
     # ── Stage 10b: Confluence + Day-over-Day Migration (the synthesis) ──
     # Rank tickers by how many INDEPENDENT, directionally-agreeing legs fire
     # (trend ∪ triangle ∪ flow ∪ 13F), then detect what MATURED since yesterday.
