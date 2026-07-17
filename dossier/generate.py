@@ -1063,6 +1063,21 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Score dispersion failed: {e}")
 
+    # ── Stage 10a4: Sector Leadership Concentration ──
+    # Same `all_ranked` scan universe again, but asks a fourth question: not
+    # "how broad," "which factor," or "what shape," but "which sector is the
+    # top-scored group actually made of" — one melt-up sector or a genuine
+    # rotation across many.
+    try:
+        from dossier.sector_leadership import compute_sector_leadership, format_leadership_text, record_leadership
+        leadership = compute_sector_leadership(momentum_picks.get("all_ranked", []))
+        leadership["date"] = date
+        sl_path = PROJECT_ROOT / "landing" / "data" / "sector_leadership_history.json"
+        record_leadership(sl_path, leadership)
+        print(f"  {format_leadership_text(leadership)}")
+    except Exception as e:
+        print(f"  [WARN] Sector leadership failed: {e}")
+
     # ── Stage 10b: Confluence + Day-over-Day Migration (the synthesis) ──
     # Rank tickers by how many INDEPENDENT, directionally-agreeing legs fire
     # (trend ∪ triangle ∪ flow ∪ 13F), then detect what MATURED since yesterday.
