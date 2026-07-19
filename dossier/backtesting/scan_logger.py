@@ -64,6 +64,7 @@ def _get_ticker_snapshot(ticker: str) -> dict:
     try:
         data = json.loads(json_path.read_text())
         ta = data.get("technical_analysis", {})
+        osc = ta.get("oscillators", {})
         return {
             "price": data.get("currentPrice", 0),
             "change_pct": data.get("priceChangePct", 0),
