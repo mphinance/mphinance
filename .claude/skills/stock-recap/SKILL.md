@@ -25,15 +25,67 @@ them point at the same ticker (equal-blend convergence):
 4. **Hedge funds (13F)** — TickerTrace top buys/sells, **cross-fund convergence**
    (multiple funds into the same name), and divergences.
 
-It also **renders candlestick charts** (from our own 90-day OHLC data) for the
-top picks + reversal names and a **dedicated under-$100 section** so the list
-isn't all $700+ mega-caps.
+It surfaces a **dedicated under-$100 section** so the list isn't all $700+
+mega-caps. **The visual read lives on Ghost Flow (TradingView), not here** — the
+recap is the data layer; Ghost Flow is the picture (see "Reading the charts" below).
 
-> **Mike's edge:** his best picks come from **Momentum Pullback names once they
-> START reversing out** of the pullback. The script has a dedicated **Reversal
-> Watch** section that flags pullback names with a fresh stochastic crossover up
-> from oversold + bullish RSI zone + A/B entry grade, and marks which of those
-> already have bullish flow and fund buying behind them. Always call this out.
+It opens with a **regime gate** + **week-ahead block** — the Sunday-night context
+a daily recap can't give you (all from the NEW dev API, `api.traderdaddy.pro/api/v1`,
+`X-API-Key` in repo-root `.env_td_api`; every leg is best-effort and degrades alone):
+
+- **🔴/🟠/🟡/🟢 Regime banner** — blends index put/call (SPY/QQQ/IWM) with SPY net
+  gamma into a RISK-OFF → RISK-ON score. In a **RISK-OFF / negative-gamma** tape
+  the convergence bar auto-tightens (names need one extra agreeing leg before they
+  make the shortlist).
+- **🗓️ The Week Ahead** — the macro clock (CPI/NFP/FOMC etc., flagged by impact), a
+  **hinge-event** call-out, **⚠️ earnings landmines** (shortlist names that report
+  this week — a swing entry into a print is a coin-flip, tagged in the Edge column
+  and detail), and a one-line **sector tilt** (which sectors money leaned into/out of).
+- **📋 Track record** — a one-line forward hit-rate from `score_history.mjs` (below),
+  so the list carries its own honesty check.
+
+> **Mike's edge:** his best picks come from **Momentum Pullback names that have
+> ALREADY started recovering** — not the ones still buried in the hole. The script
+> has a dedicated **Recovery Watch** section that flags pullback names where the
+> turn is confirmed on the tape: **RSI reclaimed bullish (≥50 / bullish zone),
+> price back above the 21EMA, week no longer bleeding, A/B entry grade.** It
+> deliberately EXCLUDES deep-oversold names crossing up inside a downtrend — Ghost
+> Flow grades those SHORT (they're bounce candidates, not longs; MIDD/CRS on
+> 2026-07-19 were the lesson). It marks which recoveries already have bullish flow
+> and fund buying behind them. Always call this out — and if the list is empty in a
+> weak tape, say so plainly (nothing to chase beats a list of knives).
+>
+> **Four tiers of the turn (earliest → confirmed → graduated → tracking):**
+> 1. **🌅 Turning Up** — the EARLIEST catch. Computes StochK(14/3) off chart-data
+>    (screeners only give today's value) and fires when K just crossed **back up
+>    through 40** after dipping below — the moment the turn starts, before RSI/EMA
+>    confirm. FIG's 2026-06-30 reclaim at $18 (then +32%) is the archetype. Fresh
+>    cross within `RECAP_TURN_LOOKBACK` (default 2) sessions, K ≤ `RECAP_TURN_KMAX`
+>    (default 68, past which it's already extended). Scanned across **every**
+>    screener (not just pullback) so a FIG-class name is caught at the cross — it
+>    sat in csp-wheel before its 06-30 reclaim. A **Source** column shows which
+>    screener(s) surfaced each name. Earlier = better price but noisier; always
+>    tell Mike to confirm on Ghost Flow before sizing.
+> 2. **🔄 Recovery Watch** — the CONFIRMED tier above (RSI≥50 + above 21EMA + week
+>    not bleeding + A/B).
+> 3. **🎓 Graduated from Watch** — a name that was on the PERSISTENT 👁️ Watch list
+>    (dropped below 40 on a prior run) and just reclaimed 40. Shows was→now price,
+>    % since it went on watch, and days tracked. 🔥 = fresh cross (≤2 sessions).
+>    This is the payoff of tracking across runs: watch the drop, own the reclaim —
+>    the exact FIG catch.
+> 4. **👁️ Watch — persistent, cross-run** — names that FELL through 40. They land
+>    here and **stay across runs** (even after they drop off every screener; those
+>    show `off ✂️`) until they reclaim 40 (→ 🎓) or age out (`RECAP_WATCH_MAX_DAYS`,
+>    default 21). NOT actionable while here. The loop: drop → watch → cross back up
+>    → 🎓 Graduated. State lives in `runs/_watchlist.json`.
+>
+> Scan universe: the 40-line scan runs over the **full union of every screener's
+> names** (any name that landed on ≥1 screener this run, ~170 names), so a FIG-
+> class name is caught at its cross even if it's not a pullback name yet. New watch
+> slots are earned by **pullback** names only (keeps the store tight), but once on
+> the list a name is tracked purely off StochK — so it's never lost between the
+> drop and the reclaim, even after it leaves every screener. Set
+> `RECAP_DEBUG_WATCH=1` to log the store-only fetch each run.
 
 ## How to run it
 
@@ -53,26 +105,58 @@ isn't all $700+ mega-caps.
      `.env_agent_api`, hits **production** (Railway + TickerTrace), and presents a
      browser User-Agent (the edge WAF 403s the bare Node UA).
 
-   The script auto-renders charts as part of the run (it shells out to the skill's
-   Python venv — `.venv/bin/python scripts/render_chart.py`). No separate step.
+   **Weekly mode (Sunday night):** prefix `RECAP_WINDOW=week`:
+
+   ```bash
+   RECAP_WINDOW=week node .claude/skills/stock-recap/scripts/gather.mjs
+   ```
+
+   This widens the flow window to the whole week and tightens the premium/score
+   thresholds (weekly flow is noisier), and re-titles the report **"Sunday Setup —
+   Week Ahead."** The regime gate + week-ahead calendar render in either mode, but
+   they're what make the weekly run a real Sunday list. Default (no env) is the
+   daily `today` recap.
+
+2. **Cron / commit-to-history** — for the scheduled daily run use the wrapper:
+
+   ```bash
+   node .claude/skills/stock-recap/scripts/run_and_commit.mjs
+   ```
+
+   It runs `gather.mjs`, snapshots the output into the **git-tracked** `history/`
+   dir — `history/<YYYY-MM-DD>.md` (full report), `history/<YYYY-MM-DD>.json`
+   (compact shortlist + health + watch-list), and `history/_watchlist.json` (the
+   persistent store snapshot) — then `git commit`s ONLY those paths (pathspec-
+   restricted, so the rest of the working tree is never swept in) and **pushes** to
+   origin (push failure is non-fatal — the commit stays saved locally). Same-day
+   reruns overwrite the day's files; git keeps the diff history. The
+   run dirs under `runs/` stay gitignored; `history/*.json` is un-ignored via a
+   `.gitignore` negation. Disclaw cron **`stock-recap daily (commit history)`**
+   (job `8f0675b4`, `0 17 * * 1-5` — weekday 5pm ET, post-close) invokes this.
 
 2. **Read the generated `report.md`** (the path is in the script's final output).
 
-3. **Open every chart PNG** listed in the report's **"📉 Charts rendered"**
-   section with the Read tool and look at each one. The chart is 90-day candles +
-   EMA 8/21/55 + SMA200 + volume + RSI. For each, judge: trend direction and
-   strength, where price sits vs the fast EMAs (pullback to support vs extended),
-   any structure (breakout, base, blow-off/exhaustion wick, lower-high rollover).
-   The visual read often **overrides the indicator table** — e.g. a name can rank
-   high on flow but the chart shows a parabolic blow-off you should not chase.
+3. **Reading the charts — use Ghost Flow, not our own render.** This skill does
+   **not** produce chart PNGs. Mike confirms the visual on **Ghost Flow**
+   (his TradingView indicator), which encodes the whole decision — GRADE, W GATE,
+   FLOW (CMF), SQUEEZE, %R EXHAUST, VOL PREMIUM, ADX/RSI, BOUNCE, ATR-based RISK
+   sizing, and gamma walls on the price axis — far past what a bare candle+EMA
+   render can show. When presenting the recap, tell Mike which shortlist names to
+   **pull up on Ghost Flow** and what to look for (is the W-GATE open or WAIT, is
+   FLOW positive, is it bouncing or rolling). The data tables here are the screen;
+   Ghost Flow is the confirm. (A standalone `scripts/render_chart.py` still exists
+   for a quick manual PNG if ever needed, but the run no longer calls it.)
 
 4. **Present a tight, plain-English recap to Mike** — don't just dump the file.
    Lead with what matters:
    - The 2–4 **highest-conviction names** (most aligned legs, no conflict), with
-     their key technicals, **what their chart shows**, and why they're interesting.
-   - The **Reversal Watch** — any Momentum Pullback names turning up, especially
-     ones with flow 🟢 and fund ✅ confirmation (his setup). Use the charts to
-     confirm the turn is real.
+     their key technicals and why they're interesting — and which to **confirm on
+     Ghost Flow** before sizing.
+   - The **Recovery Watch** — Momentum Pullback names that have **already reclaimed**
+     (RSI back ≥50, above the 21EMA, week not bleeding), especially ones with flow 🟢
+     and fund ✅ confirmation (his setup). NOT deep-oversold names in a downtrend.
+     Point him at Ghost Flow to confirm (W-GATE open, FLOW positive, bouncing not
+     rolling). If it's empty, say so — nothing to chase beats a list of knives.
    - The **💵 Under-$100** picks — Mike specifically wants accessible names, not
      just $700+ mega-caps. Always surface a few.
    - A one-line **flow/fund tone** read (net bullish vs bearish premium; what the
@@ -84,13 +168,36 @@ isn't all $700+ mega-caps.
 5. Point Mike at the saved `report.md` for the full tables/charts, and mention the
    `raw/` JSON is there if he wants to dig in or backtest.
 
+## Scoring the track record (`score_history.mjs`)
+
+The recap grades itself. After runs have aged a forward window (default 5 trading
+days), run:
+
+```bash
+node .claude/skills/stock-recap/scripts/score_history.mjs
+```
+
+For every old-enough run it looks up each shortlist name's price N trading days
+later (same source the run used — `/api/agent/ticker/:symbol/chart-data`), computes
+the forward return, and writes `runs/<stamp>/scored.json` plus a rolling
+`runs/_scorecard.json`. The next `gather.mjs` run reads `_scorecard.json` back in
+and prints the **📋 Track record** line. It's **idempotent** (a scored run is
+cached; pass `--rescore` to redo) and best-effort. Buckets the results by
+**Reversal-Watch vs base** and by **leg count** — early data shows more agreeing
+legs → higher hit-rate (the convergence thesis, measured). Tune with `--horizon N`.
+Worth running weekly (e.g. before the Sunday pull) so the track record stays fresh.
+
 ## Tuning (optional env vars)
 
+- `RECAP_WINDOW=week` — weekly Sunday-night mode (default `today`). Widens the flow
+  window and tightens flow thresholds; re-titles to "Sunday Setup — Week Ahead."
 - `RECAP_SHORTLIST=20` — shortlist size (default 15).
 - `RECAP_MAX_PRICE=50` — cutoff for the under-$N affordable section (default 100).
+- `RECAP_FLOW_MIN_SCORE` / `RECAP_FLOW_MIN_PREMIUM` — flow filter floors (weekly
+  defaults to a higher premium floor since weekly flow is noisier).
 - `RECAP_TIMEOUT_MS=90000` — per-request timeout (default 60s).
-- `TD_API_URL` / `TICKERTRACE_API_URL` — override base URLs (e.g. point at
-  `http://localhost:3001` for a local backend).
+- `TD_API_URL` / `TICKERTRACE_API_URL` / `TD_DEV_API_URL` — override base URLs (the
+  last is the NEW dev plane backing regime + week-ahead; key in `.env_td_api`).
 
 ## Notes / gotchas
 
@@ -107,10 +214,8 @@ isn't all $700+ mega-caps.
   hedge-fund leg degrades gracefully and the rest still runs.
 - Each run is a fresh point-in-time snapshot; nothing is overwritten. Old run
   folders are safe to delete (they're gitignored under `.claude/`).
-- **Charts** are rendered from our own `/api/agent/ticker/:symbol/chart-data`
-  (90d OHLC + indicators) — no TradingView scraping, no session cookies, no
-  account risk, no third-party chart API. If the chart step fails, the data
-  recap still completes; the health table shows the render status.
-- **One-time setup** (already done on this machine): a Python venv lives at
-  `.venv/` with `mplfinance` + `pandas`. If it's missing (fresh clone), recreate:
-  `python3 -m venv .venv && .venv/bin/pip install mplfinance pandas`.
+- **No chart PNGs by design.** The visual read is Ghost Flow's job (it carries the
+  full decision panel + gamma walls); a bare candle render only duplicated what the
+  data tables already say, worse. `scripts/render_chart.py` + the `.venv/` are still
+  there for a one-off manual PNG (`.venv/bin/python scripts/render_chart.py TICKER`),
+  but the run never calls them — so there's no venv dependency for a normal run.
