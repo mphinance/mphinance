@@ -1678,6 +1678,17 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Track record update failed: {e}")
 
+        # ── Stage 15f: Scan Archive Logging ──
+        # Appends today's picks + full technical snapshot to the JSONL archive
+        # that dossier/backtesting/screen_health.py and pattern_matcher.py read
+        # (both already built, but sat dormant since nothing populated the archive).
+        print("\n[15f/16] SCAN ARCHIVE")
+        with timer.stage("Scan Archive"):
+            from dossier.backtesting.scan_logger import log_todays_picks, update_forward_returns
+            log_todays_picks()
+            update_forward_returns()
+            print(f"  ✓ Scan archive updated")
+
         # ── Sync regime history to docs/ for the Mood Ring widget (GH Pages) ──
         import shutil as _shutil
         _rh_landing = PROJECT_ROOT / "landing" / "data" / "regime_history.json"
