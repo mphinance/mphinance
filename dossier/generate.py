@@ -1078,6 +1078,23 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Sector leadership failed: {e}")
 
+    # ── Stage 10a5: Junk Rally Index ──
+    # Same `all_ranked` scan universe one more time, but asks a fifth
+    # question: not breadth/factor/shape/sector, but "is the leadership
+    # actually clean?" — aggregates quality_filter.py's per-ticker
+    # SPAC/penny/junk-bio/shell/ADR/recent-IPO flags across today's top
+    # scorers so a thin, junk-driven "rally" doesn't get mistaken for a
+    # healthy one.
+    try:
+        from dossier.quality_breadth import compute_quality_index, format_quality_text, record_quality
+        quality = compute_quality_index(momentum_picks.get("all_ranked", []))
+        quality["date"] = date
+        qb_path = PROJECT_ROOT / "landing" / "data" / "quality_breadth_history.json"
+        record_quality(qb_path, quality)
+        print(f"  {format_quality_text(quality)}")
+    except Exception as e:
+        print(f"  [WARN] Junk rally index failed: {e}")
+
     # ── Stage 10b: Confluence + Day-over-Day Migration (the synthesis) ──
     # Rank tickers by how many INDEPENDENT, directionally-agreeing legs fire
     # (trend ∪ triangle ∪ flow ∪ 13F), then detect what MATURED since yesterday.
@@ -1711,6 +1728,17 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
                 print(f"  ✓ Breadth history synced → docs/data/")
         except Exception as _sync_e:
             print(f"  [WARN] Breadth history sync failed: {_sync_e}")
+
+        # ── Sync quality breadth history to docs/ for the dashboard (GH Pages) ──
+        _qb_landing = PROJECT_ROOT / "landing" / "data" / "quality_breadth_history.json"
+        _qb_docs = PROJECT_ROOT / "docs" / "data" / "quality_breadth_history.json"
+        try:
+            if _qb_landing.exists():
+                _qb_docs.parent.mkdir(parents=True, exist_ok=True)
+                _shutil.copy2(_qb_landing, _qb_docs)
+                print(f"  ✓ Quality breadth history synced → docs/data/")
+        except Exception as _sync_e:
+            print(f"  [WARN] Quality breadth history sync failed: {_sync_e}")
 
         print("\n[16/16] GIT PUSH")
         print("  Committing to Git...")
