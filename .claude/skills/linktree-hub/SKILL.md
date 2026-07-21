@@ -36,9 +36,13 @@ build end to end.
 - Clone one locally to reuse the template shell:
   `gh repo clone mphinance/onetradewex-links /tmp/ref`
 
-The HTML shell is the same every time. **Only these change per person:** the
-CSS `:root` palette, identity block (name/tagline/handle/bio), the link cards,
-the socials, the QR target, and the disclosure/footer name.
+**Config-driven template (current):** `index.html` renders the whole page from
+`config.js` (a `window.SITE` object: identity, sections[].links[], socials[],
+footerName, disclosure) using a built-in SVG icon library. The friend edits
+`config.js` ONLY — no HTML/CSS. Per person you change: the `config.js` content
++ the CSS `:root` palette in index.html + the favicon SVG color + assets
+(profile.jpg, qr.png). The render script, layout CSS, and icon library are
+person-agnostic — never touch them.
 
 ## Step 1 — Scrape their linktr.ee
 
@@ -68,26 +72,25 @@ qr.make_image(fill_color='#07251f',back_color='white').save('$HOME/THEIRHANDLE-l
 
 No landscape photo? The template blurs `profile.jpg` as the background — fine.
 
-## Step 3 — Build index.html
+## Step 3 — Copy the template + fill config.js
 
-Copy the reference `index.html` and change ONLY:
+Copy the reference `index.html` **and `config.js`**. Then:
 
-1. **`:root` palette** — seed the primary from `backgroundHeroColor`. Pick a
-   *different* palette than the last build so each friend's page is distinct
-   (ballout = violet/ember, onetradewex = emerald/gold). Recolor: `--bg`,
-   `--deep`, `--emerald`/primary, `--emerald-bright`, `--gold`/accent, and the
-   matching `rgba(...)` values throughout (favicon SVG too).
-2. **Identity block** — `.name` (split a word into `<em>` for the italic
-   accent), `.llc` tagline, `.handle`, `.bio`. Verbatim bio from the scrape.
-3. **Link cards** — one `<a class="link">` per real link. First/best one gets
-   `class="link feat"` + a `Featured` tag. Keep TraderDaddy links with their
-   `?ref=` code intact. Group under `.rule` section headers.
-4. **Socials** — one `.soc` per platform (TikTok/IG/YouTube/X/Discord SVGs are
-   all in the reference).
-5. **Footer + disclosure** — swap the name. Keep the risk-disclosure block.
+1. **`config.js`** — the only content file. Set `identity` (name + nameEm for
+   the italic accent, tagline, handle, verbatim bio, avatar), `sections[]`
+   (heading + links, first/best link gets `featured:true`), `socials[]`,
+   `footerName`, `disclosure`. Each link's `icon` is a name from the built-in
+   library (brain/chart/discord/tiktok/instagram/youtube/x/link/cart/book/mail).
+   Keep TraderDaddy links with their `?ref=` code intact. Don't invent links.
+2. **`:root` palette in index.html** — seed the primary from
+   `backgroundHeroColor`. Pick a *different* palette than the last build so each
+   friend's page is distinct (ballout = violet/ember, onetradewex = emerald/gold).
+   Recolor `--bg`, `--deep`, primary, primary-bright, accent, and the matching
+   `rgba(...)` values throughout — plus the favicon SVG colors.
 
-Do NOT touch the animation/layout CSS or the ticker-tape script — they're
-person-agnostic.
+Do NOT touch the render script, layout/animation CSS, icon library, or the
+ticker-tape — they're person-agnostic. If a link needs an icon that isn't in
+the library, add one SVG to the `ICONS` map in index.html.
 
 ## Step 4 — Ship
 
