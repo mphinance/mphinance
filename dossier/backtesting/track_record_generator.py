@@ -29,8 +29,14 @@ OUTPUT_PATH = PROJECT_ROOT / "docs" / "backtesting" / "track_record.json"
 MIN_DAYS_FOR_VALIDATION = 7
 
 
-def _get_forward_returns(ticker: str, pick_date: str, price_at_pick: float) -> dict:
-    """Fetch forward returns (1d, 5d, 10d, 21d) from Yahoo Finance."""
+def _get_forward_returns(ticker: str, pick_date: str, price_at_pick: float = 0) -> dict:
+    """Fetch forward returns (1d, 5d, 10d, 21d) from Yahoo Finance.
+
+    The dossier summary files (docs/api/dossier-*.json) never populate a real
+    "entry" price (always 0 — see short_squeeze/momentum picks), so relying on
+    price_at_pick left every pick permanently unvalidated. Fall back to the
+    actual close on the pick date when no stored price is available.
+    """
     try:
         import yfinance as yf
         from dossier.utils.retry import retry
@@ -48,13 +54,17 @@ def _get_forward_returns(ticker: str, pick_date: str, price_at_pick: float) -> d
             return {}
 
         prices = hist["Close"].tolist()
+        base_price = price_at_pick if price_at_pick > 0 else prices[0]
+        if base_price <= 0:
+            return {}
+
         returns = {}
 
         # Calculate forward returns at various horizons
         for label, offset in [("fwd_1d", 1), ("fwd_5d", 5), ("fwd_10d", 10), ("fwd_21d", 21)]:
             if len(prices) > offset:
                 fwd_price = prices[offset]
-                pct_return = round(((fwd_price - price_at_pick) / price_at_pick) * 100, 2)
+                pct_return = round(((fwd_price - base_price) / base_price) * 100, 2)
                 returns[label] = pct_return
 
         return returns
@@ -150,11 +160,10 @@ def generate_track_record() -> dict:
 
             if days_ago >= MIN_DAYS_FOR_VALIDATION:
                 price = entry.get("entry_price", 0)
-                if price > 0:
-                    returns = _get_forward_returns(entry["ticker"], entry["date"], price)
-                    entry.update(returns)
-                    if returns:
-                        validated_count += 1
+                returns = _get_forward_returns(entry["ticker"], entry["date"], price)
+                entry.update(returns)
+                if returns:
+                    validated_count += 1
         except Exception:
             continue
 
