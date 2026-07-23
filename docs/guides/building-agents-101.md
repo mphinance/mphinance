@@ -110,4 +110,8 @@ Once that clicks, once you *see* it read, decide, act, the matrix stops looking 
 
 Build that one agent. The rest is just scale.
 
+---
+
+Want to see all of this running in a real setup? [Agents in the Wild](building-agents-examples.html) walks through my actual three-agent mesh: the real agent files, how they share one brain through a git repo, and the scheduled runs that give them a heartbeat.
+
 ~ Michael
