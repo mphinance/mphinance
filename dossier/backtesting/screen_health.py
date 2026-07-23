@@ -201,6 +201,23 @@ def print_dashboard(health: dict):
                   f"({p5.get('avg_return', 0):+.2f}%, n={p5.get('n', 0)})")
 
 
+def write_health_json(window: int = 20) -> dict:
+    """
+    Compute health metrics and write docs/api/screen-health.json.
+
+    Always writes a file, even with zero validated entries, so the
+    screen-health dashboard page has something to fetch from day one
+    instead of 404ing until the scan archive accumulates a window's worth
+    of forward returns.
+    """
+    entries = _load_validated_entries()
+    health = compute_health(entries, window=window)
+    HEALTH_API.parent.mkdir(parents=True, exist_ok=True)
+    with open(HEALTH_API, "w") as f:
+        json.dump(health, f, indent=2)
+    return health
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="Screen Health Monitor")
@@ -208,21 +225,18 @@ def main():
     parser.add_argument("--window", type=int, default=20, help="Rolling window size")
     args = parser.parse_args()
 
+    if args.json:
+        health = write_health_json(window=args.window)
+        print(f"✅ Screen health written to {HEALTH_API}")
+        return
+
     entries = _load_validated_entries()
     if not entries:
         print("❌ No validated entries in scan archive yet")
         return
 
     health = compute_health(entries, window=args.window)
-
-    if args.json:
-        # Write API endpoint
-        HEALTH_API.parent.mkdir(parents=True, exist_ok=True)
-        with open(HEALTH_API, "w") as f:
-            json.dump(health, f, indent=2)
-        print(f"✅ Screen health written to {HEALTH_API}")
-    else:
-        print_dashboard(health)
+    print_dashboard(health)
 
 
 if __name__ == "__main__":
