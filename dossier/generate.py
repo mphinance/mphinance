@@ -1706,6 +1706,18 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             update_forward_returns()
             print(f"  ✓ Scan archive updated")
 
+        # ── Stage 15g: Screen Health Monitor ──
+        # Rolling win-rate per screen/grade/regime, now that Stage 15f is
+        # actually populating the scan archive it reads from. Writes
+        # docs/api/screen-health.json for the screen-health dashboard page.
+        print("\n[15g/16] SCREEN HEALTH")
+        try:
+            from dossier.backtesting.screen_health import write_health_json
+            health = write_health_json()
+            print(f"  ✓ Screen health updated ({health['total_validated']} validated entries)")
+        except Exception as e:
+            print(f"  [WARN] Screen health update failed: {e}")
+
         # ── Sync regime history to docs/ for the Mood Ring widget (GH Pages) ──
         import shutil as _shutil
         _rh_landing = PROJECT_ROOT / "landing" / "data" / "regime_history.json"
