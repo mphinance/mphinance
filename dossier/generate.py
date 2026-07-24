@@ -784,6 +784,23 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Mood ring history failed: {e}")
 
+    # ── Stage 4a2: Volatility Risk Premium (VIX vs. realized SPY vol) ──
+    # market_regime.py and sf_market_weather.py both classify off VIX's
+    # absolute level/term structure; this asks a different question — is
+    # implied vol actually pricing MORE movement than SPY has realized
+    # lately, or less. Feeds options-selling (CSP/covered-call) conviction
+    # directly. Reuses today's VIX read to avoid a duplicate fetch.
+    try:
+        from dossier.vol_risk_premium import fetch_and_compute_vrp, format_vrp_text, record_vrp
+        vrp_data = fetch_and_compute_vrp(vix_level=market_regime.get("vix", {}).get("vix_level"))
+        vrp_data["date"] = date
+        vrp_path = PROJECT_ROOT / "landing" / "data" / "vrp_history.json"
+        if vrp_data.get("available"):
+            record_vrp(vrp_path, vrp_data)
+        print(f"  {format_vrp_text(vrp_data)}")
+    except Exception as e:
+        print(f"  [WARN] Volatility risk premium failed: {e}")
+
     # ── Stage 4b: ROIC Fortress Filter ──
     print("\n[4b/16] ROIC FORTRESS QUALITY FILTER")
     fortress_results = {}
@@ -1751,6 +1768,17 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
                 print(f"  ✓ Quality breadth history synced → docs/data/")
         except Exception as _sync_e:
             print(f"  [WARN] Quality breadth history sync failed: {_sync_e}")
+
+        # ── Sync VRP history to docs/ for the dashboard (GH Pages) ──
+        _vrp_landing = PROJECT_ROOT / "landing" / "data" / "vrp_history.json"
+        _vrp_docs = PROJECT_ROOT / "docs" / "data" / "vrp_history.json"
+        try:
+            if _vrp_landing.exists():
+                _vrp_docs.parent.mkdir(parents=True, exist_ok=True)
+                _shutil.copy2(_vrp_landing, _vrp_docs)
+                print(f"  ✓ VRP history synced → docs/data/")
+        except Exception as _sync_e:
+            print(f"  [WARN] VRP history sync failed: {_sync_e}")
 
         print("\n[16/16] GIT PUSH")
         print("  Committing to Git...")
