@@ -4,15 +4,15 @@
 
 ![How to make your own MCP trading agent](hero.png)
 
-An AI that can read the market is a research assistant. An AI that can place an order is a liability. The entire craft of building a trading agent is the distance between those two sentences, and almost nobody talks about the distance. They talk about the order.
+An AI that can read the market is a research assistant. An AI that can place an order is a liability. The entire craft of building a trading agent lives in the distance between those two sentences. This piece is about the distance, not the order.
 
-Everyone wants the part where the robot buys the stock. That part is easy. It is three lines of config. The reason you do not already have a bot trading your account is not that the buy button is hard to wire. It is that wiring the buy button to a thing that occasionally makes stuff up is how you wake up short **40 contracts** of some ticker you have never heard of, wondering what the hell happened.
+The part where the robot buys the stock is the easy one. It is three lines of config. The reason you do not already have a bot trading your account is not that the buy button is hard to wire. It is that wiring the buy button to a thing that occasionally makes stuff up is how you wake up short **40 contracts** of some ticker you have never heard of, wondering what the hell happened.
 
 So here is how I actually connect an AI to my brokerage. What I let it touch, what I never let it touch, and the boring scaffolding that stands between a good idea and a margin call.
 
 Two quick things first, both free, both mine. If you have never built an agent at all, start with the plain-English primer on the three pieces every agent is made of: [Building Agents: The Part Nobody Explains](https://mphinance.github.io/mphinance/guides/building-agents-101.html). If you want to see real ones running, here are five working examples pulled straight from my own three-agent mesh: [Agents in the Wild: Real Examples](https://mphinance.github.io/mphinance/guides/building-agents-examples.html). Those two are the ground floor. This piece is the trading floor.
 
-Let me start with the piece everyone gets wrong: what MCP even is.
+Let me start with the piece that is easy to get wrong: what MCP even is.
 
 ## MCP is a USB port for your AI
 
