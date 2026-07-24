@@ -86,27 +86,11 @@ A skill, in my setup, is a folder with a playbook in it. A little bit of frontma
 
 Here is the actual entry gate out of my 0DTE skill. Every line has to be true at once, or there is no trade:
 
-```
-Ghost Alpha Grade >= B on SPY 5min
-AND signal = mega_bull OR mega_bear
-AND RVOL > 1.2
-AND time 9:30-11:30 AM ET
-AND trend_age < 15 bars
-AND no open 0DTE position
-```
+![0DTE entry gate: all six conditions must be true or there is no trade](entry-gate.png)
 
 And the exit cascade, in strict priority order, first match wins:
 
-```
--50% loss              -> SELL (hard stop, non-negotiable)
-grade drops to D/F     -> SELL (thesis is dead)
-signal flips bull/bear -> SELL (wrong side)
-2:30 PM ET             -> SELL (theta cliff)
-+100%                  -> SELL (take the double)
-+30% and grade -> C    -> SELL (edge is fading)
-+50% after 1 PM        -> SELL (afternoon theta)
-after 12 PM and +/-10% -> SELL (dead money, free the slot)
-```
+![0DTE exit cascade: eight rules in priority order, first match wins](exit-cascade.png)
 
 Read that exit list again and notice what is missing. There is no "use your judgment" line. The model is not deciding whether to sell. It is walking the ladder and reporting the first rung that trips. That is the entire difference between an agent you can sleep next to and one you cannot.
 
