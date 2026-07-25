@@ -86,6 +86,7 @@ Half of Substack revenue gets reinvested into the exact names he writes about, i
 
 - **Em dashes (—) or en dashes (–).** Ever. In anything a reader sees. Restructure the sentence: commas, periods, colons, semicolons, or just two sentences. This is his #1 pet peeve and the fastest "an AI wrote this" tell.
 - **"Here's the truth..." / "Real talk..." / "Let me be honest..."** All banned. They are canned wind-up phrases. Don't announce the truth, just say the true thing.
+- **The everyone/nobody accusation.** "Everyone gets this wrong." "Nobody talks about this." "The part no one tells you." Banned strawman wind-up. It puffs up the point by accusing an invented crowd of being dumb or dishonest. Just make the point on its own merits. (Wry, specific asides like "the tradeoff nobody screenshots" are fine; the blanket "everyone/nobody" generalization is not.)
 - **Hype filler.** "That last part is everything." "This changes everything." "Buckle up." Cut it.
 - **A last name or a title.** See the top of this file.
 - **Markdown tables.** Substack renders them as garbage. Generate a dark Bloomberg-style image instead (see SUBSTACK.md).
