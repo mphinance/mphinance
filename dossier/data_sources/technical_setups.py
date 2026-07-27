@@ -13,6 +13,7 @@ import yfinance as yf
 import pandas as pd
 
 from dossier.utils.indicators import _ema, _sma, _rsi, _safe
+from dossier.utils.validate_api import check_yfinance_history
 
 
 def _stochastic(high, low, close, k_period=14, d_period=3):
@@ -46,10 +47,13 @@ def analyze_setup(ticker: str) -> dict | None:
     try:
         stock = yf.Ticker(ticker)
         df = stock.history(period="6mo")
-        if df.empty or len(df) < 90:
-            return None
     except Exception as e:
         print(f"    [ERR] {ticker}: {e}")
+        return None
+
+    ok, reason = check_yfinance_history(df, ticker, min_rows=90)
+    if not ok:
+        print(f"    [WARN] {reason}")
         return None
 
     close = df["Close"]
@@ -265,7 +269,11 @@ def generate_setups(tickers: list[str], max_setups: int = 6) -> list[dict]:
     setups = []
 
     for ticker in tickers[:max_setups * 2]:  # Oversample to filter
-        result = analyze_setup(ticker)
+        try:
+            result = analyze_setup(ticker)
+        except Exception as e:
+            print(f"    [ERR] {ticker}: unexpected failure in setup analysis: {e}")
+            continue
         if result:
             setups.append(result)
 
