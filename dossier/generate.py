@@ -1112,6 +1112,21 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Junk rally index failed: {e}")
 
+    # ── Stage 10a6: Tape Extension Index ──
+    # Same `all_ranked` scan universe one more time, but asks a sixth
+    # question: not breadth/factor/shape/sector/quality, but "how stretched
+    # is the tape" — % of names already overbought (RSI + Stoch both pinned
+    # high, chase risk) vs oversold (capitulation cluster, bounce candidates).
+    try:
+        from dossier.extension_index import compute_extension_index, format_extension_text, record_extension
+        extension = compute_extension_index(momentum_picks.get("all_ranked", []))
+        extension["date"] = date
+        ei_path = PROJECT_ROOT / "landing" / "data" / "extension_index_history.json"
+        record_extension(ei_path, extension)
+        print(f"  {format_extension_text(extension)}")
+    except Exception as e:
+        print(f"  [WARN] Tape extension index failed: {e}")
+
     # ── Stage 10b: Confluence + Day-over-Day Migration (the synthesis) ──
     # Rank tickers by how many INDEPENDENT, directionally-agreeing legs fire
     # (trend ∪ triangle ∪ flow ∪ 13F), then detect what MATURED since yesterday.
