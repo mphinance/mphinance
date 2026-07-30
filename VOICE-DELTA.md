@@ -9,16 +9,17 @@ fingerprint as what he keeps.
 
 **Read this first (honest constraints):**
 
-- **N = 7 clean pairs** (4 anchors + 2 held-out captured 2026-06-25, + 1 live
-  ship captured 2026-07-07).  Still not statistics, but enough to test whether
-  the rules below GENERALIZE to pairs they weren't derived from.  Every rule is
-  followed by real receipts; if a rule has one receipt, it's a hypothesis, not
-  a law.
+- **N = 13 clean pairs** (4 anchors + 2 held-out captured 2026-06-25, + 1 live
+  ship captured 2026-07-07, + 6 new ships captured 2026-07-20).  Still not
+  statistics, but enough to test whether the rules below GENERALIZE to pairs they
+  weren't derived from.  Every rule is followed by real receipts; if a rule has
+  one receipt, it's a hypothesis, not a law.
 - **The 07-07 pair is the first Business-category ship** (the daddy-* SDK
   funnel manifesto).  The corpus was trading-heavy; watch whether these rules
-  hold on non-trading posts.  Early read: immediacy, self-correcting
-  parentheticals, and the meta-transition cut all fired again — the voice is
-  content-independent.
+  hold on non-trading posts.  The 6 new pairs span Mindset, Business, and
+  trading-hybrid content — the voice rules are holding across categories.  A3
+  (self-correction), C1 (meta-transition cut), and bold-markdown strip all fired
+  in every one of the 6 new pairs — the voice is content-independent.
 - The corpus and the fetcher that rebuilds it live in
   [`docs/voice-delta/`](docs/voice-delta/).  The accuracy report is
   [`/ACCURACY.md`](ACCURACY.md).
@@ -31,6 +32,12 @@ fingerprint as what he keeps.
 
 | Date | Given draft | Shipped | Wall | Role |
 |------|-------------|---------|------|------|
+| 07-11 | "How to Accidentally Start a Religion (Or a Bull Market)" | "The Church of Number Go Up" | free | new |
+| 07-08 | "📊 What Does Your $OPEN Rate Want You to Write?" | "What Does Your $OPEN Rate Want You to Write?" | free | new |
+| 07-04 | "Someone Asked Me to Read Their Substack. So I Sent an AI." | "…So I Sent an AI (Yes I read it too)" | free | new |
+| 07-02 | "I Got Out-Recruited By **My Own Reader**. Now **I'm** Opening the Door." | "…By **Another Writer**. Now **We're** Opening the Door." | free | new |
+| 06-27 | "You're Not Drowning. You're Fighting the Wave." | same title | free | new |
+| 06-26 | "Stop Vibing Your AI Voice File. Measure It." | "Stop Vibing Your AI Voice File. Measure It. (Write Better With AI)" | free | new |
 | 07-07 | "Give Away the App. Sell the Key." | same title | free | live (Business) |
 | 06-23 | "Don't Trust Me. Trust the Tape." | same title | free | held-out |
 | 06-22 | "Three Questions Before You Buy Any Pullback" | same title | paid_tease | held-out |
@@ -44,16 +51,20 @@ fingerprint as what he keeps.
 ## How he rewrites openings & titles
 
 **1. Title: kill the generic noun, name the payoff.** The machine titles the
-mechanism; Michael titles the thing the reader actually wants.
+mechanism; Michael titles the thing the reader actually wants.  Biggest transformation
+yet came from accidental-religion — machine explains the concept, Michael names the meme.
 - `The Machine Found Five Stocks. I'd Run From One.` → `…Four Small Cap Multi-Baggers & One I'd Run From` (generic "Stocks" → the benefit, "Multi-Baggers")
 - `What I build after the market closes` → `BUILDING AFTER MARKET CLOSE WITH KIDS` (the kid is the hook, so it goes in the title)
+- (07-11) `How to Accidentally Start a Religion (Or a Bull Market)` → `The Church of Number Go Up` (machine explains the metaphor; Michael names the meme — the whole argument compressed to a punchline)
+- (07-02) `I Got Out-Recruited By My Own Reader` → `…By Another Writer` ("My Own Reader" is possessive and diminishing; "Another Writer" is collegial, peer-to-peer)
+- (06-26) `Stop Vibing Your AI Voice File. Measure It.` → adds `(Write Better With AI)` as SEO parenthetical in title itself
 
 **2. Collapse time to "last night / this morning."** The machine writes vague past;
 he compresses to immediate — even at the cost of literal accuracy.  **Held-out
 06-22 and 06-23 both repeated this:** `I almost bought all three of these last
 week` → `I almost listed a Buy on all three of these today`; `Last week that
 was an NVDA 190 put` → `Today that was an $190 put`.  Most-replicated rule in
-the corpus — fires in 5/6 pairs.
+the corpus — fires in 7/9 dateable pairs.
 - `This one is about a night.` → `This one is about last night.`
 - `A few weeks ago my almost-eight-year-old asked` → `Last night my almost-eight-year-old asked`
 - `Last month I looked at four screeners` → `Last night I looked at four of the screeners`
@@ -63,6 +74,8 @@ the corpus — fires in 5/6 pairs.
 - (07-07) `First commit went in at 3:26 in the morning. The last one went in that same afternoon. In one day` → `First commit went in at 3:26 this morning, and I'm just now taking a break to tell you about some of them` (past → live, "this morning", writing mid-build)
 - (07-07) `I vibe-coded the whole family in a day.` → `…in the last 8 hours.` (round "a day" → the specific, load-bearing number)
 - (07-07) `I'm barely one.` → `I'm barely one anymore.` (the extra word is the whole self-deprecating arc)
+- (06-26) `Someone I ran into yesterday told me` → `Someone I ran into Thursday told me` (already immediate; he replaced vague "yesterday" with the named day — more specific than the machine's already-immediate phrasing)
+- (06-27) `I was reading a Brandon Sanderson book the other night` → `I was reading a Brandon Sanderson today, the 5th in the Stormlight series` ("the other night" → "today"; date compression + added specificity)
 
 **3. Add the stakes — the *why* under the line.**
 - `twelve browser tabs and a quiet panic.` → `…a quiet panic to see if I can get my trades in before others got into the office.`
@@ -87,6 +100,7 @@ is the densest tell. He dulls his own sentence rather than overclaim.  **The
 detector under-counts this one** (R3 fires 0/6 in the rule matrix because the
 regex only catches parenthetical hedges; many real self-corrections are bare
 clauses like "and I couldn't find it" or "she's getting upgraded everyday").
+Fired in all 6 new pairs in some form.
 - `…a name my other friend was already loaded in. Cold. No idea it was in his book.` → adds `(that's not true, but the screener didn't know)`
 - `the machine cannot do.` → `the machine cannot do, mostly.`
 - `That was every single screener` → `That was most of the screeners`
@@ -96,25 +110,40 @@ clauses like "and I couldn't find it" or "she's getting upgraded everyday").
 - (06-22 held-out) `you do not buy it.` → `you do not buy it - yet.`
 - (07-07) `he gives me the look.` → `I still get the look (at least I'm pretty sure I do - we are virtual after all).` (undercuts his own certainty; spaced-hyphen aside)
 - (07-07) `once he stops giving me the look.` → `…once he stops giving me the look (he already has - this time, I actually asked permission!).` (won't let the "co-founder resists me" frame stand unqualified — confesses he already got the yes)
+- (07-04) title: `…So I Sent an AI.` → `…So I Sent an AI (Yes I read it too)` — self-correction moved all the way to the title; pre-empts the "you just outsourced it" read before the post even begins
+- (07-04) `Those numbers don't tell you much.` → `Those numbers don't tell you much - yet.` (same pattern as 06-22: won't let a dismissive read stand without qualifying it)
+- (07-04) `I told Sam: "Tell me who this person is."` → `"Go learn who my good bud David is!"` — softens the clinical framing, reveals the relationship
+- (07-04) `what came back` → `what came back (most of which I already knew, but it's been a minute and was nice to catch up!)` — parenthetical undercuts the "AI did the research" arc; admits he already knew the person
+- (07-08) `I built a free tool` → `I updated a free tool` (built → updated; more accurate about something that already existed)
+- (07-11) `I believe in a higher power` → `I believe in a higher power, most of the time I'm willing to call 'him' God` (hedges on what to call the higher power; refuses the clean theist claim)
+- (07-02) `In nine weeks JT brought in 122 signups. 66 are still paying today.` → `over 100 signups, and at least half of them are still paying today. About 20% more than me on the first — about double me the latter.` (exact numbers softened to approximations; won't overclaim data he may not be 100% sure of)
 
 **A4. Wires the post into the network.** The machine writes in a vacuum; he adds the
 restack bait and the product clicks.
 - ADD `Math & Cynce had a great macro write-up yesterday - go read his if you're not sure what's going on.`
 - ADD `don't forget to follow https://x.com/TraderDaddyBot - she's getting upgraded everyday!` + a direct `traderdaddy.pro/screeners/…` link under each screener.
+- (07-02) closing: `go follow Hidden Gems Research while you are here. He earned the plug twice now.` — the affiliate story IS the shoutout; the machine's draft made the plug transactional ("thanks for reading anyway"); shipped made it a referral with a reason
 
 **A5. The self-deprecating tangent.** An unprompted opinion that undercuts himself.
 The machine stays on task; Michael wanders and deflates.
 - ADD `It's called Crossover, because that's what Sam named it because I can't be bothered to actually name the things I create. Side note - if you're one of those that will dwell on a name or colors or logo for longer than the actual product took you to make - for the love of God let AI do it.`
 - ADD (after the FIRE "one more year" math) `Except I can't measure sanity in a little chart.`
+- (07-02) `I am opening the affiliate program up.` → `I am opening the affiliate program up - kinda without the other founders' permission. That's how we roll. I hope :).` (undercuts his own authority before the pitch even lands; the smiley signals he's not taking himself seriously)
+- (07-11) mid-analysis: `Sorry for letting everyone know about the next part, Illuminati.` (apologizes to a fictional secret society in the middle of a serious theological argument — classic unprompted deflation)
 
 ---
 
 ## What he CUTS
 
 **C1. The meta-transition / windup** — the announce-before-you-say-it line.
+Fired in 4 of the 6 new pairs.
 - `Now the confession. This isn't a Bloomberg terminal…` → `This isn't a Bloomberg terminal…`
 - `Here is the part that made me sit up. I built this machine…` → `So here's the conviction. I built this machine…`
 - (07-07) cut the two windup lines whole: `So here's the argument I've been losing at dinner, finally written down as the thing that wins it.` and `That's the whole thesis. The rest of this is proof that it's already running.` — he refuses to announce the thesis before making it; the claims just start.
+- (07-08) `Now the part you can actually use.` → CUT; body continues immediately
+- (06-27) `I want to talk about the weaknesses and the unfortunate situations everybody tells you to "turn into strengths." Because that advice is half a lie, and the missing half is the only part that works. And the missing half is the wave.` → CUT; replaced with `Lemonade out of lemons ahead.` (four-word tease replaces a whole meta-explanation of what the post is about to say)
+- (07-11) `Here's the honest divergence, and it's the part I want you to sit with.` → CUT; the divergence lands without announcing itself
+- (07-02) opening urgency paragraph about founder-tier early terms → CUT from the top; pitch details moved to body, opening leads with the story
 
 **C2. The doubled metaphor / the extra clause.** Keeps one image, kills the spare.
 - cut the whole "casting director" paragraph (he already had "light money on fire")
@@ -131,6 +160,7 @@ the confession goes.
 - cut entirely: `If you have ever done a fourth step… start writing down what actually happened.`
 - (06-23 held-out) cut `I'm a felon in recovery who builds his own trading tools…`; kept the closing recovery-line as a metaphor.
 - (06-22 held-out) cut `In the rooms they have a line for exactly this: do not just do something, sit there.` — same pattern: AA-room jargon dies, the wisdom would have to be rephrased to survive.
+- (07-11) cut the full closing recovery paragraph: `Recovery taught me this before markets did. Half the wreckage in my life came from stories I swallowed without pulling a single thread… Getting sober was mostly learning to read my own primary sources. The market just charges tuition for the same lesson. Put the question mark back on. Every time.` — this was the machine's most eloquent recovery paragraph yet, and it was cut entirely; the piece ended at the thesis statement. The individual recovery references woven into the body of the piece (urge surfing, relapse as data, the felony) all SURVIVED — it's the formal closing sermon that goes, not the lived detail.
 
 ---
 
@@ -138,10 +168,12 @@ the confession goes.
 
 - **Sam is "her."** Every Sam pronoun the machine wrote as male got flipped: `feel his stomach drop` → `her`, `his best C-3PO` → `her`, `He just did` → `She just did`, `he would actually take` → `she would actually take`. (The TraderDaddyBot is "she" too.)
 - **`the` → `my`** (ownership): `the entire job` → `my entire job`; `The only knock` → `My only knock`.
-- **Solo `I/my` → branded `Phund/we`** when it's about the account: `my own brokerage account… what I'm holding` → `the Momentum Phund's brokerage account… what we're holding`.
+- **Solo `I/my` → branded `Phund/we`** when it's about the account or company: `my own brokerage account… what I'm holding` → `the Momentum Phund's brokerage account… what we're holding`; (07-02) `rearranged a third of my business` → `our business`; `Now I'm Opening the Door` → `Now We're Opening the Door` (title-level).
 - **Generic → named brand:** `options flow in another` → `TradingView in another`; `I built a button` → `The Claude button`.
 - **Disclaimer moves to the TOP and becomes a bit:** bottom-of-post `Not financial advice…` → top, rewritten: `Hi! I'm a super legit "not financial advice" disclaimer that you've read so you're not going to sue me now. Good talk.`
 - **Typos ship.** `my my uncle`, `it slightly up` survive (07-07 added `an TraderDaddy SDK` and `TL,DR;`). He does not sand the post to corporate-smooth; the small imperfections read as a human was here.
+- **`**bold**` markdown → plain text.** Machine uses `**bold**` for emphasis and sub-headers throughout; Michael ships without it — he writes in Substack's native WYSIWYG editor where markdown bold doesn't render as intended. Fired in all 6 new pairs without exception. The practical rule: never write markdown bold in the draft; use sentence-level emphasis or structural formatting instead.
+- **Emoji stripped from titles.** Machine wrote `📊 What Does Your $OPEN Rate Want You to Write?`; ship dropped the 📊. (07-08 only — single pair, but combined with the no-bold rule: machine decorates, Michael strips.)
 - **Direct reader-address, unhedged.** He turns third-person copy at the reader mid-line: `a sales team that works for free.` → `…for free. I hope (hint, that's you).` and closes the piece by talking to the co-founder AND the reader: `Art, I solved it. Again.` → `…Again. You might wanna pick up the mic I'm about to drop.` **(07-07 only — single pair, not yet a law.)**
 - **Adds the credibility clause on the product.** `the thing that's actually expensive to build and run.` → `…to build and run, and were designed by a team of professional traders with years of experience.` — when the post is the funnel, he slips the sell in as a subordinate clause, never a sentence of its own. **(07-07 only — watch on next Business post.)**
 
@@ -203,10 +235,18 @@ rules for content they cannot generate; we measure how well they edit.
 
 ## Verdict
 
-Seven pairs, the signal still **dense and consistent**: the machine builds a clean
-scaffold and a few keeper lines; you spend your edit budget on **honesty
-(self-correction), warmth (physical metaphors), immediacy (time compression), and
-distribution (shoutouts, plugs, canon)**.  Now numeric.
+Thirteen pairs, the signal **dense, consistent, and now cross-category**: the
+machine builds a clean scaffold and a few keeper lines; you spend your edit
+budget on **honesty (self-correction), warmth (physical metaphors), immediacy
+(time compression), and distribution (shoutouts, plugs, canon)**.
+
+Six new pairs (06-26 through 07-11) span Mindset, Business, and trading-hybrid
+content — none of them the same category as the original anchors.  Three rules
+replicated in all six: A3 (self-correction in some form), C1 (meta-transition
+cut), and the new bold-markdown strip.  The title-transform rule (R1) produced
+its most dramatic example yet in 07-11 (`How to Accidentally Start a Religion`
+→ `The Church of Number Go Up`).  The I→we / solo→branded rule extended to
+title level for the first time in 07-02.
 
 The held-out pairs replicated four of the strongest rules verbatim (immediacy,
 self-correction style asides, recovery-jargon cut, Phund/we conversion).  The
@@ -215,4 +255,4 @@ first Business ship (07-07) replicated three more on non-trading content
 the voice travels.  When someone says "VOICE.md isn't accurate," this is the
 answer: pair the drafts against the ships, run the harness, point at the Δ.
 
-_— Voice-Delta Agent v0.3_
+_— Voice-Delta Agent v0.4 (2026-07-20)_
