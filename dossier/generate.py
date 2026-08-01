@@ -1127,6 +1127,19 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Tape extension index failed: {e}")
 
+    # ── Stage 10a7: Market Internals Dashboard Feed ──
+    # Stages 10a-10a6 each append today's reading to their own history file
+    # under landing/data/ — nothing reads them back as a series. This combines
+    # all six into one JSON so docs/market-internals.html can chart the trend
+    # instead of just today's snapshot. Pure aggregation, no new computation.
+    try:
+        from dossier.market_internals import write_internals_api
+        internals_path = PROJECT_ROOT / "docs" / "api" / "market-internals.json"
+        write_internals_api(internals_path, PROJECT_ROOT / "landing" / "data")
+        print("  📡 Market internals feed updated")
+    except Exception as e:
+        print(f"  [WARN] Market internals feed failed: {e}")
+
     # ── Stage 10b: Confluence + Day-over-Day Migration (the synthesis) ──
     # Rank tickers by how many INDEPENDENT, directionally-agreeing legs fire
     # (trend ∪ triangle ∪ flow ∪ 13F), then detect what MATURED since yesterday.
