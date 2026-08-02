@@ -102,4 +102,4 @@ This week alone:
 
 > **Alpha Dossier** — Daily AI-generated trading intelligence at [mphinance.github.io/mphinance](https://mphinance.github.io/mphinance/)
 >
-> **TraderDaddy Pro** — AI-powered trading dashboard at [traderdaddy.pro](https://www.traderdaddy.pro/register?ref=8DUEMWAJ)
+> **TraderDaddy Pro** — AI-powered trading dashboard at [traderdaddy.pro](https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack)

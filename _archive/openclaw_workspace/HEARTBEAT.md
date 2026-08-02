@@ -86,7 +86,7 @@ Promote Michael's products on Twitter/X as @mphinance.
 
 | Product | URL |
 |---------|-----|
-| TraderDaddy Pro | <https://www.traderdaddy.pro/register?ref=8DUEMWAJ> |
+| TraderDaddy Pro | <https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack> |
 | TickerTrace Pro | <https://www.tickertrace.pro> |
 | Alpha Dossier | <https://mphinance.github.io/mphinance/> |
 | Ghost Blog | <https://mphinance.com/blog/> |

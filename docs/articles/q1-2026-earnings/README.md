@@ -183,7 +183,7 @@ I don't have a dev team. I have a caffeine addiction and an AI copilot that does
 - **Ghost Alpha V2 indicators.** 12-signal TradingView suite with institutional signal detection (FVGs, liquidity sweeps, volume profile).
 - **Alpha.HUD widget system.** 8 embeddable Bloomberg-style widgets for any website.
 - **GitHub Actions CI/CD.** Automated daily reports, blog entries, and suggestion pipeline. Green after the great Syncthing exorcism of April 10.
-- **TickerTrace Pro.** ETF institutional flow tracker. The code got pulled into [TraderDaddy.pro](https://www.traderdaddy.pro/?ref=8DUEMWAJ), where it belongs.
+- **TickerTrace Pro.** ETF institutional flow tracker. The code got pulled into [TraderDaddy.pro](https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack), where it belongs.
 - **Signal engine.** Real-time EMA/RSI/ADX/Hull/Volume scoring with SSE streaming to the HUD.
 
 Zero employees. Zero VC funding. Zero excuses.
@@ -198,7 +198,7 @@ Zero employees. Zero VC funding. Zero excuses.
 
 **The hustle:**
 1. New pricing adoption. Every new sub from here out is $144/yr or $21/mo. The upgrade path is real.
-2. TraderDaddy.pro integration. TickerTrace institutional flow signals are now baked into [TraderDaddy.pro](https://www.traderdaddy.pro/?ref=8DUEMWAJ). Sam's heading there this weekend to wire it all together. One platform, all the signals.
+2. TraderDaddy.pro integration. TickerTrace institutional flow signals are now baked into [TraderDaddy.pro](https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack). Sam's heading there this weekend to wire it all together. One platform, all the signals.
 3. Ghost Alpha Indicator on TradingView marketplace. $8 one-time, volume play.
 4. Content flywheel. Every daily dossier and weekly Substack piece is a subscriber magnet.
 
