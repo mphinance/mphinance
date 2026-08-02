@@ -226,7 +226,7 @@ Self-contained HTML widgets pulling from `docs/ticker/{TICKER}/latest.json`.
 
 | Product | URL | What |
 |---------|-----|------|
-| TraderDaddy Pro | <https://www.traderdaddy.pro/td-indicator?ref=MPHINANCE> | AI trading dashboard |
+| TraderDaddy Pro | <https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack> | AI trading dashboard |
 | TickerTrace Pro | <https://www.tickertrace.pro> | ETF tracker |
 | Ghost Alpha Dossier | <https://mphinance.github.io/mphinance/> | Daily AI report |
 | Ghost Blog | <https://mphinance.com/blog/> | Dev log + roadmap |

@@ -16,7 +16,7 @@ It reads the screeners, the unusual options flow, what the big funds bought last
 
 It doesn't dump a hundred tickers on me. It hands me the short list where a bunch of signals that don't even talk to each other all happen to point the same way. I don't want a trade every screener agrees with. I want a trade none of them can break.
 
-Now the confession. This isn't a Bloomberg terminal humming in a closet. It's [TraderDaddy Pro](https://www.traderdaddy.pro/td-indicator?ref=MPHINANCE)'s brain, which my dossier borrowed one morning and quietly never gave back. The skill itself doesn't know a thing. TD Pro does. The skill is just the part that learned to text me. Bloomberg charges 24 grand a year for the version that doesn't.
+Now the confession. This isn't a Bloomberg terminal humming in a closet. It's [TraderDaddy Pro](https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack)'s brain, which my dossier borrowed one morning and quietly never gave back. The skill itself doesn't know a thing. TD Pro does. The skill is just the part that learned to text me. Bloomberg charges 24 grand a year for the version that doesn't.
 
 And it's not really a big red button either. It runs itself every morning and I just poke it when I get impatient. Phone buzzes, intel appears, and I look like I did three hours of homework I very much skipped.
 

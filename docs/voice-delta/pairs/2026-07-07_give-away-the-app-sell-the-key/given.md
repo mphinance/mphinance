@@ -63,7 +63,7 @@ The moat is the data and the rails underneath it. The boring typed contract nobo
 
 Disclosure, since most of you already know: I'm on the team at TraderDaddy Pro. I write the screeners, a chunk of the engine, and the Sam integration. Art runs the place, and he's usually right, which is why I wrote this instead of just arguing. The link below is my referral link, so don't take my word for any of it. Go install a demo and take your own.
 
-[traderdaddy.pro](https://www.traderdaddy.pro/td-indicator?ref=MPHINANCE)
+[traderdaddy.pro](https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack)
 
 ## Two things everyone told me were opposites
 

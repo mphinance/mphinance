@@ -277,7 +277,7 @@ This is the same system I use manually. The algo just removes the times I'm in a
 - **Ghost Alpha Dossier (daily report):** [mphinance.github.io/mphinance/](https://mphinance.github.io/mphinance/)
 - **Landing Page:** [mphinance.com](https://mphinance.com)
 - **Ghost Alpha Indicator (TradingView):** [mphinance.com/ghost-alpha/](https://mphinance.com/ghost-alpha/)
-- **TraderDaddy Pro (Whop community):** [traderdaddy.pro](https://www.traderdaddy.pro/td-indicator?ref=MPHINANCE)
+- **TraderDaddy Pro (Whop community):** [traderdaddy.pro](https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack)
 - **TickerTrace Pro (ETF tracker):** [tickertrace.pro](https://www.tickertrace.pro)
 - **Ghost Blog (dev log):** [mphinance.com/blog/](https://mphinance.com/blog/)
 - **GitHub (all source code):** [github.com/mphinance](https://github.com/mphinance/mphinance)

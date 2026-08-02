@@ -30,7 +30,7 @@ I'm **Michael** — half the stuff I build solves a personal problem, the other 
 
 ## 🔥 The Toolkit
 
-### [TraderDaddy Pro](https://www.traderdaddy.pro/td-indicator?ref=MPHINANCE)
+### [TraderDaddy Pro](https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack)
 
 Premium alpha community on Whop. VoPR scoring engine, deep-dive reports, real-time scanner alerts.
 
@@ -139,7 +139,7 @@ Runs on cron, fully automated:
 
 ## 🔗 Links
 
-- 🔥 **TraderDaddy Pro** — [traderdaddy.pro](https://www.traderdaddy.pro/td-indicator?ref=MPHINANCE)
+- 🔥 **TraderDaddy Pro** — [traderdaddy.pro](https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack)
 - 📊 **TickerTrace Pro** — [tickertrace.pro](https://www.tickertrace.pro)
 - 📈 **VoPR Showcase** — [VoPR Methodology](https://mphinance.github.io/mphinance/vopr.html)
 - 📡 **Ghost Alpha API** — [Swagger Docs](http://mphinance.com:8002/docs)

@@ -336,7 +336,7 @@ Build the machine. Let it run.
 - **USAI Deep Dive:** [Your Gas Pump Is a Dividend Machine](https://mphinance.substack.com/p/your-gas-pump-is-a-dividend-machine)
 - **Ghost Alpha Dossier (daily report):** [mphinance.github.io/mphinance/](https://mphinance.github.io/mphinance/)
 - **Daily Screener (updated 5AM CST):** [mphinance.github.io/mphinance/leveraged-screener/daily.html](https://mphinance.github.io/mphinance/leveraged-screener/daily.html)
-- **TraderDaddy Pro:** [traderdaddy.pro](https://www.traderdaddy.pro/td-indicator?ref=MPHINANCE)
+- **TraderDaddy Pro:** [traderdaddy.pro](https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack)
 - **TickerTrace Pro (ETF tracker):** [tickertrace.pro](https://www.tickertrace.pro)
 - **Substack:** [mphinance.substack.com](https://mphinance.substack.com)
 

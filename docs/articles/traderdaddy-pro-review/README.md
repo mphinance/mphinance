@@ -14,7 +14,7 @@ and a small hand-drawn GEX curve on a napkin. Banner ribbon along the bottom:
 glow, and the receipts. Lived-in, honest, builder energy.
 -->
 
-*Disclosure, since most of you know already: I build for [TraderDaddy Pro](https://www.traderdaddy.pro/td-indicator?ref=MPHINANCE). The screeners, a chunk of the engine. The link is my referral link. So don't take my word for it. Take theirs.*
+*Disclosure, since most of you know already: I build for [TraderDaddy Pro](https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack). The screeners, a chunk of the engine. The link is my referral link. So don't take my word for it. Take theirs.*
 
 Time to find out if my marketing is half as good as my trading.
 
@@ -80,7 +80,7 @@ A tool won't make you money. You still do the work. TraderDaddy Pro is the best 
 
 The link is my referral link. Sign up through it and it helps us keep building. Want the founder? Follow @Trading_With_Art. He runs the ship and builds in public, same as me.
 
-**[See what they're talking about → traderdaddy.pro](https://www.traderdaddy.pro/td-indicator?ref=MPHINANCE)**
+**[See what they're talking about → traderdaddy.pro](https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack)**
 
 Drop the one tool you want me to break down next. I read every reply.
 
