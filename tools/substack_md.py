@@ -169,6 +169,137 @@ def swap_images(md, hosted_urls):
     return md
 
 
+def _inline_tiptap(s, marks=None):
+    """Parse inline markdown (**bold**, *italic*, `code`, [text](href)) into a list
+    of TipTap text nodes. `marks` accumulates as we recurse into emphasis/links."""
+    marks = list(marks or [])
+    nodes = []
+
+    def emit_text(txt):
+        if not txt:
+            return
+        node = {"type": "text", "text": txt}
+        if marks:
+            node["marks"] = [dict(m) for m in marks]
+        nodes.append(node)
+
+    i, n = 0, len(s)
+    buf = []
+    while i < n:
+        # inline code — no nested parsing
+        if s[i] == "`":
+            end = s.find("`", i + 1)
+            if end != -1:
+                emit_text("".join(buf)); buf = []
+                node = {"type": "text", "text": s[i + 1:end],
+                        "marks": [dict(m) for m in marks] + [{"type": "code"}]}
+                nodes.append(node)
+                i = end + 1
+                continue
+        # bold (check ** before *)
+        if s.startswith("**", i):
+            end = s.find("**", i + 2)
+            if end != -1:
+                emit_text("".join(buf)); buf = []
+                nodes.extend(_inline_tiptap(s[i + 2:end], marks + [{"type": "bold"}]))
+                i = end + 2
+                continue
+        if s[i] == "*":
+            end = s.find("*", i + 1)
+            if end != -1:
+                emit_text("".join(buf)); buf = []
+                nodes.extend(_inline_tiptap(s[i + 1:end], marks + [{"type": "italic"}]))
+                i = end + 1
+                continue
+        # link [text](href)
+        if s[i] == "[":
+            close = s.find("]", i + 1)
+            if close != -1 and close + 1 < n and s[close + 1] == "(":
+                end = s.find(")", close + 2)
+                if end != -1:
+                    emit_text("".join(buf)); buf = []
+                    href = s[close + 2:end]
+                    nodes.extend(_inline_tiptap(
+                        s[i + 1:close],
+                        marks + [{"type": "link", "attrs": {"href": href, "target": "_blank"}}]))
+                    i = end + 1
+                    continue
+        buf.append(s[i])
+        i += 1
+    emit_text("".join(buf))
+    return nodes
+
+
+def markdown_to_tiptap(md):
+    """Convert the markdown produced by html_to_markdown (already image-rehosted) into
+    a TipTap/ProseMirror doc dict. Pulse renders `content` as TipTap — markdown image
+    and formatting syntax otherwise shows as literal text. Handles headings, paragraphs,
+    block images, bullet/ordered lists, blockquotes, hr, fenced code, and inline marks."""
+    blocks = [b for b in re.split(r"\n{2,}", md.replace("\r\n", "\n")) if b.strip()]
+    content = []
+    i = 0
+    img_re = re.compile(r"^!\[(.*?)\]\((.*?)\)$")
+    ul_re = re.compile(r"^[-*] +(.*)$")
+    ol_re = re.compile(r"^\d+\. +(.*)$")
+
+    def list_item(text):
+        return {"type": "listItem",
+                "content": [{"type": "paragraph", "content": _inline_tiptap(text)}]}
+
+    while i < len(blocks):
+        b = blocks[i].strip()
+        # fenced code
+        if b.startswith("```"):
+            body = b[3:]
+            if body.endswith("```"):
+                body = body[:-3]
+            content.append({"type": "codeBlock",
+                            "content": [{"type": "text", "text": body.strip("\n")}]})
+            i += 1
+            continue
+        if b == "---":
+            content.append({"type": "horizontalRule"})
+            i += 1
+            continue
+        m = img_re.match(b)
+        if m:
+            content.append({"type": "image",
+                            "attrs": {"src": m.group(2), "alt": m.group(1) or "", "title": None}})
+            i += 1
+            continue
+        hm = re.match(r"^(#{1,6}) +(.*)$", b)
+        if hm:
+            level = max(2, min(6, len(hm.group(1))))
+            content.append({"type": "heading", "attrs": {"level": level},
+                            "content": _inline_tiptap(hm.group(2))})
+            i += 1
+            continue
+        if b.startswith("> "):
+            paras = [{"type": "paragraph", "content": _inline_tiptap(ln[2:] if ln.startswith("> ") else ln)}
+                     for ln in b.split("\n")]
+            content.append({"type": "blockquote", "content": paras})
+            i += 1
+            continue
+        if ul_re.match(b):
+            items = []
+            while i < len(blocks) and ul_re.match(blocks[i].strip()):
+                items.append(list_item(ul_re.match(blocks[i].strip()).group(1)))
+                i += 1
+            content.append({"type": "bulletList", "content": items})
+            continue
+        if ol_re.match(b):
+            items = []
+            while i < len(blocks) and ol_re.match(blocks[i].strip()):
+                items.append(list_item(ol_re.match(blocks[i].strip()).group(1)))
+                i += 1
+            content.append({"type": "orderedList", "content": items})
+            continue
+        content.append({"type": "paragraph", "content": _inline_tiptap(b)})
+        i += 1
+
+    return {"type": "doc", "content": content}
+
+
 def split_subtitle(subtitle):
     """Michael uses the Substack subtitle two ways: a real one-line dek, or an SEO
     keyword list ("Tags: a, b, c" or "amzn, cpi, options flow, ..."). Keyword lists read

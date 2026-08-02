@@ -133,3 +133,27 @@ triggering are dropped.
 
 The scan is a *data layer* — Michael confirms setups on Ghost Flow (the %R
 EXHAUST panel is visible there) before sizing.
+
+## Trigger A/B harness (`coil_ab.py`)
+
+A sibling script runs two trigger rules side by side so we can settle whether
+tightening the trigger helps:
+
+- **CURRENT** (`find_trigger`): both legs were ≤ −80, then fast crosses > −80.
+  Slow is *not* required to still be under −80 at the cross.
+- **STRICT**: fast crosses > −80 *while slow is still ≤ −80* at that same bar
+  ("fast breaks while slow still under"). A subset of CURRENT.
+
+A 2026-07-21 backtest found **STRICT is worse** — the crosses it drops (slow
+already recovered = both legs lifting together = structural confirmation)
+outperformed at every horizon (3/5/10/20d). Fast-leads-while-slow-buried is the
+*earlier but weaker* (knife) signal. So the harness is a live forward test to
+confirm that before deciding.
+
+```bash
+python coil_ab.py            # log today's fresh triggers under both rules
+python coil_ab.py --report   # re-price the ledger, print STRICT vs CURRENT-ONLY
+```
+
+Ledger: `state/ab_ledger.json` (deduped per `symbol|trig_date`). Logs daily via
+weekday 22:00-UTC cron → `state/ab_cron.log`. Core `coil_scan.py` is untouched.

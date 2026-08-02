@@ -130,11 +130,29 @@ class SubstackClient:
             print(f"  ⚠️ Image upload error: {e}")
         return None
 
-    def create_draft(self, title: str, subtitle: str, doc: dict) -> dict | None:
+    def sections(self) -> list:
+        """List the publication's sections (read-only)."""
+        try:
+            r = self.session.get(f"https://{self.pub}/api/v1/publication/sections",
+                                 headers=self.headers, timeout=20)
+            return r.json() if r.status_code == 200 else []
+        except Exception:
+            return []
+
+    def section_id_by_slug(self, slug: str):
+        """Resolve a section slug (e.g. 'data') to its numeric id, or None."""
+        for s in self.sections():
+            if s.get("slug") == slug or s.get("name", "").lower() == slug.lower():
+                return s.get("id")
+        return None
+
+    def create_draft(self, title: str, subtitle: str, doc: dict,
+                     section_id=None) -> dict | None:
         """Create a draft post with ProseMirror doc.
-        
+
         NOTE: Uses native ProseMirror nodes (paragraph, heading).
         rawHtml and body_html fields are deprecated/broken in Substack API.
+        Pass section_id to file the draft under a publication Section.
         """
         payload = {
             "draft_title": title,
@@ -146,10 +164,55 @@ class SubstackClient:
         }
         r = self.session.post(f"https://{self.pub}/api/v1/drafts",
                              json=payload, headers=self.headers, timeout=30)
-        if r.status_code in (200, 201):
-            return r.json()
-        print(f"  Failed ({r.status_code}): {r.text[:200]}")
-        return None
+        if r.status_code not in (200, 201):
+            print(f"  Failed ({r.status_code}): {r.text[:200]}")
+            return None
+        draft = r.json()
+        # Substack's CREATE endpoint ignores draft_section_id; it only binds via a
+        # follow-up PUT. section_chosen=True is what the composer reads to show the
+        # section as *selected* (draft_section_id alone leaves the picker blank).
+        if section_id is not None and draft.get("id"):
+            pr = self.session.put(f"https://{self.pub}/api/v1/drafts/{draft['id']}",
+                                  json={"draft_section_id": section_id,
+                                        "section_chosen": True},
+                                  headers=self.headers, timeout=30)
+            if pr.status_code in (200, 201):
+                draft = pr.json()
+            else:
+                print(f"  Section PUT failed ({pr.status_code}) — draft filed to main pub")
+        return draft
+
+    def publish_draft(self, draft_id, *, send_email: bool = False,
+                      require_section_id=None) -> dict | None:
+        """Publish an existing draft. send_email HARD-DEFAULTS to False (web/app
+        only — no subscriber email). If require_section_id is given, the draft's
+        draft_section_id MUST match it or we REFUSE to publish (returns None) —
+        the gate for mph's 'only if it's in the Data section' rule.
+
+        Substack publish endpoint: POST /api/v1/drafts/{id}/publish with
+        {"send": <bool>}. send=False => no email. This is intentionally the ONLY
+        place the server is asked to publish; everything else stays a draft.
+        """
+        # Verify current draft state before publishing (section gate + not already live).
+        d = self.session.get(f"https://{self.pub}/api/v1/drafts/{draft_id}",
+                             headers=self.headers, timeout=20)
+        if d.status_code != 200:
+            print(f"  publish: cannot read draft {draft_id} ({d.status_code}) — REFUSING")
+            return None
+        draft = d.json()
+        if require_section_id is not None:
+            bound = draft.get("draft_section_id")
+            if bound != require_section_id:
+                print(f"  publish: draft_section_id={bound} != required {require_section_id} "
+                      f"— REFUSING to publish (not in the required section)")
+                return None
+        r = self.session.post(f"https://{self.pub}/api/v1/drafts/{draft_id}/publish",
+                             json={"send": bool(send_email)},
+                             headers=self.headers, timeout=60)
+        if r.status_code not in (200, 201):
+            print(f"  publish failed ({r.status_code}): {r.text[:200]}")
+            return None
+        return r.json()
 
 
 # ═══════════════════════════════════════════════

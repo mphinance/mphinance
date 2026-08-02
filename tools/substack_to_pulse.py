@@ -30,7 +30,8 @@ sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "tools"))
 from substack_dossier import SubstackClient  # noqa: E402  (loads SUBSTACK_SID + session)
 from pulse_client import PulseClient  # noqa: E402
-from substack_md import html_to_markdown, rehost_images, swap_images, split_subtitle  # noqa: E402
+from substack_md import (html_to_markdown, rehost_images, swap_images,  # noqa: E402
+                         split_subtitle, markdown_to_tiptap)
 
 STATE_PATH = REPO / "tools" / "data" / "pulse_mirror_state.json"
 
@@ -63,8 +64,10 @@ def fetch_body(sub, slug):
 
 
 def build_pulse_post(sub, pulse, slug, live):
-    """Fetch a Substack post and render the pxlse payload: (title, dek, tags, md, cover).
-    Re-hosts images on pxlse (when live) and appends the canonical Substack link."""
+    """Fetch a Substack post and render the pxlse payload: (title, dek, tags, content,
+    cover). Re-hosts images on pxlse (when live) and appends the canonical Substack
+    link. `content` is a stringified TipTap doc — Pulse renders that, not markdown, so
+    inline images/links/formatting only show up via TipTap nodes."""
     post = fetch_body(sub, slug)
     title = (post.get("title") or "").strip()
     dek, tags = split_subtitle(post.get("subtitle"))
@@ -74,7 +77,8 @@ def build_pulse_post(sub, pulse, slug, live):
     cover = next((u for u in hosted if u.startswith("http")), None)
     canon = f"https://{sub.pub}/p/{slug}"
     md += f"\n\n---\n\n*Originally published on [Momentum Phinance]({canon}).*"
-    return title, dek, tags, md, cover, post.get("audience"), len(images)
+    content = json.dumps(markdown_to_tiptap(md))
+    return title, dek, tags, content, cover, post.get("audience"), len(images)
 
 
 def resync(sub, state, live):
@@ -88,12 +92,12 @@ def resync(sub, state, live):
     done = 0
     for n, (sid, m) in enumerate(sorted(targets, key=lambda x: x[1].get("at") or ""), 1):
         slug = m.get("slug")
-        title, dek, tags, md, cover, audience, nimg = build_pulse_post(sub, pulse, slug, live)
-        print(f"[{n}/{len(targets)}] {audience or '':9} {title[:50]}  (img={nimg} chars={len(md)})")
+        title, dek, tags, content, cover, audience, nimg = build_pulse_post(sub, pulse, slug, live)
+        print(f"[{n}/{len(targets)}] {audience or '':9} {title[:50]}  (img={nimg} chars={len(content)})")
         if not live:
             continue
         try:
-            pulse.update_post(m["pulse_id"], title=title, content=md, subtitle=dek or "",
+            pulse.update_post(m["pulse_id"], title=title, content=content, subtitle=dek or "",
                               tags=tags, cover_image_url=cover)
             print(f"     UPDATED: {pulse.post_url(m['pulse_id'])}")
             done += 1
@@ -115,6 +119,11 @@ def main():
     max_post = None  # cap how many to actually publish this run (safety / rate limits)
     if "--max" in sys.argv:
         max_post = int(sys.argv[sys.argv.index("--max") + 1])
+    # Mirror exactly ONE post by slug (or "newest" for the most recent), ignoring
+    # the oldest-first backlog order — used to hand-pick a single post to Pulse.
+    target_slug = None
+    if "--slug" in sys.argv:
+        target_slug = sys.argv[sys.argv.index("--slug") + 1]
 
     sub = SubstackClient()  # sets the SUBSTACK_SID cookie in its session
     state = load_state()
@@ -127,10 +136,26 @@ def main():
     if free_only:
         archive = [p for p in archive if p.get("audience") == "everyone"]
 
-    # Oldest-first so the pxlse feed mirrors Substack chronology.
-    new = [p for p in reversed(archive) if str(p["id"]) not in state["mirrored"]]
-    if max_post is not None:
-        new = new[:max_post]
+    if target_slug:
+        # Single-post mode: pick the one requested post from the archive. The
+        # archive is newest-first, so "newest" = archive[0].
+        if target_slug == "newest":
+            new = archive[:1]
+        else:
+            new = [p for p in archive if p.get("slug") == target_slug]
+        if not new:
+            print(f"No post with slug {target_slug!r} in the last {limit} posts "
+                  f"(try a bigger --limit).")
+            return
+        if str(new[0]["id"]) in state["mirrored"]:
+            m = state["mirrored"][str(new[0]["id"])]
+            print(f"Note: {new[0].get('slug')} is already mirrored -> {m.get('pulse_id')}. "
+                  f"Re-run with --resync to update it in place; this will create a NEW post.")
+    else:
+        # Oldest-first so the pxlse feed mirrors Substack chronology.
+        new = [p for p in reversed(archive) if str(p["id"]) not in state["mirrored"]]
+        if max_post is not None:
+            new = new[:max_post]
 
     if mark_seen:
         for p in archive:
@@ -157,16 +182,16 @@ def main():
     published = []
     for n, meta in enumerate(new, 1):
         slug = meta.get("slug")
-        title, dek, tags, md, cover, audience, nimg = build_pulse_post(sub, pulse, slug, live)
+        title, dek, tags, content, cover, audience, nimg = build_pulse_post(sub, pulse, slug, live)
 
         print(f"[{n}/{len(new)}] {meta.get('post_date','')[:10]} {audience or '':9} {title[:50]}")
-        print(f"     images={nimg} chars={len(md)} cover={'yes' if cover else 'no'} "
+        print(f"     images={nimg} chars={len(content)} cover={'yes' if cover else 'no'} "
               f"dek={'yes' if dek else 'no'} tags={tags or '-'}")
 
         if not live:
             continue
         try:
-            res = pulse.create_post(title, md, subtitle=dek, tags=tags,
+            res = pulse.create_post(title, content, subtitle=dek, tags=tags,
                                     cover_image_url=cover, visibility="public")
             url = pulse.post_url(res["id"])
             state["mirrored"][str(meta["id"])] = {

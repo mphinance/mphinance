@@ -1,4 +1,12 @@
-# Ghost Handoff — Last Updated 2026-05-05
+# Ghost Handoff — Last Updated 2026-06-28
+
+## 2026-06-28 - Convergence Scan vs. Competitor 7-Pick List
+- **What got done:** Ran the full `stock-recap` end-to-end (gather.mjs) plus direct MCP pulls for sector flow, market stats, put/call. Graded the output against a competitor's 2026-06-28 list: HIVE, AMC, HTZ, PURR, QS, TE, WYNN.
+- **Verdict:** Only **PURR** crossed (CSP Wheel screener — fat-IV / premium-sell flag, NOT a directional long). The other 6 appeared in ZERO legs (screeners, 13F/TickerTrace, CBOE listings).
+- **Data caveat (important):** Weekend run. Live flow / unusual-activity feed returned **0 rows**; all put/call ratios came back 0 (no volume). Convergence this run = screeners + 13F overlap only. Sector flow + market stats still resolve (as-of 2026-06-26).
+- **My honest shortlist:** LRCX (screener+cross-fund, clean uptrend pullback), KNX (best under-$100 shallow-pullback chart, Michael's setup), VSH (2 screeners+13F but parabolic — caution). QCOM flagged as a conflict (funds buy vs. chart breakdown). MU/CAT extended/high-priced.
+- **Run artifacts:** `.claude/skills/stock-recap/runs/2026-06-28_1451/` (report.md, raw/, charts/).
+- **What's left:** (1) market-closed guard so the flow leg fails loudly on weekends; (2) auto-chart competitor-overlap tickers (PURR rendered no chart); (3) a reusable "convergence vs. the field" diff tool.
 
 ## 2026-05-06 18:45 - District 12 AA Directory Automation
 - **What got done:** Fully automated the District 12 AA meeting directory. Built a Python scraper (`scripts/scrape_district12.py`) that pulls live data from aamilwaukee.com.

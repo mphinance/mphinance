@@ -24,7 +24,7 @@ async function run() {
   try {
      me = await withRetry(() => client.ownProfile(), 'ownProfile');
      console.log(`Authenticated as ${me.name}`);
-  } catch (e) {
+  } catch (e: any) {
      console.error("Failed to get own profile:", e.message);
      return;
   }
@@ -34,7 +34,7 @@ async function run() {
      for await (const user of me.following({ limit: 100 })) {
         following.push(user);
      }
-  } catch (e) {
+  } catch (e: any) {
      console.error("Failed getting following:", e.message);
   }
   
