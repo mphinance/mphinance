@@ -29,7 +29,7 @@ A few things I'm proud of in that feedback:
 Full disclosure: I'm part of the TraderDaddy Pro team and the link below is a referral link. The reviews are real and unsolicited. None of this is financial advice; trading carries real risk and the 69% figure is one member's self-reported result, not a promise.
 
 If you trade options and want to see what they're talking about:
-https://www.traderdaddy.pro/?ref=8DUEMWAJ
+https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack
 
 What would you want a deep-dive on first: the GEX flip zone, or the unusual-flow scoring? Drop it in the comments.
 
