@@ -171,6 +171,11 @@ export function parseMoney(text) {
   if (!text) return null;
   let t = String(text).replace(/,/g, "").replace(/\s/g, "");
   const neg = (t.startsWith("(") && t.endsWith(")")) || t.startsWith("-");
+  // C2: REFUSE multi-dot input. "1,250.50" misread as "1.250.50" must NOT be
+  // truncated to its 1.25 prefix and silently booked 1000x wrong — return null
+  // so the cell is flagged for review instead.
+  const core = t.replace(/[()$+]/g, "").replace(/^-/, "");
+  if ((core.match(/\./g) || []).length > 1) return null;
   const m = t.match(/-?\d+(\.\d{1,2})?/);
   if (!m) return null;
   const val = Math.abs(parseFloat(m[0]));
