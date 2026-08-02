@@ -3,6 +3,10 @@
 Source: `data/afterhour/mphinance.json` (1,172 AfterHour posts, Dec 2024 → Aug 2026).
 Control window: **2024-12-19 → 2025-03-29, 109 posts, 14,637 words**. Corpus in `control_corpus.md`.
 
+`check.py <draft.md>` scores a finished draft against this corpus. Read-only diagnostic, run it
+before publishing. It does not touch predict.py, which grades VOICE-DELTA.md against shipped
+Substack posts and must keep those as its target.
+
 ## Why this window
 
 Em/en dash count per month, his own unedited posts:
