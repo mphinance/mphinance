@@ -122,7 +122,7 @@ Follow her if you want a data terminal on your timeline. Mute her if you don't. 
 
 She doesn't take anything personally.
 
-And if you want the full platform behind the data, check out **[TraderDaddy Pro](https://www.traderdaddy.pro/register?ref=8DUEMWAJ)**. GEX levels, unusual flow, sector rotation, earnings positioning, congressional trades. All of it, live.
+And if you want the full platform behind the data, check out **[TraderDaddy Pro](https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack)**. GEX levels, unusual flow, sector rotation, earnings positioning, congressional trades. All of it, live.
 
 *Source: TraderDaddy Pro*
 
