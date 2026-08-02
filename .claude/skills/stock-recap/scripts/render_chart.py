@@ -45,8 +45,8 @@ def load_agent_key() -> str | None:
     return None
 
 
-def fetch_chart_data(symbol: str, key: str | None) -> dict:
-    url = f"{TD_BASE}/api/agent/ticker/{symbol}/chart-data"
+def fetch_chart_data(symbol: str, key: str | None, days: int = 90) -> dict:
+    url = f"{TD_BASE}/api/agent/ticker/{symbol}/chart-data?days={days}"
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "application/json"})
     if key:
         req.add_header("Authorization", f"Bearer {key}")
@@ -54,8 +54,8 @@ def fetch_chart_data(symbol: str, key: str | None) -> dict:
         return json.loads(r.read().decode())
 
 
-def render(symbol: str, key: str | None, out_dir: Path) -> str:
-    data = fetch_chart_data(symbol, key)
+def render(symbol: str, key: str | None, out_dir: Path, days: int = 90) -> str:
+    data = fetch_chart_data(symbol, key, days)
     rows = data.get("chartData") or []
     if len(rows) < 10:
         raise ValueError(f"only {len(rows)} candles returned")
@@ -106,6 +106,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("symbols", nargs="+")
     ap.add_argument("--out", default=str(SKILL_DIR / "runs" / "_charts"))
+    ap.add_argument("--days", type=int, default=90,
+                    help="lookback in calendar days; use 300 to judge a multi-month trendline")
     args = ap.parse_args()
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -113,7 +115,7 @@ def main():
     for sym in args.symbols:
         s = sym.upper().strip()
         try:
-            p = render(s, key, out_dir)
+            p = render(s, key, out_dir, args.days)
             print(f"{s}\t{p}")
         except Exception as e:  # noqa: BLE001 — one bad symbol shouldn't kill the batch
             print(f"{s}\tERROR: {e}", file=sys.stderr)

@@ -41,6 +41,17 @@ const FLOW_PAGE_SIZE = 100;
 // A ticker needs at least this many independent source-legs to make the shortlist.
 const MIN_LEGS = 2;
 
+// Leg count is capped at this for RANKING. The scorecard (401 picks / 30 runs,
+// 5-day forward) shows the hit-rate INVERTS past two legs: 2-leg 48% · 3-leg 26%
+// · 4+-leg 17%. Extra legs mostly stack correlated mega-cap flow/fund noise rather
+// than confirming a setup, so agreement beyond two is not evidence of a better
+// trade. Legs still GATE the shortlist (MIN_LEGS); they just stop buying rank.
+const LEG_RANK_CAP = 2;
+
+// A name whose 60d close range is tighter than this is treated as dead — it can't
+// produce a trade regardless of what the entry grade says. See the guard below.
+const DEAD_RANGE_PCT = Number(process.env.RECAP_DEAD_RANGE || 0.05);
+
 // "Affordable" cutoff for the dedicated under-$N section (lower-priced names).
 const MAX_AFFORDABLE_PRICE = Number(process.env.RECAP_MAX_PRICE || 100);
 
@@ -380,6 +391,15 @@ async function main() {
     c.isPullbackName = (c.screeners || []).some((s) => s.id === 'momentum' || s.id === 'bullish-pullback');
     c.stoch40 = cls;
     c._lastClose = num(clean[clean.length - 1]?.close);
+    // Dead-ticker guard: a name that barely moves games the entry-grade math (TALK
+    // on 2026-08-02 ranged $5.12–$5.24 over 90d — 2% — and scored 🎯 A+ / entry 95).
+    // There is no trade in a flatline, whatever the grade says.
+    const cl = clean.map((x) => num(x.close)).filter((v) => v != null && v > 0);
+    if (cl.length) {
+      const lo = Math.min(...cl), hi = Math.max(...cl);
+      c.range60 = (hi - lo) / lo;
+      c.dead = c.range60 < DEAD_RANGE_PCT;
+    }
     // enrich the reversal record so downstream tiers can read it
     if (cls.turningUp || cls.droppedBelow) {
       c.reversal = { ...(c.reversal || {}), stoch40: cls };
@@ -609,7 +629,11 @@ async function main() {
     const alignedFlowMag = c.flow && c.flow.net > 0 ? c.flow.net : 0;
     const entry = c.tech?.entryScore || 0;
     const revBoost = c.reversal?.reversing ? 1 : 0;
-    c.rankScore = c.legCount * 1e12 + revBoost * 5e11 - (c.conflict ? 2.5e11 : 0) + alignedFlowMag + entry * 1e6;
+    // Confirmed reversal outranks raw agreement: it's the only bucket that beats
+    // the base rate (51% vs 47%), while leg count past LEG_RANK_CAP anti-correlates
+    // with forward return. Rank on setup quality first, convergence second.
+    const legTier = Math.min(c.legCount, LEG_RANK_CAP);
+    c.rankScore = revBoost * 4e12 + legTier * 1e12 - (c.conflict ? 2.5e11 : 0) + alignedFlowMag + entry * 1e6;
     return c;
   });
   all.sort((a, b) => b.rankScore - a.rankScore);
@@ -617,25 +641,26 @@ async function main() {
   // In a risk-off / negative-gamma tape, demand one extra leg of agreement —
   // only the strongest convergence survives when the index backdrop fights longs.
   const effMinLegs = (regime && regime.label === 'RISK-OFF') ? MIN_LEGS + 1 : MIN_LEGS;
-  let shortlist = all.filter((c) => c.legCount >= effMinLegs);
+  let shortlist = all.filter((c) => c.legCount >= effMinLegs && !c.dead);
   if (shortlist.length < 8) {
     // backfill with single-leg high-quality (A/B grade screener OR confirmed reversal OR strong flow)
-    const extra = all.filter((c) => c.legCount === 1 &&
+    const extra = all.filter((c) => c.legCount === 1 && !c.dead &&
       (c.reversal?.reversing || /A|B/.test((c.tech?.entryGrade || '').replace(/[^A-Z]/g, '')) || (c.flow && Math.abs(c.flow.net) >= 250000)));
     shortlist = [...shortlist, ...extra];
   }
+  health.dead = `${all.filter((c) => c.dead).length} dead-range names filtered`;
   shortlist = shortlist.slice(0, SHORTLIST_SIZE);
 
   // reversal watch list (the edge) — momentum/bullish-pullback names turning up
   const reversalWatch = all
-    .filter((c) => c.reversal && c.reversal.reversing)
+    .filter((c) => c.reversal && c.reversal.reversing && !c.dead)
     .sort((a, b) => (b.reversal.entryScore || 0) - (a.reversal.entryScore || 0));
 
   // 🌅 Turning Up — the EARLIEST catch: StochK just reclaimed the 40 line (fresh
   // <40→≥40 cross within TURN_LOOKBACK sessions, not yet extended). Michael's ideal
   // entry (FIG on 2026-06-30 at $18, before RSI/EMA confirmed).
   const turningUp = all
-    .filter((c) => c.stoch40 && c.stoch40.turningUp)
+    .filter((c) => c.stoch40 && c.stoch40.turningUp && !c.dead)
     .sort((a, b) => (a.stoch40.upAgo ?? 9) - (b.stoch40.upAgo ?? 9) || (b.tech?.entryScore || 0) - (a.tech?.entryScore || 0));
   // 👁️ Watch (dropped below 40) — the PERSISTENT cross-run list. Names stay here
   // across runs (even after they leave every screener) until they reclaim 40

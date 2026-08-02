@@ -136,22 +136,60 @@ a daily recap can't give you (all from the NEW dev API, `api.traderdaddy.pro/api
 
 2. **Read the generated `report.md`** (the path is in the script's final output).
 
-3. **Reading the charts — use Ghost Flow, not our own render.** This skill does
-   **not** produce chart PNGs. Mike confirms the visual on **Ghost Flow**
+3. **ALWAYS eyeball the charts before presenting.** Render the shortlist + tier
+   names and *actually read the PNGs* — never present off the tables alone. On
+   2026-08-02 this reversed 5 of 8 calls in one run.
+
+   ```bash
+   cd .claude/skills/stock-recap
+   .venv/bin/python scripts/render_chart.py ZION GOOGL BMNR --out /tmp/recap_charts_<date>
+   .venv/bin/python scripts/render_chart.py ORCL NKE --days 300 --out /tmp/recap_charts_<date>/long
+   ```
+
+   **Use `--days 300` on anything you're about to call a downtrend or a
+   breakout.** 90 days is not enough to see a multi-month trendline, and that
+   trendline IS Mike's #1 setup. The two views can disagree completely: at 90d
+   NKE looked like dead chop under a falling 55EMA; at 300d it's a four-month
+   base with a firm floor and flattening EMAs, coiling right under the descending
+   line off the peak. Mike caught that and I hadn't. Conversely ORCL looked like
+   a bounce at 90d and a *worse* accelerating breakdown at 300d.
+
+   **The distinction that matters — decelerating base vs active waterfall:**
+   - **Setup:** lower highs, but the decline has *flattened*, EMAs going
+     horizontal, a floor tested repeatedly, price coiling under the trendline.
+     Not triggered until it closes above the line, but it's worth watching.
+   - **Knife:** still making *lower lows* (esp. undercutting the prior major
+     low), EMAs fanned out and steeply falling, 200SMA rolling over overhead.
+     No amount of RSI/Stoch turn makes this a long.
+
+   Table artifacts the charts catch, every time:
+   - **ADX has no direction.** High ADX on a falling stock = strong DOWNtrend.
+     Never cite it as bullish without the chart (ORCL, ADX 41, in freefall).
+   - **A weekly % can hide a gap.** RDDT's "-21% on the week" was ONE gap
+     candle on 5x volume, the most recent bar. Fresh gap ≠ pullback.
+   - **Dead tickers score A+.** Now filtered by `DEAD_RANGE_PCT`, but sanity-check
+     the y-axis range anyway.
+
+   Then send the PNGs to Discord grouped as keep-vs-cut so Mike sees what you saw.
+
+4. **Ghost Flow is still the confirm.** The report ships no PNGs by design; Mike
+   confirms the visual on **Ghost Flow**
    (his TradingView indicator), which encodes the whole decision — GRADE, W GATE,
    FLOW (CMF), SQUEEZE, %R EXHAUST, VOL PREMIUM, ADX/RSI, BOUNCE, ATR-based RISK
    sizing, and gamma walls on the price axis — far past what a bare candle+EMA
    render can show. When presenting the recap, tell Mike which shortlist names to
    **pull up on Ghost Flow** and what to look for (is the W-GATE open or WAIT, is
    FLOW positive, is it bouncing or rolling). The data tables here are the screen;
-   Ghost Flow is the confirm. (A standalone `scripts/render_chart.py` still exists
-   for a quick manual PNG if ever needed, but the run no longer calls it.)
+   Ghost Flow is the confirm — your own chart read in step 3 is the filter that
+   decides what's even worth him opening.
 
-4. **Present a tight, plain-English recap to Mike** — don't just dump the file.
+5. **Present a tight, plain-English recap to Mike** — don't just dump the file.
    Lead with what matters:
-   - The 2–4 **highest-conviction names** (most aligned legs, no conflict), with
-     their key technicals and why they're interesting — and which to **confirm on
-     Ghost Flow** before sizing.
+   - The 2–4 **highest-conviction names** — judged on the CHART first, rank
+     second. If the top-ranked name has a bad chart, say so and lead with the
+     one that doesn't. Name which to **confirm on Ghost Flow** before sizing.
+   - **Anything you're cutting from the shortlist and why.** The list is a
+     starting universe, not a recommendation.
    - The **Recovery Watch** — Momentum Pullback names that have **already reclaimed**
      (RSI back ≥50, above the 21EMA, week not bleeding), especially ones with flow 🟢
      and fund ✅ confirmation (his setup). NOT deep-oversold names in a downtrend.
@@ -165,7 +203,7 @@ a daily recap can't give you (all from the NEW dev API, `api.traderdaddy.pro/api
      fund selling (e.g. funds buying but options heavily bearish). Flag, don't bury.
    - New CBOE listings only if there's something worth noting.
 
-5. Point Mike at the saved `report.md` for the full tables/charts, and mention the
+6. Point Mike at the saved `report.md` for the full tables/charts, and mention the
    `raw/` JSON is there if he wants to dig in or backtest.
 
 ## Scoring the track record (`score_history.mjs`)
@@ -183,8 +221,17 @@ the forward return, and writes `runs/<stamp>/scored.json` plus a rolling
 `runs/_scorecard.json`. The next `gather.mjs` run reads `_scorecard.json` back in
 and prints the **📋 Track record** line. It's **idempotent** (a scored run is
 cached; pass `--rescore` to redo) and best-effort. Buckets the results by
-**Reversal-Watch vs base** and by **leg count** — early data shows more agreeing
-legs → higher hit-rate (the convergence thesis, measured). Tune with `--horizon N`.
+**Reversal-Watch vs base** and by **leg count**. Tune with `--horizon N`.
+
+> ⚠️ **The convergence thesis did not survive contact with the data.** At 401
+> picks / 30 runs the leg-count buckets are **inverted**: 2-leg 48% · 3-leg 26%
+> · 4+-leg 17%, against a 47% base. More agreement predicts WORSE forward
+> returns. Working theory: legs past two come from flow + funds, which stack
+> correlated mega-cap noise rather than confirming a setup. As of 2026-08-02
+> `LEG_RANK_CAP = 2` caps the rank contribution and a confirmed reversal (51%,
+> the only bucket beating base) outranks raw agreement. Legs still **gate** the
+> shortlist; they no longer buy position on it. Re-check as the sample grows —
+> if it flips back, raise the cap.
 Worth running weekly (e.g. before the Sunday pull) so the track record stays fresh.
 
 ## Tuning (optional env vars)
