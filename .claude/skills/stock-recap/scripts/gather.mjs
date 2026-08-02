@@ -719,7 +719,7 @@ async function main() {
   // on Ghost Flow (TradingView) — it encodes the whole decision (grade / gate /
   // flow / squeeze / %R exhaust / vol premium / ATR risk / gamma walls), which a
   // bare candle+EMA render can't touch. The recap surfaces the data; the chart is
-  // Ghost Flow. (scripts/render_chart.py still exists if you ever want a manual PNG.)
+  // Ghost Flow. (scripts/render_chart.mjs renders the PNGs when you want them.)
 
   // pull the rolling track record if score_history.mjs has ever run
   let scorecard = null;

@@ -142,9 +142,14 @@ a daily recap can't give you (all from the NEW dev API, `api.traderdaddy.pro/api
 
    ```bash
    cd .claude/skills/stock-recap
-   .venv/bin/python scripts/render_chart.py ZION GOOGL BMNR --out /tmp/recap_charts_<date>
-   .venv/bin/python scripts/render_chart.py ORCL NKE --days 300 --out /tmp/recap_charts_<date>/long
+   node scripts/render_chart.mjs ZION GOOGL BMNR --out /tmp/recap_charts_<date>
+   node scripts/render_chart.mjs ORCL NKE --days 300 --out /tmp/recap_charts_<date>/long
    ```
+
+   Charts render as SVG in headless chromium, in the Gamma Map palette, with live
+   TD Pro dealer levels drawn on: red walls, green support, amber PIN, purple
+   dashed gamma flip, OI on every label. Default window is ~4 months (`--days 88`).
+   Pass `--no-gex` to skip the options-chain fetch.
 
    **Use `--days 300` on anything you're about to call a downtrend or a
    breakout.** 90 days is not enough to see a multi-month trendline, and that
@@ -261,8 +266,10 @@ Worth running weekly (e.g. before the Sunday pull) so the track record stays fre
   hedge-fund leg degrades gracefully and the rest still runs.
 - Each run is a fresh point-in-time snapshot; nothing is overwritten. Old run
   folders are safe to delete (they're gitignored under `.claude/`).
-- **No chart PNGs by design.** The visual read is Ghost Flow's job (it carries the
-  full decision panel + gamma walls); a bare candle render only duplicated what the
-  data tables already say, worse. `scripts/render_chart.py` + the `.venv/` are still
-  there for a one-off manual PNG (`.venv/bin/python scripts/render_chart.py TICKER`),
-  but the run never calls them — so there's no venv dependency for a normal run.
+- **Charts are `scripts/render_chart.mjs`** — hand-built SVG rendered in headless
+  chromium (playwright), styled to match the Gamma Map product in `docs/gex-chart/`
+  and carrying live TD Pro dealer levels. Node only; no venv, no matplotlib. The
+  earlier "no chart PNGs by design" call was wrong: the render was ugly, not
+  useless. Reading the charts reversed 5 of 8 calls in a single run on 2026-08-02.
+- Note that `dealer-hud` is a *browser extension* that draws over TradingView, so
+  there is no renderer in it to lift. Copy the look from `docs/gex-chart/` instead.
