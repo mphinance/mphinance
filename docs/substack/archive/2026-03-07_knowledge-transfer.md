@@ -123,6 +123,6 @@ They are.
 - Michael
 
 *Momentum Phinance  - [mphinance.com](https://mphinance.com)*
-*TraderDaddy Pro  - [traderdaddy.pro](https://www.traderdaddy.pro/register?ref=8DUEMWAJ)*
+*TraderDaddy Pro  - [traderdaddy.pro](https://www.traderdaddy.pro/td-indicator?ref=MPHINANCE)*
 *Ghost Alpha Dossier  - [Daily AI Report](https://mphinance.blog)*
 *Sam's Dev Log  - [Ghost Blog](https://mphinance.com/blog.html)*

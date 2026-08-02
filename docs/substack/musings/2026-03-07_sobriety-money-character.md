@@ -67,5 +67,5 @@ The point isn't the system. The point is the character underneath it.
  - Michael
 
 *Momentum Phinance  - [mphinance.com](https://mphinance.com)*
-*TraderDaddy Pro  - [traderdaddy.pro](https://www.traderdaddy.pro/register?ref=8DUEMWAJ)*
+*TraderDaddy Pro  - [traderdaddy.pro](https://www.traderdaddy.pro/td-indicator?ref=MPHINANCE)*
 *Ghost Alpha Dossier  - [Daily AI Report](https://mphinance.blog)*

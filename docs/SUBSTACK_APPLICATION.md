@@ -107,7 +107,7 @@ Today alone you:
 | **VoPR Showcase** | [VoPR page](https://mphinance.github.io/mphinance/vopr.html) | Data product design |
 | **API Swagger** | [Swagger docs](http://mphinance.com:8002/docs) | API design skills |
 | **Ghost Blog** | [mphinance.com/blog/](https://mphinance.com/blog/) | AI content generation |
-| **TraderDaddy Pro** | [traderdaddy.pro](https://www.traderdaddy.pro/register?ref=8DUEMWAJ) | Paid product experience |
+| **TraderDaddy Pro** | [traderdaddy.pro](https://www.traderdaddy.pro/td-indicator?ref=MPHINANCE) | Paid product experience |
 | **TickerTrace** | [tickertrace.pro](https://www.tickertrace.pro) | SaaS experience |
 | **Substack** | [mphinance.substack.com](https://mphinance.substack.com) | You use the product |
 

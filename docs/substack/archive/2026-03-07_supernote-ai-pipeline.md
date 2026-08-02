@@ -98,12 +98,12 @@ Here's the exact architecture if you want to build your own notebook → AI pipe
 
 ![TraderDaddy Pro  - AI-powered options dashboard](images/traderdaddy_hero.png)
 
-Everything I build eventually feeds into the trading. [**TraderDaddy Pro**](https://www.traderdaddy.pro/register?ref=8DUEMWAJ) is the dashboard where it all comes together  - unusual options activity, real-time scanning, AI copilot. The same AI that reads my handwriting also picks my trades.
+Everything I build eventually feeds into the trading. [**TraderDaddy Pro**](https://www.traderdaddy.pro/td-indicator?ref=MPHINANCE) is the dashboard where it all comes together  - unusual options activity, real-time scanning, AI copilot. The same AI that reads my handwriting also picks my trades.
 
 ---
 
  - Michael
 
 *Momentum Phinance  - [mphinance.com](https://mphinance.com)*
-*TraderDaddy Pro  - [traderdaddy.pro](https://www.traderdaddy.pro/register?ref=8DUEMWAJ)*
+*TraderDaddy Pro  - [traderdaddy.pro](https://www.traderdaddy.pro/td-indicator?ref=MPHINANCE)*
 *Ghost Alpha Dossier  - [Daily AI Report](https://mphinance.blog)*

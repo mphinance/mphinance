@@ -163,7 +163,7 @@ Happy Tax Day Eve. Go file your damn taxes.
 - **Ghost Alpha Dossier (daily report):** [mphinance.github.io/mphinance/](https://mphinance.github.io/mphinance/)
 - **Daily Screener (updated 5AM CST):** [mphinance.github.io/mphinance/leveraged-screener/daily.html](https://mphinance.github.io/mphinance/leveraged-screener/daily.html)
 - **Landing Page:** [mphinance.com](https://mphinance.com)
-- **TraderDaddy Pro (Whop community):** [traderdaddy.pro](https://www.traderdaddy.pro/register?ref=8DUEMWAJ)
+- **TraderDaddy Pro (Whop community):** [traderdaddy.pro](https://www.traderdaddy.pro/td-indicator?ref=MPHINANCE)
 - **TickerTrace Pro (ETF tracker):** [tickertrace.pro](https://www.tickertrace.pro)
 - **Ghost Blog (dev log):** [mphinance.com/blog/](https://mphinance.com/blog/)
 - **GitHub (all source code):** [github.com/mphinance](https://github.com/mphinance/mphinance)
