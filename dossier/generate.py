@@ -1127,10 +1127,27 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Tape extension index failed: {e}")
 
-    # ── Stage 10a7: Market Internals Dashboard Feed ──
-    # Stages 10a-10a6 each append today's reading to their own history file
+    # ── Stage 10a7: Follow-Through Index ──
+    # Same `all_ranked` scan universe one more time, but asks a seventh
+    # question: not breadth/factor/shape/sector/quality/extension, but "is
+    # the market actually paying today's leaders?" — % of the top N momentum
+    # picks that are advancing in price today vs the same figure for the
+    # whole scanned universe. A wide gap flags leaders the tape hasn't
+    # confirmed yet (or genuine relative strength the broad tape doesn't share).
+    try:
+        from dossier.follow_through_index import compute_follow_through, format_follow_through_text, record_follow_through
+        follow_through = compute_follow_through(momentum_picks.get("all_ranked", []))
+        follow_through["date"] = date
+        ft_path = PROJECT_ROOT / "landing" / "data" / "follow_through_index_history.json"
+        record_follow_through(ft_path, follow_through)
+        print(f"  {format_follow_through_text(follow_through)}")
+    except Exception as e:
+        print(f"  [WARN] Follow-through index failed: {e}")
+
+    # ── Stage 10a8: Market Internals Dashboard Feed ──
+    # Stages 10a-10a7 each append today's reading to their own history file
     # under landing/data/ — nothing reads them back as a series. This combines
-    # all six into one JSON so docs/market-internals.html can chart the trend
+    # all seven into one JSON so docs/market-internals.html can chart the trend
     # instead of just today's snapshot. Pure aggregation, no new computation.
     try:
         from dossier.market_internals import write_internals_api
