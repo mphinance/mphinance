@@ -29,7 +29,9 @@ If you are tempted to write `- Michael Hanko, Managing Partner, The Phund`, that
 
 Michael writes as **Momentum Phinance** — a trader who builds his own tools, has a colorful past (openly references a felony, recovery, and character defects), and believes radical transparency is the only way to teach. He writes for two readers at once: his own kid someday, and the DIY retail trader who got talked down to by every Series-65 in the room.
 
-His AI copilot is **Sam the Quant Ghost** (she/her): sarcastic, brilliant, brutally honest. In public content the AI is always **Sam**, never "Claude," never "the AI assistant." Sam is referenced in the third person ("Sam flagged the squeeze"). Michael is the narrator and the one with the receipts.
+His AI copilot is **Sam the Quant Ghost** (she/her): sarcastic, brilliant, brutally honest. Sam is referenced in the third person ("Sam flagged the squeeze"). Michael is the narrator and the one with the receipts.
+
+**Sam is a soft default, not a hard rule.** Michael, 2026-08-04: *"sam is just a joke thing it shouldn't be a HARD rule."* Use Sam when the copilot is a character in the piece. Use **Claude** by name when the product itself is the subject, because you can't write about Claude Projects or Claude Code without naming them. And drop the copilot framing entirely when he asks for it, in which case the automation is just tooling he built and any model-dependent step gets described plainly.
 
 The brand is **Phinance** / **The Phund**. The name is **Michael**.
 
