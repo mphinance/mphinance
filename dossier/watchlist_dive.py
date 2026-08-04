@@ -141,7 +141,9 @@ def generate_deep_dive(ticker: str) -> str:
     stock = yf.Ticker(ticker)
 
     try:
-        df = stock.history(period="6mo")
+        # 2y, not 6mo: SMA200 and the "52-week" range/Fibonacci levels below both need
+        # more than 126 bars. At 6mo SMA200 was always NaN.
+        df = stock.history(period="2y")
         if df.empty:
             print(f"    [SKIP] No data")
             return ""
@@ -229,12 +231,20 @@ def generate_deep_dive(ticker: str) -> str:
     vol_avg = df["Volume"].rolling(20).mean()
     rel_vol = round(float(df["Volume"].iloc[-1] / vol_avg.iloc[-1]), 2) if vol_avg.iloc[-1] > 0 else 1.0
 
-    trend = "Bullish" if (sma_50 or 0) > (sma_200 or 0) else "Bearish"
-    crossover = "Golden Cross" if (sma_50 or 0) > (sma_200 or 0) else "Death Cross"
+    # No `or 0` fallback: a missing SMA must read "Unknown", not silently resolve to
+    # Bullish/Golden Cross for every ticker (which is what it did while sma_200 was NaN).
+    if sma_50 is None or sma_200 is None:
+        trend = "Unknown"
+        crossover = "Unknown"
+    else:
+        trend = "Bullish" if sma_50 > sma_200 else "Bearish"
+        crossover = "Golden Cross" if sma_50 > sma_200 else "Death Cross"
 
     # ── 52-Week Range + Position ──
-    w52_low = round(float(low.min()), 2)
-    w52_high = round(float(high.max()), 2)
+    # Explicitly the last ~252 sessions. The fetch is 2y (SMA200 needs it), so an
+    # unsliced min/max here would report a 2-year range under a 52-week label.
+    w52_low = round(float(low.tail(252).min()), 2)
+    w52_high = round(float(high.tail(252).max()), 2)
     w52_pos = round((price - w52_low) / (w52_high - w52_low) * 100, 1) if w52_high > w52_low else 50.0
 
     # ── Fibonacci Retracements (52-week range) ──
@@ -275,7 +285,9 @@ def generate_deep_dive(ticker: str) -> str:
                 iv_min = float(all_ivs.min()) * 100
                 iv_max = float(all_ivs.max()) * 100
                 iv_rank = round((iv_current - iv_min) / (iv_max - iv_min) * 100, 1) if iv_max > iv_min else 50.0
-                iv_percentile = round(float((all_ivs * 100 <= iv_current / 100).sum() / len(all_ivs) * 100), 1)
+                # iv_current is already in percent (x100 above); dividing it again put the
+                # two sides of this comparison in different units and pinned the result to 0.
+                iv_percentile = round(float((all_ivs * 100 <= iv_current).sum() / len(all_ivs) * 100), 1)
     except Exception:
         pass
 

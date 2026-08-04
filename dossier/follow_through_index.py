@@ -51,12 +51,18 @@ def classify_follow_through(leaders_advance_pct: float, leaders_n: int) -> dict:
     return {"state": "mixed", "color": "#f0b400", "emoji": "🤨", "label": "Mixed Follow-Through"}
 
 
-def _change_pct(pick: dict) -> float:
+def _change_pct(pick: dict) -> float | None:
+    """Returns None when the pick carries no usable change_pct.
+
+    Deliberately not 0.0: a missing field is unknown, not unchanged. Defaulting to
+    zero here made every name read as flat, so advance_pct and decline_pct were both
+    0.0 and the widget printed "Leaders Unconfirmed" every session regardless of tape.
+    """
     try:
         raw = pick.get("change_pct")
-        return float(raw) if raw is not None else 0.0
+        return float(raw) if raw is not None else None
     except (TypeError, ValueError):
-        return 0.0
+        return None
 
 
 def _score(pick: dict) -> float:
@@ -67,10 +73,10 @@ def _score(pick: dict) -> float:
 
 
 def _ad_stats(picks: list[dict]) -> dict:
-    n = len(picks)
+    changes = [c for c in (_change_pct(p) for p in picks) if c is not None]
+    n = len(changes)
     if not n:
         return {"n": 0, "advance_pct": 0.0, "decline_pct": 0.0, "avg_change_pct": 0.0}
-    changes = [_change_pct(p) for p in picks]
     advancers = sum(1 for c in changes if c > 0)
     decliners = sum(1 for c in changes if c < 0)
     return {
@@ -98,6 +104,17 @@ def compute_follow_through(all_ranked: list[dict], leader_count: int = DEFAULT_L
         }
 
     universe = _ad_stats(all_ranked)
+    if not universe["n"]:
+        # No pick carried a usable change_pct. Say so rather than publishing a
+        # confident red verdict computed from nothing.
+        return {
+            "total_scored": total, "leaders_n": 0,
+            "universe_advance_pct": 0.0, "universe_decline_pct": 0.0, "universe_avg_change_pct": 0.0,
+            "leaders_advance_pct": 0.0, "leaders_decline_pct": 0.0, "leaders_avg_change_pct": 0.0,
+            "follow_through_gap": 0.0,
+            **classify_follow_through(0.0, 0),
+        }
+
     leaders = sorted(all_ranked, key=_score, reverse=True)[:leader_count]
     leader_stats = _ad_stats(leaders)
     follow_through_gap = round(leader_stats["advance_pct"] - universe["advance_pct"], 1)

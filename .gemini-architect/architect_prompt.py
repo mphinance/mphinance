@@ -1,9 +1,13 @@
 import json
+import os
 import requests
 import sys
 import textwrap
 
-API_KEY = "AIzaSyCRLrlnBmBqcP8dR6WOQGp3eKA3Hwk10gc"
+# Was hardcoded and committed to a then-public repo; that key is revoked. Never inline it.
+API_KEY = os.environ.get("GOOGLE_API_KEY", "")
+if not API_KEY:
+    raise SystemExit("GOOGLE_API_KEY is not set — export it before running the architect.")
 URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={API_KEY}"
 
 # Load context files
@@ -15,7 +19,7 @@ with open("/home/mph/Antigravity/mphinance/docs/articles/letf-scanner-v2/README.
     article = f.read()
 
 prompt = textwrap.dedent(f"""
-You are the Architect Agent for Momentum Phinance. You are a world-class editorial consultant specializing in financial newsletter content that grows subscriber bases. Your job is to review, critique, and improve this Substack article written in Michael Hanko's voice.
+You are the Architect Agent for Momentum Phinance. You are a world-class editorial consultant specializing in financial newsletter content that grows subscriber bases. Your job is to review, critique, and improve this Substack article written in Michael's voice.
 
 === VOICE GUIDE ===
 {voice}

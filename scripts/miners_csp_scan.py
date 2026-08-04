@@ -12,6 +12,7 @@ For each ticker:
 """
 
 import json
+import os
 import time
 from pathlib import Path
 
@@ -19,7 +20,10 @@ import httpx
 
 # Tradier API config
 API_BASE = "https://api.tradier.com/v1"
-API_KEY = "GjMYgAD4ADrGxI78HVhJMjZMWSIU"
+# Was hardcoded and committed to a then-public repo; that key is revoked. Never inline it.
+API_KEY = os.environ.get("TRADIER_API_KEY", "")
+if not API_KEY:
+    raise SystemExit("TRADIER_API_KEY is not set — export it before running this scan.")
 HEADERS = {
     "Authorization": f"Bearer {API_KEY}",
     "Accept": "application/json",

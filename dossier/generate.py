@@ -24,6 +24,7 @@ Usage:
     python -m dossier.generate --no-pdf            # Skip PDF
 """
 
+import math
 import sys
 import os
 import argparse
@@ -99,6 +100,21 @@ class PipelineTimer:
 
 from dossier.config import CORE_WATCHLIST, MAX_DOSSIER_TICKERS, OUTPUT_DIR, SCANNER_STRATEGIES
 from dossier.data_sources.tickertrace import _is_junk
+
+
+def _json_num(value, default=None):
+    """Coerce a number to something JSON.parse() can read, else `default`.
+
+    Python's json module happily writes bare NaN/Infinity, which every browser's
+    JSON.parse rejects. A NaN spy_change silently broke the whole landing page:
+    the fetch threw and the catch handler blamed a pipeline that had run fine.
+    Note a `.get(key, 0)` default does not help — the key exists, its value is NaN.
+    """
+    try:
+        num = float(value)
+    except (TypeError, ValueError):
+        return default
+    return num if math.isfinite(num) else default
 
 
 def _run_mphinance_strategies() -> list[dict]:
@@ -775,8 +791,8 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             "date": date,
             "regime": market_regime.get("regime", "UNKNOWN"),
             "regime_name": market_regime.get("vix", {}).get("regime_name", "UNKNOWN"),
-            "vix_level": market_regime.get("vix", {}).get("vix_level", 0),
-            "spy_change": market_pulse[0].get("change_pct", 0) if market_pulse else 0,
+            "vix_level": _json_num(market_regime.get("vix", {}).get("vix_level"), 0),
+            "spy_change": _json_num(market_pulse[0].get("change_pct") if market_pulse else None, 0),
         }
         rh_path = PROJECT_ROOT / "landing" / "data" / "regime_history.json"
         record_regime(rh_path, regime_entry)
@@ -1728,9 +1744,9 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
                 "dossiers_today": len(dossiers),
                 "updated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
                 "market_regime": {
-                    "vix_level": market.get("vix", {}).get("vix_level", 0),
+                    "vix_level": _json_num(market.get("vix", {}).get("vix_level"), 0),
                     "regime_name": market.get("vix", {}).get("regime_name", "UNKNOWN"),
-                    "spy_change": market_pulse[0].get("change_pct", 0) if market_pulse else 0,
+                    "spy_change": _json_num(market_pulse[0].get("change_pct") if market_pulse else None, 0),
                     "date": date,
                 },
             }
