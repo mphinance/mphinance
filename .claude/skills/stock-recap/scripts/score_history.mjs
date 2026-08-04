@@ -90,11 +90,18 @@ function bucketStats(picks) {
   const fwds = picks.map((p) => p.fwdPct).filter((x) => Number.isFinite(x));
   if (!fwds.length) return { n: 0, hitRate: null, medianFwdPct: null, avgFwdPct: null };
   const wins = fwds.filter((x) => x > 0).length;
+  // Excess vs SPY over the identical window. Without this the card reports beta as
+  // skill: on 2026-08-04 the raw card read "48% hit, roughly flat" while the same
+  // picks were behind a passive SPY hold on 61% of names.
+  const exs = picks.map((p) => p.excessPct).filter((x) => Number.isFinite(x));
   return {
     n: fwds.length,
     hitRate: wins / fwds.length,
     medianFwdPct: median(fwds),
     avgFwdPct: fwds.reduce((s, x) => s + x, 0) / fwds.length,
+    beatSpyRate: exs.length ? exs.filter((x) => x > 0).length / exs.length : null,
+    medianExcessPct: median(exs),
+    avgExcessPct: exs.length ? exs.reduce((s, x) => s + x, 0) / exs.length : null,
   };
 }
 
@@ -145,6 +152,20 @@ async function main() {
     return data;
   };
 
+  // SPY benchmark: forward return over the exact same entry/exit dates as each pick.
+  const spyChart = await getJson(`${TD_BASE}/api/agent/ticker/SPY/chart-data?days=300`, auth);
+  const spyRows = (spyChart.ok && spyChart.data ? (spyChart.data.chartData || []) : [])
+    .map((r) => ({ d: String(r.date).slice(0, 10), c: Number(r.close) }))
+    .filter((r) => Number.isFinite(r.c))
+    .sort((a, b) => (a.d < b.d ? -1 : 1));
+  const spyIdx = new Map(spyRows.map((r, i) => [r.d, i]));
+  const spyFwdPct = (entryDate) => {
+    const i = spyIdx.get(entryDate);
+    if (i == null || i + HORIZON >= spyRows.length) return null;
+    return (spyRows[i + HORIZON].c - spyRows[i].c) / spyRows[i].c * 100;
+  };
+  if (!spyRows.length) console.warn('warn: SPY benchmark unavailable, excess columns will be null');
+
   const allScoredPicks = [];  // across every scored run, for the rolling card
   let runsScored = 0, runsSkippedYoung = 0, runsAlready = 0;
 
@@ -178,6 +199,7 @@ async function main() {
       if (!chart) continue;
       const fr = fwdReturnFromChart(chart, runDate, c.tech?.price);
       if (!fr) continue;
+      const spyPct = spyFwdPct(fr.entryDate);
       picks.push({
         run: name, ticker,
         legCount: c.legCount ?? (Array.isArray(c.legs) ? c.legs.length : null),
@@ -185,6 +207,8 @@ async function main() {
         conflict: !!c.conflict,
         entry: fr.entry, exit: fr.exit, entryDate: fr.entryDate, exitDate: fr.exitDate,
         fwdPct: fr.fwdPct,
+        spyPct,
+        excessPct: Number.isFinite(spyPct) ? fr.fwdPct - spyPct : null,
       });
     }
     if (!picks.length) { runsSkippedYoung++; continue; }
@@ -204,18 +228,31 @@ async function main() {
   }
 
   // ---- rolling scorecard the recap reads back in --------------------------
+  // Dedupe to one run per calendar day. Re-running the skill several times in a
+  // day used to count the same picks 2-10x, which inflated n and made correlated
+  // errors look like independent evidence (7/19 alone was 10 runs).
+  const lastRunOfDay = {};
+  for (const p of allScoredPicks) {
+    const day = p.run.slice(0, 10);
+    if (!lastRunOfDay[day] || p.run > lastRunOfDay[day]) lastRunOfDay[day] = p.run;
+  }
+  const dedupedPicks = allScoredPicks.filter((p) => p.run === lastRunOfDay[p.run.slice(0, 10)]);
+
   const byLeg = {};
-  for (const k of ['2', '3', '4plus']) byLeg[k] = bucketStats(allScoredPicks.filter((p) => legKey(p.legCount) === k));
+  for (const k of ['2', '3', '4plus']) byLeg[k] = bucketStats(dedupedPicks.filter((p) => legKey(p.legCount) === k));
   const card = {
     generatedAt: now.toISOString(),
     horizonDays: HORIZON,
     runsScored: runsScored + runsAlready,
-    totalPicks: allScoredPicks.length,
-    overall: bucketStats(allScoredPicks),
+    tradingDays: Object.keys(lastRunOfDay).length,
+    totalPicks: dedupedPicks.length,
+    rawPicksBeforeDedupe: allScoredPicks.length,
+    benchmark: 'SPY, same entry/exit dates',
+    overall: bucketStats(dedupedPicks),
     buckets: {
-      reversalWatch: bucketStats(allScoredPicks.filter((p) => p.reversing)),
-      conflict: bucketStats(allScoredPicks.filter((p) => p.conflict)),
-      clean: bucketStats(allScoredPicks.filter((p) => !p.conflict)),
+      reversalWatch: bucketStats(dedupedPicks.filter((p) => p.reversing)),
+      conflict: bucketStats(dedupedPicks.filter((p) => p.conflict)),
+      clean: bucketStats(dedupedPicks.filter((p) => !p.conflict)),
       byLegCount: byLeg,
     },
   };
@@ -224,11 +261,12 @@ async function main() {
 
   const o = card.overall;
   console.log('\n──────────────────────────────────────────');
-  console.log(`📊 Scorecard: ${card.totalPicks} picks across ${card.runsScored} runs (${HORIZON}-day forward)`);
-  if (o.n) console.log(`   Overall hit-rate ${(o.hitRate * 100).toFixed(0)}% · median ${o.medianFwdPct?.toFixed(1)}% · avg ${o.avgFwdPct?.toFixed(1)}%`);
+  console.log(`📊 Scorecard: ${card.totalPicks} picks across ${card.tradingDays} trading days (${HORIZON}-day forward, vs SPY)`);
+  const ex = (b) => b.medianExcessPct == null ? '' : `  |  vs SPY ${b.medianExcessPct >= 0 ? '+' : ''}${b.medianExcessPct.toFixed(1)}% med, beat ${(b.beatSpyRate * 100).toFixed(0)}%`;
+  if (o.n) console.log(`   Overall  hit ${(o.hitRate * 100).toFixed(0)}% · median ${o.medianFwdPct?.toFixed(1)}%${ex(o)}`);
   const rw = card.buckets.reversalWatch;
-  if (rw.n) console.log(`   Reversal Watch  hit-rate ${(rw.hitRate * 100).toFixed(0)}% · median ${rw.medianFwdPct?.toFixed(1)}% (n=${rw.n})`);
-  for (const k of ['2', '3', '4plus']) { const b = byLeg[k]; if (b.n) console.log(`   ${k===' 4plus'?'4+':k}-leg          hit-rate ${(b.hitRate * 100).toFixed(0)}% · median ${b.medianFwdPct?.toFixed(1)}% (n=${b.n})`); }
+  if (rw.n) console.log(`   Reversal Watch  hit ${(rw.hitRate * 100).toFixed(0)}% · median ${rw.medianFwdPct?.toFixed(1)}% (n=${rw.n})${ex(rw)}`);
+  for (const k of ['2', '3', '4plus']) { const b = byLeg[k]; if (b.n) console.log(`   ${(k === '4plus' ? '4+' : k).padEnd(2)}-leg  hit ${(b.hitRate * 100).toFixed(0)}% · median ${b.medianFwdPct?.toFixed(1)}% (n=${b.n})${ex(b)}`); }
   console.log(`\n   ${runsScored} newly scored, ${runsAlready} cached, ${runsSkippedYoung} too young.`);
   console.log(`   Written: ${join(RUNS_DIR, '_scorecard.json')}`);
 }
