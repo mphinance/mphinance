@@ -1796,6 +1796,21 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Screen health update failed: {e}")
 
+        # ── Stage 15h: Factor Correlation ──
+        # Which individual numeric factors (RSI, ADX, MACD hist, rel vol,
+        # tech/fund score, composite score...) actually correlate with
+        # forward returns, using the same validated scan archive as Stage
+        # 15g. Writes docs/api/factor-correlation.json.
+        print("\n[15h/16] FACTOR CORRELATION")
+        try:
+            from dossier.backtesting.factor_correlation import (
+                format_factor_correlation_text, write_factor_correlation_json,
+            )
+            corr = write_factor_correlation_json()
+            print(f"  {format_factor_correlation_text(corr)}")
+        except Exception as e:
+            print(f"  [WARN] Factor correlation failed: {e}")
+
         # ── Sync regime history to docs/ for the Mood Ring widget (GH Pages) ──
         import shutil as _shutil
         _rh_landing = PROJECT_ROOT / "landing" / "data" / "regime_history.json"
