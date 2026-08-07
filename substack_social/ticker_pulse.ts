@@ -1,7 +1,7 @@
 import { SubstackClient } from 'substack-api';
 import * as fs from 'fs';
 import * as path from 'path';
-import { withRetry } from './retry';
+import { withRetry, checkConnectivity } from './retry';
 
 const sid = process.env.SUBSTACK_SID;
 if (!sid) {
@@ -90,9 +90,9 @@ async function run() {
     publicationUrl: 'mphinance.substack.com',
   });
 
-  if (!(await client.testConnectivity())) {
-    console.error("Not connected. SID expired?");
-    return;
+  if (!(await checkConnectivity(() => client.testConnectivity()))) {
+    console.error("Not connected after retries. SID expired?");
+    process.exit(1);
   }
 
   const cutoff = new Date();
@@ -200,4 +200,7 @@ async function run() {
   console.log(`  ${ranked.length} distinct tickers across ${postsScanned} posts.`);
 }
 
-run().catch(console.error);
+run().catch((e) => {
+  console.error("ticker_pulse run failed:", e?.message ?? e);
+  process.exit(1);
+});

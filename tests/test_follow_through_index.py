@@ -98,10 +98,12 @@ def test_compute_follow_through_insufficient_data_below_min():
 
 
 def test_compute_follow_through_never_raises_on_bad_values():
+    # Neither pick carries a usable change_pct (missing / non-numeric), so this
+    # hits the "no usable data" early return — leaders_n is correctly 0, not 2.
     ranked = [{"ticker": "AAA"}, {"ticker": "BBB", "score": None, "change_pct": "not-a-number"}]
     f = compute_follow_through(ranked)
     assert f["total_scored"] == 2
-    assert f["leaders_n"] == 2
+    assert f["leaders_n"] == 0
     assert f["universe_avg_change_pct"] == 0.0
 
 
