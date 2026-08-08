@@ -101,7 +101,10 @@ def test_compute_follow_through_never_raises_on_bad_values():
     ranked = [{"ticker": "AAA"}, {"ticker": "BBB", "score": None, "change_pct": "not-a-number"}]
     f = compute_follow_through(ranked)
     assert f["total_scored"] == 2
-    assert f["leaders_n"] == 2
+    # Neither pick carries a usable change_pct, so the universe stats have
+    # nothing to compute from — compute_follow_through's documented
+    # zero-usable-data early return reports leaders_n=0, not len(ranked).
+    assert f["leaders_n"] == 0
     assert f["universe_avg_change_pct"] == 0.0
 
 
