@@ -43,6 +43,20 @@ undefined methods.
 ## Scripts
 - `npm run engage`  — interactive engagement dashboard (currently safe-mode/read-only)
 - `npm run explore` — exploration / discovery sandbox
+- `npm run pulse`   — ticker cashtag pulse across curated finance Substacks
+- `npm test`        — runs `retry.test.ts`, a manual check script for `retry.ts`
+  (no test framework is wired up for this sub-project, same as the rest of the repo)
+
+## Resilience (`retry.ts`)
+All network calls in `engage.ts`/`ticker_pulse.ts` go through `withRetry()`, which:
+- retries transient failures (5xx, timeouts, network errors, 429) with
+  exponential back-off, honoring a `Retry-After` header when present
+- fails immediately on non-retryable client errors (401/403/404/...) instead
+  of burning through all attempts on a dead SID or bad request
+- `checkConnectivity()` retries `testConnectivity()` a few times before a
+  script reports "SID might be expired" — that check swallows its own error
+  and just returns `false`, so a single call can't tell an expired session
+  apart from a one-off network blip.
 
 ## Data
 - `data/my-reads.json` + `data/my-reads.md` — your read list (generated)

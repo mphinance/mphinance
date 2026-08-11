@@ -1,6 +1,6 @@
 import { SubstackClient } from 'substack-api';
 import * as fs from 'fs';
-import { withRetry } from './retry';
+import { withRetry, checkConnectivity } from './retry';
 
 const sid = process.env.SUBSTACK_SID;
 if (!sid) {
@@ -14,10 +14,10 @@ async function run() {
     publicationUrl: 'mphinance.substack.com',
   });
 
-  const isConnected = await client.testConnectivity();
+  const isConnected = await checkConnectivity(() => client.testConnectivity());
   if (!isConnected) {
-    console.error("Not connected! SID might be expired.");
-    return;
+    console.error("Not connected after retries. SID might be expired.");
+    process.exit(1);
   }
   
   let me;
@@ -26,7 +26,7 @@ async function run() {
      console.log(`Authenticated as ${me.name}`);
   } catch (e: any) {
      console.error("Failed to get own profile:", e.message);
-     return;
+     process.exit(1);
   }
   
   const following = [];
@@ -137,4 +137,7 @@ async function run() {
   console.log(`Total attempts: ${attempts}, total liked: ${likedCount}`);
 }
 
-run().catch(console.error);
+run().catch((e) => {
+  console.error("engage run failed:", e?.message ?? e);
+  process.exit(1);
+});
