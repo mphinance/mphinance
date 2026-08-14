@@ -1327,6 +1327,33 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Screener overlap failed: {e}")
 
+    # ── Stage 10g: Seasonality Screen (calendar-month historical edge) ──
+    # Pure yfinance history read per ticker, no TradingView call — reuses the
+    # watchlist + top scanned names so it doesn't grow the API budget.
+    print("\n[10g/16] SEASONALITY SCREEN (calendar-month historical edge)")
+    seasonality_results: list[dict] = []
+    with timer.stage("Seasonality Screen"):
+        try:
+            import time as _season_time
+            from dossier.seasonality_screener import score_seasonality, _save_api_output as _season_save
+            _season_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            _this_month = datetime.now().month
+            for _t in _season_pool:
+                _r = score_seasonality(_t, month=_this_month)
+                if _r:
+                    seasonality_results.append(_r)
+                _season_time.sleep(0.05)
+            seasonality_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _season_save(seasonality_results, _this_month)
+            _top_season = [r for r in seasonality_results if r["grade"] in ("A+", "A")]
+            print(f"  📅 {len(seasonality_results)} scored — {len(_top_season)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['direction']})" for r in _top_season[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Seasonality screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
