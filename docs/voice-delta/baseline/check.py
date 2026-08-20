@@ -40,8 +40,14 @@ BANNED = {
     "everyone/nobody wind-up": r"(?i)(everyone (gets|thinks|says|knows)|nobody (talks|tells)|no one tells)",
     "hype filler": r"(?i)(buckle up|changes everything|that last part is everything)",
     "markdown table": r"(?m)^\s*\|.*\|\s*$",
-    "last name": r"(?i)\bhanko\b",
 }
+
+# The surname is deliberately not spelled out here: this repo is public, and the
+# byline rule is first name only anywhere a reader can see. Export MPH_LAST_NAME
+# to arm the check; unset, this one rule is simply skipped.
+_surname = os.environ.get("MPH_LAST_NAME", "").strip()
+if _surname:
+    BANNED["last name"] = rf"(?i)\b{re.escape(_surname)}\b"
 
 ASK = [
     "Does the thesis have a real-life origin, something you physically noticed?",

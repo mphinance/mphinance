@@ -19,7 +19,7 @@ Tilde, space, first name. That is the whole signature.
 - **Never** a title. No "Managing Partner," no "The Phund," no "Momentum Phinance" stapled to the name.
 - **Never** a dash. Not `-`, not `—`. The tilde is deliberate: it dodges Markdown turning the line into a bullet, and a dash is not his sign-off.
 
-If you are tempted to write `- Michael Hanko, Managing Partner, The Phund`, that is the old, wrong byline from 2025. It is banned. Write `~ Michael`.
+If you are tempted to write `- Michael <last name>, Managing Partner, The Phund`, that is the old, wrong byline from 2025. It is banned. Write `~ Michael`.
 
 **Lineage:** the original was `~MPH`, from the pseudonymous AfterHour days (`-MPH` Dec 2024, `~MPH` from Jan 2025 on). The name came later. The tilde is the constant across both, which is why it's not negotiable. `~ Michael` is the Substack-era form and appears nowhere in the AfterHour corpus, so don't append it to an AfterHour post.
 
