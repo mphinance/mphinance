@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """Minimal Gemini image generator. Usage: gen_image.py "<prompt>" <out.png> [model]
 
+Optional `--ref <image>` (repeatable) sends reference images with the prompt, so the
+model can trace a real shape — a price chart, a screenshot — instead of inventing one.
+
 Key resolution order:
   1. GEMINI_API_KEY in mphinance/secrets.env  (canonical)
   2. GEMINI_API_KEY_ALT in secrets.env         (fallback)
 """
 import base64
+import mimetypes
 import os
 import sys
 
@@ -25,9 +29,27 @@ def load_key():
     return keys
 
 
-prompt, out = sys.argv[1], sys.argv[2]
-model = sys.argv[3] if len(sys.argv) > 3 else "gemini-3-pro-image"
+argv = sys.argv[1:]
+refs = []
+while "--ref" in argv:
+    i = argv.index("--ref")
+    refs.append(argv[i + 1])
+    del argv[i:i + 2]
+
+prompt, out = argv[0], argv[1]
+model = argv[2] if len(argv) > 2 else "gemini-3-pro-image"
 keys = load_key()
+
+parts_in = []
+for path in refs:
+    with open(path, "rb") as fh:
+        parts_in.append({
+            "inline_data": {
+                "mime_type": mimetypes.guess_type(path)[0] or "image/png",
+                "data": base64.b64encode(fh.read()).decode(),
+            }
+        })
+parts_in.append({"text": prompt})
 
 last_err = None
 for label in ("primary", "alt"):
@@ -37,7 +59,7 @@ for label in ("primary", "alt"):
     r = requests.post(
         f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}",
         headers={"Content-Type": "application/json"},
-        json={"contents": [{"parts": [{"text": prompt}]}]},
+        json={"contents": [{"parts": parts_in}]},
         timeout=180,
     )
     if r.status_code == 200:
