@@ -1160,6 +1160,24 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Follow-through index failed: {e}")
 
+    # ── Stage 10a7b: Earnings Risk Flag ──
+    # Same `all_ranked` leaderboard, but asks a question none of the other
+    # breadth-style stages do: which of today's top momentum names carry
+    # event risk? Flags leaders reporting earnings within 7 days so a name
+    # topping the board isn't mistaken for a "clean" setup when it's really
+    # walking into a print. Bounded to the top 10 leaders to keep the
+    # per-run yfinance calendar lookups cheap.
+    try:
+        from dossier.earnings_risk_flag import compute_earnings_risk, format_earnings_risk_text, record_earnings_risk, save_api_output as save_earnings_risk_api
+        earnings_risk = compute_earnings_risk(momentum_picks.get("all_ranked", []))
+        earnings_risk["date"] = date
+        er_path = PROJECT_ROOT / "landing" / "data" / "earnings_risk_history.json"
+        record_earnings_risk(er_path, earnings_risk)
+        save_earnings_risk_api(earnings_risk, PROJECT_ROOT / "docs" / "api")
+        print(f"  {format_earnings_risk_text(earnings_risk)}")
+    except Exception as e:
+        print(f"  [WARN] Earnings risk flag failed: {e}")
+
     # ── Stage 10a8: Market Internals Dashboard Feed ──
     # Stages 10a-10a7 each append today's reading to their own history file
     # under landing/data/ — nothing reads them back as a series. This combines
