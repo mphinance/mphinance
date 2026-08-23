@@ -47,10 +47,11 @@ The subtitle is a **category mix with percentages**, not a tagline or a keyword 
 *Trading 60% | Mindset 40%*
 ```
 
-- One to three categories from the working set: **Trading, Business, Mindset, AI, Research**.
+- One to three categories from the working set: **Trading, Business, Mindset, AI, Research, Travel**.
 - Percentages sum to about 100, separated by ` | ` (space-pipe-space).
 - It signals the blend of the post up front. A pure setup breakdown is `*Trading 100%*`; a recovery-and-markets piece might be `*Mindset 70% | Trading 30%*`.
-- Shipped examples: `*AI 100%*`, `*AI 50% | Mindset 35% | Business 15%*`, `*Business 45% | AI 35% | Trading 20%*`.
+- Shipped examples: `*AI 100%*`, `*AI 50% | Mindset 35% | Business 15%*`, `*Business 45% | AI 35% | Trading 20%*`, `*Travel 55% | Markets 25% | Recovery 20%*`.
+- **Travel** was added 2026-08-23 after two shipped posts used it (the Iceland/Faroes travelogue and the backyard excursion follow-up). Note the Iceland post also used one-off categories `Markets` and `Recovery`. The set is a working default, not a whitelist: if a post is genuinely about something else, name that thing rather than forcing it into Trading.
 - This is NOT the old `*Tags: keyword, keyword*` format. Don't use that. And never a byline here.
 - Substack's real discovery tags (the `AI` / `investing` chips) are a separate, small, hand-added set in the editor. Not driven by the markdown.
 
