@@ -4,11 +4,11 @@
 
 `screener_overlap.py` finds tickers that clear the bar on 2+ of {TAO, VCP,
 PEAD} because those three run inside the daily pipeline and their results
-are already in memory. But the repo now has ten independent screens
-(capitulation, golden cross, SMA-200 reclaim, 52-week high, NR7, RVOL,
-sector rotation, plus TAO/VCP/PEAD) — most of them only get run ad hoc
-(via the batch-scanner skill or standalone), so their scores never get a
-chance to cross-confirm each other.
+are already in memory. But the repo has many more independent screens (see
+SCREEN_FILES below) — most of them only get run ad hoc (via the
+batch-scanner skill or standalone), so their scores never get a chance to
+cross-confirm each other. New screens need a SCREEN_FILES entry to be
+counted here; nothing else in this module changes.
 
 This module is pure post-processing, same spirit as screener_overlap.py:
 it reads whatever `docs/api/*.json` screener outputs already exist on disk
@@ -44,6 +44,13 @@ _GRADE_WEIGHT = {"A+": 5, "A": 4, "B": 3, "C": 2, "D": 1}
 # screen name -> its docs/api output filename. Not all follow the same
 # "<name>-screener.json" convention (see each module's own "Output:" line),
 # so this is an explicit registry rather than a glob guess.
+#
+# Only screens whose grade means "how strongly bullish" belong here —
+# combined_grade_weight sums grades across screens, so a screen whose A+
+# can mean either direction (death_cross_screener, obv_divergence_screener,
+# seasonality_screener all grade "strength of the edge, either direction")
+# would silently mix bearish conviction into a bullish sum. Leave those out
+# until convergence tracks direction, not just grade.
 SCREEN_FILES = {
     "tao": "tao-screener.json",
     "vcp": "vcp-screener.json",
@@ -55,6 +62,12 @@ SCREEN_FILES = {
     "nr7": "nr7-screener.json",
     "rvol": "rvol-screener.json",
     "sector_rotation": "sector-rotation.json",
+    "rs_leadership": "rs-leadership-screener.json",
+    "insider_cluster": "insider-cluster-screener.json",
+    "analyst_revision": "analyst-revision-screener.json",
+    "macd_cross": "macd-cross-screener.json",
+    "short_squeeze": "short-squeeze-screener.json",
+    "earnings_momentum": "earnings-momentum.json",
 }
 
 
