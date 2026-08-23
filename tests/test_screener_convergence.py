@@ -1,6 +1,6 @@
 """Tests for dossier.screener_convergence — multi-screen agreement across all screens."""
 
-from dossier.screener_convergence import compute_convergence
+from dossier.screener_convergence import SCREEN_FILES, compute_convergence
 
 
 def _hit(ticker="AAPL", score=80, grade="A"):
@@ -94,3 +94,24 @@ class TestComputeConvergence:
     def test_screens_loaded_excludes_empty_screens(self):
         result = compute_convergence({"tao": [_hit("AAPL")], "vcp": [], "pead": []})
         assert result["screens_loaded"] == ["tao"]
+
+
+class TestScreenFilesRegistry:
+    def test_bullish_only_screens_added_since_launch_are_registered(self):
+        # Regression guard: this registry has gone stale before (new screens
+        # shipped without ever being wired into convergence). These are all
+        # bullish-only (grade == conviction, not "strength either direction"),
+        # so they belong in the sum-of-grade-weight convergence score.
+        for name in (
+            "rs_leadership", "insider_cluster", "analyst_revision",
+            "macd_cross", "short_squeeze", "earnings_momentum",
+        ):
+            assert name in SCREEN_FILES
+
+    def test_direction_mixed_screens_are_excluded(self):
+        # death_cross / obv_divergence / seasonality grade the STRENGTH of an
+        # edge that can point either bullish or bearish — summing their
+        # grade weight into a bullish convergence score would misrepresent
+        # conviction. Keep them out until convergence tracks direction.
+        for name in ("death_cross", "obv_divergence", "seasonality"):
+            assert name not in SCREEN_FILES
