@@ -1,6 +1,6 @@
 # VOICE-DELTA — what Michael changes between the machine's draft and the post he ships
 
-_Voice-Delta Agent v0 · 2026-06-18 · feeds the writer, never writes a public word._
+_Voice-Delta Agent v0.4 · 2026-08-24 · feeds the writer, never writes a public word._
 
 Not vibes. This is built by pairing each **machine-given draft** (the markdown that
 got pushed) against the **version Michael actually shipped** on
@@ -9,11 +9,25 @@ fingerprint as what he keeps.
 
 **Read this first (honest constraints):**
 
-- **N = 9 clean pairs** (4 anchors + 2 held-out captured 2026-06-25, + 1 live
-  ship 2026-07-07, + 1 live ship 2026-07-09, + 1 dual-voice ship 2026-07-13).
-  Still not statistics, but enough to test whether the rules below GENERALIZE to
-  pairs they weren't derived from.  Every rule is followed by real receipts; if a
-  rule has one receipt, it's a hypothesis, not a law.
+- **N = 14 clean pairs** (4 anchors + 2 held-out captured 2026-06-25, + 1 live
+  ship 2026-07-07, + 1 live ship 2026-07-08, + 1 live ship 2026-07-09, + 1
+  live ship 2026-07-11, + 1 dual-voice ship 2026-07-13, + 1 live ship 2026-07-15,
+  + 1 live ship 2026-07-19, + 1 live ship 2026-07-20). Still not statistics, but
+  enough to test whether the rules below GENERALIZE to pairs they weren't
+  derived from.  Every rule is followed by real receipts; if a rule has one
+  receipt, it's a hypothesis, not a law.
+- **Ticker redaction is now a law, not a hypothesis (4 pairs).** The 07-13
+  "we called this exact trade" masking (PEP, HOOD → blank) was called a
+  hypothesis when we had one pair. It replicated on 07-11 (NVDA → blank inside
+  "The ticker is the good man.   is a real company"), 07-19 (FIG blanked in
+  the opening sentence and both trade-rule callouts; SLB blanked in the
+  paywall tease), and 07-20 (KTOS, AVAV blanked in the defense-tech
+  correlation list; PLTR blanked in the "carrying the whole tape" line but
+  kept later where it's already the metaphor). Read: **when a live trade or a
+  named position is in play, tickers get masked in the reader-facing text**;
+  he still names the ticker in the code-block trade rule (07-15 confirmed
+  this shape) but strips it from prose. Full rule under "Consistency fixes"
+  below.
 - **The 07-15 pair is the first publish-triggers-trade ship** ("Money Where My
   Mouth Is"). Two hypothesis-only tells, both driven by the mechanic: (a) he
   **converted a decorative figure into a literal machine-readable block** — the
@@ -61,9 +75,13 @@ fingerprint as what he keeps.
 
 | Date | Given draft | Shipped | Wall | Role |
 |------|-------------|---------|------|------|
+| 07-20 | "I Asked **Sam** Why the Rotation Feels Weekly" | "I Asked **My Agent** Why the Rotation Feels Weekly" | free | live (Macro, ticker-redaction replication) |
+| 07-19 | "The Signal Was Right. I Was the One Not Listening." | same title | paid | live (Trading, ticker-redaction replication) |
 | 07-15 | "Money Where My Mouth Is…" | same title | free | live (Money-Where-Mouth-Is #1, publish-triggers-trade) |
 | 07-13 | "…Show the Losses **First**." | "…Show the Losses **Too**." | free | live (Business, dual-voice) |
+| 07-11 | "How to Accidentally Start a Religion (Or a Bull Market)" | "**The Church of Number Go Up**" | free | live (Mindset/Macro, first NON-trading rule survey) |
 | 07-09 | "I Tokenized My $GLXY. Do You Actually Own Yours?" | "…Own **Your Tokenized Stocks? (No)**" | paid | live (Macro/crypto) |
+| 07-08 | "What Does Your $OPEN Rate Want You to Write?" | same title | free | live (Business, meta) |
 | 07-07 | "Give Away the App. Sell the Key." | same title | free | live (Business) |
 | 06-23 | "Don't Trust Me. Trust the Tape." | same title | free | held-out |
 | 06-22 | "Three Questions Before You Buy Any Pullback" | same title | paid_tease | held-out |
@@ -82,6 +100,8 @@ mechanism; Michael titles the thing the reader actually wants.
 - `What I build after the market closes` → `BUILDING AFTER MARKET CLOSE WITH KIDS` (the kid is the hook, so it goes in the title)
 - (07-09) `Do You Actually Own Yours?` → `Do You Actually Own Your Tokenized Stocks? (No)` — two moves: expand the vague "Yours" to the keyword phrase ("Tokenized Stocks", better share-card + search), then **answer the question in the title with a parenthetical** `(No)`. He'll spoil the payoff up front if the answer is the hook.
 - (07-13) `Show the Losses **First**.` → `Show the Losses **Too**.` — softened the combative ordering verb ("First" = *I* forced it to show losses before it bragged) to the additive honesty of "Too." When the frame is honesty, he pulls the swagger out of the title verb.
+- (07-11) `How to Accidentally Start a Religion (Or a Bull Market)` → `The Church of Number Go Up` — killed the how-to framing and the split-parenthetical entirely, replaced with a **meme-shape noun-phrase** ("Number Go Up" is the crypto/bull-market catchphrase). Reader knows what the post is about from the title alone, no verb needed. Same move as `…Multi-Baggers`: title the *feeling*, not the mechanism.
+- (07-20) `I Asked **Sam** Why…` → `I Asked **My Agent** Why…` — *renaming for audience*. Body keeps every "Sam" reference; only the title generalizes to "My Agent." Read: when the title reaches cold readers who don't know the persona, he swaps the in-house name for the category noun; when the body has already introduced her, he can name her. **First pair to show this — hypothesis, not law.**
 
 **2. Collapse time to "last night / this morning."** The machine writes vague past;
 he compresses to immediate — even at the cost of literal accuracy.  **Held-out
@@ -141,6 +161,12 @@ clauses like "and I couldn't find it" or "she's getting upgraded everyday").
 - (06-22 held-out) `you do not buy it.` → `you do not buy it - yet.`
 - (07-07) `he gives me the look.` → `I still get the look (at least I'm pretty sure I do - we are virtual after all).` (undercuts his own certainty; spaced-hyphen aside)
 - (07-07) `once he stops giving me the look.` → `…once he stops giving me the look (he already has - this time, I actually asked permission!).` (won't let the "co-founder resists me" frame stand unqualified — confesses he already got the yes)
+- (07-11) `time runs faster down there,` → `time runs faster down there (it is sci-fi),` — parenthetical undercuts his own "distance in time" setup with a wink at the mechanism. He will not let the sci-fi premise pass as if it were a real place.
+- (07-11) added out of nowhere in the middle of the invalidation-level rule: `Once again - it's ok to admit it. Say it with me once if it's been a while. "I was wrong". Back to the invalidation level.` — self-correcting *for the reader*: interrupts his own paragraph to grant permission for the word he's about to require, then resumes. Same spaced-hyphen tic.
+- (07-19) `My screener never did.` → `My screener never did, so I never wrote about it, as I've always made sure to back my claims with data.` — dulls the clean "I missed it" line with the *why* he'd normally miss it, defending the discipline instead of the miss.
+- (07-19) `They just needed one small change. Or worse, they never actually traded with it.` → `…Or worse, they never actually followed with it (I'm glaring at a few people I know who are currently laughing as they read this - you know who you are).` (parenthetical inside-joke aside; softens `traded` → `followed`)
+- (07-20) `it has been quietly driving me insane.` → `…it has been (not so) quietly driving me insane.` (parenthetical self-correction of "quietly")
+- (07-20) `This is my data run and my read, nothing more.` → `This is my data run and my read **and my noggin**, nothing more.` (adds a third item to the list to knock the seriousness down)
 
 **A4. Wires the post into the network.** The machine writes in a vacuum; he adds the
 restack bait and the product clicks.
@@ -161,6 +187,13 @@ The machine stays on task; Michael wanders and deflates.
 - `Here is the part that made me sit up. I built this machine…` → `So here's the conviction. I built this machine…`
 - (07-07) cut the two windup lines whole: `So here's the argument I've been losing at dinner, finally written down as the thing that wins it.` and `That's the whole thesis. The rest of this is proof that it's already running.` — he refuses to announce the thesis before making it; the claims just start.
 - (07-13) `Now here is the part I do not get to write. Take it away.` → `Now, to hand the mic to Sam.` — cut the self-referential windup (and the `## Sam:` header + horizontal rule); the handoff line carries the voice change on its own. Also `So here is the deal today.` → `Here's the deal today.` (drop the "So", contract "here is").
+- (07-08) cut `I vibe-coded it in a day, and the code is free, because a dashboard that only flatters you is not a dashboard, it is a mirror you paid for.` — killed the whole "because" clause: he refuses to explain *why* the tool is free-and-in-browser. The next paragraph starts making the actual argument. Same reflex as 07-07: no thesis-announcement, just start the thesis.
+- (07-11) cut `I laughed. Then I stopped laughing, because I'd spent that same week reading Tchaikovsky and arguing with friends about exactly this, and I realized the show wasn't doing science fiction. It was doing a documentary with the serial numbers filed off. Swap the robes for a blazer and the halo for an upward candlestick, and you have not changed the story at all. You've just changed the pew.` — the entire "here is my thesis about what the show *really* is" paragraph deleted; replaced with a Tchaikovsky/Lovegrove blockquote that just *shows* the thesis. Windup replaced by evidence.
+- (07-11) also cut the doubled windup `Wit, if you read Sanderson, tells stories exactly like this. A joke, a beat, then the second laugh, the one you don't enjoy. I'm not telling you what's false. I'm telling you what the words meant to the people using them, and letting you notice how little that resembles what you were handed.` — same reflex: the *explanation of how the piece works* dies; the piece is allowed to do its own work.
+- (07-11) `So here is the entire discipline, and it's nothing fancier than keeping the question mark screwed on.` — cut. The next paragraph just starts giving the discipline. Book-ending phrase "the whole entire ___" is a machine tell he strips.
+- (07-19) cut the whole opening thesis line `I spent a week trying to prove my favorite indicator was broken. It wasn't. I was.` — the *title* already says exactly this ("The Signal Was Right. I Was the One Not Listening."). He will not repeat the title as the opener. First sentence dives straight into the story.
+- (07-19) cut `That is the part that stung. The signal was sitting on my screen the whole time. I just built a scanner that was looking at a different thing.` — three sentences of *feeling about* the miss, deleted; the miss stands on its own line above and the next section jumps to what most traders do next. He refuses to explain the emotional beat between action and consequence.
+- (07-19) cut `I named it what it is. Bottom of the coil. That is the whole game. You are not trying to catch the falling knife. You are trying to catch the moment the spring lets go.` — an entire naming-plus-metaphor windup, deleted. The scan is already named earlier ("bottom of the coil"), so the reveal is redundant, and the "not X, but Y" closer is exactly the machine construction he strips.
 
 **C2. The doubled metaphor / the extra clause.** Keeps one image, kills the spare.
 - cut the whole "casting director" paragraph (he already had "light money on fire")
@@ -178,6 +211,10 @@ the confession goes.
 - (06-23 held-out) cut `I'm a felon in recovery who builds his own trading tools…`; kept the closing recovery-line as a metaphor.
 - (06-22 held-out) cut `In the rooms they have a line for exactly this: do not just do something, sit there.` — same pattern: AA-room jargon dies, the wisdom would have to be rephrased to survive.
 - (07-13) cut the recovery-adjacent `That is how you stay sick.` and de-confessed the whole opener: `I have been the guy who screenshots only the wins… I did that when I was newer, dumber, and a lot less honest with myself.` → `It must be nice to be the guy who only wins in the market… It's beyond tempting to come up here and pretend it's all wins.` **Nuance / partial counter to rule 3:** normally he ADDS first-person confession; here he REMOVED his own self-implication and made it a wry general observation. Read: he'll drop the "I was sick" self-flagging when a lighter, sardonic frame lands the same honesty without the heavy admission. The recovery *word* ("sick") dies; the humility survives as tone.
+- (07-19) **weaves rather than leads with the recovery frame.** `In recovery nobody tells you to go find a better program when you are struggling. They tell you to work the one you have.` → `Nobody tells you to go find a better program when you are struggling in recovery and they shouldn't here either. They tell you to work the one you have.` The word "recovery" survives, but the *structure* flips: he refuses to open the paragraph FROM inside the rooms as "in recovery, X"; instead he opens with the general claim and glues recovery on as a subordinate clause. Same wisdom, less lectern.
+- (07-19) also dropped the specificity: `the twelve years I have spent putting my life back together` → `the years I have spent putting my life back together` — number gone. Program-specific ("12 years" ≈ AA-milestone) → human ("years").
+- (07-19) cut the entire closing recovery paragraph: `One boring, honest day at a time. Same as everything else worth keeping.` and the paragraph before it — the "sober day at a time" cadence would have sealed the post in recovery voice; he strips it and lets `Trade with it.` be the last non-CTA line.
+- (07-11) cut the entire closing recovery paragraph: `Recovery taught me this before markets did. Half the wreckage in my life came from stories I swallowed without pulling a single thread, because pulling the thread meant the story might not hold, and I needed it to hold. Getting sober was mostly learning to read my own primary sources. The market just charges tuition for the same lesson. Put the question mark back on. Every time.` — heaviest recovery close in the corpus, deleted whole. **Fires on non-trading content too** (this is the religion/mindset post). The rule generalizes: when a post lands on a big idea, he refuses to seal it with a recovery bow, even when it fits.
 
 ---
 
@@ -192,6 +229,13 @@ the confession goes.
 - **Typos ship.** `my my uncle`, `it slightly up` survive (07-07 added `an TraderDaddy SDK` and `TL,DR;`). He does not sand the post to corporate-smooth; the small imperfections read as a human was here.
 - **Direct reader-address, unhedged.** He turns third-person copy at the reader mid-line: `a sales team that works for free.` → `…for free. I hope (hint, that's you).` and closes the piece by talking to the co-founder AND the reader: `Art, I solved it. Again.` → `…Again. You might wanna pick up the mic I'm about to drop.` **(07-07 only — single pair, not yet a law.)**
 - **Adds the credibility clause on the product.** `the thing that's actually expensive to build and run.` → `…to build and run, and were designed by a team of professional traders with years of experience.` — when the post is the funnel, he slips the sell in as a subordinate clause, never a sentence of its own. **(07-07 only — watch on next Business post.)**
+- **Ticker redaction inside prose when a live trade is in play (LAW — 4 pairs).** The machine names every ticker in-line. Michael blanks the ones tied to a *specific position or live-trade claim*, then names them in isolation (a code block, an explicit trade rule, a caption, or a `$TICKER`-tag disclosure). The prose reads as an anonymized case study; the trade rule reads as the record.
+  - (07-13, first observation) `we called this exact trade — PEP, HOOD` → `…exact trade —   ,     ` (both tickers blanked)
+  - (07-11) `NVDA is a real company, the chips are real` → `  is a real company, the chips are real` (NVDA blanked)
+  - (07-19) `sat down to write you a trade on FIG` → `sat down to write you a trade on .` (FIG blanked in the opener); paywall tease `both trade rules, FIG and SLB, the real ones` → `both trade rules,   and ____, the real ones` (both blanked). Note the code-block trade rule below the wall still names FIG and SLB in full — the ticker survives where the parser reads it, dies where the reader reads it.
+  - (07-20) `Palantir is carrying the whole tape by itself` → `  or   is carrying the whole tape by itself` (blanked, and `or` inserted so the second slot exists); `Palantir, Kratos, AVAV correlate` → `Palantir, ,    correlate` (KTOS, AVAV blanked; PLTR survives here because it's already the archetype/label). Read: he'll keep the name when it's operating as the *category shorthand* and blank it when it's making a specific position claim.
+  - Read as compliance-shaped, not stylistic: the redactions cluster where the sentence could be read as a public buy/sell claim on a named security. Where the ticker is only naming an *industry* or a *pattern*, it survives.
+- **Renaming Sam for outside vs inside audiences.** *(07-20 only — hypothesis, one pair.)* Title changed from `I Asked **Sam**` → `I Asked **My Agent**`, but every "Sam" reference INSIDE the body survives, plus an added Dr. Seuss beat (`One question, oh Sam-I-Am, why does this feel like it turns every week?`). Read: the title reaches strangers, so Sam gets category-shortened to "My Agent"; the body has already introduced her, so she can be named. Watch whether the next dual-audience post repeats this.
 
 ## What the machine already nails — don't "fix" these
 
@@ -252,16 +296,22 @@ rules for content they cannot generate; we measure how well they edit.
 
 ## Verdict
 
-Seven pairs, the signal still **dense and consistent**: the machine builds a clean
-scaffold and a few keeper lines; you spend your edit budget on **honesty
-(self-correction), warmth (physical metaphors), immediacy (time compression), and
-distribution (shoutouts, plugs, canon)**.  Now numeric.
+Fourteen pairs, the signal still **dense and consistent**: the machine builds a
+clean scaffold and a few keeper lines; you spend your edit budget on **honesty
+(self-correction), warmth (physical metaphors), immediacy (time compression),
+distribution (shoutouts, plugs, canon), and — new law this refresh — ticker
+discipline (masking named positions in prose while the trade rule keeps them
+literal)**.
 
-The held-out pairs replicated four of the strongest rules verbatim (immediacy,
-self-correction style asides, recovery-jargon cut, Phund/we conversion).  The
-first Business ship (07-07) replicated three more on non-trading content
-(immediacy/specificity, self-correcting parentheticals, meta-transition cut) —
-the voice travels.  When someone says "VOICE.md isn't accurate," this is the
-answer: pair the drafts against the ships, run the harness, point at the Δ.
+Four new pairs this refresh (07-08, 07-11, 07-19, 07-20) fire the same rules
+across four different content shapes: Business/meta (07-08), Mindset/Macro
+(07-11 — the first religion-adjacent post), paid Trading (07-19), and
+free Macro (07-20). Every one of them cut a meta-transition windup, added
+mid-paragraph self-corrections, and — in the three where a live position was
+present — blanked tickers in the prose. The **07-19 recovery de-lead** ("in
+recovery, X" → "X, in recovery, and here too") is a new *shape* of the same
+C3 rule. The **07-11 close** deleted the heaviest recovery paragraph in the
+corpus even though the whole post was about faith and stories — the "no
+recovery bow on the last paragraph" rule generalizes hard.
 
-_— Voice-Delta Agent v0.3_
+_— Voice-Delta Agent v0.4_
