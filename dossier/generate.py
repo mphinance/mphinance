@@ -1856,6 +1856,25 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Factor correlation failed: {e}")
 
+        # ── Stage 15i: Screener Convergence ──
+        # Cross-references whichever docs/api/*.json screener outputs already
+        # exist on disk (see SCREEN_FILES registry) — pure post-processing,
+        # no new network calls. This module was fully built and tested but
+        # never wired into the pipeline, so it never got a chance to run.
+        # Wiring it here means the ad hoc screens Michael runs via the
+        # batch-scanner skill start feeding a live convergence signal once
+        # their JSON lands in docs/api/. Writes docs/api/convergence-report.json.
+        print("\n[15i/16] SCREENER CONVERGENCE")
+        with timer.stage("Screener Convergence"):
+            from dossier.screener_convergence import (
+                SCREEN_FILES, _load_leg, _save_api_output, compute_convergence,
+            )
+            results_by_screen = {name: _load_leg(fn) for name, fn in SCREEN_FILES.items()}
+            convergence = compute_convergence(results_by_screen)
+            _save_api_output(convergence)
+            print(f"  ✓ {convergence['convergence_count']} tickers converging across "
+                  f"{len(convergence['screens_loaded'])} screens")
+
         # ── Sync regime history to docs/ for the Mood Ring widget (GH Pages) ──
         import shutil as _shutil
         _rh_landing = PROJECT_ROOT / "landing" / "data" / "regime_history.json"
