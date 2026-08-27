@@ -8,6 +8,9 @@ name: Pipeline Failure Notifier
 #  2. Open or update a GitHub Issue tagged 'pipeline-failure' with a short
 #     summary and the run URL. One open issue per workflow — comments on
 #     existing instead of stacking duplicates.
+#  3. On a SUCCESSFUL run, close any open 'pipeline-failure' issue for that
+#     same workflow. Without this the issues sit open forever after the
+#     underlying problem is fixed.
 
 on:
   workflow_run:
@@ -16,7 +19,6 @@ on:
       - Ghost Daily (Blog + Suggestions)
       - Watchlist Deep Dive
       - Update District 12 Meetings
-      - Triage & Status Update
       - Deploy to GitHub Pages
       - Secret Aliveness Check
     types: [completed]
@@ -100,3 +102,27 @@ jobs:
               --label "pipeline-failure" \
               --body "$BODY"
           fi
+
+  resolve:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close the open failure issue for this workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WORKFLOW: ${{ github.event.workflow_run.name }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+        run: |
+          set -e
+          # Exact-title match via real jq — gh's --jq takes no --arg.
+          NUM=$(gh issue list --repo "${{ github.repository }}" \
+            --label "pipeline-failure" --state open --limit 100 \
+            --json number,title \
+            | jq -r --arg t "[pipeline-failure] $WORKFLOW" \
+                '.[] | select(.title == $t) | .number' | head -1)
+          if [ -z "$NUM" ]; then
+            echo "No open pipeline-failure issue for '$WORKFLOW' — nothing to close."
+            exit 0
+          fi
+          gh issue close "$NUM" --repo "${{ github.repository }}" \
+            --comment "✅ \`$WORKFLOW\` succeeded again — $RUN_URL. Closing automatically."
