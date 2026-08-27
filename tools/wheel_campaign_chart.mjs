@@ -59,8 +59,9 @@ const PW_ = W - PAD_L - PAD_R, PH_ = H - PAD_T - PAD_B;
 
 const n = candles.length;
 const idx = new Map(candles.map((c, i) => [c.date, i]));
-const lo = Math.min(...candles.map((c) => c.low)) * 0.965;
-const hi = Math.max(...candles.map((c) => c.high)) * 1.035;
+const levels = [spec.strike, spec.basis].filter(Boolean);
+const lo = Math.min(...candles.map((c) => c.low), ...levels) * 0.965;
+const hi = Math.max(...candles.map((c) => c.high), ...levels) * 1.035;
 const y = (p) => PAD_T + PH_ - ((p - lo) / (hi - lo)) * PH_;
 const x = (i) => PAD_L + (i + 0.5) * (PW_ / n);
 const cw = Math.max(3, (PW_ / n) * 0.62);
@@ -86,12 +87,13 @@ if (spec.strike) {
   // park the label wherever the tape is furthest below the line, so it never fights a candle
   const sx = PAD_L + PW_ * (spec.strikeLabelAt ?? 0.62);
   p(`<rect x="${sx - 100}" y="${ys + 9}" width="200" height="21" rx="3" fill="${C.bg}" opacity="0.88"/>`);
-  p(`<text x="${sx}" y="${ys + 24}" fill="${C.strike}" font-size="13.5" font-weight="700" letter-spacing="1.5" text-anchor="middle">THE $${f2(spec.strike)} STRIKE</text>`);
+  p(`<text x="${sx}" y="${ys + 24}" fill="${C.strike}" font-size="13.5" font-weight="700" letter-spacing="1.5" text-anchor="middle">${esc(spec.strikeLabel || `THE $${f2(spec.strike)} STRIKE`)}</text>`);
 }
 if (spec.basis) {
   const yb = y(spec.basis);
   p(`<line x1="${PAD_L}" y1="${yb}" x2="${PAD_L + PW_}" y2="${yb}" stroke="${C.basis}" stroke-width="1.6" stroke-dasharray="8 6" opacity="0.85"/>`);
-  p(`<text x="${PAD_L + 10}" y="${yb + 18}" fill="${C.basis}" font-size="13">AVG BASIS $${f2(spec.basis)}</text>`);
+  const bx = PAD_L + 10 + PW_ * (spec.basisLabelAt ?? 0);
+  p(`<text x="${bx}" y="${yb + 18}" fill="${C.basis}" font-size="13">${esc(spec.basisLabel || `AVG BASIS $${f2(spec.basis)}`)}</text>`);
 }
 
 // candles
@@ -178,7 +180,9 @@ p(`<text x="${PAD_L + 118}" y="46" fill="${C.text}" font-size="26">$${f2(lastC.c
 p(`<text x="${PAD_L}" y="74" fill="${C.dim}" font-size="14.5">${esc(spec.title || '')}</text>`);
 
 // legend
-const leg = [['share buy', C.buy], ['share trim', C.sell], ['option sold', C.strike], ['called away', C.assign]];
+const leg = spec.legend
+  ? spec.legend.map(([t, k]) => [t, byType[k] || C.dim])
+  : [['share buy', C.buy], ['share trim', C.sell], ['option sold', C.strike], ['called away', C.assign]];
 leg.forEach(([t, col], i) => {
   const lx = PAD_L + PW_ - 545 + i * 140;
   p(`<circle cx="${lx}" cy="${40}" r="5.5" fill="${col}"/>`);
