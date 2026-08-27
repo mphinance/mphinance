@@ -1875,6 +1875,23 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             print(f"  ✓ {convergence['convergence_count']} tickers converging across "
                   f"{len(convergence['screens_loaded'])} screens")
 
+        # ── Stage 15j: Bearish Convergence ──
+        # Mirror of Stage 15i for the short side: death_cross and
+        # insider_selling_cluster are always-bearish screens, plus the
+        # bearish-direction rows from obv_divergence and seasonality (both
+        # excluded from the bullish sum above because their grade can point
+        # either way). Writes docs/api/bearish-convergence-report.json.
+        print("\n[15j/16] BEARISH CONVERGENCE")
+        with timer.stage("Bearish Convergence"):
+            from dossier.bearish_convergence import (
+                _save_api_output as _save_bearish_output, load_bearish_legs,
+            )
+            from dossier.screener_convergence import compute_convergence as _compute_convergence
+            bear_convergence = _compute_convergence(load_bearish_legs())
+            _save_bearish_output(bear_convergence)
+            print(f"  ✓ {bear_convergence['convergence_count']} tickers converging across "
+                  f"{len(bear_convergence['screens_loaded'])} bearish screens")
+
         # ── Sync regime history to docs/ for the Mood Ring widget (GH Pages) ──
         import shutil as _shutil
         _rh_landing = PROJECT_ROOT / "landing" / "data" / "regime_history.json"
