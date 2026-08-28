@@ -1569,6 +1569,7 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         confluence=confluence,
         migration=migration,
         market_weather=market_weather_data,
+        gex_reads=gex_reads,
     )
 
     pdf_path = None
