@@ -752,6 +752,23 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     from dossier.data_sources.tickertrace import fetch_institutional_data
     institutional = fetch_institutional_data()
 
+    # ── Stage 3b: Institutional Fund Flow Clusters ──
+    # institutional["recent_changes"] (day-over-day TickerTrace position
+    # deltas) has been fetched and filtered since tickertrace.py was built,
+    # but nothing ever read it — top_buying/top_selling is a static
+    # snapshot; this nets the fresher day-over-day flip into fund-flow
+    # clusters. Pure post-processing on data already in hand this run.
+    print("\n[3b/16] FUND FLOW CLUSTERS")
+    try:
+        from dossier.institutional_momentum import (
+            compute_fund_flow_clusters, format_institutional_momentum_text, _save_api_output as _save_flow_output,
+        )
+        fund_flow = compute_fund_flow_clusters(institutional.get("recent_changes", []))
+        _save_flow_output(fund_flow)
+        print(f"  {format_institutional_momentum_text(fund_flow)}")
+    except Exception as e:
+        print(f"  [WARN] Fund flow clusters failed: {e}")
+
     # ── Stage 4: Market Regime ──
     print("\n[4/16] MARKET REGIME DETECTION")
     market = {}
