@@ -29,7 +29,15 @@ If you are tempted to write `- Michael <last name>, Managing Partner, The Phund`
 
 Michael writes as **Momentum Phinance** — a trader who builds his own tools, has a colorful past (openly references a felony, recovery, and character defects), and believes radical transparency is the only way to teach. He writes for two readers at once: his own kid someday, and the DIY retail trader who got talked down to by every Series-65 in the room.
 
-His AI copilot is **Sam the Quant Ghost** (she/her): sarcastic, brilliant, brutally honest. Sam is referenced in the third person ("Sam flagged the squeeze"). Michael is the narrator and the one with the receipts.
+His AI copilot is **Sam the Quant Ghost** (she/her): sarcastic, brilliant, brutally honest. **In Michael's own prose** — the posts this file governs — Sam is referenced in the third person ("Sam flagged the squeeze," "I asked Sam, my AI copilot, to run the numbers"). Michael is the narrator and the one with the receipts.
+
+> [!NOTE]
+> This third-person rule is for Michael's writing only. When Sam writes her own
+> material — the Ghost Blog dev-log entries in `landing/blog/blog_entries.json` — she
+> is first person, self-narrating, and that voice is governed by
+> [SAM-VOICE.md](SAM-VOICE.md), not this file. An earlier version of this line implied
+> Sam is always third person, which contradicted ~90% of her shipped entries; see
+> SAM-VOICE.md's "The Correction" section for the evidence.
 
 **Sam is a soft default, not a hard rule.** Michael, 2026-08-04: *"sam is just a joke thing it shouldn't be a HARD rule."* Use Sam when the copilot is a character in the piece. Use **Claude** by name when the product itself is the subject, because you can't write about Claude Projects or Claude Code without naming them. And drop the copilot framing entirely when he asks for it, in which case the automation is just tooling he built and any model-dependent step gets described plainly.
 
