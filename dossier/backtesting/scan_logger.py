@@ -237,17 +237,22 @@ def update_forward_returns():
 
         try:
             end = scan_date + timedelta(days=45)
-            hist = yf.download(ticker, start=scan_date, end=end,
-                             interval="1d", progress=False)
+            # yf.download() returns MultiIndex columns on this yfinance version,
+            # which makes hist["Close"].iloc[d] a 1-element Series (float() on it
+            # raises "not 'Series'") instead of a scalar — silently failing this
+            # for every entry. yf.Ticker().history() doesn't have that problem;
+            # see track_record_generator.py's _get_forward_returns for the same fix.
+            hist = yf.Ticker(ticker).history(start=scan_date.strftime("%Y-%m-%d"),
+                                              end=end.strftime("%Y-%m-%d"))
             if hist.empty:
                 updated_entries.append(entry)
                 continue
 
-            prices = hist["Close"]
+            prices = hist["Close"].tolist()
             for d, key in [(1, "fwd_1d"), (3, "fwd_3d"), (5, "fwd_5d"),
                           (10, "fwd_10d"), (21, "fwd_21d")]:
                 if len(prices) > d:
-                    ret = (float(prices.iloc[d]) - entry_price) / entry_price * 100
+                    ret = (prices[d] - entry_price) / entry_price * 100
                     entry[key] = round(ret, 2)
 
             updated += 1
