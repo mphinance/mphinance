@@ -3,13 +3,14 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from dossier.backtesting.scan_logger import (
     _append_entry,
     _get_ticker_snapshot,
     _load_archive,
     log_todays_picks,
+    update_forward_returns,
 )
 
 
@@ -116,3 +117,35 @@ def test_log_todays_picks_missing_file_noop():
     with patch("dossier.backtesting.scan_logger.PICKS_PATH", Path("/tmp/_absent_daily_picks.json")), \
          patch("dossier.backtesting.scan_logger.SCAN_ARCHIVE", Path("/tmp/_absent_scan_archive_2.jsonl")):
         log_todays_picks()  # should print an error and return without raising
+
+
+def test_update_forward_returns_uses_ticker_history_not_download():
+    """Regression: yf.download() returns MultiIndex columns on the yfinance
+    version this pipeline runs, which makes hist["Close"].iloc[d] a 1-element
+    Series — float() on it raises "not 'Series'", caught by the bare except,
+    silently leaving every entry unvalidated. This ran in prod for 6+ weeks
+    with 0/158 archive entries ever getting a fwd_5d. yf.Ticker().history()
+    doesn't have that problem (same fix already used by
+    track_record_generator.py's _get_forward_returns)."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
+        f.write(json.dumps({"ticker": "AAPL", "date": "2020-01-01", "price": 100.0}) + "\n")
+        path = Path(f.name)
+
+    import pandas as pd
+    closes = [100.0 + i for i in range(22)]  # enough rows for the fwd_21d lookup
+    fake_ticker = MagicMock()
+    fake_ticker.history.return_value = pd.DataFrame({"Close": closes})
+
+    try:
+        with patch("dossier.backtesting.scan_logger.SCAN_ARCHIVE", path), \
+             patch("yfinance.Ticker", return_value=fake_ticker), \
+             patch("time.sleep"):
+            update_forward_returns()
+            entries = _load_archive()
+    finally:
+        os.unlink(path)
+
+    assert len(entries) == 1
+    entry = entries[0]
+    assert entry["fwd_5d"] == round((closes[5] - 100.0) / 100.0 * 100, 2)
+    assert entry["fwd_21d"] == round((closes[21] - 100.0) / 100.0 * 100, 2)
