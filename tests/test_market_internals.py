@@ -2,7 +2,7 @@
 Tests for dossier/market_internals.py — Market Internals dashboard feed.
 
 Covers:
-  1. build_internals with all seven history files present
+  1. build_internals with all eight history files present
   2. build_internals with missing/empty history files (never raises)
   3. _trend windowing (last N, skips missing field, sorts by date)
   4. write_internals_api round-trip persistence
@@ -30,9 +30,11 @@ def test_build_internals_missing_files_never_raises(tmp_path):
     assert snapshot["factor_mix"]["latest"] is None
     assert snapshot["follow_through"]["trend"] == []
     assert snapshot["follow_through"]["latest"] is None
+    assert snapshot["volume_conviction"]["trend"] == []
+    assert snapshot["volume_conviction"]["latest"] is None
 
 
-def test_build_internals_aggregates_all_seven(tmp_path):
+def test_build_internals_aggregates_all_eight(tmp_path):
     _write(tmp_path / "breadth_history.json", [
         {"date": "2026-07-30", "breadth_score": 40.0, "state": "neutral"},
         {"date": "2026-07-31", "breadth_score": 72.0, "state": "expanding"},
@@ -55,6 +57,9 @@ def test_build_internals_aggregates_all_seven(tmp_path):
     _write(tmp_path / "follow_through_index_history.json", [
         {"date": "2026-07-31", "leaders_advance_pct": 80.0, "state": "confirmed"},
     ])
+    _write(tmp_path / "volume_conviction_history.json", [
+        {"date": "2026-07-31", "leaders_elevated_pct": 60.0, "state": "confirmed"},
+    ])
 
     snapshot = build_internals(tmp_path, window=20)
 
@@ -70,6 +75,7 @@ def test_build_internals_aggregates_all_seven(tmp_path):
     assert snapshot["extension"]["latest"]["net_extension"] == 35.0
     assert snapshot["factor_mix"]["latest"]["factors"][0]["factor"] == "adx"
     assert snapshot["follow_through"]["latest"]["leaders_advance_pct"] == 80.0
+    assert snapshot["volume_conviction"]["latest"]["leaders_elevated_pct"] == 60.0
 
 
 def test_breadth_latest_gets_classified_when_missing_state(tmp_path):

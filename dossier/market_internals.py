@@ -1,19 +1,19 @@
 """
-Market Internals feed — combines seven existing "breadth-style" daily signals
+Market Internals feed — combines eight existing "breadth-style" daily signals
 (breadth_index, factor_leaderboard, score_dispersion, sector_leadership,
-quality_breadth, extension_index, follow_through_index) into one time-series
-snapshot for a dashboard page.
+quality_breadth, extension_index, follow_through_index, volume_conviction_index)
+into one time-series snapshot for a dashboard page.
 
 Each of those modules already computes a daily reading and appends it to its
 own dated history file under landing/data/*_history.json (see
-dossier/generate.py Stages 10a-10a7) — but nothing reads them back. Today
+dossier/generate.py Stages 10a-10a7c) — but nothing reads them back. Today
 they're printed to the pipeline log and folded into narrative prose, then
 otherwise stranded: there's no page where Michael can see "is the tape
 getting more extended day over day" or "is leadership rotating sectors"
 as a trend instead of a one-day snapshot.
 
 This module adds no new computation — it's pure plumbing on top of data
-that already exists: read the six history files, trim each to a rolling
+that already exists: read the history files, trim each to a rolling
 window, and write one combined JSON for docs/market-internals.html to
 render as sparklines.
 """
@@ -30,6 +30,7 @@ from dossier.follow_through_index import load_history as _load_follow_through_hi
 from dossier.quality_breadth import load_history as _load_quality_history
 from dossier.score_dispersion import load_history as _load_dispersion_history
 from dossier.sector_leadership import load_history as _load_leadership_history
+from dossier.volume_conviction_index import load_history as _load_volume_conviction_history
 
 DEFAULT_WINDOW = 20
 
@@ -41,6 +42,7 @@ HISTORY_FILES = {
     "extension": "extension_index_history.json",
     "factors": "factor_leaderboard_history.json",
     "follow_through": "follow_through_index_history.json",
+    "volume_conviction": "volume_conviction_history.json",
 }
 
 
@@ -79,10 +81,10 @@ def _latest_breadth(history: list) -> dict | None:
 
 def build_internals(data_dir, window: int = DEFAULT_WINDOW) -> dict:
     """
-    Aggregate the seven breadth-style history files under `data_dir`
+    Aggregate the eight breadth-style history files under `data_dir`
     (landing/data) into one dashboard-ready snapshot. Never raises — a
     missing or empty history file just yields an empty trend and a null
-    "latest" for that metric, same never-raise contract as the seven
+    "latest" for that metric, same never-raise contract as the eight
     upstream `compute_*` functions.
     """
     data_dir = Path(data_dir)
@@ -94,6 +96,7 @@ def build_internals(data_dir, window: int = DEFAULT_WINDOW) -> dict:
     extension = _load_extension_history(data_dir / HISTORY_FILES["extension"])
     factors = _load_factor_history(data_dir / HISTORY_FILES["factors"])
     follow_through = _load_follow_through_history(data_dir / HISTORY_FILES["follow_through"])
+    volume_conviction = _load_volume_conviction_history(data_dir / HISTORY_FILES["volume_conviction"])
 
     return {
         "window": window,
@@ -123,6 +126,10 @@ def build_internals(data_dir, window: int = DEFAULT_WINDOW) -> dict:
         "follow_through": {
             "trend": _trend(follow_through, "leaders_advance_pct", window),
             "latest": _latest(follow_through),
+        },
+        "volume_conviction": {
+            "trend": _trend(volume_conviction, "leaders_elevated_pct", window),
+            "latest": _latest(volume_conviction),
         },
     }
 

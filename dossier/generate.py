@@ -1195,10 +1195,27 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Earnings risk flag failed: {e}")
 
+    # ── Stage 10a7c: Volume Conviction Index ──
+    # Same `all_ranked` leaderboard one more time, but asks a question none
+    # of breadth/factor/shape/sector/quality/extension/follow-through ask:
+    # is today's leaderboard actually being traded, or just drifting up on
+    # thin volume? % of the top N momentum picks showing elevated relative
+    # volume (>= 1.5x, momentum_picks.py's own "real participation" floor)
+    # vs the same figure for the whole scanned universe.
+    try:
+        from dossier.volume_conviction_index import compute_volume_conviction, format_volume_conviction_text, record_volume_conviction
+        volume_conviction = compute_volume_conviction(momentum_picks.get("all_ranked", []))
+        volume_conviction["date"] = date
+        vc_path = PROJECT_ROOT / "landing" / "data" / "volume_conviction_history.json"
+        record_volume_conviction(vc_path, volume_conviction)
+        print(f"  {format_volume_conviction_text(volume_conviction)}")
+    except Exception as e:
+        print(f"  [WARN] Volume conviction index failed: {e}")
+
     # ── Stage 10a8: Market Internals Dashboard Feed ──
-    # Stages 10a-10a7 each append today's reading to their own history file
+    # Stages 10a-10a7c each append today's reading to their own history file
     # under landing/data/ — nothing reads them back as a series. This combines
-    # all seven into one JSON so docs/market-internals.html can chart the trend
+    # all eight into one JSON so docs/market-internals.html can chart the trend
     # instead of just today's snapshot. Pure aggregation, no new computation.
     try:
         from dossier.market_internals import write_internals_api
