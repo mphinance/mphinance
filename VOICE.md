@@ -129,6 +129,18 @@ When a draft has a thesis and no origin story, ask whether there's a real-life o
 - **Passive voice. LinkedIn tone. "In this article, we will..."**
 - **Unverified dates.** Never put a CPI / NFP / FOMC / earnings date in a post unless it's verified. The dev econ-calendar feed has served wrong dates and it cost a deleted post.
 
+**The rest of the AI-tell list** (added 2026-09-06 from [blader/humanizer](https://github.com/blader/humanizer), which sources Wikipedia's "Signs of AI writing"). These aren't redundant with the bans above, they're the next tier down, and a draft can be clean on every rule above and still read as AI because of these:
+
+- **"Not just X, it's Y."** State the point directly instead of staging the contrast.
+- **Forced triads.** Three adjectives or examples crammed in because three sounds complete. Use the number the sentence actually needs, not a rule of three.
+- **Sayings that sound deep.** "At its core, what matters is...", "trust is the real currency here." Replace the platitude with the specific claim it's standing in for.
+- **Overused AI vocabulary.** delve, testament, landscape, tapestry, navigate, robust, showcase, foster, boast. Plain words only.
+- **Inflated significance.** "marking a pivotal moment," "the future looks bright," "despite challenges, X continues to thrive." Keep the fact, cut the sentence announcing that the fact is significant.
+- **Borrowed authority with no name attached.** "Experts believe," "studies show." Name the actual source (he already does this, see "Real numbers from real APIs") or cut the claim.
+- **Avoiding is/are/has.** "serves as... features... boasts..." Just say "is" and "has."
+- **Bold as decoration.** Bolding a term or a mini-label instead of a number. Bold the figures the Structural Patterns section calls for, nothing else.
+- **Repeated sentence openings back to back.** "He noted... He noted... He filed..." Merge the sentences or vary the subject.
+
 ---
 
 ## Vocabulary & Tics

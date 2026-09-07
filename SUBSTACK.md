@@ -48,6 +48,17 @@ Every Substack article follows this skeleton:
 12. Signature: exactly `~ Michael` on its own line. Tilde, space, first name. NEVER a last name, NEVER a title ("Managing Partner," "The Phund," "Momentum Phinance"), NEVER a `-` or `—`. See VOICE.md.
 ```
 
+### Self-Edit Pass (required, before you call the draft done)
+
+Writing the skeleton above is not the last step. Before treating a draft as finished:
+
+1. Reread it against VOICE.md's **"What This Voice NEVER Does"** list, tell by tell, including the humanizer-sourced patterns at the bottom of that section (not-X-but-Y, forced triads, inflated significance, borrowed authority, decorative bolding, etc.).
+2. Mark every line that trips one of those patterns.
+3. Rewrite only those lines. Don't restructure lines that didn't trip anything.
+4. Confirm nothing you cut was a fact (a number, date, quote, name) rather than a tell. Facts don't get cut to fix rhythm.
+
+Skipping this pass is how a draft that followed every formatting rule still reads like an AI wrote it. Do it every time, not just when the draft "feels off."
+
 ### Image Generation Rules
 - **Theme:** Dark background (#0a0a0a or #111), neon green (#00ff41) for bullish/good, gold (#f0b400) for caution, red (#e53935) for danger. Monospace or clean sans-serif fonts.
 - **Style:** Bloomberg terminal meets hacker aesthetic. Data-dense but readable. No clip art. No stock photos. No rounded-corner corporate nonsense.
