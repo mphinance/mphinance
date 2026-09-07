@@ -98,6 +98,33 @@ is what's left standing after all of them get a turn. That's the article:
 not "I found a great trade," it's "here's what it actually takes to find out
 an idea doesn't work, instead of guessing."
 
+## Visual — teaser chart, no labels, paywalled reveal
+
+- Built: `$85c, 21 DTE, premium vs. underlying price` — 4 curves, one per IV
+  scenario (65/80/100/120%), rendered dark/gold to match the site's chart look.
+- **Teaser** (free section, above the fold): axes stripped, no legend, no
+  title — just the 4 curves. Real data, not a mockup. It's a hook, not a
+  reveal: four lines that clearly diverge but tell you nothing about what
+  they are.
+  `docs/substack/drafts/2026-09-07_rklb-iv-premium-teaser.png`
+- **Reveal** (behind the paywall): fully labeled version — axis, title,
+  legend, "today's spot" marker.
+  `docs/substack/drafts/2026-09-07_rklb-iv-premium-reveal.png`
+- **The pull-quote the chart earns**: at today's exact spot, holding the
+  stock price fixed, the same contract prices anywhere from **$19 to $187
+  per contract** depending purely on which IV assumption you land on — a
+  ~10x range from volatility alone, price never moving. That's a stronger
+  hook than "wait for the pullback," and it's what the paywall reveal
+  actually pays off.
+- Reminder: `create_draft_from_md.py` has no native paywall support —
+  paywall has to be set by hand in the editor (see
+  [[reference_substack_pusher_paywall]]). Teaser image goes in the free
+  section, reveal image + the full round-4 breakdown goes below the
+  hand-set paywall line.
+- Both PNGs will need re-rendering with real numbers at publish time — this
+  pair is illustrative, built from the same stale 2026-09-07 read as
+  everything else in this outline.
+
 ## Numbers to re-verify before publishing (all stale/example as of 2026-09-07)
 
 - RKLB spot, GEX walls (flip $65.76, support $60/$55, resistance $65/$67/$70)
