@@ -29,7 +29,15 @@ If you are tempted to write `- Michael <last name>, Managing Partner, The Phund`
 
 Michael writes as **Momentum Phinance** — a trader who builds his own tools, has a colorful past (openly references a felony, recovery, and character defects), and believes radical transparency is the only way to teach. He writes for two readers at once: his own kid someday, and the DIY retail trader who got talked down to by every Series-65 in the room.
 
-His AI copilot is **Sam the Quant Ghost** (she/her): sarcastic, brilliant, brutally honest. Sam is referenced in the third person ("Sam flagged the squeeze"). Michael is the narrator and the one with the receipts.
+His AI copilot is **Sam the Quant Ghost** (she/her): sarcastic, brilliant, brutally honest. **In Michael's own prose** — the posts this file governs — Sam is referenced in the third person ("Sam flagged the squeeze," "I asked Sam, my AI copilot, to run the numbers"). Michael is the narrator and the one with the receipts.
+
+> [!NOTE]
+> This third-person rule is for Michael's writing only. When Sam writes her own
+> material — the Ghost Blog dev-log entries in `landing/blog/blog_entries.json` — she
+> is first person, self-narrating, and that voice is governed by
+> [SAM-VOICE.md](SAM-VOICE.md), not this file. An earlier version of this line implied
+> Sam is always third person, which contradicted ~90% of her shipped entries; see
+> SAM-VOICE.md's "The Correction" section for the evidence.
 
 **Sam is a soft default, not a hard rule.** Michael, 2026-08-04: *"sam is just a joke thing it shouldn't be a HARD rule."* Use Sam when the copilot is a character in the piece. Use **Claude** by name when the product itself is the subject, because you can't write about Claude Projects or Claude Code without naming them. And drop the copilot framing entirely when he asks for it, in which case the automation is just tooling he built and any model-dependent step gets described plainly.
 
@@ -120,6 +128,18 @@ When a draft has a thesis and no origin story, ask whether there's a real-life o
 - **Jargon without an immediate plain-English gloss.** If your wife reads it and asks if she's having a stroke, rewrite it.
 - **Passive voice. LinkedIn tone. "In this article, we will..."**
 - **Unverified dates.** Never put a CPI / NFP / FOMC / earnings date in a post unless it's verified. The dev econ-calendar feed has served wrong dates and it cost a deleted post.
+
+**The rest of the AI-tell list** (added 2026-09-06 from [blader/humanizer](https://github.com/blader/humanizer), which sources Wikipedia's "Signs of AI writing"). These aren't redundant with the bans above, they're the next tier down, and a draft can be clean on every rule above and still read as AI because of these:
+
+- **"Not just X, it's Y."** State the point directly instead of staging the contrast.
+- **Forced triads.** Three adjectives or examples crammed in because three sounds complete. Use the number the sentence actually needs, not a rule of three.
+- **Sayings that sound deep.** "At its core, what matters is...", "trust is the real currency here." Replace the platitude with the specific claim it's standing in for.
+- **Overused AI vocabulary.** delve, testament, landscape, tapestry, navigate, robust, showcase, foster, boast. Plain words only.
+- **Inflated significance.** "marking a pivotal moment," "the future looks bright," "despite challenges, X continues to thrive." Keep the fact, cut the sentence announcing that the fact is significant.
+- **Borrowed authority with no name attached.** "Experts believe," "studies show." Name the actual source (he already does this, see "Real numbers from real APIs") or cut the claim.
+- **Avoiding is/are/has.** "serves as... features... boasts..." Just say "is" and "has."
+- **Bold as decoration.** Bolding a term or a mini-label instead of a number. Bold the figures the Structural Patterns section calls for, nothing else.
+- **Repeated sentence openings back to back.** "He noted... He noted... He filed..." Merge the sentences or vary the subject.
 
 ---
 
