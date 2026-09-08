@@ -30,6 +30,19 @@ Updated: 2026-04-03
 import sys
 from pathlib import Path
 
+try:
+    from dossier.utils.validate_api import check_yfinance_history
+except ImportError:
+    def check_yfinance_history(df, ticker, min_rows=2):
+        if df is None or df.empty:
+            return False, f"{ticker}: empty history"
+        if len(df) < min_rows:
+            return False, f"{ticker}: only {len(df)} row(s)"
+        missing = {"Close", "High", "Low", "Volume"} - set(df.columns)
+        if missing:
+            return False, f"{ticker}: missing columns {sorted(missing)}"
+        return True, ""
+
 # ══════════════════════════════════════════════════════════════════════════════
 # MASTER MAP: underlying → list of 2x bull ETFs and 2x bear ETFs
 #
@@ -421,15 +434,24 @@ def has_2x_etf(ticker: str) -> bool:
 
 
 def _fetch_avg_volume(ticker: str) -> float:
-    """Fetch 20-day average volume for a ticker via yfinance."""
+    """Fetch 20-day average volume for a ticker via yfinance.
+
+    A silent 0.0 here isn't just "no data" — it feeds directly into
+    get_best_2x_etf()'s volume comparison, so a malformed/short response
+    could make a genuinely liquid ETF lose to a thinner one with no trace of
+    why. Logs the reason instead of swallowing it.
+    """
     try:
         import yfinance as yf
         stock = yf.Ticker(ticker)
         hist = stock.history(period="1mo")
-        if hist.empty:
+        ok, reason = check_yfinance_history(hist, ticker, min_rows=1)
+        if not ok:
+            print(f"    [WARN] leveraged_etf_map: {reason}", file=sys.stderr)
             return 0.0
         return float(hist["Volume"].tail(20).mean())
-    except Exception:
+    except Exception as e:
+        print(f"    [WARN] leveraged_etf_map: {ticker} volume fetch failed: {e}", file=sys.stderr)
         return 0.0
 
 
