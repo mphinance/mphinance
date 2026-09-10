@@ -87,6 +87,27 @@ def test_compute_factor_correlations_skips_non_numeric_values():
     assert rsi_row["n"] == 0
 
 
+def test_compute_factor_correlations_skips_nan_forward_return():
+    # A yfinance lookup gap can leave fwd_5d as NaN (not None) on some
+    # entries — those must not poison the correlation for entries that
+    # otherwise have a clean, perfectly-correlated pair.
+    clean = [_entry(rsi_14=float(i), fwd_5d=float(i)) for i in range(20)]
+    poisoned = [_entry(rsi_14=5.0, fwd_5d=float("nan")) for _ in range(5)]
+    result = compute_factor_correlations(clean + poisoned, "fwd_5d", min_pairs=15)
+    rsi_row = next(f for f in result["factors_ranked"] if f["factor"] == "rsi_14")
+    assert rsi_row["n"] == 20
+    assert rsi_row["correlation"] == 1.0
+
+
+def test_compute_factor_correlations_skips_nan_factor_value():
+    clean = [_entry(rsi_14=float(i), fwd_5d=float(i)) for i in range(20)]
+    poisoned = [_entry(rsi_14=float("nan"), fwd_5d=5.0) for _ in range(5)]
+    result = compute_factor_correlations(clean + poisoned, "fwd_5d", min_pairs=15)
+    rsi_row = next(f for f in result["factors_ranked"] if f["factor"] == "rsi_14")
+    assert rsi_row["n"] == 20
+    assert rsi_row["correlation"] == 1.0
+
+
 # ── compute_all_horizons ─────────────────────────────────────────────────
 
 def test_compute_all_horizons_shape():
