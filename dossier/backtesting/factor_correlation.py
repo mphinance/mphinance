@@ -89,8 +89,8 @@ def _pearson(pairs: list[tuple[float, float]]) -> float | None:
 def compute_factor_correlations(entries: list[dict], horizon: str, min_pairs: int = MIN_PAIRS) -> dict:
     """
     For each factor in NUMERIC_FACTORS, correlate it against `horizon`
-    forward return across entries where both are present and numeric.
-    Never raises — malformed/missing values are skipped per-pair.
+    forward return across entries where both are present, numeric, and
+    finite. Never raises — malformed/missing values are skipped per-pair.
     """
     ranked, insufficient = [], []
     for name in NUMERIC_FACTORS:
@@ -100,9 +100,16 @@ def compute_factor_correlations(entries: list[dict], horizon: str, min_pairs: in
             if fv is None or hv is None:
                 continue
             try:
-                pairs.append((float(fv), float(hv)))
+                fv, hv = float(fv), float(hv)
             except (TypeError, ValueError):
                 continue
+            # yfinance forward-return lookups occasionally come back NaN
+            # (delisted/gapped ticker on the lookup date) — a NaN silently
+            # poisons every mean/variance downstream and turns the whole
+            # factor's correlation into NaN, which isn't valid JSON either.
+            if not (math.isfinite(fv) and math.isfinite(hv)):
+                continue
+            pairs.append((fv, hv))
 
         n = len(pairs)
         r = _pearson(pairs) if n >= min_pairs else None
