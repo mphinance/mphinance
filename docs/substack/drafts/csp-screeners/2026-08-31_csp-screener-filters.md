@@ -92,9 +92,21 @@ The screener gave a higher grade to the trades less likely to work. It's doing e
 
 I took it apart to find the killer. Drop the 80% probability floor and three names appear. Drop the IV band and keep the floor and it's still zero. Lower the return target from 1% a week to 0.25% and **fourteen names appear.**
 
-It's the return target. That preset wants 1% a week, 15% out of the money, at 80% odds. Those three can't all be true. Nothing pays that much on a cushion that deep unless it's genuinely likely to fall 15%, and that's exactly what the 80% floor forbids.
+It's the return target, and the reason is better than I expected.
 
-Zero results is the right answer. Every free scanner on the internet would have quietly loosened something and handed me five names anyway.
+Lock probability of profit at 80% and the strike at 15% out of the money and you've already pinned the premium. It works out to 1.80% of the strike at any expiry you like, because those two numbers fix how far into the tail you're standing. The calendar is the only thing left that moves.
+
+So weekly return is that number spread over the hold: `1.80% x 7 / DTE`. Which leaves two floors pulling against each other.
+
+Asking 1% a week caps me at **12.6 days.** Longer and the same premium spreads too thin.
+
+My own IV ceiling of 100 floors me at **11.2 days.** Shorter and 15% out of the money at 80% odds needs more than 100% implied vol, which the preset forbids.
+
+A window **1.4 days wide**, at 94% to 99% implied.
+
+I assumed those three numbers just couldn't all be true at once. They can. It's a slot, and most weeks nothing is standing in it. This week something nearly was: CIFR quoted 92.5% implied on the exact September 11 expiry sitting 12 days out. The window wanted about 96.5%. Four points of vol short.
+
+And the filter locking it out is `max_iv`, the same ceiling I just spent a section praising. Raise it and the preset breathes. That's the honest tension in the whole tool: the ceiling that saves you from garbage is the ceiling that makes your best-sounding preset return nothing.
 
 ## The rest, fast
 

@@ -27,11 +27,13 @@ from urllib.parse import unquote
 from playwright.async_api import async_playwright
 
 SID_RAW = os.environ.get("SUBSTACK_SID", "")
-PUB_URL = os.environ.get("SUBSTACK_PUB_URL", "https://mphinance.substack.com")
+PUB_URL = os.environ.get("SUBSTACK_PUB_URL", "mphinance.substack.com")
+if not PUB_URL.startswith("http"):
+    PUB_URL = f"https://{PUB_URL}"
 HEADED = "--headed" in sys.argv
 OUTPUT_DIR = Path(__file__).parent.parent  # repo root
 
-DASHBOARD_URL = f"{PUB_URL}/publish/users"
+DASHBOARD_URL = f"{PUB_URL}/publish/subscribers"
 EXPORT_URL    = f"{PUB_URL}/api/v1/subscribers/export"
 
 
@@ -154,7 +156,7 @@ async def run():
 
             # Scroll and collect all visible emails
             prev_count = 0
-            for scroll_attempt in range(20):  # max 20 scrolls
+            for scroll_attempt in range(600):  # max 600 scrolls
                 # Extract emails from current view
                 new_emails = await page.evaluate("""
                     () => {
