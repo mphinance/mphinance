@@ -1927,6 +1927,24 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             print(f"  ✓ {bear_convergence['convergence_count']} tickers converging across "
                   f"{len(bear_convergence['screens_loaded'])} bearish screens")
 
+        # ── Stage 15k: Repeat Offenders ──
+        # Tickers the algo keeps flagging across the trailing archive window —
+        # pure post-processing over the docs/api/dossier-*.json files Stage 15
+        # already writes (today's archive file lands before this point, so it's
+        # included). Fully built and tested but never wired into the pipeline
+        # until now. Writes docs/api/repeat-offenders.json.
+        print("\n[15k/16] REPEAT OFFENDERS")
+        with timer.stage("Repeat Offenders"):
+            from dossier.repeat_offenders import (
+                _load_daily_archive, _save_api_output as _save_repeat_output,
+                compute_repeat_offenders,
+            )
+            daily_entries = _load_daily_archive(20, PROJECT_ROOT / "docs" / "api")
+            repeat_offenders = compute_repeat_offenders(daily_entries)
+            _save_repeat_output(repeat_offenders)
+            print(f"  ✓ {repeat_offenders['repeat_count']} repeat offenders across "
+                  f"{repeat_offenders['window_days']} archived days")
+
         # ── Sync regime history to docs/ for the Mood Ring widget (GH Pages) ──
         import shutil as _shutil
         _rh_landing = PROJECT_ROOT / "landing" / "data" / "regime_history.json"
