@@ -68,6 +68,8 @@ SCREEN_FILES = {
     "macd_cross": "macd-cross-screener.json",
     "short_squeeze": "short-squeeze-screener.json",
     "earnings_momentum": "earnings-momentum.json",
+    "pocket_pivot": "pocket-pivot-screener.json",
+    "volume_dryup": "volume-dryup-screener.json",
 }
 
 
