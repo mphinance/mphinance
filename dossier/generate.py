@@ -1910,6 +1910,18 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             print(f"  ✓ {convergence['convergence_count']} tickers converging across "
                   f"{len(convergence['screens_loaded'])} screens")
 
+            # Convergence Streaks: persist today's snapshot and surface which
+            # tickers have held the convergence bar across multiple sessions,
+            # not just today. Pure post-processing on top of the line above.
+            from dossier.convergence_streaks import (
+                DEFAULT_HISTORY_PATH, _save_api_output as _save_streaks_output,
+                compute_streaks, format_streaks_text, record_snapshot,
+            )
+            conv_history = record_snapshot(DEFAULT_HISTORY_PATH, date, convergence)
+            streaks = compute_streaks(conv_history)
+            _save_streaks_output(streaks)
+            print(f"  {format_streaks_text(streaks)}")
+
         # ── Stage 15j: Bearish Convergence ──
         # Mirror of Stage 15i for the short side: death_cross and
         # insider_selling_cluster are always-bearish screens, plus the
@@ -1978,6 +1990,17 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
                 print(f"  ✓ Quality breadth history synced → docs/data/")
         except Exception as _sync_e:
             print(f"  [WARN] Quality breadth history sync failed: {_sync_e}")
+
+        # ── Sync convergence history to docs/ for the dashboard (GH Pages) ──
+        _ch_landing = PROJECT_ROOT / "landing" / "data" / "convergence_history.json"
+        _ch_docs = PROJECT_ROOT / "docs" / "data" / "convergence_history.json"
+        try:
+            if _ch_landing.exists():
+                _ch_docs.parent.mkdir(parents=True, exist_ok=True)
+                _shutil.copy2(_ch_landing, _ch_docs)
+                print(f"  ✓ Convergence history synced → docs/data/")
+        except Exception as _sync_e:
+            print(f"  [WARN] Convergence history sync failed: {_sync_e}")
 
         # ── Sync VRP history to docs/ for the dashboard (GH Pages) ──
         _vrp_landing = PROJECT_ROOT / "landing" / "data" / "vrp_history.json"
