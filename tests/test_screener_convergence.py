@@ -105,7 +105,7 @@ class TestScreenFilesRegistry:
         for name in (
             "rs_leadership", "insider_cluster", "analyst_revision",
             "macd_cross", "short_squeeze", "earnings_momentum",
-            "pocket_pivot", "volume_dryup",
+            "pocket_pivot", "volume_dryup", "dividend_growth",
         ):
             assert name in SCREEN_FILES
 

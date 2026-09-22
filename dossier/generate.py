@@ -1406,6 +1406,35 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Seasonality screen failed: {e}")
 
+    # ── Stage 10h: Dividend Growth Screen (quality income, not yield traps) ──
+    # Own curated pool of established dividend payers — scanned_tickers and
+    # CORE_WATCHLIST above skew growth/no-dividend (PLTR, COIN, TSLA, ...), so
+    # reusing them here would starve this screen of qualifying names.
+    print("\n[10h/16] DIVIDEND GROWTH SCREEN (quality income, not yield traps)")
+    dividend_results: list[dict] = []
+    with timer.stage("Dividend Growth Screen"):
+        try:
+            import time as _div_time
+            from dossier.dividend_growth_screener import score_dividend_growth, _save_api_output as _div_save
+            _DIVIDEND_POOL = [
+                "KO", "JNJ", "PG", "PEP", "MMM", "MCD", "WMT", "HD", "LOW", "ABBV",
+                "ABT", "TXN", "CVX", "XOM", "CAT", "IBM", "AMGN", "MRK", "PFE", "KMB",
+                "CL", "SHW", "ADP", "O", "VZ", "T", "SO", "DUK", "GD", "ITW",
+            ]
+            for _t in _DIVIDEND_POOL:
+                _r = score_dividend_growth(_t)
+                if _r:
+                    dividend_results.append(_r)
+                _div_time.sleep(0.05)
+            dividend_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _div_save(dividend_results)
+            _top_div = [r for r in dividend_results if r["grade"] in ("A+", "A")]
+            print(f"  💰 {len(dividend_results)} scored — {len(_top_div)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (streak {r['growth_streak_years']}yr)" for r in _top_div[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Dividend growth screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
