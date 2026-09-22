@@ -10,6 +10,8 @@ status: draft
 
 ![2026-04-25_hero.png](2026-04-25_hero.png)
 
+**TLDR:** I gutted all four screeners in the Ghost Alpha pipeline and turned them from dumb pass/fail filters into real multi-factor scoring models, then ran the rebuild through five different AI models at once instead of trusting just one. The dossier now leads with three Daily Cuts (one momentum, one CSP, one leveraged ETF, each graded Prime, Choice, or Select) instead of burying you in ninety tickers, and paid subscribers get my TickerTrace read on what a $9B fund has quietly been buying for seven straight weeks. Same rule as recovery: you do not fix it once, you show up and refine it every day.
+
 In recovery they tell you something that sounds too simple to be useful. Every day, it gets a little easier. But you gotta do it every day. That is the hard part.
 
 I have been sober long enough to know they are right. And I have been building trading systems long enough to know it applies there too. You do not wake up one morning with a working pipeline. You show up. You find what is holding you back. You refine it. You go to sleep. You do it again.
