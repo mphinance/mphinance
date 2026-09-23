@@ -834,6 +834,22 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Volatility risk premium failed: {e}")
 
+    # ── Stage 4a3: Distribution/Accumulation Day Count (IBD-style) ──
+    # VIX-based regime reads say nothing about the classic institutional-
+    # selling fingerprint: sessions where SPY/QQQ close down on rising volume.
+    # 5+ in a trailing 25-session window is IBD's threshold for "market under
+    # pressure" — a genuinely different lens than anything else in Stage 4.
+    try:
+        from dossier.distribution_days import fetch_and_compute_distribution_days, format_distribution_days_text, record_distribution_days
+        dist_data = fetch_and_compute_distribution_days()
+        dist_data["date"] = date
+        dist_path = PROJECT_ROOT / "landing" / "data" / "distribution_days_history.json"
+        if dist_data.get("available"):
+            record_distribution_days(dist_path, dist_data)
+        print(f"  {format_distribution_days_text(dist_data)}")
+    except Exception as e:
+        print(f"  [WARN] Distribution day count failed: {e}")
+
     # ── Stage 4b: ROIC Fortress Filter ──
     print("\n[4b/16] ROIC FORTRESS QUALITY FILTER")
     fortress_results = {}
