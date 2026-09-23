@@ -1,8 +1,8 @@
 """
-Market Internals feed — combines eight existing "breadth-style" daily signals
+Market Internals feed — combines nine existing "breadth-style" daily signals
 (breadth_index, factor_leaderboard, score_dispersion, sector_leadership,
-quality_breadth, extension_index, follow_through_index, volume_conviction_index)
-into one time-series snapshot for a dashboard page.
+quality_breadth, extension_index, follow_through_index, volume_conviction_index,
+distribution_days) into one time-series snapshot for a dashboard page.
 
 Each of those modules already computes a daily reading and appends it to its
 own dated history file under landing/data/*_history.json (see
@@ -24,6 +24,7 @@ import json
 from pathlib import Path
 
 from dossier.breadth_index import classify_breadth, load_history as _load_breadth_history
+from dossier.distribution_days import load_history as _load_distribution_days_history
 from dossier.extension_index import load_history as _load_extension_history
 from dossier.factor_leaderboard import load_history as _load_factor_history
 from dossier.follow_through_index import load_history as _load_follow_through_history
@@ -43,6 +44,7 @@ HISTORY_FILES = {
     "factors": "factor_leaderboard_history.json",
     "follow_through": "follow_through_index_history.json",
     "volume_conviction": "volume_conviction_history.json",
+    "distribution_days": "distribution_days_history.json",
 }
 
 
@@ -81,10 +83,10 @@ def _latest_breadth(history: list) -> dict | None:
 
 def build_internals(data_dir, window: int = DEFAULT_WINDOW) -> dict:
     """
-    Aggregate the eight breadth-style history files under `data_dir`
+    Aggregate the nine breadth-style history files under `data_dir`
     (landing/data) into one dashboard-ready snapshot. Never raises — a
     missing or empty history file just yields an empty trend and a null
-    "latest" for that metric, same never-raise contract as the eight
+    "latest" for that metric, same never-raise contract as the nine
     upstream `compute_*` functions.
     """
     data_dir = Path(data_dir)
@@ -97,6 +99,7 @@ def build_internals(data_dir, window: int = DEFAULT_WINDOW) -> dict:
     factors = _load_factor_history(data_dir / HISTORY_FILES["factors"])
     follow_through = _load_follow_through_history(data_dir / HISTORY_FILES["follow_through"])
     volume_conviction = _load_volume_conviction_history(data_dir / HISTORY_FILES["volume_conviction"])
+    distribution_days = _load_distribution_days_history(data_dir / HISTORY_FILES["distribution_days"])
 
     return {
         "window": window,
@@ -130,6 +133,10 @@ def build_internals(data_dir, window: int = DEFAULT_WINDOW) -> dict:
         "volume_conviction": {
             "trend": _trend(volume_conviction, "leaders_elevated_pct", window),
             "latest": _latest(volume_conviction),
+        },
+        "distribution_days": {
+            "trend": _trend(distribution_days, "distribution_days", window),
+            "latest": _latest(distribution_days),
         },
     }
 
