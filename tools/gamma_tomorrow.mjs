@@ -112,12 +112,12 @@ const dayKey = (d) => d.toISOString().slice(0, 10);
 const sessions = [...new Set(pts.map((p) => dayKey(p.t)))];
 
 // ── geometry ────────────────────────────────────────────────────────────────
-const W = 1600, H = 1000;
-const PAD_L = 64, PAD_R = 168, PAD_T = 118;
-const PLOT_H = 560;
+const W = 1600, H = 900;
+const PAD_L = 64, PAD_R = 40, PAD_T = 116;
+const PLOT_H = 600;
 const PLOT_W = W - PAD_L - PAD_R;
-const PAST_W = Math.round(PLOT_W * 0.58);          // price history
-const FWD_X = PAD_L + PAST_W;                       // "tomorrow" zone starts here
+const PAST_W = Math.round(PLOT_W * 0.36);          // the drive so far
+const FWD_X = PAD_L + PAST_W;                       // tomorrow starts here
 const FWD_W = PLOT_W - PAST_W;
 
 const yLo = Math.min(lo, ...pts.map((p) => p.px)) - 0.25;
@@ -127,49 +127,59 @@ const X = (i) => PAD_L + (i / (pts.length - 1)) * PAST_W;
 
 const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
-// ── scenarios: generated from the structure, not hand-written ───────────────
-const scenarios = [
+// ── the three roads ─────────────────────────────────────────────────────────
+// One shared price axis, three branches out of spot. A waypoint is a price the
+// tape has to deal with; its note says what the book does to price THERE, which
+// is the whole point -- the same level behaves differently depending on which
+// way you arrived at it.
+const rangeLo = Math.min(magnet, Math.floor(spot)) - 1;
+const rangeHi = Math.max(magnet, Math.ceil(flip));
+
+const roads = [
   {
-    key: 'IF IT TRENDS DOWN',
-    tint: C.put,
-    lead: pocket
-      ? `Lose ${pocket.hi + 1}, and the book thins out.`
-      : `Lose ${Math.floor(spot)}, and dealers are chasing.`,
-    body: pocket
+    key: 'UP',
+    col: C.call,
+    cond: `above ${flip.toFixed(2)}`,
+    rule: gate
+      ? `dealers brake. stalls at ${battle ? battle.strike : gate.strike}, dies at ${gate.strike}.`
+      : `dealers brake. no ceiling in range.`,
+    side: -1,
+    pts: [
+      { at: flip, tag: `${flip.toFixed(2)} FLIP`, note: 'dealers stop chasing, start braking' },
+      battle ? { at: battle.strike, tag: `${battle.strike} WALL`, note: `${oiFmt(battle.putOi)} puts, needs volume` } : null,
+      gate ? { at: gate.strike, tag: `${gate.strike} CEILING`, note: 'move dies here' } : null,
+    ].filter(Boolean),
+  },
+  {
+    key: 'RANGE',
+    col: C.pin,
+    isElse: true,
+    labelBelow: true,
+    cond: `between ${rangeLo} and ${rangeHi}`,
+    rule: negGamma
+      ? `chop around the ${magnet} pin. it knifes both edges.`
+      : `quiet drift into the ${magnet} pin.`,
+    side: -1,
+    wave: true,
+    pts: [{ at: magnet, tag: `${magnet} PIN`, note: negGamma ? 'short gamma, so it chops hard' : 'long gamma, so it settles' }],
+  },
+  {
+    key: 'DOWN',
+    col: C.put,
+    cond: pocket ? `below ${pocket.hi + 1}` : `below ${Math.floor(spot)}`,
+    rule: pocket
+      ? `open air. ${pocket.lo} to ${pocket.hi} is empty. next stop ${floor.strike}.`
+      : `every strike below carries size. grind, not a drop.`,
+    side: 1,
+    pts: pocket
       ? [
-          `${pocket.lo} to ${pocket.hi} holds only ${fmtM(pocket.net)} of net gamma across ${pocket.n} strikes. ${fmtM(Math.abs(magnetLevel().netGex))} sits at ${magnet} alone.`,
-          `That is an air pocket. Nothing for price to lean on, so it covers the distance fast.`,
-          floor ? `First real shelf is ${floor.strike} (${oiFmt(floor.putOi)} put OI, ${fmtM(floor.netGex)}). Expect the fight there, not on the way.` : '',
+          { at: pocket.hi + 1, tag: `${pocket.hi + 1} LAST SHELF`, note: 'the last thing to lean on' },
+          { at: (pocket.lo + pocket.hi) / 2, tag: 'EMPTY', note: `${pocket.lo} to ${pocket.hi}, nothing here`, open: true },
+          { at: floor.strike, tag: `${floor.strike} FLOOR`, note: `${oiFmt(floor.putOi)} puts. the fight is here` },
         ]
-      : [`No thin band below spot. Every strike down to ${Math.round(lo)} carries size. Grinding tape, not a waterfall.`],
-    levels: pocket ? [pocket.hi + 1, pocket.lo, floor && floor.strike].filter(Boolean) : [],
-  },
-  {
-    key: 'IF IT TRENDS UP',
-    tint: C.call,
-    lead: `${flip.toFixed(2)} is the gate, ${gate ? gate.strike : 'none'} is the ceiling.`,
-    body: [
-      `Under ${flip.toFixed(2)} dealers are short gamma. They chase, so up-moves keep going.`,
-      battle ? `${battle.strike} is the battle (${oiFmt(battle.putOi)} put OI, ${fmtM(battle.netGex)}). Heavy volume required; vol spikes there.` : '',
-      gate ? `Clear ${gate.strike} (${oiFmt(gate.callOi)} call OI, ${fmtM(gate.netGex)}) and the regime flips: dealers sell rips, the move damps, and you are pinned rather than trending.` : '',
-    ],
-    levels: [flip, battle && battle.strike, gate && gate.strike].filter(Boolean),
-  },
-  {
-    key: 'IF IT RANGES',
-    tint: C.pin,
-    lead: `${magnet} is the magnet, and it is a ${negGamma ? 'negative' : 'positive'}-gamma one.`,
-    body: [
-      `Spot is wedged between the magnet at ${magnet} and the flip at ${flip.toFixed(2)}, a ${Math.abs(flip - magnet).toFixed(2)} point box.`,
-      negGamma
-        ? `A short-gamma pin does not sit still. It chops hard around ${magnet} and knifes both edges. Fade the edges, do not hold the middle.`
-        : `A long-gamma pin is the quiet kind. Dealers sell the highs and buy the lows into it. Mean reversion, small range.`,
-      `Range to trade: ${(magnet - 1.5).toFixed(0)} to ${(flip + 0.5).toFixed(0)}.`,
-    ],
-    levels: [magnet, flip],
+      : [{ at: Math.round(lo), tag: `${Math.round(lo)}`, note: 'no thin band below' }],
   },
 ];
-function magnetLevel() { return ladder.find((s) => s.strike === magnet) || { netGex: 0 }; }
 
 // ── svg ─────────────────────────────────────────────────────────────────────
 let s = '';
@@ -178,32 +188,16 @@ const push = (x) => { s += x; };
 push(`<rect width="${W}" height="${H}" fill="${C.bg}"/>`);
 
 // header
-const asof = new Date(gex.lastUpdated || Date.now());
 push(`<text x="${PAD_L}" y="46" font-family="'Share Tech Mono',monospace" font-size="30" fill="${C.text}" letter-spacing="1">TOMORROW'S MAP <tspan fill="${C.green}">${esc(sym)}</tspan></text>`);
-push(`<text x="${PAD_L}" y="72" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">spot ${spot.toFixed(2)} · flip ${flip.toFixed(2)} · magnet ${magnet} · net GEX ${fmtM(gex.totalGEX)}</text>`);
+push(`<text x="${PAD_L}" y="72" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">spot ${spot.toFixed(2)} · flip ${flip.toFixed(2)} · pin ${magnet} · net GEX ${fmtM(gex.totalGEX)}</text>`);
 const pillC = negGamma ? C.coral : C.green;
-push(`<rect x="${W - PAD_R - 300}" y="26" width="300" height="34" rx="17" fill="${negGamma ? '#1a0e11' : '#0c1a13'}" stroke="${pillC}" stroke-opacity="0.45"/>`);
-push(`<text x="${W - PAD_R - 150}" y="48" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14" fill="${pillC}">${negGamma ? 'NEGATIVE GAMMA / amplified' : 'POSITIVE GAMMA / damped'}</text>`);
-push(`<text x="${W - PAD_R - 150}" y="74" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}">as of ${asof.toISOString().slice(0, 16).replace('T', ' ')}Z</text>`);
+push(`<rect x="${W - PAD_R - 330}" y="26" width="330" height="34" rx="17" fill="${negGamma ? '#1a0e11' : '#0c1a13'}" stroke="${pillC}" stroke-opacity="0.45"/>`);
+push(`<text x="${W - PAD_R - 165}" y="48" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14" fill="${pillC}">${negGamma ? 'NEGATIVE GAMMA / moves get amplified' : 'POSITIVE GAMMA / moves get damped'}</text>`);
+push(`<text x="${W - PAD_R}" y="76" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}">as of ${new Date().toISOString().slice(0, 16).replace('T', ' ')}Z</text>`);
 
-// plot frame
+// plot frame + tomorrow tint
 push(`<rect x="${PAD_L}" y="${PAD_T}" width="${PLOT_W}" height="${PLOT_H}" fill="${C.panel}" stroke="${C.line}"/>`);
-// tomorrow zone tint
-push(`<rect x="${FWD_X}" y="${PAD_T}" width="${FWD_W}" height="${PLOT_H}" fill="#0d0d16"/>`);
-push(`<line x1="${FWD_X}" y1="${PAD_T}" x2="${FWD_X}" y2="${PAD_T + PLOT_H}" stroke="${C.dim}" stroke-opacity="0.5" stroke-dasharray="3 4"/>`);
-push(`<text x="${FWD_X + 10}" y="${PAD_T + 20}" font-family="'JetBrains Mono',monospace" font-size="12" fill="${C.dim}" letter-spacing="2">TOMORROW / THE BOOK AS IT STANDS</text>`);
-
-// regime shading: below flip = short gamma
-const yFlip = Y(flip);
-push(`<rect x="${PAD_L}" y="${yFlip}" width="${PLOT_W}" height="${PAD_T + PLOT_H - yFlip}" fill="${C.put}" fill-opacity="0.045"/>`);
-push(`<rect x="${PAD_L}" y="${PAD_T}" width="${PLOT_W}" height="${yFlip - PAD_T}" fill="${C.call}" fill-opacity="0.04"/>`);
-
-// air pocket
-if (pocket) {
-  const yp1 = Y(pocket.hi + 0.5), yp2 = Y(pocket.lo - 0.5);
-  push(`<rect x="${FWD_X}" y="${yp1}" width="${FWD_W}" height="${yp2 - yp1}" fill="none" stroke="${C.coral}" stroke-opacity="0.35" stroke-dasharray="5 5"/>`);
-  push(`<text x="${FWD_X + FWD_W / 2}" y="${(yp1 + yp2) / 2 + 4}" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" fill="${C.coral}" fill-opacity="0.8" letter-spacing="3">AIR POCKET</text>`);
-}
+push(`<rect x="${FWD_X}" y="${PAD_T}" width="${FWD_W}" height="${PLOT_H}" fill="#0c0c14"/>`);
 
 // price rail
 {
@@ -214,94 +208,101 @@ if (pocket) {
   }
 }
 
-// session separators + price line
-sessions.forEach((d, k) => {
-  if (k === 0) return;
-  const i = pts.findIndex((p) => dayKey(p.t) === d);
-  push(`<line x1="${X(i)}" y1="${PAD_T}" x2="${X(i)}" y2="${PAD_T + PLOT_H}" stroke="${C.line}"/>`);
-});
+// the drive so far
+push(`<polyline fill="none" stroke="${C.cyan}" stroke-width="1.6" stroke-opacity="0.85" points="${pts.map((p, i) => `${X(i).toFixed(1)},${Y(p.px).toFixed(1)}`).join(' ')}"/>`);
 sessions.forEach((d) => {
   const i = pts.findIndex((p) => dayKey(p.t) === d);
-  push(`<text x="${X(i) + 6}" y="${PAD_T + PLOT_H - 8}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}">${d.slice(5)}</text>`);
+  push(`<text x="${X(i) + 5}" y="${PAD_T + PLOT_H - 8}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}">${d.slice(5)}</text>`);
 });
-push(`<polyline fill="none" stroke="${C.cyan}" stroke-width="1.6" points="${pts.map((p, i) => `${X(i).toFixed(1)},${Y(p.px).toFixed(1)}`).join(' ')}"/>`);
+push(`<text x="${PAD_L + 8}" y="${PAD_T + 20}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" letter-spacing="2">THE LAST 5 SESSIONS</text>`);
+push(`<line x1="${FWD_X}" y1="${PAD_T}" x2="${FWD_X}" y2="${PAD_T + PLOT_H}" stroke="${C.dim}" stroke-opacity="0.45" stroke-dasharray="3 4"/>`);
+push(`<text x="${FWD_X + 12}" y="${PAD_T + 20}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" letter-spacing="2">TOMORROW</text>`);
 
-// ── the walls: horizontal netGEX bars in the tomorrow zone ──────────────────
-const BAR_MAX = FWD_W * 0.62;
-const rowH = Math.max(6, PLOT_H / (ladder.length * 1.35));
-for (const st of ladder) {
-  const w = (Math.abs(st.netGex) / maxAbs) * BAR_MAX;
-  const col = st.netGex >= 0 ? C.call : C.put;
-  const y = Y(st.strike) - rowH / 2;
-  push(`<rect x="${FWD_X + 2}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${rowH.toFixed(1)}" fill="${col}" fill-opacity="${Math.abs(st.netGex) > WALL ? 0.72 : 0.28}" rx="1"/>`);
-  if (Math.abs(st.netGex) > WALL) {
-    push(`<text x="${FWD_X + w + 10}" y="${(y + rowH / 2 + 4).toFixed(1)}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${col}">${st.strike} · ${fmtM(st.netGex)}</text>`);
+// spot marker: where every road starts
+const ys = Y(spot);
+push(`<circle cx="${FWD_X}" cy="${ys}" r="5" fill="${C.text}"/>`);
+push(`<text x="${FWD_X + 10}" y="${ys + 22}" font-family="'JetBrains Mono',monospace" font-size="12" fill="${C.text}">${spot.toFixed(2)} now</text>`);
+
+// smooth a run of points into a path
+function smooth(pp) {
+  if (pp.length < 2) return '';
+  let d = `M ${pp[0][0].toFixed(1)},${pp[0][1].toFixed(1)}`;
+  for (let i = 1; i < pp.length - 1; i++) {
+    const mx = (pp[i][0] + pp[i + 1][0]) / 2, my = (pp[i][1] + pp[i + 1][1]) / 2;
+    d += ` Q ${pp[i][0].toFixed(1)},${pp[i][1].toFixed(1)} ${mx.toFixed(1)},${my.toFixed(1)}`;
   }
+  const l = pp[pp.length - 1];
+  d += ` L ${l[0].toFixed(1)},${l[1].toFixed(1)}`;
+  return d;
 }
 
-// ── key lines with right-edge tags ──────────────────────────────────────────
-// Lines run solid across the price history and fade to dotted across the book, so
-// the strike bars and their labels stay readable underneath.
-const tags = [];
-const tag = (px, label, col, dash) => {
-  const y = Y(px);
-  push(`<line x1="${PAD_L}" y1="${y}" x2="${FWD_X}" y2="${y}" stroke="${col}" stroke-width="1.4" ${dash ? `stroke-dasharray="${dash}"` : ''} stroke-opacity="0.9"/>`);
-  push(`<line x1="${FWD_X}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="${col}" stroke-width="1" stroke-dasharray="2 5" stroke-opacity="0.35"/>`);
-  tags.push({ y, label, col });
-};
-if (gate) tag(gate.strike, `${gate.strike} CEILING`, C.call);
-if (battle) tag(battle.strike, `${battle.strike} BATTLE`, C.put);
-tag(flip, `${flip.toFixed(2)} GAMMA FLIP`, C.flip, '7 4');
-tag(magnet, `${magnet} MAGNET`, C.pin);
-if (floor) tag(floor.strike, `${floor.strike} FLOOR`, C.put);
-tag(spot, `${spot.toFixed(2)} SPOT`, C.text, '2 3');
+const ROAD_X0 = FWD_X + 14;
+const ROAD_W = FWD_W - 210;   // leave room for the waypoint labels
 
-// De-collide the right-edge tags: anything closer than a tag height gets nudged
-// down the rail, with a leader line back to its true level.
-const TAG_H = 24;
-tags.sort((a, b) => a.y - b.y);
-let prevY = -Infinity;
-for (const t of tags) {
-  t.ty = Math.max(t.y, prevY + TAG_H);
-  prevY = t.ty;
-}
-for (const t of tags) {
-  if (Math.abs(t.ty - t.y) > 1) {
-    push(`<line x1="${W - PAD_R}" y1="${t.y}" x2="${W - PAD_R + 4}" y2="${t.ty}" stroke="${t.col}" stroke-width="1" stroke-opacity="0.6"/>`);
-  }
-  push(`<rect x="${W - PAD_R + 4}" y="${t.ty - 11}" width="152" height="22" rx="4" fill="${t.col}"/>`);
-  push(`<text x="${W - PAD_R + 12}" y="${t.ty + 4}" font-family="'JetBrains Mono',monospace" font-size="11.5" fill="#0a0a0e" font-weight="700">${esc(t.label)}</text>`);
-}
+for (const r of roads) {
+  // waypoint x positions march evenly out along the road
+  const n = r.pts.length;
+  const xs = r.wave
+    ? r.pts.map(() => ROAD_X0 + ROAD_W * 0.3)
+    : r.pts.map((_, i) => ROAD_X0 + ROAD_W * ((i + 1) / n));
 
-// ── scenario cards ──────────────────────────────────────────────────────────
-const CARD_T = PAD_T + PLOT_H + 34;
-const CARD_W = (PLOT_W + PAD_R - 64) / 3 - 16;
-scenarios.forEach((sc, i) => {
-  const x = PAD_L + i * (CARD_W + 24);
-  push(`<rect x="${x}" y="${CARD_T}" width="${CARD_W}" height="236" rx="10" fill="${C.panel}" stroke="${C.line}"/>`);
-  push(`<rect x="${x}" y="${CARD_T}" width="4" height="236" rx="2" fill="${sc.tint}"/>`);
-  push(`<text x="${x + 20}" y="${CARD_T + 30}" font-family="'JetBrains Mono',monospace" font-size="12" fill="${sc.tint}" letter-spacing="2">${esc(sc.key)}</text>`);
-  push(`<text x="${x + 20}" y="${CARD_T + 56}" font-family="'JetBrains Mono',monospace" font-size="15" fill="${C.text}">${esc(sc.lead)}</text>`);
-  let y = CARD_T + 84;
-  for (const para of sc.body.filter(Boolean)) {
-    for (const ln of wrap(para, Math.floor((CARD_W - 44) / 6.95))) {
-      push(`<text x="${x + 20}" y="${y}" font-family="'JetBrains Mono',monospace" font-size="11.5" fill="${C.dim}">${esc(ln)}</text>`);
-      y += 16;
+  let path;
+  if (r.wave) {
+    // the range road oscillates instead of going anywhere
+    const wp = [[FWD_X, ys]];
+    const cycles = 3.5, steps = 48;
+    for (let i = 1; i <= steps; i++) {
+      const f = i / steps;
+      const px = magnet + Math.sin(f * Math.PI * 2 * cycles) * ((rangeHi - rangeLo) / 2) * 0.5;
+      wp.push([ROAD_X0 + ROAD_W * f, Y(px)]);
     }
-    y += 6;
+    path = smooth(wp);
+    // the box it chops inside
+    push(`<rect x="${FWD_X}" y="${Y(rangeHi)}" width="${ROAD_X0 + ROAD_W - FWD_X}" height="${Y(rangeLo) - Y(rangeHi)}" fill="${r.col}" fill-opacity="0.035" stroke="${r.col}" stroke-opacity="0.22" stroke-dasharray="4 5"/>`);
+  } else {
+    path = smooth([[FWD_X, ys], ...r.pts.map((w, i) => [xs[i], Y(w.at)])]);
   }
-});
+  push(`<path d="${path}" fill="none" stroke="${r.col}" stroke-width="${r.wave ? 2 : 2.6}" stroke-opacity="${r.wave ? 0.6 : 0.9}" stroke-linecap="round"/>`);
 
-function wrap(t, n) {
-  const out = []; let ln = '';
-  for (const w of t.split(' ')) {
-    if ((ln + ' ' + w).trim().length > n) { out.push(ln.trim()); ln = w; } else ln += ' ' + w;
-  }
-  if (ln.trim()) out.push(ln.trim());
-  return out;
+  // waypoints
+  r.pts.forEach((w, i) => {
+    const x = xs[i], y = Y(w.at);
+    if (w.open) {
+      // an air pocket is drawn as a gap in the road, not a stop on it
+      push(`<circle cx="${x}" cy="${y}" r="4" fill="none" stroke="${r.col}" stroke-width="1.6" stroke-dasharray="2 2"/>`);
+    } else {
+      push(`<circle cx="${x}" cy="${y}" r="5.5" fill="${C.bg}" stroke="${r.col}" stroke-width="2.4"/>`);
+    }
+    // The road arrives from the lower/upper left and leaves to the right, so the
+    // only reliably empty quadrant is back over the shoulder. Last stop is the
+    // exception: nothing follows it, so its label can sit out front.
+    const last = i === n - 1;
+    const tx = last ? x + 12 : x - 12;
+    const anchor = last ? 'start' : 'end';
+    const ty = y + (r.labelBelow ? 30 : r.side < 0 ? -28 : 24);
+    push(`<text x="${tx}" y="${ty}" text-anchor="${anchor}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${r.col}" font-weight="700">${esc(w.tag)}</text>`);
+    push(`<text x="${tx}" y="${ty + 15}" text-anchor="${anchor}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}">${esc(w.note)}</text>`);
+  });
+
+  // road name at the far end
+  const endY = r.wave ? Y(magnet) : Y(r.pts[n - 1].at);
+  push(`<text x="${ROAD_X0 + ROAD_W + 12}" y="${endY + 4}" font-family="'Share Tech Mono',monospace" font-size="15" fill="${r.col}" letter-spacing="1">${r.key}</text>`);
 }
 
-push(`<text x="${PAD_L}" y="${H - 18}" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${C.dim}">Net GEX by strike, ${sym} · bars = how hard dealers must hedge there · green damps, red amplifies, thin = price travels · not advice</text>`);
+// ── the if / else ───────────────────────────────────────────────────────────
+const IF_T = PAD_T + PLOT_H + 40;
+// UP and DOWN are the two IFs; the range case is what is left over.
+const ifRows = [...roads.filter((r) => !r.isElse), ...roads.filter((r) => r.isElse)];
+ifRows.forEach((r, i) => {
+  const y = IF_T + i * 42;
+  const kw = r.isElse ? 'ELSE' : 'IF';
+  push(`<rect x="${PAD_L}" y="${y - 20}" width="${PLOT_W}" height="34" rx="6" fill="${r.col}" fill-opacity="0.06"/>`);
+  push(`<text x="${PAD_L + 16}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${r.col}" font-weight="700">${kw}</text>`);
+  push(`<text x="${PAD_L + 74}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.text}">${esc(kw === 'ELSE' ? `it holds ${r.cond}` : `it goes ${r.cond}`)}</text>`);
+  push(`<text x="${PAD_L + 330}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(r.rule)}</text>`);
+});
+
+push(`<text x="${PAD_L}" y="${H - 16}" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${C.dim}">Levels are net gamma exposure by strike. Where dealers are long gamma they brake, where they are short they chase, where there is nothing price travels. Not advice.</text>`);
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${s}</svg>`;
 
