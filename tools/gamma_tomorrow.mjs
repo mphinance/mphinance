@@ -84,6 +84,13 @@ const battle = above.filter((s) => s.netGex < -WALL && s.strike !== magnet && (!
 // The floor: biggest short-gamma strike below spot.
 const floor = below.filter((s) => s.netGex < -WALL).sort((a, b) => a.netGex - b.netGex)[0] || null;
 
+// The cushion: the best positive-gamma strike below spot. Dealers are long
+// gamma there, so they buy into weakness. This is structurally different from a
+// big negative strike, which is a crowd, not a floor.
+const cushion = floor
+  ? below.filter((s) => s.strike > floor.strike && s.netGex > 0).sort((a, b) => b.netGex - a.netGex)[0] || null
+  : null;
+
 // Air pocket: the run of thin strikes between spot and that floor.
 let pocket = null;
 if (floor) {
@@ -168,14 +175,18 @@ const roads = [
     col: C.put,
     cond: pocket ? `below ${pocket.hi + 1}` : `below ${Math.floor(spot)}`,
     rule: pocket
-      ? `open air. ${pocket.lo} to ${pocket.hi} is empty. next stop ${floor.strike}.`
+      ? (cushion
+          ? `thin air. only real bid is ${cushion.strike}. then ${floor.strike}.`
+          : `open air. ${pocket.lo} to ${pocket.hi} is empty. next stop ${floor.strike}.`)
       : `every strike below carries size. grind, not a drop.`,
     side: 1,
     pts: pocket
       ? [
           { at: pocket.hi + 1, tag: `${pocket.hi + 1} LAST SHELF`, note: 'the last thing to lean on' },
-          { at: (pocket.lo + pocket.hi) / 2, tag: 'EMPTY', note: `${pocket.lo} to ${pocket.hi}, nothing here`, open: true },
-          { at: floor.strike, tag: `${floor.strike} FLOOR`, note: `${oiFmt(floor.putOi)} puts. the fight is here` },
+          cushion
+            ? { at: cushion.strike, tag: `${cushion.strike} THIN CUSHION`, note: 'only dealer buying down here, and it is small', open: true }
+            : { at: (pocket.lo + pocket.hi) / 2, tag: 'EMPTY', note: `${pocket.lo} to ${pocket.hi}, nothing here`, open: true },
+          { at: floor.strike, tag: `${floor.strike} PUT WALL`, note: `${oiFmt(floor.putOi)} puts. the fight is here` },
         ]
       : [{ at: Math.round(lo), tag: `${Math.round(lo)}`, note: 'no thin band below' }],
   },
