@@ -101,6 +101,13 @@ def code_block(text):
     return {"type": "code_block", "content": [{"type": "text", "text": _ascii_safe(text)}]}
 
 
+def blockquote(paragraphs):
+    """Native Substack blockquote node (renders as the bordered/indented pull-quote
+    box), wrapping one or more paragraph nodes. `paragraphs` is a list of inline-content
+    lists, one per line inside the quote."""
+    return {"type": "blockquote", "content": [p(*para) for para in paragraphs]}
+
+
 def hr():
     """Native Substack horizontalRule. `---` used to render as a literal '* * *'
     paragraph; this is the real divider node. The create endpoint's TipTap schema
@@ -142,6 +149,16 @@ def build_doc(md_path, client, dry):
             continue
         if not s:
             i += 1; continue
+        # Group consecutive "> " lines into one real blockquote node (one paragraph
+        # per line), so a TLDR/pull-quote box round-trips instead of flattening to
+        # plain paragraphs on the next push.
+        if s.startswith("> "):
+            paras = []
+            while i < len(lines) and lines[i].strip().startswith("> "):
+                paras.append(inline(lines[i].strip()[2:]))
+                i += 1
+            nodes.append(blockquote(paras))
+            continue
         # Group consecutive "- " lines into one real bullet_list node.
         if s.startswith("- "):
             items = []
