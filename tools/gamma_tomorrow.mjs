@@ -137,19 +137,19 @@ const scenarios = [
       : `Lose ${Math.floor(spot)}, and dealers are chasing.`,
     body: pocket
       ? [
-          `${pocket.lo}–${pocket.hi} holds only ${fmtM(pocket.net)} of net gamma across ${pocket.n} strikes — versus ${fmtM(Math.abs(magnetLevel().netGex))} sitting at ${magnet} alone.`,
+          `${pocket.lo} to ${pocket.hi} holds only ${fmtM(pocket.net)} of net gamma across ${pocket.n} strikes. ${fmtM(Math.abs(magnetLevel().netGex))} sits at ${magnet} alone.`,
           `That is an air pocket. Nothing for price to lean on, so it covers the distance fast.`,
           floor ? `First real shelf is ${floor.strike} (${oiFmt(floor.putOi)} put OI, ${fmtM(floor.netGex)}). Expect the fight there, not on the way.` : '',
         ]
-      : [`No thin band below spot — every strike down to ${Math.round(lo)} carries size. Grinding tape, not a waterfall.`],
+      : [`No thin band below spot. Every strike down to ${Math.round(lo)} carries size. Grinding tape, not a waterfall.`],
     levels: pocket ? [pocket.hi + 1, pocket.lo, floor && floor.strike].filter(Boolean) : [],
   },
   {
     key: 'IF IT TRENDS UP',
     tint: C.call,
-    lead: `${flip.toFixed(2)} is the gate, ${gate ? gate.strike : '—'} is the ceiling.`,
+    lead: `${flip.toFixed(2)} is the gate, ${gate ? gate.strike : 'none'} is the ceiling.`,
     body: [
-      `Under ${flip.toFixed(2)} dealers are short gamma — they chase, so up-moves keep going.`,
+      `Under ${flip.toFixed(2)} dealers are short gamma. They chase, so up-moves keep going.`,
       battle ? `${battle.strike} is the battle (${oiFmt(battle.putOi)} put OI, ${fmtM(battle.netGex)}). Heavy volume required; vol spikes there.` : '',
       gate ? `Clear ${gate.strike} (${oiFmt(gate.callOi)} call OI, ${fmtM(gate.netGex)}) and the regime flips: dealers sell rips, the move damps, and you are pinned rather than trending.` : '',
     ],
@@ -160,11 +160,11 @@ const scenarios = [
     tint: C.pin,
     lead: `${magnet} is the magnet, and it is a ${negGamma ? 'negative' : 'positive'}-gamma one.`,
     body: [
-      `Spot is wedged between the magnet at ${magnet} and the flip at ${flip.toFixed(2)} — a ${Math.abs(flip - magnet).toFixed(2)} point box.`,
+      `Spot is wedged between the magnet at ${magnet} and the flip at ${flip.toFixed(2)}, a ${Math.abs(flip - magnet).toFixed(2)} point box.`,
       negGamma
         ? `A short-gamma pin does not sit still. It chops hard around ${magnet} and knifes both edges. Fade the edges, do not hold the middle.`
         : `A long-gamma pin is the quiet kind. Dealers sell the highs and buy the lows into it. Mean reversion, small range.`,
-      `Range to trade: ${(magnet - 1.5).toFixed(0)}–${(flip + 0.5).toFixed(0)}.`,
+      `Range to trade: ${(magnet - 1.5).toFixed(0)} to ${(flip + 0.5).toFixed(0)}.`,
     ],
     levels: [magnet, flip],
   },
@@ -183,7 +183,7 @@ push(`<text x="${PAD_L}" y="46" font-family="'Share Tech Mono',monospace" font-s
 push(`<text x="${PAD_L}" y="72" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">spot ${spot.toFixed(2)} · flip ${flip.toFixed(2)} · magnet ${magnet} · net GEX ${fmtM(gex.totalGEX)}</text>`);
 const pillC = negGamma ? C.coral : C.green;
 push(`<rect x="${W - PAD_R - 300}" y="26" width="300" height="34" rx="17" fill="${negGamma ? '#1a0e11' : '#0c1a13'}" stroke="${pillC}" stroke-opacity="0.45"/>`);
-push(`<text x="${W - PAD_R - 150}" y="48" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14" fill="${pillC}">${negGamma ? 'NEGATIVE GAMMA — amplified' : 'POSITIVE GAMMA — damped'}</text>`);
+push(`<text x="${W - PAD_R - 150}" y="48" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14" fill="${pillC}">${negGamma ? 'NEGATIVE GAMMA / amplified' : 'POSITIVE GAMMA / damped'}</text>`);
 push(`<text x="${W - PAD_R - 150}" y="74" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}">as of ${asof.toISOString().slice(0, 16).replace('T', ' ')}Z</text>`);
 
 // plot frame
@@ -191,7 +191,7 @@ push(`<rect x="${PAD_L}" y="${PAD_T}" width="${PLOT_W}" height="${PLOT_H}" fill=
 // tomorrow zone tint
 push(`<rect x="${FWD_X}" y="${PAD_T}" width="${FWD_W}" height="${PLOT_H}" fill="#0d0d16"/>`);
 push(`<line x1="${FWD_X}" y1="${PAD_T}" x2="${FWD_X}" y2="${PAD_T + PLOT_H}" stroke="${C.dim}" stroke-opacity="0.5" stroke-dasharray="3 4"/>`);
-push(`<text x="${FWD_X + 10}" y="${PAD_T + 20}" font-family="'JetBrains Mono',monospace" font-size="12" fill="${C.dim}" letter-spacing="2">TOMORROW — THE BOOK AS IT STANDS</text>`);
+push(`<text x="${FWD_X + 10}" y="${PAD_T + 20}" font-family="'JetBrains Mono',monospace" font-size="12" fill="${C.dim}" letter-spacing="2">TOMORROW / THE BOOK AS IT STANDS</text>`);
 
 // regime shading: below flip = short gamma
 const yFlip = Y(flip);
