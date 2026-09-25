@@ -11,7 +11,9 @@ mix with percentages, `*Trading 60% | Mindset 40%*` (see VOICE.md / SUBSTACK.md)
 it is passed straight through as the Substack subtitle. Substack's real discovery
 tags are a separate manual step in the editor and are not driven from here.
 
-  python3 tools/push_substack.py <workspace>/post.md [--dry-run]
+  python3 tools/push_substack.py <workspace>/post.md [--dry-run] [--skip-lint]
+
+Runs tools/voice_lint.py first; lint ERRORs block the push.
 """
 import base64
 import os
@@ -205,6 +207,14 @@ def main():
     # --prefix=<str> prepends to the title (e.g. "[Data Sam] ") — marks automated posts.
     prefix = next((a.split("=", 1)[1] for a in sys.argv[1:]
                    if a.startswith("--prefix=")), "")
+    # Voice gate: hard bans (dashes, banned phrases, bad sign-off) block the push.
+    # Warnings print so the tells get fixed before Michael reads the draft, not after.
+    if "--skip-lint" not in sys.argv:
+        from voice_lint import run_file
+        n_err, _ = run_file(md_path)
+        if n_err:
+            print("REFUSING to push: fix the voice_lint ERRORs above (or pass --skip-lint).")
+            sys.exit(3)
     client = SubstackClient()
     section_id = None
     if not dry:
