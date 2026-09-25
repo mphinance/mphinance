@@ -237,85 +237,105 @@ const expected = excursions.length
   ? excursions.slice().sort((a, b) => a - b)[Math.floor(excursions.length / 2)]
   : spot * 0.006;
 
-// Draw fewer sessions than we measure: the map only ever references the last
-// one, and three sessions gives the candles almost double the width.
+// ── review every prior day before drawing a new one ─────────────────────────
+// Grading is durable: once a session is scored the result is written into its
+// ledger entry and never recomputed, because the history feed only reaches back
+// ~5 sessions and an old map could not be re-graded later.
+const lastSession = allSessions[allSessions.length - 1];
+const sessionBars = (day) => allPts.filter((q) => dayKey(q.t) === day).map((q) => q.px);
+
+if (!allPts.length) throw new Error('history feed returned no usable points');
+const lastTick = allPts[allPts.length - 1].t;
+const sessionClosed = lastSession < todayET || etParts(lastTick).hour >= 16;
+
+// Draw fewer sessions than we measure: the map only references the last one,
+// and three sessions gives the candles almost double the width.
 const SHOW = parseInt(arg('sessions', '3'), 10);
 const keep = new Set(allSessions.slice(-SHOW));
 const pts = allPts.filter((q) => keep.has(dayKey(q.t)));
 const sessions = allSessions.slice(-SHOW);
 
-// ── score the last call ─────────────────────────────────────────────────────
-// Find the map that was made the session BEFORE the most recent one, then check
-// it against what that session actually printed.
-const lastSession = sessions[sessions.length - 1];
-const priorSession = sessions[sessions.length - 2];
-const sessionBars = (day) => pts.filter((q) => dayKey(q.t) === day).map((q) => q.px);
+function gradeEntry(e, day, bars) {
+  const open = bars[0], high = Math.max(...bars), low = Math.min(...bars), close = bars[bars.length - 1];
 
-// A session still in flight is worth SHOWING and never worth scoring or writing
-// to the ledger. This used to test `getUTCHours() >= 20`, which is 16:00 ET only
-// during EDT; every winter it would mark the session closed an hour early and
-// bake a truncated high/low into the permanent record.
-if (!pts.length) throw new Error('history feed returned no usable points');
-const lastTick = pts[pts.length - 1].t;
-const sessionClosed = lastSession < todayET || etParts(lastTick).hour >= 16;
+  // A level price never went near tells you nothing. Counting "never reached the
+  // put wall" as a HIT on a quiet day is something a null model with arbitrary
+  // round numbers scores just as well. Untested levels stay out of the ratio.
+  const tol = (e.expected || expected) * 0.25;
+  const checks = [];
+  const level = (lvl, side, label) => {
+    if (lvl == null) return;
+    const reached = side === 'low' ? low : high;
+    const dist = Math.abs(reached - lvl);
+    const held = side === 'low' ? low >= lvl : high <= lvl;
+    checks.push({ lvl, side, dist: +dist.toFixed(2), tested: dist <= tol || !held, ok: held, label });
+  };
+  level(e.cushion, 'low', `${e.cushion} cushion`);
+  level(e.wall, 'low', `${e.wall} put wall`);
+  level(e.flip, 'high', `${e.flip} flip`);
+  level(e.brake ?? e.battle, 'high', `${e.brake ?? e.battle} brake`);
+  level(e.gate, 'high', `${e.gate} ceiling`);
 
-let report = null;
+  // Exclusive branches. UP and DOWN could both fire, with "took both roads" as a
+  // named outcome, which let the chart claim it called whatever happened.
+  const wentUp = e.flip != null && high > e.flip;
+  const wentDown = e.shelf != null && low < e.shelf;
+  const branch = wentUp && wentDown ? 'WHIPSAW' : wentUp ? 'UP' : wentDown ? 'DOWN' : 'RANGE';
+  const branchOk = branch !== 'WHIPSAW';
+
+  const tested = checks.filter((c) => c.tested);
+  const untested = checks.filter((c) => !c.tested);
+  return {
+    day, open, high, low, close, branch, branchOk, checks, tested, untested,
+    hits: tested.filter((c) => c.ok).length + (branchOk ? 1 : 0),
+    total: tested.length + 1,
+    summary: [
+      branch === 'WHIPSAW' ? 'MISS whipsawed through both roads' : `took the ${branch} road`,
+      ...tested.map((c) => `${c.ok ? 'held' : 'MISS broke'} ${c.label} by ${c.dist.toFixed(2)}`),
+      untested.length ? `${untested.length} level${untested.length > 1 ? 's' : ''} untested` : '',
+    ].filter(Boolean).join(' · '),
+  };
+}
+
+// Backfill: score any prior entry whose session has closed and is still in reach.
+let ledgerDirty = false;
+if (!ledgerBroken) {
+  for (const e of ledger) {
+    if (e.graded) continue;
+    const i = allSessions.indexOf(e.madeAfter);
+    const day = i >= 0 ? allSessions[i + 1] : null;
+    if (!day) continue;
+    if (day === lastSession && !sessionClosed) continue;
+    const bars = sessionBars(day);
+    if (!bars.length) continue;
+    const g = gradeEntry(e, day, bars);
+    e.graded = { day: g.day, branch: g.branch, hits: g.hits, total: g.total,
+                 untested: g.untested.length, summary: g.summary };
+    ledgerDirty = true;
+  }
+}
+
+// The running record. Not published until there are enough sessions for it to
+// mean anything: a one-session "4/4" is a number, not a track record.
+const MIN_GRADED = 10;
+const gradedAll = ledger.filter((e) => e.graded);
+const record = {
+  sessions: gradedAll.length,
+  hits: gradedAll.reduce((a, e) => a + e.graded.hits, 0),
+  total: gradedAll.reduce((a, e) => a + e.graded.total, 0),
+  publishable: gradedAll.length >= MIN_GRADED,
+  minSessions: MIN_GRADED,
+};
+
+// The panel still shows yesterday, because that is reporting, not a claim.
+const priorSession = allSessions[allSessions.length - 2];
 const prev = ledgerBroken ? null : ledger.find((e) => e.madeAfter === priorSession);
+let report = null;
 if (prev) {
   const bars = sessionBars(lastSession);
-  if (bars.length) {
-    const open = bars[0], high = Math.max(...bars), low = Math.min(...bars), close = bars[bars.length - 1];
-
-    // A level that price never went near tells you nothing. The old scoring
-    // counted "never reached the put wall" as a HIT on a quiet day even when the
-    // wall sat further from spot than a typical session travels -- a null model
-    // with levels at arbitrary round numbers scores the same. Levels price did
-    // not approach are now UNTESTED and excluded from the ratio.
-    const tol = (prev.expected || expected) * 0.25;
-    const checks = [];
-    const level = (lvl, side, label) => {
-      if (lvl == null) return;
-      const reached = side === 'low' ? low : high;
-      const dist = Math.abs(reached - lvl);
-      const held = side === 'low' ? low >= lvl : high <= lvl;
-      checks.push({ lvl, side, dist, tested: dist <= tol || !held, ok: held, label });
-    };
-
-    level(prev.cushion, 'low', `${prev.cushion} cushion`);
-    level(prev.wall, 'low', `${prev.wall} put wall`);
-    level(prev.flip, 'high', `${prev.flip} flip`);
-    level(prev.brake ?? prev.battle, 'high', `${prev.brake ?? prev.battle} brake`);
-    level(prev.gate, 'high', `${prev.gate} ceiling`);
-
-    // Exclusive branch classification. UP and DOWN used to both be able to fire,
-    // with "took both roads" as a named outcome, which let the chart claim it
-    // called whatever happened. A whipsaw is now its own verdict and it is a
-    // MISS, not a hit, because the map did not describe that day.
-    const wentUp = prev.flip != null && high > prev.flip;
-    const wentDown = prev.shelf != null && low < prev.shelf;
-    const branch = wentUp && wentDown ? 'WHIPSAW' : wentUp ? 'UP' : wentDown ? 'DOWN' : 'RANGE';
-    const branchOk = branch !== 'WHIPSAW';
-
-    const tested = checks.filter((c) => c.tested);
-    const untested = checks.filter((c) => !c.tested);
-    const hits = tested.filter((c) => c.ok).length + (branchOk ? 1 : 0);
-    const total = tested.length + 1;
-
-    report = {
-      partial: !sessionClosed,
-      day: lastSession, open, high, low, close,
-      branch, branchOk, checks, tested, untested,
-      hits, total,
-      levels: [prev.shelf, prev.cushion, prev.wall, prev.flip, prev.battle, prev.brake, prev.gate]
-        .filter((v) => v != null),
-      prev,
-      summary: [
-        branch === 'WHIPSAW' ? 'MISS whipsawed through both roads' : `took the ${branch} road`,
-        ...tested.map((c) => `${c.ok ? '' : 'MISS '}${c.ok ? 'held' : 'broke'} ${c.label} by ${c.dist.toFixed(2)}`),
-        untested.length ? `${untested.length} level${untested.length > 1 ? 's' : ''} untested` : '',
-      ].filter(Boolean).join(' · '),
-    };
-  }
+  if (bars.length) report = { ...gradeEntry(prev, lastSession, bars), partial: !sessionClosed, prev,
+    levels: [prev.shelf, prev.cushion, prev.wall, prev.flip, prev.battle, prev.brake, prev.gate]
+      .filter((v) => v != null) };
 }
 
 // ── candles ─────────────────────────────────────────────────────────────────
@@ -703,10 +723,10 @@ const entry = {
 };
 if (ledgerBroken) {
   console.log('not writing the ledger: it is unreadable and overwriting it would lose the history');
-} else if (sessionClosed) {
+} else if (sessionClosed || ledgerDirty) {
   const kept = ledger.filter((e) => e.madeAfter !== entry.madeAfter);
   if (kept.length) writeFileSync(`${LEDGER}.bak`, JSON.stringify(ledger, null, 2) + '\n');
-  kept.push(entry);
+  if (sessionClosed) kept.push(entry);
   kept.sort((a, b) => a.madeAfter.localeCompare(b.madeAfter));
   mkdirSync(dirname(LEDGER), { recursive: true });
   writeFileSync(LEDGER, JSON.stringify(kept.slice(-120), null, 2) + '\n');
@@ -714,6 +734,7 @@ if (ledgerBroken) {
   console.log('session still open: not writing to the ledger, and the score below is provisional');
 }
 
+console.log(`record so far: ${record.sessions} session(s) graded${record.publishable ? '' : ` -- not publishable until ${MIN_GRADED}`}`);
 if (report) console.log(`${report.partial ? 'in flight' : 'last call'}: ${report.hits}/${report.total} tested on ${report.day} | ${report.summary}`);
 console.log(`spot ${spot} | flip ${flip} | magnet ${magnet} | netGEX ${fmtM(gex.totalGEX)}`);
 console.log(`gate ${gate?.strike} | brake ${brake?.strike} | accel ${accel?.strike} | floor ${floor?.strike} | pocket ${pocket ? `${pocket.lo}-${pocket.hi}` : 'none'}`);
@@ -745,6 +766,7 @@ writeFileSync(sidecar, JSON.stringify({
     cond: r.isElse ? `it holds ${r.cond}` : `it goes ${r.cond}`,
     rule: r.rule,
   })),
+  record,
   lastCall: report && !report.partial
     ? { day: report.day, hits: report.hits, total: report.total, branch: report.branch,
         untested: report.untested.length, summary: report.summary }

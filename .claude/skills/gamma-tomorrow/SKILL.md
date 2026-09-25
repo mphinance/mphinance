@@ -111,10 +111,20 @@ typical day travels will pass a "never reached it" test on any quiet session, an
 null model with levels at arbitrary round numbers scores identically. Levels price
 came nowhere near are marked UNTESTED, drawn grey, and excluded from the ratio.
 
-Under that rule 2026-09-24 grades **3/3 on tested levels, with 3 levels never in
-play** (took the DOWN road, held the 763 cushion by 0.33, capped under the 769.22
-flip by 0.38; the 760 wall, 770 brake and 772 ceiling were never approached). The
-headline used to read 4/4. That is one graded session, not a track record.
+Under that rule 2026-09-24 grades 3/3 on tested levels with 3 levels never in play.
+The headline used to read 4/4.
+
+**Never publish an accuracy number before it is one.** A grade is written into its
+ledger entry permanently the first time its session closes, so the record builds
+itself and old maps stay graded after the history feed rolls past them. The note
+publishes a hit rate only once `MIN_GRADED` (10) sessions are on the clock; below
+that it states how many days have been graded and explicitly declines to claim a
+rate. One session is a number, not a track record. Do not lower that threshold to
+make the post look better.
+
+**Review the prior days before drawing a new one.** Every run backfills any
+ungraded entry whose session has closed, then builds the new map. The ledger is
+the memory; the chart is just today's view of it.
 
 ## Publishing
 
@@ -127,7 +137,7 @@ Draft the structure, never the voice. Michael rewrites the sentences.
 
 ## Known open
 
-- Road weighting from ledger base rates. Needs ~5 sessions; there are 2.
+- Road weighting from ledger base rates. Needs a real sample; see MIN_GRADED.
 - The UP and DOWN branches can both fire on a whipsaw day. That is now its own
   verdict and scores as a MISS rather than letting the chart claim it called both.
 - Fonts load from Google on render. On a network-restricted cron the PNG still

@@ -53,12 +53,20 @@ def compose(d):
     sym = d["symbol"]
     lines = [f"{sym} tomorrow, from tonight's options book."]
 
-    lc = d.get("lastCall")
-    if lc:
-        part = f"Last map: {lc['hits']}/{lc['total']} on the levels price actually tested ({lc['day'][5:]})"
-        if lc.get("untested"):
-            part += f", {lc['untested']} never came into play"
-        lines.append(part + ".")
+    # An accuracy number is a claim, and a claim needs a sample. Until the ledger
+    # has enough graded sessions this says how many days are on the clock and
+    # nothing about how well it has done.
+    rec = d.get("record") or {}
+    if rec.get("publishable"):
+        lines.append(
+            f"Running record: {rec['hits']}/{rec['total']} on tested levels "
+            f"across {rec['sessions']} sessions."
+        )
+    elif rec.get("sessions"):
+        lines.append(
+            f"Tracking since day one. {rec['sessions']} session(s) graded so far, "
+            f"which is not yet enough to claim a hit rate."
+        )
 
     for b in d["branches"]:
         lines.append(f"{b['kind']} {b['cond']} -> {b['rule']}")
