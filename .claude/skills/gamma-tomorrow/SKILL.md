@@ -17,7 +17,9 @@ One picture that answers "if tomorrow trends down, what happens and where" witho
 making the reader interpret a gamma chart.
 
 **Run it after the close.** The whole point is the book as it stands going into the
-next session.
+next session. The daily cron (`37c6eec1`) fires 21:00 ET Sunday through Thursday, so
+every post covers the next trading session; Sunday's run maps Monday off Friday's
+closing book.
 
 ```bash
 cd /home/mph/mphinance

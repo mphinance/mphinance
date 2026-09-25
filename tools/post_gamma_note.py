@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Post the morning Tomorrow's Map as a Substack Note.
+"""Post the nightly Tomorrow's Map as a Substack Note.
 
 Reads the JSON sidecar written by tools/gamma_tomorrow.mjs, uploads the PNG to
 Substack, and publishes a note with the chart attached.
@@ -51,7 +51,7 @@ def session():
 def compose(d):
     """The caption. Short, factual, no voice."""
     sym = d["symbol"]
-    lines = [f"{sym} tomorrow, from tonight's options book."]
+    lines = [f"{sym} next session, from the book as it settled."]
 
     # An accuracy number is a claim, and a claim needs a sample. Until the ledger
     # has enough graded sessions this says how many days are on the clock and
@@ -76,8 +76,11 @@ def compose(d):
         f"A typical day from here is about {d['expected']:.2f} points."
     )
     if d.get("expiringShare"):
+        # Runs at 21:00 ET, so "expires tonight" is already past tense, and on a
+        # Sunday run nothing expired that night at all.
         lines.append(
-            f"Levels exclude the {d['expiringShare'] * 100:.0f}% of gamma that expires tonight."
+            f"Levels exclude the {d['expiringShare'] * 100:.0f}% of gamma that does not "
+            f"survive into the next session."
         )
     lines.append("Where dealers are long gamma they brake, where they are short they chase. Not advice.")
     return "\n\n".join(lines)

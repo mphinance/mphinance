@@ -460,7 +460,7 @@ push(`<rect width="${W}" height="${H}" fill="${C.bg}"/>`);
 
 // header
 push(`<text x="${PAD_L}" y="46" font-family="'Share Tech Mono',monospace" font-size="30" fill="${C.text}" letter-spacing="1">TOMORROW'S MAP <tspan fill="${C.green}">${esc(sym)}</tspan></text>`);
-push(`<text x="${PAD_L}" y="72" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">spot ${spot.toFixed(2)} · flip ${flip.toFixed(2)} · pin ${pin} · net GEX ${fmtM(gex.totalGEX)}${survivors ? ` · levels exclude the ${(expiringShare * 100).toFixed(0)}% of gamma expiring tonight` : ''}</text>`);
+push(`<text x="${PAD_L}" y="72" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">spot ${spot.toFixed(2)} · flip ${flip.toFixed(2)} · pin ${pin} · net GEX ${fmtM(gex.totalGEX)}${survivors ? ` · levels exclude the ${(expiringShare * 100).toFixed(0)}% of gamma that does not survive to the next session` : ''}</text>`);
 const pillC = negGamma ? C.coral : C.green;
 push(`<rect x="${W - PAD_R - 330}" y="26" width="330" height="34" rx="17" fill="${negGamma ? '#1a0e11' : '#0c1a13'}" stroke="${pillC}" stroke-opacity="0.45"/>`);
 push(`<text x="${W - PAD_R - 165}" y="48" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14" fill="${pillC}">${negGamma ? 'NEGATIVE GAMMA / moves get amplified' : 'POSITIVE GAMMA / moves get damped'}</text>`);
