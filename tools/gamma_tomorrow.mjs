@@ -144,6 +144,10 @@ let ledger = [];
 try { ledger = JSON.parse(readFileSync(LEDGER, 'utf8')); } catch { /* first run */ }
 
 const negGamma = gex.totalGEX < 0;
+// When the flip sits on top of price it has no information: you get a crossing
+// every few minutes and none of them mean anything. Say so rather than drawing
+// two confident roads out of the same point.
+const flipOnPrice = Math.abs(flip - spot) < spot * 0.0004;
 const fmtM = (v) => {
   const a = Math.abs(v);
   if (a >= 1e9) return `${v < 0 ? '−' : ''}$${(a / 1e9).toFixed(2)}B`;
@@ -152,9 +156,32 @@ const fmtM = (v) => {
 const oiFmt = (v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(Math.round(v)));
 
 // ── price history: 1-min spot, grouped by session ───────────────────────────
-const pts = hist.map((p) => ({ t: new Date(p.snapshotTime), px: p.spotPrice }));
 const dayKey = (d) => d.toISOString().slice(0, 10);
-const sessions = [...new Set(pts.map((p) => dayKey(p.t)))];
+const allPts = hist.map((p) => ({ t: new Date(p.snapshotTime), px: p.spotPrice }));
+const allSessions = [...new Set(allPts.map((p) => dayKey(p.t)))];
+
+// How far price typically gets from where it started. Measured against the PRIOR
+// close, not intraday high-to-low, because that is exactly what these roads
+// project from: the previous session's finish. It therefore includes the
+// overnight gap, which on 9/24 was 70% of the day's entire move.
+const excursions = [];
+for (let i = 1; i < allSessions.length; i++) {
+  const prevPx = allPts.filter((q) => dayKey(q.t) === allSessions[i - 1]).map((q) => q.px);
+  const dayPx = allPts.filter((q) => dayKey(q.t) === allSessions[i]).map((q) => q.px);
+  if (!prevPx.length || !dayPx.length) continue;
+  const pc = prevPx[prevPx.length - 1];
+  excursions.push(Math.max(Math.abs(Math.max(...dayPx) - pc), Math.abs(Math.min(...dayPx) - pc)));
+}
+const expected = excursions.length
+  ? excursions.slice().sort((a, b) => a - b)[Math.floor(excursions.length / 2)]
+  : spot * 0.006;
+
+// Draw fewer sessions than we measure: the map only ever references the last
+// one, and three sessions gives the candles almost double the width.
+const SHOW = parseInt(arg('sessions', '3'), 10);
+const keep = new Set(allSessions.slice(-SHOW));
+const pts = allPts.filter((q) => keep.has(dayKey(q.t)));
+const sessions = allSessions.slice(-SHOW);
 
 // ── score the last call ─────────────────────────────────────────────────────
 // Find the map that was made the session BEFORE the most recent one, then check
@@ -281,7 +308,7 @@ const roads = [
     col: C.put,
     cond: pocket ? `below ${Math.min(pocket.hi + 1, Math.floor(spot))}` : `below ${Math.floor(spot)}`,
     rule: pocket
-      ? (cushion
+      ? (cushion && cushion.strike < Math.min(pocket.hi + 1, Math.floor(spot))
           ? `thin air. only real bid is ${cushion.strike}. then ${floor.strike}.`
           : `open air. ${pocket.lo} to ${pocket.hi} is empty. next stop ${floor.strike}.`)
       : `every strike below carries size. grind, not a drop.`,
@@ -295,7 +322,7 @@ const roads = [
               ? { at: shelfK, tag: `${shelfK} LAST SHELF`, note: 'the last thing to lean on' }
               : { at: shelfK, tag: `${shelfK} TRAPDOOR`, note: `${oiFmt(lv.putOi)} puts, and dealers sell into it` };
           })(),
-          cushion
+          cushion && cushion.strike < Math.min(pocket.hi + 1, Math.floor(spot))
             ? { at: cushion.strike, tag: `${cushion.strike} THIN CUSHION`, note: 'only dealer buying down here, and it is small', open: true }
             : { at: (pocket.lo + pocket.hi) / 2, tag: 'EMPTY', note: `${pocket.lo} to ${pocket.hi}, nothing here`, open: true },
           { at: floor.strike, tag: `${floor.strike} PUT WALL`, note: `${oiFmt(floor.putOi)} puts. the fight is here` },
@@ -322,6 +349,29 @@ push(`<text x="${W - PAD_R}" y="76" text-anchor="end" font-family="'JetBrains Mo
 push(`<rect x="${PAD_L}" y="${PAD_T}" width="${PLOT_W}" height="${PLOT_H}" fill="${C.panel}" stroke="${C.line}"/>`);
 push(`<rect x="${FWD_X}" y="${PAD_T}" width="${FWD_W}" height="${PLOT_H}" fill="#0c0c14"/>`);
 
+// Which side of the flip you are on is the single most important fact on this
+// half of the chart, so it gets colour rather than a line to read.
+{
+  const yf = Math.max(PAD_T, Math.min(PAD_T + PLOT_H, Y(flip)));
+  push(`<rect x="${FWD_X}" y="${PAD_T}" width="${FWD_W}" height="${yf - PAD_T}" fill="${C.call}" fill-opacity="0.05"/>`);
+  push(`<rect x="${FWD_X}" y="${yf}" width="${FWD_W}" height="${PAD_T + PLOT_H - yf}" fill="${C.put}" fill-opacity="0.055"/>`);
+  push(`<text x="${W - PAD_R - 10}" y="${yf - 10}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${C.call}" fill-opacity="0.75">ABOVE THE FLIP / dealers brake</text>`);
+  push(`<text x="${W - PAD_R - 10}" y="${yf + 20}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${C.put}" fill-opacity="0.75">BELOW THE FLIP / dealers chase</text>`);
+}
+
+// Everything outside a typical day's excursion is a tail. Drawing 772 as far
+// from spot as 761 made a 4-point move look as ordinary as a 7-point one.
+const emHi = spot + expected, emLo = spot - expected;
+{
+  const y1 = Math.max(PAD_T, Y(emHi)), y2 = Math.min(PAD_T + PLOT_H, Y(emLo));
+  push(`<rect x="${FWD_X}" y="${PAD_T}" width="${FWD_W}" height="${y1 - PAD_T}" fill="${C.bg}" fill-opacity="0.5"/>`);
+  push(`<rect x="${FWD_X}" y="${y2}" width="${FWD_W}" height="${PAD_T + PLOT_H - y2}" fill="${C.bg}" fill-opacity="0.5"/>`);
+  for (const yy of [y1, y2]) {
+    push(`<line x1="${FWD_X}" y1="${yy}" x2="${W - PAD_R}" y2="${yy}" stroke="${C.dim}" stroke-width="0.8" stroke-opacity="0.45" stroke-dasharray="6 6"/>`);
+  }
+  push(`<text x="${FWD_X + 10}" y="${y1 - 8}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}">beyond a typical day (+/- ${expected.toFixed(2)})</text>`);
+}
+
 // price rail
 {
   const step = (yHi - yLo) > 18 ? 5 : 2;
@@ -344,11 +394,20 @@ for (const k of candles) {
   push(`<rect x="${(x - cw / 2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${cw.toFixed(1)}" height="${Math.max(1, yBot - yTop).toFixed(1)}" fill="${col}" fill-opacity="${up ? 0.85 : 0.95}"/>`);
 }
 push(`<text x="${PAD_L + 8}" y="${PAD_T + 36}" font-family="'JetBrains Mono',monospace" font-size="9.5" fill="${C.dim}">${BUCKET}m candles</text>`);
-sessions.forEach((d) => {
+sessions.forEach((d, k) => {
   const i = pts.findIndex((p) => dayKey(p.t) === d);
   push(`<text x="${X(i) + 5}" y="${PAD_T + PLOT_H - 8}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}">${d.slice(5)}</text>`);
+  // The overnight gap is the map's biggest single risk and it used to be
+  // invisible: just white space between two candles.
+  if (k === 0) return;
+  const prevPx = pts.filter((q) => dayKey(q.t) === sessions[k - 1]).map((q) => q.px);
+  const g = pts[i].px - prevPx[prevPx.length - 1];
+  if (Math.abs(g) < 0.4) return;
+  const y1 = Y(prevPx[prevPx.length - 1]), y2 = Y(pts[i].px);
+  push(`<line x1="${X(i)}" y1="${y1}" x2="${X(i)}" y2="${y2}" stroke="${C.pin}" stroke-width="2" stroke-opacity="0.55"/>`);
+  push(`<text x="${X(i) + 5}" y="${(y1 + y2) / 2 + 3}" font-family="'JetBrains Mono',monospace" font-size="9.5" fill="${C.pin}" fill-opacity="0.85">gap ${g > 0 ? '+' : ''}${g.toFixed(2)}</text>`);
 });
-push(`<text x="${PAD_L + 8}" y="${PAD_T + 20}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" letter-spacing="2">THE LAST 5 SESSIONS</text>`);
+push(`<text x="${PAD_L + 8}" y="${PAD_T + 20}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" letter-spacing="2">THE LAST ${sessions.length} SESSIONS</text>`);
 // Last night's call, drawn back over the session it was made for. Green means
 // the level did what the map said it would; red means it did not.
 if (report) {
@@ -380,6 +439,10 @@ if (report) {
 
 push(`<line x1="${FWD_X}" y1="${PAD_T}" x2="${FWD_X}" y2="${PAD_T + PLOT_H}" stroke="${C.dim}" stroke-opacity="0.45" stroke-dasharray="3 4"/>`);
 push(`<text x="${FWD_X + 12}" y="${PAD_T + 20}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" letter-spacing="2">TOMORROW</text>`);
+if (flipOnPrice) {
+  push(`<rect x="${FWD_X + 12}" y="${PAD_T + 28}" width="430" height="24" rx="5" fill="${C.pin}" fill-opacity="0.12" stroke="${C.pin}" stroke-opacity="0.4"/>`);
+  push(`<text x="${FWD_X + 22}" y="${PAD_T + 45}" font-family="'JetBrains Mono',monospace" font-size="11.5" fill="${C.pin}">THE FLIP IS SITTING ON PRICE. it has no information today.</text>`);
+}
 
 // spot marker: where every road starts
 const ys = Y(spot);
@@ -435,7 +498,8 @@ for (const r of roads) {
       // an air pocket is drawn as a gap in the road, not a stop on it
       push(`<circle cx="${x}" cy="${y}" r="4" fill="none" stroke="${r.col}" stroke-width="1.6" stroke-dasharray="2 2"/>`);
     } else {
-      push(`<circle cx="${x}" cy="${y}" r="5.5" fill="${C.bg}" stroke="${r.col}" stroke-width="2.4"/>`);
+      const reach = w.at <= emHi && w.at >= emLo;
+      push(`<circle cx="${x}" cy="${y}" r="5.5" fill="${C.bg}" stroke="${r.col}" stroke-width="2.4" stroke-opacity="${reach ? 1 : 0.4}"/>`);
     }
     // The road arrives from the lower/upper left and leaves to the right, so the
     // only reliably empty quadrant is back over the shoulder. Last stop is the
@@ -447,6 +511,7 @@ for (const r of roads) {
       anchor: last ? 'start' : 'end',
       ty: y + (r.labelBelow ? 30 : r.side < 0 ? -28 : 24),
       tag: w.tag, note: w.note, col: r.col,
+      faint: !(w.at <= emHi && w.at >= emLo),
     });
   });
 
@@ -469,8 +534,9 @@ for (const L of labels) {
   if (Math.abs(L.ty - (L.y + 24)) > 26 || Math.abs(L.ty - L.y) > 40) {
     push(`<line x1="${L.x}" y1="${L.y}" x2="${L.tx}" y2="${(L.ty - 4).toFixed(1)}" stroke="${L.col}" stroke-width="0.8" stroke-opacity="0.35"/>`);
   }
-  push(`<text x="${L.tx}" y="${L.ty.toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${L.col}" font-weight="700">${esc(L.tag)}</text>`);
-  push(`<text x="${L.tx}" y="${(L.ty + 15).toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}">${esc(L.note)}</text>`);
+  const op = L.faint ? 0.42 : 1;
+  push(`<text x="${L.tx}" y="${L.ty.toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${L.col}" fill-opacity="${op}" font-weight="700">${esc(L.tag)}${L.faint ? ' *' : ''}</text>`);
+  push(`<text x="${L.tx}" y="${(L.ty + 15).toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" fill-opacity="${op}">${esc(L.note)}</text>`);
 }
 
 // ── how the last one went ───────────────────────────────────────────────────
