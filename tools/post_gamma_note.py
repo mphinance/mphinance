@@ -55,7 +55,10 @@ def compose(d):
 
     lc = d.get("lastCall")
     if lc:
-        lines.append(f"Last map scored {lc['hits']}/{lc['total']} on {lc['day'][5:]}.")
+        part = f"Last map: {lc['hits']}/{lc['total']} on the levels price actually tested ({lc['day'][5:]})"
+        if lc.get("untested"):
+            part += f", {lc['untested']} never came into play"
+        lines.append(part + ".")
 
     for b in d["branches"]:
         lines.append(f"{b['kind']} {b['cond']} -> {b['rule']}")

@@ -36,6 +36,7 @@ Keys: `.env_td_api` (bare `X-API-Key` on one line, no `KEY=` prefix).
 | PIN | heaviest strike within 1.5 of spot. What price is wrestling with. |
 | FLIP | gamma flip. Above it dealers brake, below it they chase. |
 | BRAKE | heaviest long-gamma strike between spot and the ceiling. Rallies stall here. |
+| ACCELERANT | heaviest SHORT-gamma strike above spot. Dealers buy into strength, so price speeds UP through it. Not a wall. |
 | CEILING | heaviest long-gamma strike above spot. Where the move dies. |
 | TRAPDOOR / LAST SHELF | first significant strike below spot. "Shelf" if dealers are long gamma there, "trapdoor" if short. |
 | THIN CUSHION | the only positive-gamma strike below spot. Small but it is the real bid. |
@@ -64,6 +65,24 @@ Price bottomed at 763.33 the next day.
 rips into any large positive strike. The 9/24 map said "nothing gives until 772"
 and price topped at 770.29 on a +$495M shelf.
 
+**A short-gamma strike ABOVE spot is an accelerant, not a wall.** Mirror of the
+downside rule, and it was wrong here for a week: a big negative strike above spot
+was labelled WALL / "needs volume", telling a reader to fade a level the model's
+own physics says should rip. Dealers short gamma there must buy into strength.
+
+**Never assert structure from an absence of signal.** A missing strike used to
+default to netGEX 0, and `0 >= 0` is true, so an unlisted level was always called
+a SHELF you can lean on and an unknown pin always "settles". Both defaults biased
+toward the calm, supportive read exactly when the tool had no data. Thresholds are
+relative to the biggest level in the band, so a book with trivial size still
+produced confident labels; there is now an absolute floor and a THIN BOOK banner.
+
+**Do the ET conversions properly.** Session-close and the 0DTE cutoff were
+hardcoded to UTC-4, which is EDT only. Every winter that marked the session closed
+an hour early and baked a truncated high/low into the ledger permanently. Use
+`Intl.DateTimeFormat` with `America/New_York`. A session from a prior date is
+closed regardless of hour, which is also what makes half days grade correctly.
+
 **The flip is a daily state, not an intraday trigger.** Across 1,954 one-minute
 snapshots, the put/call GEX ratio and distance-from-flip correlate at -0.98 and
 agree 99.95% of the time. They are one signal, not two. Four of five sessions had
@@ -87,8 +106,15 @@ A session is only gradeable after 16:00 ET. Before that the panel reads IN FLIGH
 and **the ledger is not written**, so an intraday book never gets recorded as a
 closing map. If a bad entry does get in, delete it from the JSON by hand.
 
-Score so far: 2026-09-24 went 4/4 (gapped below the shelf, held the 763 cushion at
-763.33, never reached the 760 put wall, rally capped under the 769.22 flip).
+**Only score levels price actually approached.** A level further from spot than a
+typical day travels will pass a "never reached it" test on any quiet session, and a
+null model with levels at arbitrary round numbers scores identically. Levels price
+came nowhere near are marked UNTESTED, drawn grey, and excluded from the ratio.
+
+Under that rule 2026-09-24 grades **3/3 on tested levels, with 3 levels never in
+play** (took the DOWN road, held the 763 cushion by 0.33, capped under the 769.22
+flip by 0.38; the 760 wall, 770 brake and 772 ceiling were never approached). The
+headline used to read 4/4. That is one graded session, not a track record.
 
 ## Publishing
 
@@ -102,6 +128,10 @@ Draft the structure, never the voice. Michael rewrites the sentences.
 ## Known open
 
 - Road weighting from ledger base rates. Needs ~5 sessions; there are 2.
+- The UP and DOWN branches can both fire on a whipsaw day. That is now its own
+  verdict and scores as a MISS rather than letting the chart claim it called both.
+- Fonts load from Google on render. On a network-restricted cron the PNG still
+  ships, silently, in a fallback monospace.
 - The TradingView indicator's gamma flip disagrees with TDPro's by about 3 points
   (766.33 vs 769.22 on 9/23). Unresolved, and every up-road waypoint depends on it.
 - The dev API caps at 30 requests/minute. The tool backs off and retries.

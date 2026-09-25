@@ -47,7 +47,10 @@ const KEY = readFileSync(join(ROOT, '.env_td_api'), 'utf8').trim();
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const api = async (path, tries = 4) => {
   for (let n = 1; ; n++) {
-    const r = await fetch(`${DEV_BASE}${path}`, { headers: { 'X-API-Key': KEY, 'User-Agent': UA } });
+    const r = await fetch(`${DEV_BASE}${path}`, {
+      headers: { 'X-API-Key': KEY, 'User-Agent': UA },
+      signal: AbortSignal.timeout(30000),
+    });
     const j = await r.json().catch(() => ({}));
     if (j.success) return j.data;
     const limited = r.status === 429 || /requests per minute/i.test(j.message || j.error || '');
@@ -79,15 +82,27 @@ const lo = spot * (1 - BAND), hi = spot * (1 + BAND);
 // are the loudest strikes on the board and they are gone by the open: on 9/23
 // net GEX went from +$0.17B to -$2.09B across the bell as 0DTE rolled off. A map
 // OF tomorrow built from a book that evaporates tonight is a map of nothing.
-const todayET = new Date(Date.now() - 4 * 3600e3).toISOString().slice(0, 10);
+const etParts = (d) => {
+  const f = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', hour12: false,
+  }).formatToParts(d).reduce((a, x) => ((a[x.type] = x.value), a), {});
+  return { date: `${f.year}-${f.month}-${f.day}`, hour: parseInt(f.hour, 10) };
+};
+const todayET = etParts(new Date()).date;
 let survivors = null, expiringShare = 0;
 if (matrix?.rows?.length) {
   const live = matrix.expirations.map((e) => e > todayET);
   const sum = (arr, mask) => arr.reduce((a, v, i) => a + (mask[i] && v ? v : 0), 0);
   const all = matrix.expirations.map(() => true);
   survivors = new Map(matrix.rows.map((r) => [r.strike, sum(r.gex, live)]));
-  const tot = matrix.rows.reduce((a, r) => a + Math.abs(sum(r.gex, all)), 0);
-  const kept = matrix.rows.reduce((a, r) => a + Math.abs(sum(r.gex, live)), 0);
+  // Summing signed gamma and THEN taking abs let a row's surviving magnitude
+  // exceed its total (offsetting signs cancel in the total but not in the
+  // subset), which can drive the headline share negative on exactly the
+  // heavy-0DTE days this was built to flag. Sum magnitudes per expiry instead.
+  const absSum = (arr, mask) => arr.reduce((a, v, i) => a + (mask[i] && v ? Math.abs(v) : 0), 0);
+  const tot = matrix.rows.reduce((a, r) => a + absSum(r.gex, all), 0);
+  const kept = matrix.rows.reduce((a, r) => a + absSum(r.gex, live), 0);
   expiringShare = tot ? 1 - kept / tot : 0;
 }
 
@@ -100,8 +115,14 @@ const ladder = gex.byStrike
 // A "wall" is a strike whose |netGEX| is a large share of the local book. An "air
 // pocket" is a run of strikes that together carry less than one wall -- that is
 // where price has nothing to lean on and covers ground fast.
+if (!ladder.length) throw new Error(`no strikes within ${(BAND * 100).toFixed(1)}% of spot`);
 const maxAbs = Math.max(...ladder.map((s) => Math.abs(s.netGex)));
-const WALL = maxAbs * 0.28;   // wall threshold: ~a third of the biggest level
+// Relative-only thresholds will happily label a "ceiling" in a book with a few
+// thousand dollars of gamma in it. The absolute floor lets the chart say the
+// structure is too thin to read instead of inventing one.
+const MIN_WALL = 50e6;
+const WALL = Math.max(maxAbs * 0.28, MIN_WALL);
+const thinBook = maxAbs < MIN_WALL * 2;
 
 const above = ladder.filter((s) => s.strike > spot);
 const below = ladder.filter((s) => s.strike < spot);
@@ -110,10 +131,12 @@ const below = ladder.filter((s) => s.strike < spot);
 // instead breaks whenever the positive stack starts right at spot -- you get a
 // "ceiling" sitting below the gamma flip, which is nonsense.
 const gate = above.filter((s) => s.netGex > WALL).sort((a, b) => b.netGex - a.netGex)[0] || null;
-// The battle: biggest short-gamma strike above spot before that gate.
-// The magnet is already tagged on its own; a "battle" is the *other* short-gamma
-// shelf between spot and the gate, which is what actually stops a rally.
-const battle = above.filter((s) => s.netGex < -WALL && s.strike !== magnet && (!gate || s.strike < gate.strike))
+// A big SHORT-gamma strike above spot does not stop a rally. Dealers are short
+// gamma there, so they must buy into strength: price accelerates through it.
+// This is the mirror of the downside lesson ("a crowd, not a floor") and it was
+// previously mislabelled WALL / "needs volume", telling a reader to fade a level
+// the model's own physics says should rip.
+const accel = above.filter((s) => s.netGex < -WALL && s.strike !== magnet && (!gate || s.strike < gate.strike))
   .sort((a, b) => a.netGex - b.netGex)[0] || null;
 // The pin is whatever price is actually wrestling with, so it has to be local.
 // maxGammaStrike from the API is the biggest strike in the WHOLE book, which on
@@ -122,7 +145,11 @@ const near = ladder.filter((s) => Math.abs(s.strike - spot) <= 1.5);
 const pin = near.length
   ? near.slice().sort((a, b) => Math.abs(b.netGex) - Math.abs(a.netGex))[0].strike
   : magnet;
-const pinNet = (ladder.find((s) => s.strike === pin) || { netGex: 0 }).netGex;
+// No `|| {netGex: 0}` here on purpose. A missing strike used to default to 0,
+// and `0 < 0` is false, so the tool printed "long gamma, so it settles" -- the
+// calmest possible read -- exactly when it had no data.
+const pinLvl = ladder.find((s) => s.strike === pin) || null;
+const pinNet = pinLvl ? pinLvl.netGex : null;
 
 // The brake: heaviest LONG-gamma strike between spot and the ceiling. Dealers
 // sell rips there too, so a rally stalls into it long before it reaches the
@@ -163,7 +190,19 @@ if (floor) {
 // makes the right half worth reading.
 const LEDGER = join(ROOT, 'data/gamma_maps', `${sym}.json`);
 let ledger = [];
-try { ledger = JSON.parse(readFileSync(LEDGER, 'utf8')); } catch { /* first run */ }
+let ledgerBroken = false;
+if (existsSync(LEDGER)) {
+  try {
+    const parsed = JSON.parse(readFileSync(LEDGER, 'utf8'));
+    if (!Array.isArray(parsed)) throw new Error('not an array');
+    ledger = parsed;
+  } catch (e) {
+    // Treating this as "first run" and then overwriting would destroy the whole
+    // grading history with no trace. Refuse to write instead.
+    ledgerBroken = true;
+    console.error(`LEDGER UNREADABLE (${e.message}) -- grading is off and nothing will be written. Fix ${LEDGER} by hand.`);
+  }
+}
 
 const negGamma = gex.totalGEX < 0;
 // When the flip sits on top of price it has no information: you get a crossing
@@ -212,36 +251,69 @@ const lastSession = sessions[sessions.length - 1];
 const priorSession = sessions[sessions.length - 2];
 const sessionBars = (day) => pts.filter((q) => dayKey(q.t) === day).map((q) => q.px);
 
-// 16:00 ET is 20:00 UTC. Anything short of that is a session still in flight:
-// worth SHOWING, never worth scoring or writing to the ledger as a final grade.
+// A session still in flight is worth SHOWING and never worth scoring or writing
+// to the ledger. This used to test `getUTCHours() >= 20`, which is 16:00 ET only
+// during EDT; every winter it would mark the session closed an hour early and
+// bake a truncated high/low into the permanent record.
+if (!pts.length) throw new Error('history feed returned no usable points');
 const lastTick = pts[pts.length - 1].t;
-const sessionClosed = lastTick.getUTCHours() >= 20;
+const sessionClosed = lastSession < todayET || etParts(lastTick).hour >= 16;
 
 let report = null;
-const prev = ledger.find((e) => e.madeAfter === priorSession);
+const prev = ledgerBroken ? null : ledger.find((e) => e.madeAfter === priorSession);
 if (prev) {
   const bars = sessionBars(lastSession);
   if (bars.length) {
     const open = bars[0], high = Math.max(...bars), low = Math.min(...bars), close = bars[bars.length - 1];
+
+    // A level that price never went near tells you nothing. The old scoring
+    // counted "never reached the put wall" as a HIT on a quiet day even when the
+    // wall sat further from spot than a typical session travels -- a null model
+    // with levels at arbitrary round numbers scores the same. Levels price did
+    // not approach are now UNTESTED and excluded from the ratio.
+    const tol = (prev.expected || expected) * 0.25;
     const checks = [];
-    const add = (ok, text) => checks.push({ ok, text });
+    const level = (lvl, side, label) => {
+      if (lvl == null) return;
+      const reached = side === 'low' ? low : high;
+      const dist = Math.abs(reached - lvl);
+      const held = side === 'low' ? low >= lvl : high <= lvl;
+      checks.push({ lvl, side, dist, tested: dist <= tol || !held, ok: held, label });
+    };
 
-    const wentDown = open < prev.shelf || low < prev.shelf;
-    const wentUp = high > prev.flip;
-    add(true, wentDown && !wentUp ? `took the DOWN road` : wentUp && !wentDown ? `took the UP road` : wentUp && wentDown ? `took both roads` : `stayed in the range`);
-    if (prev.cushion != null) add(low >= prev.cushion - 0.75, `held ${prev.cushion} cushion (low ${low.toFixed(2)})`);
-    if (prev.wall != null) add(low > prev.wall, `never reached ${prev.wall} put wall`);
-    if (prev.flip != null) add(high < prev.flip, `capped under ${prev.flip} flip (high ${high.toFixed(2)})`);
-    if (prev.battle != null) add(high < prev.battle, `never tested ${prev.battle}`);
-    if (prev.brake != null) add(high < prev.brake + 0.75, `stalled into ${prev.brake} (high ${high.toFixed(2)})`);
+    level(prev.cushion, 'low', `${prev.cushion} cushion`);
+    level(prev.wall, 'low', `${prev.wall} put wall`);
+    level(prev.flip, 'high', `${prev.flip} flip`);
+    level(prev.brake ?? prev.battle, 'high', `${prev.brake ?? prev.battle} brake`);
+    level(prev.gate, 'high', `${prev.gate} ceiling`);
 
-    const scored = checks.slice(1);
+    // Exclusive branch classification. UP and DOWN used to both be able to fire,
+    // with "took both roads" as a named outcome, which let the chart claim it
+    // called whatever happened. A whipsaw is now its own verdict and it is a
+    // MISS, not a hit, because the map did not describe that day.
+    const wentUp = prev.flip != null && high > prev.flip;
+    const wentDown = prev.shelf != null && low < prev.shelf;
+    const branch = wentUp && wentDown ? 'WHIPSAW' : wentUp ? 'UP' : wentDown ? 'DOWN' : 'RANGE';
+    const branchOk = branch !== 'WHIPSAW';
+
+    const tested = checks.filter((c) => c.tested);
+    const untested = checks.filter((c) => !c.tested);
+    const hits = tested.filter((c) => c.ok).length + (branchOk ? 1 : 0);
+    const total = tested.length + 1;
+
     report = {
       partial: !sessionClosed,
-      day: lastSession, open, high, low, close, checks,
-      hits: scored.filter((c) => c.ok).length, total: scored.length,
-      levels: [prev.shelf, prev.cushion, prev.wall, prev.flip, prev.battle, prev.brake, prev.gate].filter((v) => v != null),
+      day: lastSession, open, high, low, close,
+      branch, branchOk, checks, tested, untested,
+      hits, total,
+      levels: [prev.shelf, prev.cushion, prev.wall, prev.flip, prev.battle, prev.brake, prev.gate]
+        .filter((v) => v != null),
       prev,
+      summary: [
+        branch === 'WHIPSAW' ? 'MISS whipsawed through both roads' : `took the ${branch} road`,
+        ...tested.map((c) => `${c.ok ? '' : 'MISS '}${c.ok ? 'held' : 'broke'} ${c.label} by ${c.dist.toFixed(2)}`),
+        untested.length ? `${untested.length} level${untested.length > 1 ? 's' : ''} untested` : '',
+      ].filter(Boolean).join(' · '),
     };
   }
 }
@@ -280,7 +352,7 @@ const FWD_W = PLOT_W - PAST_W;
 const yLo = Math.min(lo, ...pts.map((p) => p.px)) - 0.25;
 const yHi = Math.max(hi, ...pts.map((p) => p.px)) + 0.25;
 const Y = (px) => PAD_T + PLOT_H - ((px - yLo) / (yHi - yLo)) * PLOT_H;
-const X = (i) => PAD_L + (i / (pts.length - 1)) * PAST_W;
+const X = (i) => PAD_L + (pts.length > 1 ? i / (pts.length - 1) : 0.5) * PAST_W;
 
 const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
@@ -292,25 +364,25 @@ const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt
 const rangeLo = Math.min(pin, Math.floor(spot)) - 1;
 const rangeHi = Math.max(pin, Math.ceil(flip));
 
+const sideFilter = (pts_, up) => pts_.filter((w) => w && (up ? w.at > spot : w.at < spot));
+
 const roads = [
   {
     key: 'UP',
     col: C.call,
-    cond: `above ${flip.toFixed(2)}`,
+    cond: flip > spot ? `above ${flip.toFixed(2)}` : "higher",
     rule: gate
-      ? (battle
-          ? `dealers brake. stalls at ${battle.strike}, dies at ${gate.strike}.`
-          : brake
-            ? `dealers brake. stalls into ${brake.strike}, dies at ${gate.strike}.`
-            : `dealers brake all the way. nothing gives until ${gate.strike}.`)
+      ? ((flip <= spot ? 'already above the flip, so dealers are braking. ' : '') + (brake
+          ? `${accel ? `rips through ${accel.strike}, then ` : ''}stalls into ${brake.strike}, dies at ${gate.strike}.`
+          : `${accel ? `rips through ${accel.strike}. ` : ''}nothing gives until ${gate.strike}.`))
       : `dealers brake. no ceiling in range.`,
     side: -1,
     pts: [
-      { at: flip, tag: `${flip.toFixed(2)} FLIP`, note: 'dealers stop chasing, start braking' },
-      battle ? { at: battle.strike, tag: `${battle.strike} WALL`, note: `${oiFmt(battle.putOi)} puts, needs volume` } : null,
-      !battle && brake ? { at: brake.strike, tag: `${brake.strike} BRAKE`, note: 'dealers sell rips here, rallies stall' } : null,
+      flip > spot ? { at: flip, tag: `${flip.toFixed(2)} FLIP`, note: 'dealers stop chasing, start braking' } : null,
+      accel ? { at: accel.strike, tag: `${accel.strike} ACCELERANT`, note: `${oiFmt(accel.callOi)} calls, dealers buy into strength` } : null,
+      brake ? { at: brake.strike, tag: `${brake.strike} BRAKE`, note: 'dealers sell rips here, rallies stall' } : null,
       gate ? { at: gate.strike, tag: `${gate.strike} CEILING`, note: 'move dies here' } : null,
-    ].filter(Boolean),
+    ], up: true,
   },
   {
     key: 'RANGE',
@@ -323,7 +395,8 @@ const roads = [
       : `quiet drift into the ${pin} pin.`,
     side: -1,
     wave: true,
-    pts: [{ at: pin, tag: `${pin} PIN`, note: pinNet < 0 ? 'short gamma, so it chops hard' : 'long gamma, so it settles' }],
+    pts: [{ at: pin, tag: `${pin} PIN`, note: pinNet === null ? 'no listed strike here, regime unknown'
+        : pinNet < 0 ? 'short gamma, so it chops hard' : 'long gamma, so it settles' }],
   },
   {
     key: 'DOWN',
@@ -333,13 +406,18 @@ const roads = [
       ? (cushion && cushion.strike < Math.min(pocket.hi + 1, Math.floor(spot))
           ? `thin air. only real bid is ${cushion.strike}. then ${floor.strike}.`
           : `open air. ${pocket.lo} to ${pocket.hi} is empty. next stop ${floor.strike}.`)
-      : `every strike below carries size. grind, not a drop.`,
+      : floor
+        ? `no thin band above ${floor.strike}. grind, not a drop.`
+        : `no readable structure below spot.`,
     side: 1,
     pts: pocket
       ? [
           (() => {
             const shelfK = Math.min(pocket.hi + 1, Math.floor(spot));
-            const lv = ladder.find((s) => s.strike === shelfK) || { netGex: 0, putOi: 0 };
+            // Same trap: a missing strike defaulted to netGex 0, and `0 >= 0` is
+            // true, so an unlisted level was always called a SHELF you can lean on.
+            const lv = ladder.find((s) => s.strike === shelfK) || null;
+            if (!lv) return { at: shelfK, tag: `${shelfK}`, note: 'no listed strike here' };
             return lv.netGex >= 0
               ? { at: shelfK, tag: `${shelfK} LAST SHELF`, note: 'the last thing to lean on' }
               : { at: shelfK, tag: `${shelfK} TRAPDOOR`, note: `${oiFmt(lv.putOi)} puts, and dealers sell into it` };
@@ -350,6 +428,7 @@ const roads = [
           { at: floor.strike, tag: `${floor.strike} PUT WALL`, note: `${oiFmt(floor.putOi)} puts. the fight is here` },
         ]
       : [{ at: Math.round(lo), tag: `${Math.round(lo)}`, note: 'no thin band below' }],
+    up: false,
   },
 ];
 
@@ -437,18 +516,15 @@ if (report) {
   const x0 = X(idxs[0]), x1 = X(idxs[idxs.length - 1]);
   push(`<rect x="${x0}" y="${PAD_T}" width="${x1 - x0}" height="${PLOT_H}" fill="${C.text}" fill-opacity="0.025"/>`);
   push(`<text x="${x0 + 3}" y="${PAD_T + 38}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}" letter-spacing="1">${report.partial ? 'TODAY SO FAR' : 'LAST CALL'}</text>`);
-  const byLvl = {
-    [report.prev.cushion]: report.checks.find((c) => c.text.includes('cushion')),
-    [report.prev.wall]: report.checks.find((c) => c.text.includes('put wall')),
-    [report.prev.flip]: report.checks.find((c) => c.text.includes('flip')),
-    [report.prev.battle]: report.checks.find((c) => c.text.includes('never tested')),
-  };
+  const byLvl = Object.fromEntries(report.checks.map((c) => [c.lvl, c]));
   for (const lvl of report.levels) {
     const y = Y(lvl);
     if (y < PAD_T || y > PAD_T + PLOT_H) continue;
     const c = byLvl[lvl];
-    const col = c ? (c.ok ? C.call : C.put) : C.dim;
-    push(`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="${col}" stroke-width="1.2" stroke-opacity="${c ? 0.75 : 0.3}" stroke-dasharray="3 3"/>`);
+    // untested levels are drawn grey: price never went near them, so they were
+    // neither right nor wrong and must not read as a green tick.
+    const col = !c || !c.tested ? C.dim : c.ok ? C.call : C.put;
+    push(`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="${col}" stroke-width="1.2" stroke-opacity="${c && c.tested ? 0.75 : 0.28}" stroke-dasharray="3 3"/>`);
   }
   // where it actually turned
   const loI = idxs.reduce((b, i) => (pts[i].px < pts[b].px ? i : b), idxs[0]);
@@ -461,6 +537,10 @@ if (report) {
 
 push(`<line x1="${FWD_X}" y1="${PAD_T}" x2="${FWD_X}" y2="${PAD_T + PLOT_H}" stroke="${C.dim}" stroke-opacity="0.45" stroke-dasharray="3 4"/>`);
 push(`<text x="${FWD_X + 12}" y="${PAD_T + 20}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" letter-spacing="2">TOMORROW</text>`);
+if (thinBook) {
+  push(`<rect x="${FWD_X + 12}" y="${PAD_T + 56}" width="440" height="24" rx="5" fill="${C.coral}" fill-opacity="0.12" stroke="${C.coral}" stroke-opacity="0.4"/>`);
+  push(`<text x="${FWD_X + 22}" y="${PAD_T + 73}" font-family="'JetBrains Mono',monospace" font-size="11.5" fill="${C.coral}">THIN BOOK. these levels carry little size, read them lightly.</text>`);
+}
 if (flipOnPrice) {
   push(`<rect x="${FWD_X + 12}" y="${PAD_T + 28}" width="430" height="24" rx="5" fill="${C.pin}" fill-opacity="0.12" stroke="${C.pin}" stroke-opacity="0.4"/>`);
   push(`<text x="${FWD_X + 22}" y="${PAD_T + 45}" font-family="'JetBrains Mono',monospace" font-size="11.5" fill="${C.pin}">THE FLIP IS SITTING ON PRICE. it has no information today.</text>`);
@@ -489,6 +569,8 @@ const ROAD_X0 = FWD_X + 14;
 const ROAD_W = FWD_W - 210;   // leave room for the waypoint labels
 
 for (const r of roads) {
+  if (r.up !== undefined) r.pts = sideFilter(r.pts, r.up);
+  if (!r.pts.length) continue;
   // waypoint x positions march evenly out along the road
   const n = r.pts.length;
   const xs = r.wave
@@ -570,8 +652,8 @@ if (report) {
   const col = report.partial ? C.cyan : allHit ? C.call : report.hits >= report.total / 2 ? C.pin : C.put;
   push(`<rect x="${PAD_L}" y="${y - 20}" width="${PLOT_W}" height="34" rx="6" fill="${col}" fill-opacity="0.07" stroke="${col}" stroke-opacity="0.25"/>`);
   push(`<text x="${PAD_L + 16}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${col}" font-weight="700">${report.partial ? 'IN FLIGHT' : 'LAST CALL'}</text>`);
-  push(`<text x="${PAD_L + 130}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.text}">${report.partial ? `${report.day.slice(5)} still open` : `${report.hits}/${report.total} on ${report.day.slice(5)}`}</text>`);
-  push(`<text x="${PAD_L + 290}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(report.checks.map((c) => (c.ok ? c.text : `MISS ${c.text}`)).join(' · '))}</text>`);
+  push(`<text x="${PAD_L + 130}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.text}">${report.partial ? `${report.day.slice(5)} still open` : `${report.hits}/${report.total} tested on ${report.day.slice(5)}`}</text>`);
+  push(`<text x="${PAD_L + 290}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(report.summary)}</text>`);
 }
 
 // ── the if / else ───────────────────────────────────────────────────────────
@@ -612,15 +694,18 @@ const entry = {
   madeAfter: sessions[sessions.length - 1],
   asOf: new Date().toISOString(),
   spot, flip, pin: magnet,
-  battle: battle ? battle.strike : null,
+  accel: accel ? accel.strike : null,
   brake: brake ? brake.strike : null,
   gate: gate ? gate.strike : null,
   shelf: pocket ? pocket.hi + 1 : null,
   cushion: cushion ? cushion.strike : null,
   wall: floor ? floor.strike : null,
 };
-if (sessionClosed) {
+if (ledgerBroken) {
+  console.log('not writing the ledger: it is unreadable and overwriting it would lose the history');
+} else if (sessionClosed) {
   const kept = ledger.filter((e) => e.madeAfter !== entry.madeAfter);
+  if (kept.length) writeFileSync(`${LEDGER}.bak`, JSON.stringify(ledger, null, 2) + '\n');
   kept.push(entry);
   kept.sort((a, b) => a.madeAfter.localeCompare(b.madeAfter));
   mkdirSync(dirname(LEDGER), { recursive: true });
@@ -629,9 +714,9 @@ if (sessionClosed) {
   console.log('session still open: not writing to the ledger, and the score below is provisional');
 }
 
-if (report) console.log(`${report.partial ? 'in flight' : 'last call'}: ${report.hits}/${report.total} on ${report.day} | ` + report.checks.map((c) => `${c.ok ? 'HIT' : 'MISS'} ${c.text}`).join(' | '));
+if (report) console.log(`${report.partial ? 'in flight' : 'last call'}: ${report.hits}/${report.total} tested on ${report.day} | ${report.summary}`);
 console.log(`spot ${spot} | flip ${flip} | magnet ${magnet} | netGEX ${fmtM(gex.totalGEX)}`);
-console.log(`gate ${gate?.strike} | brake ${brake?.strike} | battle ${battle?.strike} | floor ${floor?.strike} | pocket ${pocket ? `${pocket.lo}-${pocket.hi}` : 'none'}`);
+console.log(`gate ${gate?.strike} | brake ${brake?.strike} | accel ${accel?.strike} | floor ${floor?.strike} | pocket ${pocket ? `${pocket.lo}-${pocket.hi}` : 'none'}`);
 // Sidecar so downstream publishers (the daily Substack note) never have to
 // re-derive the map or scrape it back out of the PNG.
 const sidecar = join(OUT, `${sym.toLowerCase()}_tomorrow_${stamp}.json`);
@@ -640,16 +725,17 @@ writeFileSync(sidecar, JSON.stringify({
   asOf: new Date().toISOString(),
   forSession: sessionClosed ? 'next' : 'intraday-provisional',
   sessionClosed,
-  spot, flip, pin,
+  spot, flip, pin, expected,
   regime: negGamma ? 'negative gamma' : 'positive gamma',
   netGEX: gex.totalGEX,
   expected,
   expiringShare,
   flipOnPrice,
+  thinBook,
   levels: {
     ceiling: gate ? gate.strike : null,
     brake: brake ? brake.strike : null,
-    battle: battle ? battle.strike : null,
+    accel: accel ? accel.strike : null,
     shelf: pocket ? Math.min(pocket.hi + 1, Math.floor(spot)) : null,
     cushion: cushion ? cushion.strike : null,
     putWall: floor ? floor.strike : null,
@@ -660,7 +746,8 @@ writeFileSync(sidecar, JSON.stringify({
     rule: r.rule,
   })),
   lastCall: report && !report.partial
-    ? { day: report.day, hits: report.hits, total: report.total, checks: report.checks }
+    ? { day: report.day, hits: report.hits, total: report.total, branch: report.branch,
+        untested: report.untested.length, summary: report.summary }
     : null,
   png,
 }, null, 2) + '\n');
