@@ -41,11 +41,21 @@ function repoRoot(start) {
 const ROOT = repoRoot(process.cwd()) || repoRoot(new URL('.', import.meta.url).pathname);
 const KEY = readFileSync(join(ROOT, '.env_td_api'), 'utf8').trim();
 
-const api = async (path) => {
-  const r = await fetch(`${DEV_BASE}${path}`, { headers: { 'X-API-Key': KEY, 'User-Agent': UA } });
-  const j = await r.json();
-  if (!j.success) throw new Error(`${path}: ${j.message || j.error}`);
-  return j.data;
+// The dev API caps at 30 requests/minute. Two calls per run is nowhere near it
+// in normal use, but iterating on the chart trips it constantly, and dying on a
+// rate limit halfway through is a silly way to lose a render.
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const api = async (path, tries = 4) => {
+  for (let n = 1; ; n++) {
+    const r = await fetch(`${DEV_BASE}${path}`, { headers: { 'X-API-Key': KEY, 'User-Agent': UA } });
+    const j = await r.json().catch(() => ({}));
+    if (j.success) return j.data;
+    const limited = r.status === 429 || /requests per minute/i.test(j.message || j.error || '');
+    if (!limited || n >= tries) throw new Error(`${path}: ${j.message || j.error || r.status}`);
+    const wait = 20000 * n;
+    console.log(`rate limited, waiting ${wait / 1000}s (attempt ${n}/${tries})`);
+    await sleep(wait);
+  }
 };
 
 // ── args ────────────────────────────────────────────────────────────────────
@@ -187,12 +197,34 @@ if (prev) {
   }
 }
 
+// ── candles ─────────────────────────────────────────────────────────────────
+// The history feed is a 1-minute spot sample, not a bar feed, so the candles are
+// aggregated here: open/high/low/close of each bucket's samples. Bucket size is
+// chosen so a body never gets thinner than a few pixels.
+function buildCandles(minutes) {
+  const out = [];
+  let cur = null;
+  pts.forEach((q, i) => {
+    const day = dayKey(q.t);
+    const slot = Math.floor((q.t.getUTCHours() * 60 + q.t.getUTCMinutes()) / minutes);
+    if (!cur || cur.day !== day || cur.slot !== slot) {
+      cur = { day, slot, i0: i, i1: i, o: q.px, h: q.px, l: q.px, c: q.px };
+      out.push(cur);
+    }
+    cur.i1 = i;
+    cur.h = Math.max(cur.h, q.px);
+    cur.l = Math.min(cur.l, q.px);
+    cur.c = q.px;
+  });
+  return out;
+}
+
 // ── geometry ────────────────────────────────────────────────────────────────
 const W = 1600, H = 950;
 const PAD_L = 64, PAD_R = 40, PAD_T = 116;
 const PLOT_H = 600;
 const PLOT_W = W - PAD_L - PAD_R;
-const PAST_W = Math.round(PLOT_W * 0.36);          // the drive so far
+const PAST_W = Math.round(PLOT_W * 0.42);          // the drive so far
 const FWD_X = PAD_L + PAST_W;                       // tomorrow starts here
 const FWD_W = PLOT_W - PAST_W;
 
@@ -247,7 +279,7 @@ const roads = [
   {
     key: 'DOWN',
     col: C.put,
-    cond: pocket ? `below ${pocket.hi + 1}` : `below ${Math.floor(spot)}`,
+    cond: pocket ? `below ${Math.min(pocket.hi + 1, Math.floor(spot))}` : `below ${Math.floor(spot)}`,
     rule: pocket
       ? (cushion
           ? `thin air. only real bid is ${cushion.strike}. then ${floor.strike}.`
@@ -257,10 +289,11 @@ const roads = [
     pts: pocket
       ? [
           (() => {
-            const lv = ladder.find((s) => s.strike === pocket.hi + 1) || { netGex: 0, putOi: 0 };
+            const shelfK = Math.min(pocket.hi + 1, Math.floor(spot));
+            const lv = ladder.find((s) => s.strike === shelfK) || { netGex: 0, putOi: 0 };
             return lv.netGex >= 0
-              ? { at: pocket.hi + 1, tag: `${pocket.hi + 1} LAST SHELF`, note: 'the last thing to lean on' }
-              : { at: pocket.hi + 1, tag: `${pocket.hi + 1} TRAPDOOR`, note: `${oiFmt(lv.putOi)} puts, and dealers sell into it` };
+              ? { at: shelfK, tag: `${shelfK} LAST SHELF`, note: 'the last thing to lean on' }
+              : { at: shelfK, tag: `${shelfK} TRAPDOOR`, note: `${oiFmt(lv.putOi)} puts, and dealers sell into it` };
           })(),
           cushion
             ? { at: cushion.strike, tag: `${cushion.strike} THIN CUSHION`, note: 'only dealer buying down here, and it is small', open: true }
@@ -298,8 +331,19 @@ push(`<rect x="${FWD_X}" y="${PAD_T}" width="${FWD_W}" height="${PLOT_H}" fill="
   }
 }
 
-// the drive so far
-push(`<polyline fill="none" stroke="${C.cyan}" stroke-width="1.6" stroke-opacity="0.85" points="${pts.map((p, i) => `${X(i).toFixed(1)},${Y(p.px).toFixed(1)}`).join(' ')}"/>`);
+// the drive so far, as candles
+const BUCKET = [5, 10, 15, 30, 60].find((m) => PAST_W / (pts.length / m) >= 5) || 60;
+const candles = buildCandles(BUCKET);
+const cw = Math.max(2, (PAST_W / candles.length) * 0.66);
+for (const k of candles) {
+  const x = (X(k.i0) + X(k.i1)) / 2;
+  const up = k.c >= k.o;
+  const col = up ? C.call : C.put;
+  push(`<line x1="${x.toFixed(1)}" y1="${Y(k.h).toFixed(1)}" x2="${x.toFixed(1)}" y2="${Y(k.l).toFixed(1)}" stroke="${col}" stroke-width="1" stroke-opacity="0.9"/>`);
+  const yTop = Y(Math.max(k.o, k.c)), yBot = Y(Math.min(k.o, k.c));
+  push(`<rect x="${(x - cw / 2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${cw.toFixed(1)}" height="${Math.max(1, yBot - yTop).toFixed(1)}" fill="${col}" fill-opacity="${up ? 0.85 : 0.95}"/>`);
+}
+push(`<text x="${PAD_L + 8}" y="${PAD_T + 36}" font-family="'JetBrains Mono',monospace" font-size="9.5" fill="${C.dim}">${BUCKET}m candles</text>`);
 sessions.forEach((d) => {
   const i = pts.findIndex((p) => dayKey(p.t) === d);
   push(`<text x="${X(i) + 5}" y="${PAD_T + PLOT_H - 8}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}">${d.slice(5)}</text>`);
@@ -355,6 +399,7 @@ function smooth(pp) {
   return d;
 }
 
+const labels = [];
 const ROAD_X0 = FWD_X + 14;
 const ROAD_W = FWD_W - 210;   // leave room for the waypoint labels
 
@@ -396,16 +441,36 @@ for (const r of roads) {
     // only reliably empty quadrant is back over the shoulder. Last stop is the
     // exception: nothing follows it, so its label can sit out front.
     const last = i === n - 1;
-    const tx = last ? x + 12 : x - 12;
-    const anchor = last ? 'start' : 'end';
-    const ty = y + (r.labelBelow ? 30 : r.side < 0 ? -28 : 24);
-    push(`<text x="${tx}" y="${ty}" text-anchor="${anchor}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${r.col}" font-weight="700">${esc(w.tag)}</text>`);
-    push(`<text x="${tx}" y="${ty + 15}" text-anchor="${anchor}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}">${esc(w.note)}</text>`);
+    labels.push({
+      x, y,
+      tx: last ? x + 12 : x - 12,
+      anchor: last ? 'start' : 'end',
+      ty: y + (r.labelBelow ? 30 : r.side < 0 ? -28 : 24),
+      tag: w.tag, note: w.note, col: r.col,
+    });
   });
 
   // road name at the far end
   const endY = r.wave ? Y(pin) : Y(r.pts[n - 1].at);
   push(`<text x="${ROAD_X0 + ROAD_W + 12}" y="${endY + 4}" font-family="'Share Tech Mono',monospace" font-size="15" fill="${r.col}" letter-spacing="1">${r.key}</text>`);
+}
+
+// Waypoint labels are placed last, as one pass, so labels from different roads
+// cannot land on top of each other. When a label has to move off its dot, a
+// leader line keeps the two connected.
+labels.sort((a, b) => a.ty - b.ty);
+const LBL_H = 34;
+let lastTy = -Infinity;
+for (const L of labels) {
+  if (L.ty - lastTy < LBL_H) L.ty = lastTy + LBL_H;
+  lastTy = L.ty;
+}
+for (const L of labels) {
+  if (Math.abs(L.ty - (L.y + 24)) > 26 || Math.abs(L.ty - L.y) > 40) {
+    push(`<line x1="${L.x}" y1="${L.y}" x2="${L.tx}" y2="${(L.ty - 4).toFixed(1)}" stroke="${L.col}" stroke-width="0.8" stroke-opacity="0.35"/>`);
+  }
+  push(`<text x="${L.tx}" y="${L.ty.toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${L.col}" font-weight="700">${esc(L.tag)}</text>`);
+  push(`<text x="${L.tx}" y="${(L.ty + 15).toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}">${esc(L.note)}</text>`);
 }
 
 // ── how the last one went ───────────────────────────────────────────────────
