@@ -632,4 +632,38 @@ if (sessionClosed) {
 if (report) console.log(`${report.partial ? 'in flight' : 'last call'}: ${report.hits}/${report.total} on ${report.day} | ` + report.checks.map((c) => `${c.ok ? 'HIT' : 'MISS'} ${c.text}`).join(' | '));
 console.log(`spot ${spot} | flip ${flip} | magnet ${magnet} | netGEX ${fmtM(gex.totalGEX)}`);
 console.log(`gate ${gate?.strike} | brake ${brake?.strike} | battle ${battle?.strike} | floor ${floor?.strike} | pocket ${pocket ? `${pocket.lo}-${pocket.hi}` : 'none'}`);
+// Sidecar so downstream publishers (the daily Substack note) never have to
+// re-derive the map or scrape it back out of the PNG.
+const sidecar = join(OUT, `${sym.toLowerCase()}_tomorrow_${stamp}.json`);
+writeFileSync(sidecar, JSON.stringify({
+  symbol: sym,
+  asOf: new Date().toISOString(),
+  forSession: sessionClosed ? 'next' : 'intraday-provisional',
+  sessionClosed,
+  spot, flip, pin,
+  regime: negGamma ? 'negative gamma' : 'positive gamma',
+  netGEX: gex.totalGEX,
+  expected,
+  expiringShare,
+  flipOnPrice,
+  levels: {
+    ceiling: gate ? gate.strike : null,
+    brake: brake ? brake.strike : null,
+    battle: battle ? battle.strike : null,
+    shelf: pocket ? Math.min(pocket.hi + 1, Math.floor(spot)) : null,
+    cushion: cushion ? cushion.strike : null,
+    putWall: floor ? floor.strike : null,
+  },
+  branches: ifRows.map((r) => ({
+    kind: r.isElse ? 'ELSE' : 'IF',
+    cond: r.isElse ? `it holds ${r.cond}` : `it goes ${r.cond}`,
+    rule: r.rule,
+  })),
+  lastCall: report && !report.partial
+    ? { day: report.day, hits: report.hits, total: report.total, checks: report.checks }
+    : null,
+  png,
+}, null, 2) + '\n');
+
 console.log(png);
+console.log(sidecar);
