@@ -67,12 +67,34 @@ const BAND = parseFloat(arg('band', '1.4')) / 100;   // % of spot drawn above/be
 
 const gex = await api(`/gex/${sym}`);
 const hist = await api(`/gex/${sym}/historical?hours=168`);
+const matrix = await api(`/gex/${sym}/matrix`).catch(() => null);
 
 const spot = gex.spotPrice;
 const flip = gex.gammaFlipLevel;
 const magnet = gex.maxGammaStrike;
 const lo = spot * (1 - BAND), hi = spot * (1 + BAND);
-const ladder = gex.byStrike.filter((s) => s.strike >= lo && s.strike <= hi).sort((a, b) => a.strike - b.strike);
+
+// ── only count gamma that will still be here tomorrow ───────────────────────
+// The snapshot's byStrike includes contracts expiring at tonight's close. Those
+// are the loudest strikes on the board and they are gone by the open: on 9/23
+// net GEX went from +$0.17B to -$2.09B across the bell as 0DTE rolled off. A map
+// OF tomorrow built from a book that evaporates tonight is a map of nothing.
+const todayET = new Date(Date.now() - 4 * 3600e3).toISOString().slice(0, 10);
+let survivors = null, expiringShare = 0;
+if (matrix?.rows?.length) {
+  const live = matrix.expirations.map((e) => e > todayET);
+  const sum = (arr, mask) => arr.reduce((a, v, i) => a + (mask[i] && v ? v : 0), 0);
+  const all = matrix.expirations.map(() => true);
+  survivors = new Map(matrix.rows.map((r) => [r.strike, sum(r.gex, live)]));
+  const tot = matrix.rows.reduce((a, r) => a + Math.abs(sum(r.gex, all)), 0);
+  const kept = matrix.rows.reduce((a, r) => a + Math.abs(sum(r.gex, live)), 0);
+  expiringShare = tot ? 1 - kept / tot : 0;
+}
+
+const ladder = gex.byStrike
+  .filter((s) => s.strike >= lo && s.strike <= hi)
+  .map((s) => (survivors?.has(s.strike) ? { ...s, netGex: survivors.get(s.strike), gross: s.netGex } : s))
+  .sort((a, b) => a.strike - b.strike);
 
 // ── structure: read the ladder the way a trader would ───────────────────────
 // A "wall" is a strike whose |netGEX| is a large share of the local book. An "air
@@ -339,7 +361,7 @@ push(`<rect width="${W}" height="${H}" fill="${C.bg}"/>`);
 
 // header
 push(`<text x="${PAD_L}" y="46" font-family="'Share Tech Mono',monospace" font-size="30" fill="${C.text}" letter-spacing="1">TOMORROW'S MAP <tspan fill="${C.green}">${esc(sym)}</tspan></text>`);
-push(`<text x="${PAD_L}" y="72" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">spot ${spot.toFixed(2)} · flip ${flip.toFixed(2)} · pin ${pin} · net GEX ${fmtM(gex.totalGEX)}</text>`);
+push(`<text x="${PAD_L}" y="72" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">spot ${spot.toFixed(2)} · flip ${flip.toFixed(2)} · pin ${pin} · net GEX ${fmtM(gex.totalGEX)}${survivors ? ` · levels exclude the ${(expiringShare * 100).toFixed(0)}% of gamma expiring tonight` : ''}</text>`);
 const pillC = negGamma ? C.coral : C.green;
 push(`<rect x="${W - PAD_R - 330}" y="26" width="330" height="34" rx="17" fill="${negGamma ? '#1a0e11' : '#0c1a13'}" stroke="${pillC}" stroke-opacity="0.45"/>`);
 push(`<text x="${W - PAD_R - 165}" y="48" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14" fill="${pillC}">${negGamma ? 'NEGATIVE GAMMA / moves get amplified' : 'POSITIVE GAMMA / moves get damped'}</text>`);
