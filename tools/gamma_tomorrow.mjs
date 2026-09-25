@@ -74,13 +74,24 @@ const WALL = maxAbs * 0.28;   // wall threshold: ~a third of the biggest level
 const above = ladder.filter((s) => s.strike > spot);
 const below = ladder.filter((s) => s.strike < spot);
 
-// The gate: first strike above spot where the book turns decisively long gamma.
-const gate = above.find((s) => s.netGex > WALL) || null;
+// The ceiling: the heaviest long-gamma strike above spot. Taking the FIRST one
+// instead breaks whenever the positive stack starts right at spot -- you get a
+// "ceiling" sitting below the gamma flip, which is nonsense.
+const gate = above.filter((s) => s.netGex > WALL).sort((a, b) => b.netGex - a.netGex)[0] || null;
 // The battle: biggest short-gamma strike above spot before that gate.
 // The magnet is already tagged on its own; a "battle" is the *other* short-gamma
 // shelf between spot and the gate, which is what actually stops a rally.
 const battle = above.filter((s) => s.netGex < -WALL && s.strike !== magnet && (!gate || s.strike < gate.strike))
   .sort((a, b) => a.netGex - b.netGex)[0] || null;
+// The pin is whatever price is actually wrestling with, so it has to be local.
+// maxGammaStrike from the API is the biggest strike in the WHOLE book, which on
+// a day with a far-off put wall is six points away and not a pin at all.
+const near = ladder.filter((s) => Math.abs(s.strike - spot) <= 1.5);
+const pin = near.length
+  ? near.slice().sort((a, b) => Math.abs(b.netGex) - Math.abs(a.netGex))[0].strike
+  : magnet;
+const pinNet = (ladder.find((s) => s.strike === pin) || { netGex: 0 }).netGex;
+
 // The floor: biggest short-gamma strike below spot.
 const floor = below.filter((s) => s.netGex < -WALL).sort((a, b) => a.netGex - b.netGex)[0] || null;
 
@@ -105,6 +116,14 @@ if (floor) {
   }
 }
 
+// ── the ledger: every map this tool publishes gets written down ────────────
+// Without this the chart is a theory. With it, the left half of the picture can
+// show whether last night's call actually happened, which is the only thing that
+// makes the right half worth reading.
+const LEDGER = join(ROOT, 'data/gamma_maps', `${sym}.json`);
+let ledger = [];
+try { ledger = JSON.parse(readFileSync(LEDGER, 'utf8')); } catch { /* first run */ }
+
 const negGamma = gex.totalGEX < 0;
 const fmtM = (v) => {
   const a = Math.abs(v);
@@ -118,8 +137,42 @@ const pts = hist.map((p) => ({ t: new Date(p.snapshotTime), px: p.spotPrice }));
 const dayKey = (d) => d.toISOString().slice(0, 10);
 const sessions = [...new Set(pts.map((p) => dayKey(p.t)))];
 
+// ── score the last call ─────────────────────────────────────────────────────
+// Find the map that was made the session BEFORE the most recent one, then check
+// it against what that session actually printed.
+const lastSession = sessions[sessions.length - 1];
+const priorSession = sessions[sessions.length - 2];
+const sessionBars = (day) => pts.filter((q) => dayKey(q.t) === day).map((q) => q.px);
+
+let report = null;
+const prev = ledger.find((e) => e.madeAfter === priorSession);
+if (prev) {
+  const bars = sessionBars(lastSession);
+  if (bars.length) {
+    const open = bars[0], high = Math.max(...bars), low = Math.min(...bars), close = bars[bars.length - 1];
+    const checks = [];
+    const add = (ok, text) => checks.push({ ok, text });
+
+    const wentDown = open < prev.shelf || low < prev.shelf;
+    const wentUp = high > prev.flip;
+    add(true, wentDown && !wentUp ? `took the DOWN road` : wentUp && !wentDown ? `took the UP road` : wentUp && wentDown ? `took both roads` : `stayed in the range`);
+    if (prev.cushion != null) add(low >= prev.cushion - 0.75, `held ${prev.cushion} cushion (low ${low.toFixed(2)})`);
+    if (prev.wall != null) add(low > prev.wall, `never reached ${prev.wall} put wall`);
+    if (prev.flip != null) add(high < prev.flip, `capped under ${prev.flip} flip (high ${high.toFixed(2)})`);
+    if (prev.battle != null) add(high < prev.battle, `never tested ${prev.battle}`);
+
+    const scored = checks.slice(1);
+    report = {
+      day: lastSession, open, high, low, close, checks,
+      hits: scored.filter((c) => c.ok).length, total: scored.length,
+      levels: [prev.shelf, prev.cushion, prev.wall, prev.flip, prev.battle, prev.gate].filter((v) => v != null),
+      prev,
+    };
+  }
+}
+
 // ── geometry ────────────────────────────────────────────────────────────────
-const W = 1600, H = 900;
+const W = 1600, H = 950;
 const PAD_L = 64, PAD_R = 40, PAD_T = 116;
 const PLOT_H = 600;
 const PLOT_W = W - PAD_L - PAD_R;
@@ -139,8 +192,8 @@ const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt
 // tape has to deal with; its note says what the book does to price THERE, which
 // is the whole point -- the same level behaves differently depending on which
 // way you arrived at it.
-const rangeLo = Math.min(magnet, Math.floor(spot)) - 1;
-const rangeHi = Math.max(magnet, Math.ceil(flip));
+const rangeLo = Math.min(pin, Math.floor(spot)) - 1;
+const rangeHi = Math.max(pin, Math.ceil(flip));
 
 const roads = [
   {
@@ -148,7 +201,9 @@ const roads = [
     col: C.call,
     cond: `above ${flip.toFixed(2)}`,
     rule: gate
-      ? `dealers brake. stalls at ${battle ? battle.strike : gate.strike}, dies at ${gate.strike}.`
+      ? (battle
+          ? `dealers brake. stalls at ${battle.strike}, dies at ${gate.strike}.`
+          : `dealers brake all the way. nothing gives until ${gate.strike}.`)
       : `dealers brake. no ceiling in range.`,
     side: -1,
     pts: [
@@ -164,11 +219,11 @@ const roads = [
     labelBelow: true,
     cond: `between ${rangeLo} and ${rangeHi}`,
     rule: negGamma
-      ? `chop around the ${magnet} pin. it knifes both edges.`
-      : `quiet drift into the ${magnet} pin.`,
+      ? `chop around the ${pin} pin. it knifes both edges.`
+      : `quiet drift into the ${pin} pin.`,
     side: -1,
     wave: true,
-    pts: [{ at: magnet, tag: `${magnet} PIN`, note: negGamma ? 'short gamma, so it chops hard' : 'long gamma, so it settles' }],
+    pts: [{ at: pin, tag: `${pin} PIN`, note: pinNet < 0 ? 'short gamma, so it chops hard' : 'long gamma, so it settles' }],
   },
   {
     key: 'DOWN',
@@ -182,7 +237,12 @@ const roads = [
     side: 1,
     pts: pocket
       ? [
-          { at: pocket.hi + 1, tag: `${pocket.hi + 1} LAST SHELF`, note: 'the last thing to lean on' },
+          (() => {
+            const lv = ladder.find((s) => s.strike === pocket.hi + 1) || { netGex: 0, putOi: 0 };
+            return lv.netGex >= 0
+              ? { at: pocket.hi + 1, tag: `${pocket.hi + 1} LAST SHELF`, note: 'the last thing to lean on' }
+              : { at: pocket.hi + 1, tag: `${pocket.hi + 1} TRAPDOOR`, note: `${oiFmt(lv.putOi)} puts, and dealers sell into it` };
+          })(),
           cushion
             ? { at: cushion.strike, tag: `${cushion.strike} THIN CUSHION`, note: 'only dealer buying down here, and it is small', open: true }
             : { at: (pocket.lo + pocket.hi) / 2, tag: 'EMPTY', note: `${pocket.lo} to ${pocket.hi}, nothing here`, open: true },
@@ -200,7 +260,7 @@ push(`<rect width="${W}" height="${H}" fill="${C.bg}"/>`);
 
 // header
 push(`<text x="${PAD_L}" y="46" font-family="'Share Tech Mono',monospace" font-size="30" fill="${C.text}" letter-spacing="1">TOMORROW'S MAP <tspan fill="${C.green}">${esc(sym)}</tspan></text>`);
-push(`<text x="${PAD_L}" y="72" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">spot ${spot.toFixed(2)} · flip ${flip.toFixed(2)} · pin ${magnet} · net GEX ${fmtM(gex.totalGEX)}</text>`);
+push(`<text x="${PAD_L}" y="72" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">spot ${spot.toFixed(2)} · flip ${flip.toFixed(2)} · pin ${pin} · net GEX ${fmtM(gex.totalGEX)}</text>`);
 const pillC = negGamma ? C.coral : C.green;
 push(`<rect x="${W - PAD_R - 330}" y="26" width="330" height="34" rx="17" fill="${negGamma ? '#1a0e11' : '#0c1a13'}" stroke="${pillC}" stroke-opacity="0.45"/>`);
 push(`<text x="${W - PAD_R - 165}" y="48" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14" fill="${pillC}">${negGamma ? 'NEGATIVE GAMMA / moves get amplified' : 'POSITIVE GAMMA / moves get damped'}</text>`);
@@ -226,6 +286,35 @@ sessions.forEach((d) => {
   push(`<text x="${X(i) + 5}" y="${PAD_T + PLOT_H - 8}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}">${d.slice(5)}</text>`);
 });
 push(`<text x="${PAD_L + 8}" y="${PAD_T + 20}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" letter-spacing="2">THE LAST 5 SESSIONS</text>`);
+// Last night's call, drawn back over the session it was made for. Green means
+// the level did what the map said it would; red means it did not.
+if (report) {
+  const idxs = pts.map((q, i) => (dayKey(q.t) === report.day ? i : -1)).filter((i) => i >= 0);
+  const x0 = X(idxs[0]), x1 = X(idxs[idxs.length - 1]);
+  push(`<rect x="${x0}" y="${PAD_T}" width="${x1 - x0}" height="${PLOT_H}" fill="${C.text}" fill-opacity="0.025"/>`);
+  push(`<text x="${x0 + 3}" y="${PAD_T + 38}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}" letter-spacing="1">LAST CALL</text>`);
+  const byLvl = {
+    [report.prev.cushion]: report.checks.find((c) => c.text.includes('cushion')),
+    [report.prev.wall]: report.checks.find((c) => c.text.includes('put wall')),
+    [report.prev.flip]: report.checks.find((c) => c.text.includes('flip')),
+    [report.prev.battle]: report.checks.find((c) => c.text.includes('never tested')),
+  };
+  for (const lvl of report.levels) {
+    const y = Y(lvl);
+    if (y < PAD_T || y > PAD_T + PLOT_H) continue;
+    const c = byLvl[lvl];
+    const col = c ? (c.ok ? C.call : C.put) : C.dim;
+    push(`<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="${col}" stroke-width="1.2" stroke-opacity="${c ? 0.75 : 0.3}" stroke-dasharray="3 3"/>`);
+  }
+  // where it actually turned
+  const loI = idxs.reduce((b, i) => (pts[i].px < pts[b].px ? i : b), idxs[0]);
+  const hiI = idxs.reduce((b, i) => (pts[i].px > pts[b].px ? i : b), idxs[0]);
+  for (const [i, px] of [[loI, report.low], [hiI, report.high]]) {
+    push(`<circle cx="${X(i)}" cy="${Y(px)}" r="4" fill="${C.bg}" stroke="${C.text}" stroke-width="1.6"/>`);
+    push(`<text x="${X(i)}" y="${Y(px) + (px === report.low ? 16 : -8)}" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.text}">${px.toFixed(2)}</text>`);
+  }
+}
+
 push(`<line x1="${FWD_X}" y1="${PAD_T}" x2="${FWD_X}" y2="${PAD_T + PLOT_H}" stroke="${C.dim}" stroke-opacity="0.45" stroke-dasharray="3 4"/>`);
 push(`<text x="${FWD_X + 12}" y="${PAD_T + 20}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" letter-spacing="2">TOMORROW</text>`);
 
@@ -264,7 +353,7 @@ for (const r of roads) {
     const cycles = 3.5, steps = 48;
     for (let i = 1; i <= steps; i++) {
       const f = i / steps;
-      const px = magnet + Math.sin(f * Math.PI * 2 * cycles) * ((rangeHi - rangeLo) / 2) * 0.5;
+      const px = pin + Math.sin(f * Math.PI * 2 * cycles) * ((rangeHi - rangeLo) / 2) * 0.5;
       wp.push([ROAD_X0 + ROAD_W * f, Y(px)]);
     }
     path = smooth(wp);
@@ -296,12 +385,25 @@ for (const r of roads) {
   });
 
   // road name at the far end
-  const endY = r.wave ? Y(magnet) : Y(r.pts[n - 1].at);
+  const endY = r.wave ? Y(pin) : Y(r.pts[n - 1].at);
   push(`<text x="${ROAD_X0 + ROAD_W + 12}" y="${endY + 4}" font-family="'Share Tech Mono',monospace" font-size="15" fill="${r.col}" letter-spacing="1">${r.key}</text>`);
 }
 
+// ── how the last one went ───────────────────────────────────────────────────
+let SCORE_H = 0;
+if (report) {
+  const y = PAD_T + PLOT_H + 34;
+  SCORE_H = 46;
+  const allHit = report.hits === report.total;
+  const col = allHit ? C.call : report.hits >= report.total / 2 ? C.pin : C.put;
+  push(`<rect x="${PAD_L}" y="${y - 20}" width="${PLOT_W}" height="34" rx="6" fill="${col}" fill-opacity="0.07" stroke="${col}" stroke-opacity="0.25"/>`);
+  push(`<text x="${PAD_L + 16}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${col}" font-weight="700">LAST CALL</text>`);
+  push(`<text x="${PAD_L + 130}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.text}">${report.hits}/${report.total} on ${report.day.slice(5)}</text>`);
+  push(`<text x="${PAD_L + 290}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(report.checks.map((c) => (c.ok ? c.text : `MISS ${c.text}`)).join(' · '))}</text>`);
+}
+
 // ── the if / else ───────────────────────────────────────────────────────────
-const IF_T = PAD_T + PLOT_H + 40;
+const IF_T = PAD_T + PLOT_H + 40 + SCORE_H;
 // UP and DOWN are the two IFs; the range case is what is left over.
 const ifRows = [...roads.filter((r) => !r.isElse), ...roads.filter((r) => r.isElse)];
 ifRows.forEach((r, i) => {
@@ -333,6 +435,24 @@ await page.waitForTimeout(600);
 await page.screenshot({ path: png });
 await browser.close();
 
+// Write this map down so the next run can grade it.
+const entry = {
+  madeAfter: sessions[sessions.length - 1],
+  asOf: new Date().toISOString(),
+  spot, flip, pin: magnet,
+  battle: battle ? battle.strike : null,
+  gate: gate ? gate.strike : null,
+  shelf: pocket ? pocket.hi + 1 : null,
+  cushion: cushion ? cushion.strike : null,
+  wall: floor ? floor.strike : null,
+};
+const kept = ledger.filter((e) => e.madeAfter !== entry.madeAfter);
+kept.push(entry);
+kept.sort((a, b) => a.madeAfter.localeCompare(b.madeAfter));
+mkdirSync(dirname(LEDGER), { recursive: true });
+writeFileSync(LEDGER, JSON.stringify(kept.slice(-120), null, 2) + '\n');
+
+if (report) console.log(`last call: ${report.hits}/${report.total} on ${report.day} | ` + report.checks.map((c) => `${c.ok ? 'HIT' : 'MISS'} ${c.text}`).join(' | '));
 console.log(`spot ${spot} | flip ${flip} | magnet ${magnet} | netGEX ${fmtM(gex.totalGEX)}`);
 console.log(`gate ${gate?.strike} | battle ${battle?.strike} | floor ${floor?.strike} | pocket ${pocket ? `${pocket.lo}-${pocket.hi}` : 'none'}`);
 console.log(png);
