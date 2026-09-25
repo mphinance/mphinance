@@ -92,6 +92,15 @@ const pin = near.length
   : magnet;
 const pinNet = (ladder.find((s) => s.strike === pin) || { netGex: 0 }).netGex;
 
+// The brake: heaviest LONG-gamma strike between spot and the ceiling. Dealers
+// sell rips there too, so a rally stalls into it long before it reaches the
+// ceiling. Missing this is why 9/24's map said "nothing gives until 772" and
+// then 9/25 topped at 770.29 and turned.
+const brake = gate
+  ? above.filter((s) => s.netGex > WALL && s.strike < gate.strike)
+      .sort((a, b) => b.netGex - a.netGex)[0] || null
+  : null;
+
 // The floor: biggest short-gamma strike below spot.
 const floor = below.filter((s) => s.netGex < -WALL).sort((a, b) => a.netGex - b.netGex)[0] || null;
 
@@ -144,6 +153,11 @@ const lastSession = sessions[sessions.length - 1];
 const priorSession = sessions[sessions.length - 2];
 const sessionBars = (day) => pts.filter((q) => dayKey(q.t) === day).map((q) => q.px);
 
+// 16:00 ET is 20:00 UTC. Anything short of that is a session still in flight:
+// worth SHOWING, never worth scoring or writing to the ledger as a final grade.
+const lastTick = pts[pts.length - 1].t;
+const sessionClosed = lastTick.getUTCHours() >= 20;
+
 let report = null;
 const prev = ledger.find((e) => e.madeAfter === priorSession);
 if (prev) {
@@ -160,12 +174,14 @@ if (prev) {
     if (prev.wall != null) add(low > prev.wall, `never reached ${prev.wall} put wall`);
     if (prev.flip != null) add(high < prev.flip, `capped under ${prev.flip} flip (high ${high.toFixed(2)})`);
     if (prev.battle != null) add(high < prev.battle, `never tested ${prev.battle}`);
+    if (prev.brake != null) add(high < prev.brake + 0.75, `stalled into ${prev.brake} (high ${high.toFixed(2)})`);
 
     const scored = checks.slice(1);
     report = {
+      partial: !sessionClosed,
       day: lastSession, open, high, low, close, checks,
       hits: scored.filter((c) => c.ok).length, total: scored.length,
-      levels: [prev.shelf, prev.cushion, prev.wall, prev.flip, prev.battle, prev.gate].filter((v) => v != null),
+      levels: [prev.shelf, prev.cushion, prev.wall, prev.flip, prev.battle, prev.brake, prev.gate].filter((v) => v != null),
       prev,
     };
   }
@@ -203,12 +219,15 @@ const roads = [
     rule: gate
       ? (battle
           ? `dealers brake. stalls at ${battle.strike}, dies at ${gate.strike}.`
-          : `dealers brake all the way. nothing gives until ${gate.strike}.`)
+          : brake
+            ? `dealers brake. stalls into ${brake.strike}, dies at ${gate.strike}.`
+            : `dealers brake all the way. nothing gives until ${gate.strike}.`)
       : `dealers brake. no ceiling in range.`,
     side: -1,
     pts: [
       { at: flip, tag: `${flip.toFixed(2)} FLIP`, note: 'dealers stop chasing, start braking' },
       battle ? { at: battle.strike, tag: `${battle.strike} WALL`, note: `${oiFmt(battle.putOi)} puts, needs volume` } : null,
+      !battle && brake ? { at: brake.strike, tag: `${brake.strike} BRAKE`, note: 'dealers sell rips here, rallies stall' } : null,
       gate ? { at: gate.strike, tag: `${gate.strike} CEILING`, note: 'move dies here' } : null,
     ].filter(Boolean),
   },
@@ -292,7 +311,7 @@ if (report) {
   const idxs = pts.map((q, i) => (dayKey(q.t) === report.day ? i : -1)).filter((i) => i >= 0);
   const x0 = X(idxs[0]), x1 = X(idxs[idxs.length - 1]);
   push(`<rect x="${x0}" y="${PAD_T}" width="${x1 - x0}" height="${PLOT_H}" fill="${C.text}" fill-opacity="0.025"/>`);
-  push(`<text x="${x0 + 3}" y="${PAD_T + 38}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}" letter-spacing="1">LAST CALL</text>`);
+  push(`<text x="${x0 + 3}" y="${PAD_T + 38}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}" letter-spacing="1">${report.partial ? 'TODAY SO FAR' : 'LAST CALL'}</text>`);
   const byLvl = {
     [report.prev.cushion]: report.checks.find((c) => c.text.includes('cushion')),
     [report.prev.wall]: report.checks.find((c) => c.text.includes('put wall')),
@@ -395,10 +414,10 @@ if (report) {
   const y = PAD_T + PLOT_H + 34;
   SCORE_H = 46;
   const allHit = report.hits === report.total;
-  const col = allHit ? C.call : report.hits >= report.total / 2 ? C.pin : C.put;
+  const col = report.partial ? C.cyan : allHit ? C.call : report.hits >= report.total / 2 ? C.pin : C.put;
   push(`<rect x="${PAD_L}" y="${y - 20}" width="${PLOT_W}" height="34" rx="6" fill="${col}" fill-opacity="0.07" stroke="${col}" stroke-opacity="0.25"/>`);
-  push(`<text x="${PAD_L + 16}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${col}" font-weight="700">LAST CALL</text>`);
-  push(`<text x="${PAD_L + 130}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.text}">${report.hits}/${report.total} on ${report.day.slice(5)}</text>`);
+  push(`<text x="${PAD_L + 16}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${col}" font-weight="700">${report.partial ? 'IN FLIGHT' : 'LAST CALL'}</text>`);
+  push(`<text x="${PAD_L + 130}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.text}">${report.partial ? `${report.day.slice(5)} still open` : `${report.hits}/${report.total} on ${report.day.slice(5)}`}</text>`);
   push(`<text x="${PAD_L + 290}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(report.checks.map((c) => (c.ok ? c.text : `MISS ${c.text}`)).join(' · '))}</text>`);
 }
 
@@ -441,18 +460,23 @@ const entry = {
   asOf: new Date().toISOString(),
   spot, flip, pin: magnet,
   battle: battle ? battle.strike : null,
+  brake: brake ? brake.strike : null,
   gate: gate ? gate.strike : null,
   shelf: pocket ? pocket.hi + 1 : null,
   cushion: cushion ? cushion.strike : null,
   wall: floor ? floor.strike : null,
 };
-const kept = ledger.filter((e) => e.madeAfter !== entry.madeAfter);
-kept.push(entry);
-kept.sort((a, b) => a.madeAfter.localeCompare(b.madeAfter));
-mkdirSync(dirname(LEDGER), { recursive: true });
-writeFileSync(LEDGER, JSON.stringify(kept.slice(-120), null, 2) + '\n');
+if (sessionClosed) {
+  const kept = ledger.filter((e) => e.madeAfter !== entry.madeAfter);
+  kept.push(entry);
+  kept.sort((a, b) => a.madeAfter.localeCompare(b.madeAfter));
+  mkdirSync(dirname(LEDGER), { recursive: true });
+  writeFileSync(LEDGER, JSON.stringify(kept.slice(-120), null, 2) + '\n');
+} else {
+  console.log('session still open: not writing to the ledger, and the score below is provisional');
+}
 
-if (report) console.log(`last call: ${report.hits}/${report.total} on ${report.day} | ` + report.checks.map((c) => `${c.ok ? 'HIT' : 'MISS'} ${c.text}`).join(' | '));
+if (report) console.log(`${report.partial ? 'in flight' : 'last call'}: ${report.hits}/${report.total} on ${report.day} | ` + report.checks.map((c) => `${c.ok ? 'HIT' : 'MISS'} ${c.text}`).join(' | '));
 console.log(`spot ${spot} | flip ${flip} | magnet ${magnet} | netGEX ${fmtM(gex.totalGEX)}`);
-console.log(`gate ${gate?.strike} | battle ${battle?.strike} | floor ${floor?.strike} | pocket ${pocket ? `${pocket.lo}-${pocket.hi}` : 'none'}`);
+console.log(`gate ${gate?.strike} | brake ${brake?.strike} | battle ${battle?.strike} | floor ${floor?.strike} | pocket ${pocket ? `${pocket.lo}-${pocket.hi}` : 'none'}`);
 console.log(png);
