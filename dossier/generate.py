@@ -1921,6 +1921,23 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Screen health update failed: {e}")
 
+        # ── Stage 15g2: Sector Health Monitor ──
+        # screen_health.py breaks the same validated archive down by
+        # strategy/grade/regime/EMA stack but never by sector, even though
+        # every entry already carries one (scan_logger.py's snapshot).
+        # Writes docs/api/sector-health.json: rolling win rate + avg return
+        # per sector, plus a hot/cold trend so a sector heating up or
+        # fading shows before it's obvious from the picks alone.
+        print("\n[15g2/16] SECTOR HEALTH")
+        try:
+            from dossier.backtesting.sector_health import (
+                format_sector_health_text, write_health_json as write_sector_health_json,
+            )
+            sector_health = write_sector_health_json()
+            print(f"  ✓ {format_sector_health_text(sector_health)}")
+        except Exception as e:
+            print(f"  [WARN] Sector health update failed: {e}")
+
         # ── Stage 15h: Factor Correlation ──
         # Which individual numeric factors (RSI, ADX, MACD hist, rel vol,
         # tech/fund score, composite score...) actually correlate with
