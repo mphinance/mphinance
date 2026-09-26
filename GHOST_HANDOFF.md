@@ -5,6 +5,29 @@
 - **What's left:** (1) Michael symlinks it into `~/.claude/skills/` (command is in the SKILL.md); (2) first real run, then pair interview.md vs. the shipped post in `docs/voice-delta/`; (3) maybe feed transcripts into the voice-delta corpus.
 
 
+## 2026-07-10 - six-ddc Toolkit Review (verified) + Backtest Journal-Cache
+- **Context:** Michael pasted a Claude *web* review of `github.com/six-ddc` that
+  admitted it couldn't verify several repos. Re-ran it here with real web/git.
+- **Verified:** all flagged repos exist. `six-ddc/skills` has **no license**
+  (all-rights-reserved). The web report's "market analysis" skill
+  (`serenity-investor`) is actually a Chinese persona-clone of a named investor,
+  not a GEX/flow workflow — did **not** vendor it. There is no `ccmux` (it's `ccbot`).
+- **Vendored (with permission):** `sub-claude` batch fan-out skill →
+  `.claude/skills/sub-claude/` (SKILL.md + scripts/sub_claude.py). Provenance +
+  a `--dangerously-skip-permissions` safety note are recorded in-file. Best fit:
+  one worker per ticker for basket scans.
+- **Fixed the fetch-and-persist bug:** applied the journal-cache resume pattern
+  (from codex-dynamic-workflows, MIT) to `backtesting/vopr_grade_backtest.py`.
+  New `backtesting/fetch_cache.py` (stdlib, atomic writes, TTL) caches OHLC the
+  moment it lands, so a mid-run crash reuses fetched bars instead of
+  re-downloading. Toggle `MPH_FETCH_CACHE=0`. 9 tests in
+  `tests/test_fetch_cache.py`, all green. Also un-hardcoded the `/home/mph/...`
+  paths so it runs off-VPS.
+- **Full writeup:** `docs/six-ddc-toolkit-review.md`.
+- **What's left:** point `fetch_cache` at the Tradier/dossier pulls (same bug
+  class); wire `tests/` into CI. `browser-cli` still parked pending a real
+  authenticated-scraping job.
+
 ## 2026-06-28 - Convergence Scan vs. Competitor 7-Pick List
 - **What got done:** Ran the full `stock-recap` end-to-end (gather.mjs) plus direct MCP pulls for sector flow, market stats, put/call. Graded the output against a competitor's 2026-06-28 list: HIVE, AMC, HTZ, PURR, QS, TE, WYNN.
 - **Verdict:** Only **PURR** crossed (CSP Wheel screener — fat-IV / premium-sell flag, NOT a directional long). The other 6 appeared in ZERO legs (screeners, 13F/TickerTrace, CBOE listings).

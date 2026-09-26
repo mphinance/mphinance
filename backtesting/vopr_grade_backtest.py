@@ -1,6 +1,7 @@
 import glob
 import re
 import os
+import sys
 import json
 import logging
 from datetime import datetime, timedelta
@@ -11,15 +12,35 @@ import yfinance as yf
 import pandas as pd
 from tqdm import tqdm
 
+# Journal-cache so a mid-run failure doesn't nuke already-fetched OHLC.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from fetch_cache import FetchCache, cached_fetch_map
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-BASE_DIR = "/home/mph/Antigravity/mphinance/backtesting"
-REPORTS_DIR = "/home/mph/Antigravity/mphinance/docs/reports"
+# Prefer the VPS layout, but fall back to a path relative to this file so the
+# backtest (and its tests) run anywhere — CI, a fresh clone, another machine.
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_REPO_ROOT = os.path.dirname(_SCRIPT_DIR)
+_VPS_BASE = "/home/mph/Antigravity/mphinance/backtesting"
+
+BASE_DIR = os.environ.get("MPH_BACKTEST_DIR") or (
+    _VPS_BASE if os.path.isdir(os.path.dirname(_VPS_BASE)) else _SCRIPT_DIR
+)
+REPORTS_DIR = os.environ.get("MPH_REPORTS_DIR") or os.path.join(
+    os.path.dirname(BASE_DIR), "docs", "reports"
+)
 RESULTS_DIR = f"{BASE_DIR}/results"
+CACHE_DIR = f"{RESULTS_DIR}/cache"
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 PER_SIGNAL_OUT = f"{RESULTS_DIR}/vopr_per_signal.csv"
 SUMMARY_OUT = f"{RESULTS_DIR}/vopr_summary.json"
+
+# Set MPH_FETCH_CACHE=0 to bypass the cache; TTL keeps day-old bars from being
+# silently reused by a fresh run while still giving full intra-run resume.
+FETCH_CACHE_ENABLED = os.environ.get("MPH_FETCH_CACHE", "1") != "0"
+FETCH_CACHE_TTL_SECONDS = float(os.environ.get("MPH_FETCH_CACHE_TTL", 12 * 3600))
 
 # Days to hold the simulated Cash Secured Put (CSP)
 HOLD_TIME_DAYS = 15
@@ -77,21 +98,21 @@ def parse_dossiers() -> List[Dict[str, Any]]:
 
     return signals
 
-def fetch_data(tickers: List[str], start_date: datetime) -> Dict[str, pd.DataFrame]:
-    """Fetch daily data for the relevant period."""
+def _download_data(tickers: List[str], start_date: datetime) -> Dict[str, pd.DataFrame]:
+    """Raw network fetch of daily OHLC for the relevant period (no caching)."""
     start_str = (start_date - timedelta(days=5)).strftime("%Y-%m-%d")
     logging.info(f"Fetching data for {len(tickers)} tickers from {start_str}...")
-    
+
     data = yf.download(
-        " ".join(tickers), 
+        " ".join(tickers),
         start=start_str,
-        interval="1d", 
+        interval="1d",
         group_by="ticker",
         auto_adjust=False,
         progress=False,
         threads=True
     )
-    
+
     ticker_dfs = {}
     if len(tickers) == 1:
         ticker_dfs[tickers[0]] = data
@@ -101,8 +122,35 @@ def fetch_data(tickers: List[str], start_date: datetime) -> Dict[str, pd.DataFra
                 df = data[ticker].dropna(subset=["Close"])
                 if not df.empty:
                     ticker_dfs[ticker] = df
-    
+
     return ticker_dfs
+
+
+def fetch_data(
+    tickers: List[str],
+    start_date: datetime,
+    cache: "FetchCache | None" = None,
+) -> Dict[str, pd.DataFrame]:
+    """Fetch daily OHLC, reusing any bars already persisted to the cache.
+
+    With a cache, each ticker's frame is stored the moment it's fetched and
+    only cache misses hit the network. A crash later in the run (or on a
+    re-run) reuses everything already downloaded instead of re-paying for it.
+    Without a cache, this is just the raw download.
+    """
+    if cache is None:
+        return _download_data(tickers, start_date)
+
+    # Namespace pins the cache to this fetch window + interval so a different
+    # backtest window can't reuse another window's bars.
+    start_str = (start_date - timedelta(days=5)).strftime("%Y-%m-%d")
+    namespace = f"ohlc:1d:{start_str}"
+    return cached_fetch_map(
+        tickers,
+        lambda missing: _download_data(missing, start_date),
+        cache,
+        namespace,
+    )
 
 def evaluate_trade(signal: Dict[str, Any], df: pd.DataFrame) -> Dict[str, Any]:
     """Simulate a short put sold at S1 support."""
@@ -160,12 +208,18 @@ def main():
     earliest_time = min(s["signal_time"] for s in signals)
     tickers = list(set(s["ticker"] for s in signals))
     
+    cache = (
+        FetchCache(CACHE_DIR, max_age_seconds=FETCH_CACHE_TTL_SECONDS)
+        if FETCH_CACHE_ENABLED
+        else None
+    )
+
     results = []
     chunk_size = 50
     ticker_chunks = [tickers[i:i + chunk_size] for i in range(0, len(tickers), chunk_size)]
-    
+
     for chunk in tqdm(ticker_chunks, desc="Fetching data and evaluating"):
-        data_dict = fetch_data(chunk, earliest_time)
+        data_dict = fetch_data(chunk, earliest_time, cache=cache)
         
         chunk_signals = [s for s in signals if s["ticker"] in chunk]
         for sig in chunk_signals:
