@@ -1,4 +1,9 @@
-# Ghost Handoff — Last Updated 2026-06-28
+# Ghost Handoff — Last Updated 2026-09-26
+
+## 2026-09-26 - voice-interview skill
+- **What got done:** New skill `.claude/skills/voice-interview/`. Claude drafts an outline, then interviews Michael one question at a time (built for `/voice` dictation), about 2 questions per section by default. The questions target what VOICE-DELTA.md says he always adds by hand: origin story, stakes, the miss, physical metaphor, live tape. Answers are appended verbatim to `docs/articles/<slug>/interview.md`, and the draft (`README.md`) is assembled from his sentences with light cleanup only. Gaps become `[GAP: ...]` placeholders instead of machine filler.
+- **What's left:** (1) Michael symlinks it into `~/.claude/skills/` (command is in the SKILL.md); (2) first real run, then pair interview.md vs. the shipped post in `docs/voice-delta/`; (3) maybe feed transcripts into the voice-delta corpus.
+
 
 ## 2026-06-28 - Convergence Scan vs. Competitor 7-Pick List
 - **What got done:** Ran the full `stock-recap` end-to-end (gather.mjs) plus direct MCP pulls for sector flow, market stats, put/call. Graded the output against a competitor's 2026-06-28 list: HIVE, AMC, HTZ, PURR, QS, TE, WYNN.
