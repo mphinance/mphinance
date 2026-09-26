@@ -71,6 +71,7 @@ SCREEN_FILES = {
     "pocket_pivot": "pocket-pivot-screener.json",
     "volume_dryup": "volume-dryup-screener.json",
     "dividend_growth": "dividend-growth-screener.json",
+    "avwap_reclaim": "avwap-reclaim-screener.json",
 }
 
 

@@ -1451,6 +1451,35 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Dividend growth screen failed: {e}")
 
+    # ── Stage 10i: Anchored VWAP Reclaim Screen ──
+    # Same lean pattern as Seasonality above: pure yfinance history read per
+    # ticker, no TradingView call. Anchors a VWAP at each ticker's 52-week
+    # low and flags names that just reclaimed it — a distinct signal from
+    # sma200_reclaim_screener.py (volume-weighted cost basis, not a simple
+    # moving average of closes).
+    print("\n[10i/16] AVWAP RECLAIM SCREEN (52-week-low anchored VWAP reclaims)")
+    avwap_reclaim_results: list[dict] = []
+    with timer.stage("AVWAP Reclaim Screen"):
+        try:
+            import time as _avwap_time
+            from dossier.avwap_reclaim_screener import score_avwap_reclaim, _save_api_output as _avwap_save
+            _avwap_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _avwap_pool:
+                _r = score_avwap_reclaim(_t)
+                if _r:
+                    avwap_reclaim_results.append(_r)
+                _avwap_time.sleep(0.05)
+            avwap_reclaim_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _avwap_save(avwap_reclaim_results)
+            _top_avwap = [r for r in avwap_reclaim_results if r["grade"] in ("A+", "A")]
+            print(f"  ⚓ {len(avwap_reclaim_results)} scored — {len(_top_avwap)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (+{r['pct_above_avwap']:.1f}%)" for r in _top_avwap[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] AVWAP reclaim screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
