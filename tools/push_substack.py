@@ -75,7 +75,16 @@ def inline(text):
         if m.group(1) is not None:
             out.append(code(m.group(1)))
         elif m.group(2) is not None:
-            out.append(bold(_ascii_safe(m.group(2))))
+            # Bold may wrap a link, e.g. **[Get X](url)** — the bold alt matches
+            # first and would otherwise render the link as literal text. Detect a
+            # link inside and emit a text node carrying BOTH marks.
+            lm = re.fullmatch(r"\[([^\]]+)\]\(([^)]+)\)", m.group(2).strip())
+            if lm:
+                out.append({"type": "text", "text": _ascii_safe(lm.group(1)),
+                            "marks": [{"type": "link", "attrs": {"href": lm.group(2)}},
+                                      {"type": "bold"}]})
+            else:
+                out.append(bold(_ascii_safe(m.group(2))))
         elif m.group(3) is not None:
             out.append(link(_ascii_safe(m.group(3)), m.group(4)))
         else:
@@ -90,6 +99,22 @@ def code_block(text):
     """Native Substack code_block node (monospace, copyable). Newlines are kept
     inside a single text node, which is how PM code blocks carry their content."""
     return {"type": "code_block", "content": [{"type": "text", "text": _ascii_safe(text)}]}
+
+
+def hr():
+    """Native Substack horizontalRule. `---` used to render as a literal '* * *'
+    paragraph; this is the real divider node. The create endpoint's TipTap schema
+    is camelCase (see tools/substack_md.py)."""
+    return {"type": "horizontalRule"}
+
+
+def bullet_list(items):
+    """Native Substack bulletList > listItem > paragraph. `items` is a list of
+    inline-content lists (each the content of one bullet's paragraph). `- ` lines
+    used to render as a literal '* ' paragraph; this is a real list. Node names are
+    camelCase — the create endpoint 500s on snake_case bullet_list/list_item."""
+    return {"type": "bulletList", "content": [
+        {"type": "listItem", "content": [p(*it)]} for it in items]}
 
 
 def build_doc(md_path, client, dry):
@@ -117,12 +142,20 @@ def build_doc(md_path, client, dry):
             continue
         if not s:
             i += 1; continue
+        # Group consecutive "- " lines into one real bullet_list node.
+        if s.startswith("- "):
+            items = []
+            while i < len(lines) and lines[i].strip().startswith("- "):
+                items.append(inline(lines[i].strip()[2:]))
+                i += 1
+            nodes.append(bullet_list(items))
+            continue
         if s.startswith("## "):
             nodes.append(h(2, _ascii_safe(s[3:].strip())))
         elif s.startswith("# "):
             nodes.append(h(2, _ascii_safe(s[2:].strip())))
         elif s == "---":
-            nodes.append(p(_ascii_safe("* * *")))
+            nodes.append(hr())
         elif s.startswith("!["):
             m = re.match(r"!\[([^\]]*)\]\(([^)]+)\)", s)
             if m:
@@ -136,8 +169,6 @@ def build_doc(md_path, client, dry):
                         nodes.append(image_node(up, alt))
                     else:
                         nodes.append(p(bold(_ascii_safe(f"[CHART FAILED: {alt} — add by hand]"))))
-        elif s.startswith("- "):
-            nodes.append(p("* ", *inline(s[2:])))
         elif s.startswith("*") and s.endswith("*") and "**" not in s:
             nodes.append(p(italic(_ascii_safe(s.strip("*").strip()))))
         else:
@@ -151,21 +182,48 @@ def main():
     if not args:
         print(__doc__); sys.exit(1)
     md_path, dry = args[0], "--dry-run" in sys.argv
+    # --section=<slug> files the draft under a publication Section (e.g. data).
+    section_slug = next((a.split("=", 1)[1] for a in sys.argv[1:]
+                         if a.startswith("--section=")), None)
+    # --prefix=<str> prepends to the title (e.g. "[Data Sam] ") — marks automated posts.
+    prefix = next((a.split("=", 1)[1] for a in sys.argv[1:]
+                   if a.startswith("--prefix=")), "")
     client = SubstackClient()
+    section_id = None
     if not dry:
         if not client.authenticate():
             print("AUTH FAILED — check SUBSTACK_SID in secrets.env"); sys.exit(2)
+        if section_slug:
+            section_id = client.section_id_by_slug(section_slug)
+            if section_id is None:
+                print(f"SECTION '{section_slug}' not found — filing to main pub");
     title, subtitle, doc = build_doc(md_path, client, dry)
+    if prefix:
+        title = _ascii_safe(prefix) + title
     print(f"TITLE:    {title}")
     print(f"SUBTITLE: {subtitle or '(none — set by hand in editor)'}")
+    print(f"SECTION:  {section_slug or '(main)'}" + (f" -> {section_id}" if section_id else ""))
     print(f"NODES:    {len(doc['content'])}  (images: {sum(n.get('type') == 'captionedImage' for n in doc['content'])})")
     if dry:
         print("DRY RUN — no API call."); return
-    res = client.create_draft(title, subtitle, doc)
-    if res and res.get("id"):
-        print(f"DRAFT: https://mphinance.substack.com/publish/post/{res['id']}")
-    else:
-        print(f"CREATE FAILED: {res}")
+    res = client.create_draft(title, subtitle, doc, section_id=section_id)
+    if not (res and res.get("id")):
+        print(f"CREATE FAILED: {res}"); return
+    draft_id = res["id"]
+    print(f"DRAFT: https://mphinance.substack.com/publish/post/{draft_id}")
+    # --publish flips the draft live. GUARDED: only publishes if it is bound to the
+    # requested --section (mph's 'only if it's in the Data section' rule), and always
+    # send_email=False (web/app only, never an email blast). Absent --publish -> draft.
+    if "--publish" in sys.argv:
+        if section_id is None:
+            print("REFUSING to publish: --publish requires a resolved --section."); return
+        pub = client.publish_draft(draft_id, send_email=False,
+                                   require_section_id=section_id)
+        if pub:
+            url = pub.get("canonical_url") or f"https://{client.pub}/p/{pub.get('slug','')}"
+            print(f"PUBLISHED (web/app, no email): {url}")
+        else:
+            print("NOT PUBLISHED — left as draft (section gate or API refusal).")
 
 
 if __name__ == "__main__":

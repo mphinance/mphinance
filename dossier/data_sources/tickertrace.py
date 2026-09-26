@@ -39,6 +39,16 @@ def _filter_divergences(items: list) -> list:
     return [d for d in items if not _is_junk(d.get("ticker", ""))]
 
 
+def _as_dict(value) -> dict:
+    """Coerce an API field to a dict, discarding any other shape."""
+    return value if isinstance(value, dict) else {}
+
+
+def _as_list(value) -> list:
+    """Coerce an API field to a list, discarding any other shape."""
+    return value if isinstance(value, list) else []
+
+
 @retry(max_retries=3, initial_delay=2.0)
 def _get(endpoint: str, params: dict = None) -> dict:
     """Make a GET request to the TickerTrace API with automatic retry."""
@@ -93,6 +103,12 @@ def fetch_institutional_data() -> dict:
         )
         print(f"  [WARN] TickerTrace unavailable after retries: {e}")
         payload = {}
+    if not isinstance(payload, dict):
+        print(
+            f"  [WARN] TickerTrace returned unexpected type: {type(payload).__name__}"
+            " — treating as unavailable"
+        )
+        payload = {}
     if not payload:
         return {
             "as_of_date": "unknown",
@@ -106,30 +122,32 @@ def fetch_institutional_data() -> dict:
             "recent_changes": [],
         }
 
-    signals = payload.get("signals", {})
-    sector_flow = payload.get("sectorFlow", {})
+    signals = _as_dict(payload.get("signals"))
+    sector_flow = _as_dict(payload.get("sectorFlow"))
+    raw_divergences = _as_list(payload.get("divergences"))
+    raw_changes = _as_list(payload.get("changes"))
 
     # Filter out CUSIPs, money-market tickers, and garbage from all lists
-    buying = _filter_signals(signals.get("buying", []))
-    selling = _filter_signals(signals.get("selling", []))
-    divergences = _filter_divergences(payload.get("divergences", []))
-    changes = _filter_signals(payload.get("changes", [])[:50])
+    buying = _filter_signals(_as_list(signals.get("buying")))
+    selling = _filter_signals(_as_list(signals.get("selling")))
+    divergences = _filter_divergences(raw_divergences)
+    changes = _filter_signals(raw_changes[:50])
 
     filtered_count = (
-        len(signals.get("buying", [])) - len(buying)
-        + len(signals.get("selling", [])) - len(selling)
-        + len(payload.get("divergences", [])) - len(divergences)
+        len(_as_list(signals.get("buying"))) - len(buying)
+        + len(_as_list(signals.get("selling"))) - len(selling)
+        + len(raw_divergences) - len(divergences)
     )
     if filtered_count:
         print(f"  Filtered {filtered_count} non-equity entries (CUSIPs, money markets)")
 
     return {
         "as_of_date": payload.get("asOfDate", "unknown"),
-        "stats": payload.get("stats", {}),
+        "stats": _as_dict(payload.get("stats")),
         "top_buying": buying,
         "top_selling": selling,
-        "sector_inflows": sector_flow.get("inflows", []),
-        "sector_outflows": sector_flow.get("outflows", []),
+        "sector_inflows": _as_list(sector_flow.get("inflows")),
+        "sector_outflows": _as_list(sector_flow.get("outflows")),
         "divergences": divergences,
         "recent_changes": changes[:25],
     }

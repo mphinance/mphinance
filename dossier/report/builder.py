@@ -37,6 +37,7 @@ def build_report(
     your_book: dict = None,
     market_weather: dict = None,
     analyst_overlay: dict = None,
+    gex_reads: list = None,
 ) -> str:
     """Render the daily Alpha Dossier report as HTML. Returns path to HTML file."""
     env = Environment(
@@ -110,6 +111,7 @@ def build_report(
         your_book=your_book or {},
         market_weather=market_weather or {},
         analyst_overlay=analyst_overlay or {},
+        gex_reads=gex_reads or [],
         disclaimer=DISCLAIMER,
         pdf_filename=pdf_filename,
         md_filename=md_filename,

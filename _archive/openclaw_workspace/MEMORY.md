@@ -11,7 +11,7 @@ _Full historical memory archived to `memory/archive_pre_march2026.md`._
 
 ## Key Context
 
-- **Michael Hanko** — Owner. Quant/options trader. Momentum Phinance.
+- **Michael** — Owner. Quant/options trader. Momentum Phinance.
 - **Trading Style:** The Wheel (CSP/CC), LEAPS, high IV premium selling. Core holding: $AVGO.
 - **Tech:** Python, Streamlit, NiceGUI, WSL, SQL. Custom PineScript indicators.
 - **Hedging:** $SQQQ and $UVIX positions.

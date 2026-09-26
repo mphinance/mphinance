@@ -35,6 +35,19 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+try:
+    from dossier.utils.validate_api import check_yfinance_history
+except ImportError:
+    def check_yfinance_history(df, ticker, min_rows=2):
+        if df is None or df.empty:
+            return False, f"{ticker}: empty history"
+        if len(df) < min_rows:
+            return False, f"{ticker}: only {len(df)} row(s)"
+        missing = {"Close", "High", "Low", "Volume"} - set(df.columns)
+        if missing:
+            return False, f"{ticker}: missing columns {sorted(missing)}"
+        return True, ""
+
 
 def _compute_adx(highs, lows, closes, period=14, delta_lookback=5):
     """Compute ADX with trend acceleration data.
@@ -280,14 +293,17 @@ def generate_daily_screener(date_str: str = None, dry_run: bool = False):
     # ── Step 1: Check SPY ADX regime ──
     try:
         spy_hist = yf.Ticker("SPY").history(period="3mo", interval="1h")
-        if not spy_hist.empty and len(spy_hist) >= 30:
+        ok, reason = check_yfinance_history(spy_hist, "SPY", min_rows=30)
+        if ok:
             spy_h = spy_hist["High"].tolist()[-60:]
             spy_l = spy_hist["Low"].tolist()[-60:]
             spy_c = spy_hist["Close"].tolist()[-60:]
             spy_adx = _compute_adx(spy_h, spy_l, spy_c)["adx"]
         else:
+            print(f"    [WARN] leveraged_daily_screener: {reason} — defaulting SPY ADX to 25.0")
             spy_adx = 25.0  # Default if data unavailable
-    except Exception:
+    except Exception as e:
+        print(f"    [WARN] leveraged_daily_screener: SPY ADX fetch failed: {e} — defaulting to 25.0")
         spy_adx = 25.0
 
     is_trade_day = spy_adx >= 20.0
@@ -316,7 +332,9 @@ def generate_daily_screener(date_str: str = None, dry_run: bool = False):
             else:
                 df = yf.Ticker(ticker).history(period="6mo")
 
-            if df.empty or len(df) < 20:
+            ok, reason = check_yfinance_history(df, ticker, min_rows=20)
+            if not ok:
+                print(f"    [WARN] leveraged_daily_screener: skipping {ticker} — {reason}")
                 continue
 
             closes = df["Close"].tolist()
@@ -379,6 +397,7 @@ def generate_daily_screener(date_str: str = None, dry_run: bool = False):
                 "etf_avg_volume": etf_vol,
             })
         except Exception as e:
+            print(f"    [WARN] leveraged_daily_screener: skipping {ticker} — {e}")
             continue
 
     # Sort: A first, then B, C, D. Within grade, sort by score descending

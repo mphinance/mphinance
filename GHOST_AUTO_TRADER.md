@@ -1,8 +1,12 @@
 # Ghost Auto-Trader — XSP 0DTE
 
-**Deployed:** March 10, 2026  
-**Server:** Venus (192.168.2.172)  
-**URL:** https://ghost.mphanko.com
+**Deployed:** March 10, 2026
+**Server:** Venus (LAN)
+**URL:** `https://$GHOST_HOST`
+
+> The host is not written down here. This repo is public and that name resolves
+> straight to the house, so it is not something to hand a scanner. Export
+> `GHOST_HOST` in your shell and every command below works as written.
 
 ## What It Does
 
@@ -20,7 +24,7 @@ Position monitor runs every 30s: **+50% TP**, **-40% SL**, **3:00 PM ET auto-fla
 
 ## TradingView Alert
 
-**Webhook URL:** `https://ghost.mphanko.com/api/signals/webhook`
+**Webhook URL:** `https://$GHOST_HOST/api/signals/webhook`
 
 **Message:**
 ```json
@@ -39,10 +43,10 @@ Position monitor runs every 30s: **+50% TP**, **-40% SL**, **3:00 PM ET auto-fla
 
 ```bash
 # Check status
-curl https://ghost.mphanko.com/api/auto-trade/status
+curl https://$GHOST_HOST/api/auto-trade/status
 
 # Trade log
-curl https://ghost.mphanko.com/api/auto-trade/log
+curl https://$GHOST_HOST/api/auto-trade/log
 
 # Disable
 ssh venus "cd ~/alpha-momentum && sed -i 's/AUTO_TRADE_XSP=true/AUTO_TRADE_XSP=false/' .env && docker compose up -d api"

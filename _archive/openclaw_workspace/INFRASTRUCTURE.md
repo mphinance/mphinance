@@ -87,7 +87,7 @@ _How the machines connect. What lives where. Updated 2026-03-05._
 | Ghost Blog | <https://mphinance.com/blog/> | Vultr |
 | Momentum Phund | <https://tt.mphinance.com> | Vultr |
 | Alpha Dossier | <https://mphinance.github.io/mphinance/> | GitHub Pages |
-| TraderDaddy Pro | <https://www.traderdaddy.pro/register?ref=8DUEMWAJ> | Whop |
+| TraderDaddy Pro | <https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack> | Whop |
 | TickerTrace Pro | <https://www.tickertrace.pro> | Vultr |
 | AMU | <https://mphinance.github.io/AMU/> | GitHub Pages |
 | TickerTrace Local | <http://localhost:3333> | sam2 (no auth) |

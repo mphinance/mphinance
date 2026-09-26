@@ -21,14 +21,19 @@
 
 ### API Keys & Tokens
 
+> **Values redacted 2026-08-04.** These were committed in plaintext while this repo
+> was public. Treat every one of them as compromised. Tradier and the Google key are
+> already revoked; the rest need rotating. Live values belong in `~/.config` or
+> VaultGuard, never in a tracked file.
+
 | Key | Value | Notes |
 |-----|-------|-------|
-| Brave Search | `BSAY-s7Y-uvTDiKKc43WIHRXy9S8JbF` | Web search tool |
-| Telegram Bot | `8511502621:AAFn8lkpDxY_8dD_0gto9sb_dzkmUBF4870` | @mphinance bot |
-| Telegram User ID | `8024985134` | Michael's Telegram |
-| Tradier MCP | `GjMYgAD4ADrGxI78HVhJMjZMWSIU` | HTTP MCP at `https://mcp.tradier.com/mcp` |
-| Hooks Token | `2c050c3c24564fac89d8595373b898a852e4e8a12adba4a6` | Internal webhook auth |
-| Gateway Token | `25bdbc0bfbb8e554f75e72aa80eb72f8d7edd561498796ee` | Local gateway auth |
+| Brave Search | `<redacted — ROTATE>` | Web search tool |
+| Telegram Bot | `<redacted — ROTATE>` | @mphinance bot |
+| Telegram User ID | `<redacted>` | Michael's Telegram |
+| Tradier MCP | `<redacted — revoked>` | HTTP MCP at `https://mcp.tradier.com/mcp` (was `PAPER_TRADING=false`) |
+| Hooks Token | `<redacted — ROTATE>` | Internal webhook auth |
+| Gateway Token | `<redacted — ROTATE>` | Local gateway auth |
 | Gateway Port | `18789` | Loopback only |
 
 ### MCP Servers (Skills)

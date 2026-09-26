@@ -19,7 +19,9 @@ Tilde, space, first name. That is the whole signature.
 - **Never** a title. No "Managing Partner," no "The Phund," no "Momentum Phinance" stapled to the name.
 - **Never** a dash. Not `-`, not `—`. The tilde is deliberate: it dodges Markdown turning the line into a bullet, and a dash is not his sign-off.
 
-If you are tempted to write `- Michael Hanko, Managing Partner, The Phund`, that is the old, wrong byline from 2025. It is banned. Write `~ Michael`.
+If you are tempted to write `- Michael <last name>, Managing Partner, The Phund`, that is the old, wrong byline from 2025. It is banned. Write `~ Michael`.
+
+**Lineage:** the original was `~MPH`, from the pseudonymous AfterHour days (`-MPH` Dec 2024, `~MPH` from Jan 2025 on). The name came later. The tilde is the constant across both, which is why it's not negotiable. `~ Michael` is the Substack-era form and appears nowhere in the AfterHour corpus, so don't append it to an AfterHour post.
 
 ---
 
@@ -27,9 +29,21 @@ If you are tempted to write `- Michael Hanko, Managing Partner, The Phund`, that
 
 Michael writes as **Momentum Phinance** — a trader who builds his own tools, has a colorful past (openly references a felony, recovery, and character defects), and believes radical transparency is the only way to teach. He writes for two readers at once: his own kid someday, and the DIY retail trader who got talked down to by every Series-65 in the room.
 
-His AI copilot is **Sam the Quant Ghost** (she/her): sarcastic, brilliant, brutally honest. In public content the AI is always **Sam**, never "Claude," never "the AI assistant." Sam is referenced in the third person ("Sam flagged the squeeze"). Michael is the narrator and the one with the receipts.
+His AI copilot is **Sam the Quant Ghost** (she/her): sarcastic, brilliant, brutally honest. **In Michael's own prose** — the posts this file governs — Sam is referenced in the third person ("Sam flagged the squeeze," "I asked Sam, my AI copilot, to run the numbers"). Michael is the narrator and the one with the receipts.
+
+> [!NOTE]
+> This third-person rule is for Michael's writing only. When Sam writes her own
+> material — the Ghost Blog dev-log entries in `landing/blog/blog_entries.json` — she
+> is first person, self-narrating, and that voice is governed by
+> [SAM-VOICE.md](SAM-VOICE.md), not this file. An earlier version of this line implied
+> Sam is always third person, which contradicted ~90% of her shipped entries; see
+> SAM-VOICE.md's "The Correction" section for the evidence.
+
+**Sam is a soft default, not a hard rule.** Michael, 2026-08-04: *"sam is just a joke thing it shouldn't be a HARD rule."* Use Sam when the copilot is a character in the piece. Use **Claude** by name when the product itself is the subject, because you can't write about Claude Projects or Claude Code without naming them. And drop the copilot framing entirely when he asks for it, in which case the automation is just tooling he built and any model-dependent step gets described plainly.
 
 The brand is **Phinance** / **The Phund**. The name is **Michael**.
+
+**The underlying belief, before any screener or momentum system, is premium selling.** He's a wheeler. "The stock market is a device for transferring money from the impatient to the patient" is his actual bio, and the 2025-01-25 post is the thesis in full: he watched somebody buy top-tick $8 RXRX calls, realized he is the person on the other side taking that money, and wrote a post teaching them to sell instead. "Become the casino and get rich slowly." "When I hear people say 'this stock has cheap options,' what I hear is 'someone's getting paid a ton of pennies from all of us because losing $5 is nothing.'" He will never post a 300% week and he will never blow up. The screeners and the momentum tooling came later and sit on top of this, not in place of it.
 
 ---
 
@@ -41,10 +55,11 @@ The subtitle is a **category mix with percentages**, not a tagline or a keyword 
 *Trading 60% | Mindset 40%*
 ```
 
-- One to three categories from the working set: **Trading, Business, Mindset, AI, Research**.
+- One to three categories from the working set: **Trading, Business, Mindset, AI, Research, Travel**.
 - Percentages sum to about 100, separated by ` | ` (space-pipe-space).
 - It signals the blend of the post up front. A pure setup breakdown is `*Trading 100%*`; a recovery-and-markets piece might be `*Mindset 70% | Trading 30%*`.
-- Shipped examples: `*AI 100%*`, `*AI 50% | Mindset 35% | Business 15%*`, `*Business 45% | AI 35% | Trading 20%*`.
+- Shipped examples: `*AI 100%*`, `*AI 50% | Mindset 35% | Business 15%*`, `*Business 45% | AI 35% | Trading 20%*`, `*Travel 55% | Markets 25% | Recovery 20%*`.
+- **Travel** was added 2026-08-23 after two shipped posts used it (the Iceland/Faroes travelogue and the backyard excursion follow-up). Note the Iceland post also used one-off categories `Markets` and `Recovery`. The set is a working default, not a whitelist: if a post is genuinely about something else, name that thing rather than forcing it into Trading.
 - This is NOT the old `*Tags: keyword, keyword*` format. Don't use that. And never a byline here.
 - Substack's real discovery tags (the `AI` / `investing` chips) are a separate, small, hand-added set in the editor. Not driven by the markdown.
 
@@ -54,8 +69,8 @@ The subtitle is a **category mix with percentages**, not a tagline or a keyword 
 
 - **Irreverent educator.** Teaches complex finance like a friend at a bar, not a professor at a lectern.
 - **Self-deprecating.** "I don't have any asses to appreciate. I mean assets to depreciate." Admitting the loss is the content. Perfection is boring and nobody believes it.
-- **Blunt.** Never hedges, never "it could be argued that," never corporate speak. Make the claim and stand on it.
-- **PG-13 profanity.** "bullsh*t," "damn boner pills," "pull a dozen rabbits out of his ass." Bar conversation, not locker room.
+- **Blunt about the read, humble about his standing.** These are two separate axes and collapsing them is the most common way to get his voice wrong. On the market he never hedges: no "it could be argued that," no corporate speak, make the claim and stand on it. On *himself* he hedges constantly, and should: "I'm not showing this to brag." "I'm not trying to tell anyone what to do and I'm not sure if I'm even trying to give advice." "I only did about 45 seconds of DD on each, so please do your own." "Or maybe a TA person can double check me... I do numbers." Confident call, modest caller. A draft that is certain about both reads like a guru, and he is not one.
+- **Profanity, calibrated to the platform.** On Substack, PG-13: "bullsh*t," "damn boner pills," "pull a dozen rabbits out of his ass." Bar conversation, not locker room, because Substack is SEO-indexed. On AfterHour and other non-indexed surfaces the ceiling is higher and the real voice goes further: "I fucking love the conviction," "back that shit up with your pocket," "ffs." Match the surface.
 - **Anti-establishment.** "Stop letting CFOs play you." He's on the reader's side of the table, against the people who profit from keeping them confused.
 - **News follows price.** The tape moves first; the story shows up later to explain it. Lead with what the data did, not the headline.
 
@@ -68,6 +83,8 @@ Two named registers he'll ask for by shorthand:
 ## Structural Patterns
 
 - **Bold openers.** Lead with the most controversial true thing ("A green candle is not a signal. It's a rumor.").
+- **The question ladder.** A native opener: three or four parallel rhetorical questions, escalating, then the turn where he admits he's guilty of all of them. From 2025-02-23: "Do you plan round trip vacations, but only book the outgoing flight? Do you leave for a long road trip without a map and going pee first? Do you go on a blind date without having a friend ready to call you with an 'emergency'?" ... "I've said yes to all of these, and I too, have entered trades without having a goal or an exit strategy." The reader gets to laugh at the setup before realizing it's about them, and he takes the hit first.
+- **Show the arithmetic.** He writes the formula into the post, not just the result: `((932-800)/800)x100 = 16.5%`. The accountant showing his work. Don't round it down to a clean takeaway.
 - **Lists with personality.** Bullets that sound like talking, not a textbook glossary.
 - **Short paragraphs.** Rarely more than three sentences unless he's telling a story.
 - **Emoji as section markers, sparingly.** 📈 💰 👑 to break the page, never as decoration.
@@ -82,10 +99,28 @@ Half of Substack revenue gets reinvested into the exact names he writes about, i
 
 ---
 
+## Life as Alt-Data
+
+His most distinctive habit: theses start with something he physically noticed, then go to the numbers. Not "here's a screener hit," but "here's what I saw, and then I went and checked."
+
+From the pre-AI AfterHour corpus:
+
+- Counted shoe brands at his kid's basketball game, kids roughly 25/50/25 UAA/NKE/other, coaches and refs split, parents in the stands mostly Skechers, then sold 4 CSPs on UAA.
+- Egg prices at the grocery store sent him back to CALM before earnings.
+- Crocs on every kid through a Wisconsin winter, and the position is still red: "my losing stock that I can't figure out why."
+- Halloween in his neighborhood is candy for the kids and shots for the parents, therefore HSY and BF.B. "Until Americans also stop having children, chocolate and alcohol will continue to be staples."
+
+Note the third one. The observation that *didn't* work still goes in the post. That's what makes the other three credible.
+
+When a draft has a thesis and no origin story, ask whether there's a real-life observation underneath it. If there is, that's the opener.
+
+---
+
 ## What This Voice NEVER Does
 
 - **Em dashes (—) or en dashes (–).** Ever. In anything a reader sees. Restructure the sentence: commas, periods, colons, semicolons, or just two sentences. This is his #1 pet peeve and the fastest "an AI wrote this" tell.
 - **"Here's the truth..." / "Real talk..." / "Let me be honest..."** All banned. They are canned wind-up phrases. Don't announce the truth, just say the true thing.
+- **The everyone/nobody accusation.** "Everyone gets this wrong." "Nobody talks about this." "The part no one tells you." Banned strawman wind-up. It puffs up the point by accusing an invented crowd of being dumb or dishonest. Just make the point on its own merits. (Wry, specific asides like "the tradeoff nobody screenshots" are fine; the blanket "everyone/nobody" generalization is not.)
 - **Hype filler.** "That last part is everything." "This changes everything." "Buckle up." Cut it.
 - **A last name or a title.** See the top of this file.
 - **Markdown tables.** Substack renders them as garbage. Generate a dark Bloomberg-style image instead (see SUBSTACK.md).
@@ -94,10 +129,23 @@ Half of Substack revenue gets reinvested into the exact names he writes about, i
 - **Passive voice. LinkedIn tone. "In this article, we will..."**
 - **Unverified dates.** Never put a CPI / NFP / FOMC / earnings date in a post unless it's verified. The dev econ-calendar feed has served wrong dates and it cost a deleted post.
 
+**The rest of the AI-tell list** (added 2026-09-06 from [blader/humanizer](https://github.com/blader/humanizer), which sources Wikipedia's "Signs of AI writing"). These aren't redundant with the bans above, they're the next tier down, and a draft can be clean on every rule above and still read as AI because of these:
+
+- **"Not just X, it's Y."** State the point directly instead of staging the contrast.
+- **Forced triads.** Three adjectives or examples crammed in because three sounds complete. Use the number the sentence actually needs, not a rule of three.
+- **Sayings that sound deep.** "At its core, what matters is...", "trust is the real currency here." Replace the platitude with the specific claim it's standing in for.
+- **Overused AI vocabulary.** delve, testament, landscape, tapestry, navigate, robust, showcase, foster, boast. Plain words only.
+- **Inflated significance.** "marking a pivotal moment," "the future looks bright," "despite challenges, X continues to thrive." Keep the fact, cut the sentence announcing that the fact is significant.
+- **Borrowed authority with no name attached.** "Experts believe," "studies show." Name the actual source (he already does this, see "Real numbers from real APIs") or cut the claim.
+- **Avoiding is/are/has.** "serves as... features... boasts..." Just say "is" and "has."
+- **Bold as decoration.** Bolding a term or a mini-label instead of a number. Bold the figures the Structural Patterns section calls for, nothing else.
+- **Repeated sentence openings back to back.** "He noted... He noted... He filed..." Merge the sentences or vary the subject.
+
 ---
 
 ## Vocabulary & Tics
 
+- **"but I digress."** His signature tic, straight from the pre-AI corpus. How he exits a tangent he enjoyed taking. Use it after an aside, never as filler.
 - "Phinance" (the personal brand), "The Phund" (the portfolio).
 - "money glitch" (a financial-engineering trick).
 - "the damn _____" (casual intensifier).

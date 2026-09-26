@@ -24,6 +24,7 @@ Usage:
     python -m dossier.generate --no-pdf            # Skip PDF
 """
 
+import math
 import sys
 import os
 import argparse
@@ -99,6 +100,21 @@ class PipelineTimer:
 
 from dossier.config import CORE_WATCHLIST, MAX_DOSSIER_TICKERS, OUTPUT_DIR, SCANNER_STRATEGIES
 from dossier.data_sources.tickertrace import _is_junk
+
+
+def _json_num(value, default=None):
+    """Coerce a number to something JSON.parse() can read, else `default`.
+
+    Python's json module happily writes bare NaN/Infinity, which every browser's
+    JSON.parse rejects. A NaN spy_change silently broke the whole landing page:
+    the fetch threw and the catch handler blamed a pipeline that had run fine.
+    Note a `.get(key, 0)` default does not help — the key exists, its value is NaN.
+    """
+    try:
+        num = float(value)
+    except (TypeError, ValueError):
+        return default
+    return num if math.isfinite(num) else default
 
 
 def _run_mphinance_strategies() -> list[dict]:
@@ -378,7 +394,7 @@ def _update_index_page():
 <body class="min-h-screen p-4 md:p-8">
     <div class="max-w-5xl mx-auto space-y-5">
         <div style="background:linear-gradient(90deg,#1a1a2e,#16213e);border:1px solid #0f3460;padding:8px 16px;text-align:center;font-size:10px;font-family:'JetBrains Mono',monospace;border-radius:2px">
-            <a href="https://www.traderdaddy.pro/register?ref=8DUEMWAJ" target="_blank" style="color:#00f3ff;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none">🚀 Try TraderDaddy Pro — AI-Powered Trading Dashboard</a>
+            <a href="https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack" target="_blank" style="color:#00f3ff;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none">🚀 Try TraderDaddy Pro — AI-Powered Trading Dashboard</a>
         </div>
         <div class="hud-panel p-6 rounded-sm border-l-4 border-neon-blue">
             <div class="flex justify-between items-center">
@@ -736,6 +752,23 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     from dossier.data_sources.tickertrace import fetch_institutional_data
     institutional = fetch_institutional_data()
 
+    # ── Stage 3b: Institutional Fund Flow Clusters ──
+    # institutional["recent_changes"] (day-over-day TickerTrace position
+    # deltas) has been fetched and filtered since tickertrace.py was built,
+    # but nothing ever read it — top_buying/top_selling is a static
+    # snapshot; this nets the fresher day-over-day flip into fund-flow
+    # clusters. Pure post-processing on data already in hand this run.
+    print("\n[3b/16] FUND FLOW CLUSTERS")
+    try:
+        from dossier.institutional_momentum import (
+            compute_fund_flow_clusters, format_institutional_momentum_text, _save_api_output as _save_flow_output,
+        )
+        fund_flow = compute_fund_flow_clusters(institutional.get("recent_changes", []))
+        _save_flow_output(fund_flow)
+        print(f"  {format_institutional_momentum_text(fund_flow)}")
+    except Exception as e:
+        print(f"  [WARN] Fund flow clusters failed: {e}")
+
     # ── Stage 4: Market Regime ──
     print("\n[4/16] MARKET REGIME DETECTION")
     market = {}
@@ -775,14 +808,47 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
             "date": date,
             "regime": market_regime.get("regime", "UNKNOWN"),
             "regime_name": market_regime.get("vix", {}).get("regime_name", "UNKNOWN"),
-            "vix_level": market_regime.get("vix", {}).get("vix_level", 0),
-            "spy_change": market_pulse[0].get("change_pct", 0) if market_pulse else 0,
+            "vix_level": _json_num(market_regime.get("vix", {}).get("vix_level"), 0),
+            "spy_change": _json_num(market_pulse[0].get("change_pct") if market_pulse else None, 0),
         }
         rh_path = PROJECT_ROOT / "landing" / "data" / "regime_history.json"
         record_regime(rh_path, regime_entry)
         print(f"  ✓ Mood ring history updated → {rh_path}")
     except Exception as e:
         print(f"  [WARN] Mood ring history failed: {e}")
+
+    # ── Stage 4a2: Volatility Risk Premium (VIX vs. realized SPY vol) ──
+    # market_regime.py and sf_market_weather.py both classify off VIX's
+    # absolute level/term structure; this asks a different question — is
+    # implied vol actually pricing MORE movement than SPY has realized
+    # lately, or less. Feeds options-selling (CSP/covered-call) conviction
+    # directly. Reuses today's VIX read to avoid a duplicate fetch.
+    try:
+        from dossier.vol_risk_premium import fetch_and_compute_vrp, format_vrp_text, record_vrp
+        vrp_data = fetch_and_compute_vrp(vix_level=market_regime.get("vix", {}).get("vix_level"))
+        vrp_data["date"] = date
+        vrp_path = PROJECT_ROOT / "landing" / "data" / "vrp_history.json"
+        if vrp_data.get("available"):
+            record_vrp(vrp_path, vrp_data)
+        print(f"  {format_vrp_text(vrp_data)}")
+    except Exception as e:
+        print(f"  [WARN] Volatility risk premium failed: {e}")
+
+    # ── Stage 4a3: Distribution/Accumulation Day Count (IBD-style) ──
+    # VIX-based regime reads say nothing about the classic institutional-
+    # selling fingerprint: sessions where SPY/QQQ close down on rising volume.
+    # 5+ in a trailing 25-session window is IBD's threshold for "market under
+    # pressure" — a genuinely different lens than anything else in Stage 4.
+    try:
+        from dossier.distribution_days import fetch_and_compute_distribution_days, format_distribution_days_text, record_distribution_days
+        dist_data = fetch_and_compute_distribution_days()
+        dist_data["date"] = date
+        dist_path = PROJECT_ROOT / "landing" / "data" / "distribution_days_history.json"
+        if dist_data.get("available"):
+            record_distribution_days(dist_path, dist_data)
+        print(f"  {format_distribution_days_text(dist_data)}")
+    except Exception as e:
+        print(f"  [WARN] Distribution day count failed: {e}")
 
     # ── Stage 4b: ROIC Fortress Filter ──
     print("\n[4b/16] ROIC FORTRESS QUALITY FILTER")
@@ -1049,6 +1115,132 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
     except Exception as e:
         print(f"  [WARN] Factor leaderboard failed: {e}")
 
+    # ── Stage 10a3: Score Dispersion Index ──
+    # Same `all_ranked` scan universe again, but asks a third question: not
+    # "how broad" or "which factor" but "is today's leadership a lone
+    # standout pulling away from the pack, or a broad, evenly-strong tape."
+    try:
+        from dossier.score_dispersion import compute_dispersion, format_dispersion_text, record_dispersion
+        dispersion = compute_dispersion(momentum_picks.get("all_ranked", []))
+        dispersion["date"] = date
+        sd_path = PROJECT_ROOT / "landing" / "data" / "score_dispersion_history.json"
+        record_dispersion(sd_path, dispersion)
+        print(f"  {format_dispersion_text(dispersion)}")
+    except Exception as e:
+        print(f"  [WARN] Score dispersion failed: {e}")
+
+    # ── Stage 10a4: Sector Leadership Concentration ──
+    # Same `all_ranked` scan universe again, but asks a fourth question: not
+    # "how broad," "which factor," or "what shape," but "which sector is the
+    # top-scored group actually made of" — one melt-up sector or a genuine
+    # rotation across many.
+    try:
+        from dossier.sector_leadership import compute_sector_leadership, format_leadership_text, record_leadership
+        leadership = compute_sector_leadership(momentum_picks.get("all_ranked", []))
+        leadership["date"] = date
+        sl_path = PROJECT_ROOT / "landing" / "data" / "sector_leadership_history.json"
+        record_leadership(sl_path, leadership)
+        print(f"  {format_leadership_text(leadership)}")
+    except Exception as e:
+        print(f"  [WARN] Sector leadership failed: {e}")
+
+    # ── Stage 10a5: Junk Rally Index ──
+    # Same `all_ranked` scan universe one more time, but asks a fifth
+    # question: not breadth/factor/shape/sector, but "is the leadership
+    # actually clean?" — aggregates quality_filter.py's per-ticker
+    # SPAC/penny/junk-bio/shell/ADR/recent-IPO flags across today's top
+    # scorers so a thin, junk-driven "rally" doesn't get mistaken for a
+    # healthy one.
+    try:
+        from dossier.quality_breadth import compute_quality_index, format_quality_text, record_quality
+        quality = compute_quality_index(momentum_picks.get("all_ranked", []))
+        quality["date"] = date
+        qb_path = PROJECT_ROOT / "landing" / "data" / "quality_breadth_history.json"
+        record_quality(qb_path, quality)
+        print(f"  {format_quality_text(quality)}")
+    except Exception as e:
+        print(f"  [WARN] Junk rally index failed: {e}")
+
+    # ── Stage 10a6: Tape Extension Index ──
+    # Same `all_ranked` scan universe one more time, but asks a sixth
+    # question: not breadth/factor/shape/sector/quality, but "how stretched
+    # is the tape" — % of names already overbought (RSI + Stoch both pinned
+    # high, chase risk) vs oversold (capitulation cluster, bounce candidates).
+    try:
+        from dossier.extension_index import compute_extension_index, format_extension_text, record_extension
+        extension = compute_extension_index(momentum_picks.get("all_ranked", []))
+        extension["date"] = date
+        ei_path = PROJECT_ROOT / "landing" / "data" / "extension_index_history.json"
+        record_extension(ei_path, extension)
+        print(f"  {format_extension_text(extension)}")
+    except Exception as e:
+        print(f"  [WARN] Tape extension index failed: {e}")
+
+    # ── Stage 10a7: Follow-Through Index ──
+    # Same `all_ranked` scan universe one more time, but asks a seventh
+    # question: not breadth/factor/shape/sector/quality/extension, but "is
+    # the market actually paying today's leaders?" — % of the top N momentum
+    # picks that are advancing in price today vs the same figure for the
+    # whole scanned universe. A wide gap flags leaders the tape hasn't
+    # confirmed yet (or genuine relative strength the broad tape doesn't share).
+    try:
+        from dossier.follow_through_index import compute_follow_through, format_follow_through_text, record_follow_through
+        follow_through = compute_follow_through(momentum_picks.get("all_ranked", []))
+        follow_through["date"] = date
+        ft_path = PROJECT_ROOT / "landing" / "data" / "follow_through_index_history.json"
+        record_follow_through(ft_path, follow_through)
+        print(f"  {format_follow_through_text(follow_through)}")
+    except Exception as e:
+        print(f"  [WARN] Follow-through index failed: {e}")
+
+    # ── Stage 10a7b: Earnings Risk Flag ──
+    # Same `all_ranked` leaderboard, but asks a question none of the other
+    # breadth-style stages do: which of today's top momentum names carry
+    # event risk? Flags leaders reporting earnings within 7 days so a name
+    # topping the board isn't mistaken for a "clean" setup when it's really
+    # walking into a print. Bounded to the top 10 leaders to keep the
+    # per-run yfinance calendar lookups cheap.
+    try:
+        from dossier.earnings_risk_flag import compute_earnings_risk, format_earnings_risk_text, record_earnings_risk, save_api_output as save_earnings_risk_api
+        earnings_risk = compute_earnings_risk(momentum_picks.get("all_ranked", []))
+        earnings_risk["date"] = date
+        er_path = PROJECT_ROOT / "landing" / "data" / "earnings_risk_history.json"
+        record_earnings_risk(er_path, earnings_risk)
+        save_earnings_risk_api(earnings_risk, PROJECT_ROOT / "docs" / "api")
+        print(f"  {format_earnings_risk_text(earnings_risk)}")
+    except Exception as e:
+        print(f"  [WARN] Earnings risk flag failed: {e}")
+
+    # ── Stage 10a7c: Volume Conviction Index ──
+    # Same `all_ranked` leaderboard one more time, but asks a question none
+    # of breadth/factor/shape/sector/quality/extension/follow-through ask:
+    # is today's leaderboard actually being traded, or just drifting up on
+    # thin volume? % of the top N momentum picks showing elevated relative
+    # volume (>= 1.5x, momentum_picks.py's own "real participation" floor)
+    # vs the same figure for the whole scanned universe.
+    try:
+        from dossier.volume_conviction_index import compute_volume_conviction, format_volume_conviction_text, record_volume_conviction
+        volume_conviction = compute_volume_conviction(momentum_picks.get("all_ranked", []))
+        volume_conviction["date"] = date
+        vc_path = PROJECT_ROOT / "landing" / "data" / "volume_conviction_history.json"
+        record_volume_conviction(vc_path, volume_conviction)
+        print(f"  {format_volume_conviction_text(volume_conviction)}")
+    except Exception as e:
+        print(f"  [WARN] Volume conviction index failed: {e}")
+
+    # ── Stage 10a8: Market Internals Dashboard Feed ──
+    # Stages 10a-10a7c each append today's reading to their own history file
+    # under landing/data/ — nothing reads them back as a series. This combines
+    # all eight into one JSON so docs/market-internals.html can chart the trend
+    # instead of just today's snapshot. Pure aggregation, no new computation.
+    try:
+        from dossier.market_internals import write_internals_api
+        internals_path = PROJECT_ROOT / "docs" / "api" / "market-internals.json"
+        write_internals_api(internals_path, PROJECT_ROOT / "landing" / "data")
+        print("  📡 Market internals feed updated")
+    except Exception as e:
+        print(f"  [WARN] Market internals feed failed: {e}")
+
     # ── Stage 10b: Confluence + Day-over-Day Migration (the synthesis) ──
     # Rank tickers by how many INDEPENDENT, directionally-agreeing legs fire
     # (trend ∪ triangle ∪ flow ∪ 13F), then detect what MATURED since yesterday.
@@ -1202,6 +1394,91 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
                   + (", ".join(f"{e['ticker']} ({'+'.join(e['screens'])})" for e in _top_overlap) or "none today"))
         except Exception as e:
             print(f"  [WARN] Screener overlap failed: {e}")
+
+    # ── Stage 10g: Seasonality Screen (calendar-month historical edge) ──
+    # Pure yfinance history read per ticker, no TradingView call — reuses the
+    # watchlist + top scanned names so it doesn't grow the API budget.
+    print("\n[10g/16] SEASONALITY SCREEN (calendar-month historical edge)")
+    seasonality_results: list[dict] = []
+    with timer.stage("Seasonality Screen"):
+        try:
+            import time as _season_time
+            from dossier.seasonality_screener import score_seasonality, _save_api_output as _season_save
+            _season_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            _this_month = datetime.now().month
+            for _t in _season_pool:
+                _r = score_seasonality(_t, month=_this_month)
+                if _r:
+                    seasonality_results.append(_r)
+                _season_time.sleep(0.05)
+            seasonality_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _season_save(seasonality_results, _this_month)
+            _top_season = [r for r in seasonality_results if r["grade"] in ("A+", "A")]
+            print(f"  📅 {len(seasonality_results)} scored — {len(_top_season)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['direction']})" for r in _top_season[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Seasonality screen failed: {e}")
+
+    # ── Stage 10h: Dividend Growth Screen (quality income, not yield traps) ──
+    # Own curated pool of established dividend payers — scanned_tickers and
+    # CORE_WATCHLIST above skew growth/no-dividend (PLTR, COIN, TSLA, ...), so
+    # reusing them here would starve this screen of qualifying names.
+    print("\n[10h/16] DIVIDEND GROWTH SCREEN (quality income, not yield traps)")
+    dividend_results: list[dict] = []
+    with timer.stage("Dividend Growth Screen"):
+        try:
+            import time as _div_time
+            from dossier.dividend_growth_screener import score_dividend_growth, _save_api_output as _div_save
+            _DIVIDEND_POOL = [
+                "KO", "JNJ", "PG", "PEP", "MMM", "MCD", "WMT", "HD", "LOW", "ABBV",
+                "ABT", "TXN", "CVX", "XOM", "CAT", "IBM", "AMGN", "MRK", "PFE", "KMB",
+                "CL", "SHW", "ADP", "O", "VZ", "T", "SO", "DUK", "GD", "ITW",
+            ]
+            for _t in _DIVIDEND_POOL:
+                _r = score_dividend_growth(_t)
+                if _r:
+                    dividend_results.append(_r)
+                _div_time.sleep(0.05)
+            dividend_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _div_save(dividend_results)
+            _top_div = [r for r in dividend_results if r["grade"] in ("A+", "A")]
+            print(f"  💰 {len(dividend_results)} scored — {len(_top_div)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (streak {r['growth_streak_years']}yr)" for r in _top_div[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Dividend growth screen failed: {e}")
+
+    # ── Stage 10i: Anchored VWAP Reclaim Screen ──
+    # Same lean pattern as Seasonality above: pure yfinance history read per
+    # ticker, no TradingView call. Anchors a VWAP at each ticker's 52-week
+    # low and flags names that just reclaimed it — a distinct signal from
+    # sma200_reclaim_screener.py (volume-weighted cost basis, not a simple
+    # moving average of closes).
+    print("\n[10i/16] AVWAP RECLAIM SCREEN (52-week-low anchored VWAP reclaims)")
+    avwap_reclaim_results: list[dict] = []
+    with timer.stage("AVWAP Reclaim Screen"):
+        try:
+            import time as _avwap_time
+            from dossier.avwap_reclaim_screener import score_avwap_reclaim, _save_api_output as _avwap_save
+            _avwap_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _avwap_pool:
+                _r = score_avwap_reclaim(_t)
+                if _r:
+                    avwap_reclaim_results.append(_r)
+                _avwap_time.sleep(0.05)
+            avwap_reclaim_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _avwap_save(avwap_reclaim_results)
+            _top_avwap = [r for r in avwap_reclaim_results if r["grade"] in ("A+", "A")]
+            print(f"  ⚓ {len(avwap_reclaim_results)} scored — {len(_top_avwap)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (+{r['pct_above_avwap']:.1f}%)" for r in _top_avwap[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] AVWAP reclaim screen failed: {e}")
 
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
@@ -1400,6 +1677,7 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         confluence=confluence,
         migration=migration,
         market_weather=market_weather_data,
+        gex_reads=gex_reads,
     )
 
     pdf_path = None
@@ -1620,9 +1898,9 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
                 "dossiers_today": len(dossiers),
                 "updated": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
                 "market_regime": {
-                    "vix_level": market.get("vix", {}).get("vix_level", 0),
+                    "vix_level": _json_num(market.get("vix", {}).get("vix_level"), 0),
                     "regime_name": market.get("vix", {}).get("regime_name", "UNKNOWN"),
-                    "spy_change": market_pulse[0].get("change_pct", 0) if market_pulse else 0,
+                    "spy_change": _json_num(market_pulse[0].get("change_pct") if market_pulse else None, 0),
                     "date": date,
                 },
             }
@@ -1649,6 +1927,127 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Track record update failed: {e}")
 
+        # ── Stage 15f: Scan Archive Logging ──
+        # Appends today's picks + full technical snapshot to the JSONL archive
+        # that dossier/backtesting/screen_health.py and pattern_matcher.py read
+        # (both already built, but sat dormant since nothing populated the archive).
+        print("\n[15f/16] SCAN ARCHIVE")
+        with timer.stage("Scan Archive"):
+            from dossier.backtesting.scan_logger import log_todays_picks, update_forward_returns
+            log_todays_picks()
+            update_forward_returns()
+            print(f"  ✓ Scan archive updated")
+
+        # ── Stage 15g: Screen Health Monitor ──
+        # Rolling win-rate per screen/grade/regime, now that Stage 15f is
+        # actually populating the scan archive it reads from. Writes
+        # docs/api/screen-health.json for the screen-health dashboard page.
+        print("\n[15g/16] SCREEN HEALTH")
+        try:
+            from dossier.backtesting.screen_health import write_health_json
+            health = write_health_json()
+            print(f"  ✓ Screen health updated ({health['total_validated']} validated entries)")
+        except Exception as e:
+            print(f"  [WARN] Screen health update failed: {e}")
+
+        # ── Stage 15g2: Sector Health Monitor ──
+        # screen_health.py breaks the same validated archive down by
+        # strategy/grade/regime/EMA stack but never by sector, even though
+        # every entry already carries one (scan_logger.py's snapshot).
+        # Writes docs/api/sector-health.json: rolling win rate + avg return
+        # per sector, plus a hot/cold trend so a sector heating up or
+        # fading shows before it's obvious from the picks alone.
+        print("\n[15g2/16] SECTOR HEALTH")
+        try:
+            from dossier.backtesting.sector_health import (
+                format_sector_health_text, write_health_json as write_sector_health_json,
+            )
+            sector_health = write_sector_health_json()
+            print(f"  ✓ {format_sector_health_text(sector_health)}")
+        except Exception as e:
+            print(f"  [WARN] Sector health update failed: {e}")
+
+        # ── Stage 15h: Factor Correlation ──
+        # Which individual numeric factors (RSI, ADX, MACD hist, rel vol,
+        # tech/fund score, composite score...) actually correlate with
+        # forward returns, using the same validated scan archive as Stage
+        # 15g. Writes docs/api/factor-correlation.json.
+        print("\n[15h/16] FACTOR CORRELATION")
+        try:
+            from dossier.backtesting.factor_correlation import (
+                format_factor_correlation_text, write_factor_correlation_json,
+            )
+            corr = write_factor_correlation_json()
+            print(f"  {format_factor_correlation_text(corr)}")
+        except Exception as e:
+            print(f"  [WARN] Factor correlation failed: {e}")
+
+        # ── Stage 15i: Screener Convergence ──
+        # Cross-references whichever docs/api/*.json screener outputs already
+        # exist on disk (see SCREEN_FILES registry) — pure post-processing,
+        # no new network calls. This module was fully built and tested but
+        # never wired into the pipeline, so it never got a chance to run.
+        # Wiring it here means the ad hoc screens Michael runs via the
+        # batch-scanner skill start feeding a live convergence signal once
+        # their JSON lands in docs/api/. Writes docs/api/convergence-report.json.
+        print("\n[15i/16] SCREENER CONVERGENCE")
+        with timer.stage("Screener Convergence"):
+            from dossier.screener_convergence import (
+                SCREEN_FILES, _load_leg, _save_api_output, compute_convergence,
+            )
+            results_by_screen = {name: _load_leg(fn) for name, fn in SCREEN_FILES.items()}
+            convergence = compute_convergence(results_by_screen)
+            _save_api_output(convergence)
+            print(f"  ✓ {convergence['convergence_count']} tickers converging across "
+                  f"{len(convergence['screens_loaded'])} screens")
+
+            # Convergence Streaks: persist today's snapshot and surface which
+            # tickers have held the convergence bar across multiple sessions,
+            # not just today. Pure post-processing on top of the line above.
+            from dossier.convergence_streaks import (
+                DEFAULT_HISTORY_PATH, _save_api_output as _save_streaks_output,
+                compute_streaks, format_streaks_text, record_snapshot,
+            )
+            conv_history = record_snapshot(DEFAULT_HISTORY_PATH, date, convergence)
+            streaks = compute_streaks(conv_history)
+            _save_streaks_output(streaks)
+            print(f"  {format_streaks_text(streaks)}")
+
+        # ── Stage 15j: Bearish Convergence ──
+        # Mirror of Stage 15i for the short side: death_cross and
+        # insider_selling_cluster are always-bearish screens, plus the
+        # bearish-direction rows from obv_divergence and seasonality (both
+        # excluded from the bullish sum above because their grade can point
+        # either way). Writes docs/api/bearish-convergence-report.json.
+        print("\n[15j/16] BEARISH CONVERGENCE")
+        with timer.stage("Bearish Convergence"):
+            from dossier.bearish_convergence import (
+                _save_api_output as _save_bearish_output, load_bearish_legs,
+            )
+            from dossier.screener_convergence import compute_convergence as _compute_convergence
+            bear_convergence = _compute_convergence(load_bearish_legs())
+            _save_bearish_output(bear_convergence)
+            print(f"  ✓ {bear_convergence['convergence_count']} tickers converging across "
+                  f"{len(bear_convergence['screens_loaded'])} bearish screens")
+
+        # ── Stage 15k: Repeat Offenders ──
+        # Tickers the algo keeps flagging across the trailing archive window —
+        # pure post-processing over the docs/api/dossier-*.json files Stage 15
+        # already writes (today's archive file lands before this point, so it's
+        # included). Fully built and tested but never wired into the pipeline
+        # until now. Writes docs/api/repeat-offenders.json.
+        print("\n[15k/16] REPEAT OFFENDERS")
+        with timer.stage("Repeat Offenders"):
+            from dossier.repeat_offenders import (
+                _load_daily_archive, _save_api_output as _save_repeat_output,
+                compute_repeat_offenders,
+            )
+            daily_entries = _load_daily_archive(20, PROJECT_ROOT / "docs" / "api")
+            repeat_offenders = compute_repeat_offenders(daily_entries)
+            _save_repeat_output(repeat_offenders)
+            print(f"  ✓ {repeat_offenders['repeat_count']} repeat offenders across "
+                  f"{repeat_offenders['window_days']} archived days")
+
         # ── Sync regime history to docs/ for the Mood Ring widget (GH Pages) ──
         import shutil as _shutil
         _rh_landing = PROJECT_ROOT / "landing" / "data" / "regime_history.json"
@@ -1671,6 +2070,39 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
                 print(f"  ✓ Breadth history synced → docs/data/")
         except Exception as _sync_e:
             print(f"  [WARN] Breadth history sync failed: {_sync_e}")
+
+        # ── Sync quality breadth history to docs/ for the dashboard (GH Pages) ──
+        _qb_landing = PROJECT_ROOT / "landing" / "data" / "quality_breadth_history.json"
+        _qb_docs = PROJECT_ROOT / "docs" / "data" / "quality_breadth_history.json"
+        try:
+            if _qb_landing.exists():
+                _qb_docs.parent.mkdir(parents=True, exist_ok=True)
+                _shutil.copy2(_qb_landing, _qb_docs)
+                print(f"  ✓ Quality breadth history synced → docs/data/")
+        except Exception as _sync_e:
+            print(f"  [WARN] Quality breadth history sync failed: {_sync_e}")
+
+        # ── Sync convergence history to docs/ for the dashboard (GH Pages) ──
+        _ch_landing = PROJECT_ROOT / "landing" / "data" / "convergence_history.json"
+        _ch_docs = PROJECT_ROOT / "docs" / "data" / "convergence_history.json"
+        try:
+            if _ch_landing.exists():
+                _ch_docs.parent.mkdir(parents=True, exist_ok=True)
+                _shutil.copy2(_ch_landing, _ch_docs)
+                print(f"  ✓ Convergence history synced → docs/data/")
+        except Exception as _sync_e:
+            print(f"  [WARN] Convergence history sync failed: {_sync_e}")
+
+        # ── Sync VRP history to docs/ for the dashboard (GH Pages) ──
+        _vrp_landing = PROJECT_ROOT / "landing" / "data" / "vrp_history.json"
+        _vrp_docs = PROJECT_ROOT / "docs" / "data" / "vrp_history.json"
+        try:
+            if _vrp_landing.exists():
+                _vrp_docs.parent.mkdir(parents=True, exist_ok=True)
+                _shutil.copy2(_vrp_landing, _vrp_docs)
+                print(f"  ✓ VRP history synced → docs/data/")
+        except Exception as _sync_e:
+            print(f"  [WARN] VRP history sync failed: {_sync_e}")
 
         print("\n[16/16] GIT PUSH")
         print("  Committing to Git...")

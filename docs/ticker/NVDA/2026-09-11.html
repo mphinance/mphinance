@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-KTHVTFX699"></script>
+    <script>window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments); } gtag('js', new Date()); gtag('config', 'G-KTHVTFX699');</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVDA | ALPHA.HUD | Deep Dive</title>
+    <meta name="description"
+        content="Full technical deep-dive for NVDA — NVIDIA Corporation. EMA stack, pivots, options flow, institutional signals, AI synthesis.">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'mono': ['"JetBrains Mono"', 'monospace'],
+                        'tech': ['"Share Tech Mono"', 'monospace'],
+                    },
+                    colors: {
+                        'neon-green': '#00ff41',
+                        'neon-red': '#ff3e3e',
+                        'neon-blue': '#00f3ff',
+                        'neon-amber': '#ffb000',
+                        'hud-black': '#0a0a0a',
+                        'hud-panel': '#111111',
+                        'hud-border': '#333333',
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'blink': 'blink 1s step-end infinite',
+                    },
+                    keyframes: {
+                        blink: { '0%, 100%': { opacity: '1' }, '50%': { opacity: '0' } }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #050505;
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', monospace;
+            background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+        }
+
+        .hud-panel {
+            background: rgba(10, 10, 10, 0.8);
+            border: 1px solid #333;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+        }
+
+        .hud-header {
+            border-bottom: 2px solid #333;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hud-title {
+            font-family: 'Share Tech Mono', monospace;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: #888;
+            font-size: 0.75rem;
+        }
+
+        .text-glow-green {
+            text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+        }
+
+        .text-glow-red {
+            text-shadow: 0 0 5px rgba(255, 62, 62, 0.5);
+        }
+
+        .text-glow-blue {
+            text-shadow: 0 0 5px rgba(0, 243, 255, 0.5);
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #111;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        .grid-bg {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(50, 50, 50, 0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(50, 50, 50, 0.1) 1px, transparent 1px);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen p-4 grid-bg selection:bg-neon-green selection:text-black">
+
+    <!-- TOP CONTROL BAR -->
+    <div
+        class="fixed top-0 left-0 w-full bg-hud-black/90 border-b border-hud-border z-50 px-4 py-2 flex justify-between items-center backdrop-blur-md">
+        <div class="flex items-center space-x-4">
+            <a href="../index.html"
+                class="font-tech text-neon-green text-xl tracking-widest font-bold hover:text-white transition-colors">ALPHA://HUD</a>
+            <span class="text-xs text-gray-500 font-mono border-l border-gray-700 pl-4">DEEP.DIVE</span>
+            <div id="logo-container"
+                class="w-8 h-8 ml-4 rounded bg-gray-800 border border-gray-700 flex items-center justify-center overflow-hidden relative">
+                <img src="https://logo.clearbit.com/www.nvidia.com" class="w-full h-full object-contain p-1 bg-white" alt="NVDA"
+                    onerror="this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';">
+                <div id="logo-fallback" class="absolute inset-0 flex items-center justify-center bg-gray-800 hidden">
+                    <span class="text-[10px] font-bold text-gray-400">N</span>
+                </div>
+            </div>
+            <button onclick="openModal()"
+                class="px-2 py-1 bg-gray-800 text-[10px] text-gray-400 border border-gray-700 hover:text-white hover:border-gray-500 transition-colors uppercase font-mono ml-2">SOURCE
+                :: JSON</button>
+        </div>
+        <div class="flex items-center space-x-6">
+            <div class="text-right">
+                <div class="text-[10px] text-gray-500 uppercase">Target Asset</div>
+                <div class="text-2xl font-bold font-tech tracking-wider text-white">
+                    <a href="https://www.tradingview.com/symbols/NVDA/chart/" target="_blank"
+                        class="hover:text-neon-blue transition-colors">NVDA</a>
+                </div>
+            </div>
+            <div class="text-right border-l border-gray-700 pl-4">
+                <div class="text-[10px] text-gray-500 uppercase">Last Price</div>
+                <div class="text-2xl font-bold font-mono tracking-tight text-white">$222.0</div>
+            </div>
+            <div class="text-right border-l border-gray-700 pl-4">
+                <div class="text-[10px] text-gray-500 uppercase">Change</div>
+                <div
+                    class="text-lg font-bold font-mono text-neon-green">
+                    +1.67%
+                </div>
+            </div>
+            <div class="text-right border-l border-gray-700 pl-4 pr-2">
+                <div class="text-[10px] text-gray-500 uppercase">Generated</div>
+                <div class="text-xs font-mono text-neon-amber">2026-09-11 09:04 AM CST</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN GRID CONTAINER -->
+    <div class="grid grid-cols-12 gap-4 mt-20 max-w-[1920px] mx-auto pb-8">
+
+        <!-- COLUMN 1: LEFT SIDEBAR -->
+        <div class="col-span-12 lg:col-span-3 space-y-4">
+
+            <!-- CORE PROFILE -->
+            <div class="hud-panel p-4 rounded-sm border-l-4 border-neon-blue">
+                <div class="hud-header">
+                    <span class="hud-title text-neon-blue">ASSET.PROFILE</span>
+                    <span class="text-[10px] bg-neon-blue/10 text-neon-blue px-1">SEC.01</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="text-xs text-gray-300 leading-relaxed font-mono">
+                        NVIDIA Corporation // Technology [Semiconductors]. Mkt Cap: $5360.63B. Rev Growth: 105.9%. PM: 63.7%.
+                    </div>
+                    <div class="h-px bg-gray-800 w-full"></div>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div><span class="text-gray-500 block text-[9px]">MARKET CAP</span><span
+                                class="text-white font-bold">$5360.63B</span></div>
+                        <div><span class="text-gray-500 block text-[9px]">BETA</span><span class="text-white">2.22</span></div>
+                        <div><span class="text-gray-500 block text-[9px]">ANALYST TARGET</span><span
+                                class="text-white">$327.18</span></div>
+                        <div><span class="text-gray-500 block text-[9px]">52W RANGE</span><span
+                                class="text-white text-[10px]">163.9 - 236.0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI ANALYSIS & SCORING -->
+            <div class="hud-panel p-4 rounded-sm border-l-4 border-neon-amber">
+                <div class="hud-header">
+                    <span class="hud-title text-neon-amber">AI.SYNTHESIS <span class="animate-blink">_</span></span>
+                    <span class="text-[10px] bg-neon-amber/10 text-neon-amber px-1">GRADE: A</span>
+                </div>
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <div class="bg-gray-900/50 p-2 rounded border border-gray-800 text-center">
+                        <div class="text-[9px] text-gray-500 uppercase">TECH.SCORE</div>
+                        <div
+                            class="text-xl font-bold font-mono text-neon-green">
+                            95</div>
+                    </div>
+                    <div class="bg-gray-900/50 p-2 rounded border border-gray-800 text-center">
+                        <div class="text-[9px] text-gray-500 uppercase">FUND.SCORE</div>
+                        <div
+                            class="text-xl font-bold font-mono text-neon-green">
+                            80</div>
+                    </div>
+                </div>
+                <div
+                    class="text-xs text-gray-300 font-mono leading-relaxed p-2 bg-black/40 border border-gray-800 rounded h-40 overflow-y-auto">
+                    <span class='text-neon-blue font-bold'>AI.SYNTHESIS // </span><br>Asset demonstrates a <span class='text-neon-green'>STRONG</span> technical posture (Score: 95/100) within a wider Bullish trend. Asset appears undervalued relative to growth and book value. <br><br><span class='text-gray-400 font-bold'>RISK.PROFILE // </span>Volatility within normal range. <br><br><span class='text-neon-amber font-bold'>VERDICT // </span>ACCUMULATE on dips
+                </div>
+            </div>
+
+            <!-- VALUATION MODEL -->
+            <div class="hud-panel p-4 text-center rounded-sm border-t-2 border-gray-700">
+                
+                <div class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">VALUATION (BLENDED (Graham+Lynch+Analyst))</div>
+                <div class="text-xl font-black font-tech text-neon-green tracking-widest">UNDERVALUED</div>
+                <div class="grid grid-cols-2 gap-1 mt-2 text-[9px] font-mono">
+                    <div class="text-gray-400">TARGET: <span class="text-gray-200">$395.47</span></div>
+                    <div class="text-neon-green">GAP: +78.4%</div>
+                </div>
+            </div>
+
+            <!-- RISK METRICS -->
+            <div class="hud-panel p-4 rounded-sm">
+                <div class="hud-header"><span class="hud-title text-gray-400">RISK.METRICS</span></div>
+                <div class="text-xs font-mono text-gray-400 space-y-2">
+                    Beta: 2.22. Range(52W): 163.9 - 236.0. Analyst Tgt: 327.18.
+                </div>
+            </div>
+
+        </div>
+
+        <!-- COLUMN 2: CENTER STAGE -->
+        <div class="col-span-12 lg:col-span-6 space-y-4">
+
+            <!-- MAIN SIGNAL BOXES -->
+            <div class="grid grid-cols-4 gap-3">
+                <!-- Trend -->
+                <div class="hud-panel p-4 text-center rounded-sm relative overflow-hidden">
+                    <div
+                        class="absolute top-0 left-0 w-1 h-full bg-neon-green">
+                    </div>
+                    <div class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">TREND</div>
+                    <div
+                        class="text-xl font-black font-tech text-neon-green text-glow-green">
+                        Bullish
+                    </div>
+                    <div class="text-[9px] mt-2 text-gray-400 font-mono">Golden Cross</div>
+                </div>
+
+                <!-- RSI -->
+                <div class="hud-panel p-4 text-center rounded-sm">
+                    <div class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">RSI (14)</div>
+                    <div class="text-2xl font-bold font-mono text-white">54.63
+                    </div>
+                    <div class="w-full bg-gray-800 h-1 mt-2 rounded-full overflow-hidden">
+                        
+                        <div class="h-full bg-gray-500"
+                            style="width: 54.63%"></div>
+                    </div>
+                </div>
+
+                <!-- IV -->
+                <div class="hud-panel p-4 text-center rounded-sm">
+                    <div class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">IMPLIED VOL</div>
+                    <div class="text-2xl font-bold font-mono text-neon-blue">16.42%</div>
+                    <div class="text-[9px] mt-2 text-gray-400">HV: 41.54%</div>
+                </div>
+
+                <!-- EMA Stack -->
+                <div class="hud-panel p-4 text-center rounded-sm">
+                    <div class="text-[10px] text-gray-500 uppercase tracking-widest mb-1">EMA STACK</div>
+                    
+                    <div class="text-sm font-black font-tech text-neon-green text-glow-green mt-1">FULL<br>BULLISH</div>
+                    
+                </div>
+            </div>
+
+            <!-- TREND ARROWS -->
+            <div class="hud-panel p-3 rounded-sm">
+                <div class="flex justify-between items-center">
+                    <div class="text-[10px] text-gray-500 uppercase tracking-widest">TREND.STATUS</div>
+                    <div class="flex gap-8">
+                        <div class="text-center">
+                            <div
+                                class="text-2xl text-neon-green">
+                                ↑</div>
+                            <div class="text-[9px] text-gray-500">SHORT</div>
+                            <div
+                                class="text-[10px] text-neon-green font-bold">
+                                Strong</div>
+                        </div>
+                        <div class="text-center">
+                            <div
+                                class="text-2xl text-neon-green">
+                                ↑</div>
+                            <div class="text-[9px] text-gray-500">MED-TERM</div>
+                            <div
+                                class="text-[10px] text-neon-green font-bold">
+                                Strong</div>
+                        </div>
+                        <div class="text-center">
+                            <div
+                                class="text-2xl text-neon-green">
+                                ↑</div>
+                            <div class="text-[9px] text-gray-500">LONG-TERM</div>
+                            <div
+                                class="text-[10px] text-neon-green font-bold">
+                                Strong</div>
+                        </div>
+                    </div>
+                    <div class="text-center px-4 py-2 bg-gray-900 border border-gray-800 rounded">
+                        <div class="text-[9px] text-gray-500">LAST PRICE</div>
+                        <div class="text-lg font-bold text-white">$222.0</div>
+                        <div
+                            class="text-xs text-neon-green">
+                            +1.67%</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INTERACTIVE CHART -->
+            <div class="hud-panel p-2 rounded-sm border-b-2 border-neon-blue relative">
+                <div
+                    class="absolute top-2 left-2 z-10 text-[10px] bg-black/50 px-1 text-gray-500 font-mono border border-gray-800 flex items-center space-x-2">
+                    <span>INTERACTIVE.CHART // OHLC + EMA OVERLAYS</span>
+                    <button onclick="resetChart()"
+                        class="text-neon-blue hover:text-white transition-colors border-l border-gray-800 pl-2">RESET.VIEW</button>
+                </div>
+                <div id="plotly-chart" class="w-full h-[400px]"></div>
+            </div>
+
+            <!-- TECHNICALS GRID -->
+            <div class="hud-panel p-0 rounded-sm overflow-hidden">
+                <div class="bg-gray-900 border-b border-gray-800 p-2 px-4 flex justify-between items-center">
+                    <span class="text-xs font-bold text-gray-400">TECHNICAL.MATRIX</span>
+                    <span class="text-[10px] font-mono text-gray-600">AUTO-CALC</span>
+                </div>
+                <div class="grid grid-cols-2 divide-x divide-gray-800 border-b border-gray-800">
+                    <!-- Moving Averages -->
+                    <div class="p-4">
+                        <h4 class="text-[10px] text-neon-blue mb-3 uppercase tracking-wider font-bold">Moving Averages
+                        </h4>
+                        <div class="space-y-1.5">
+                            
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-500">EMA 8</span>
+                                <span
+                                    class="font-mono text-neon-red">$222.26</span>
+                            </div>
+                            
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-500">EMA 21</span>
+                                <span
+                                    class="font-mono text-neon-green">$219.82</span>
+                            </div>
+                            
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-500">EMA 34</span>
+                                <span
+                                    class="font-mono text-neon-green">$217.3</span>
+                            </div>
+                            
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-500">EMA 55</span>
+                                <span
+                                    class="font-mono text-neon-green">$214.16</span>
+                            </div>
+                            
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-500">EMA 89</span>
+                                <span
+                                    class="font-mono text-neon-green">$210.14</span>
+                            </div>
+                            
+                            <div class="flex justify-between text-xs border-t border-gray-800 pt-1.5">
+                                <span class="text-gray-500">SMA 50 (Inst)</span>
+                                <span
+                                    class="font-mono text-neon-green font-bold">$212.42</span>
+                            </div>
+                            <div class="flex justify-between text-xs">
+                                <span class="text-gray-500">SMA 200 (Trend)</span>
+                                <span
+                                    class="font-mono text-neon-green font-bold">$197.12</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Pivots -->
+                    <div class="p-4">
+                        <h4 class="text-[10px] text-neon-amber mb-3 uppercase tracking-wider font-bold">Pivot Points
+                        </h4>
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between text-xs border-l-2 border-neon-red/50 pl-2"><span
+                                    class="text-gray-500">RES 2</span><span class="font-mono text-gray-300">$222.64</span></div>
+                            <div class="flex justify-between text-xs border-l-2 border-neon-red/30 pl-2"><span
+                                    class="text-gray-500">RES 1</span><span class="font-mono text-gray-300">$220.5</span></div>
+                            <div class="flex justify-between text-xs border-l-2 border-white/20 pl-2 bg-white/5 py-1">
+                                <span class="text-gray-300 font-bold">PIVOT</span><span
+                                    class="font-mono text-white font-bold">$218.85</span>
+                            </div>
+                            <div class="flex justify-between text-xs border-l-2 border-neon-green/30 pl-2"><span
+                                    class="text-gray-500">SUP 1</span><span class="font-mono text-gray-300">$216.71</span></div>
+                            <div class="flex justify-between text-xs border-l-2 border-neon-green/50 pl-2"><span
+                                    class="text-gray-500">SUP 2</span><span class="font-mono text-gray-300">$215.06</span></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Fibs & Volume -->
+                <div class="grid grid-cols-2 divide-x divide-gray-800">
+                    <div class="p-4">
+                        <h4 class="text-[10px] text-purple-400 mb-3 uppercase tracking-wider font-bold">Fibonacci (1Y)
+                        </h4>
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-[10px]"><span class="text-gray-600">1.000</span><span
+                                    class="font-mono text-gray-400">$236.0</span>
+                            </div>
+                            <div class="flex justify-between text-[10px]"><span class="text-gray-600">0.618</span><span
+                                    class="font-mono text-gray-400">$191.44</span>
+                            </div>
+                            <div class="flex justify-between text-[10px]"><span class="text-gray-600">0.500</span><span
+                                    class="font-mono text-gray-400">$199.95</span>
+                            </div>
+                            <div class="flex justify-between text-[10px]"><span class="text-gray-600">0.382</span><span
+                                    class="font-mono text-gray-400">$208.46</span>
+                            </div>
+                            <div class="flex justify-between text-[10px]"><span class="text-gray-600">0.000</span><span
+                                    class="font-mono text-gray-400">$163.9</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h4 class="text-[10px] text-cyan-400 mb-3 uppercase tracking-wider font-bold">Volume Profile
+                        </h4>
+                        <div class="space-y-2">
+                            <div class="text-xs">
+                                <div class="flex justify-between mb-1"><span class="text-gray-500">Relative
+                                        Vol</span><span class="text-white">0.15x</span></div>
+                                <div class="w-full bg-gray-800 h-1.5 rounded-full">
+                                    <div class="h-full bg-cyan-500"
+                                        style="width: 7%"></div>
+                                </div>
+                            </div>
+                            <div class="flex justify-between text-[10px] mt-2"><span
+                                    class="text-gray-600">CURRENT</span><span class="font-mono text-gray-400">20,039,350</span></div>
+                            <div class="flex justify-between text-[10px]"><span class="text-gray-600">AVG
+                                    (20D)</span><span class="font-mono text-gray-400">124,253,697</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INDICATORS ROW -->
+            <div class="grid grid-cols-4 gap-2">
+                
+                <div class="hud-panel p-3 text-center rounded-sm">
+                    <div class="text-[9px] text-gray-500 uppercase">ADX</div>
+                    <div class="text-lg font-bold font-mono text-white">13.84</div>
+                </div>
+                
+                <div class="hud-panel p-3 text-center rounded-sm">
+                    <div class="text-[9px] text-gray-500 uppercase">MACD Hist</div>
+                    <div class="text-lg font-bold font-mono text-white">-0.29</div>
+                </div>
+                
+                <div class="hud-panel p-3 text-center rounded-sm">
+                    <div class="text-[9px] text-gray-500 uppercase">Stoch %K</div>
+                    <div class="text-lg font-bold font-mono text-white">53.21</div>
+                </div>
+                
+                <div class="hud-panel p-3 text-center rounded-sm">
+                    <div class="text-[9px] text-gray-500 uppercase">HV
+                (30D)</div>
+                    <div class="text-lg font-bold font-mono text-white">41.54</div>
+                </div>
+                
+            </div>
+
+            <!-- EXPECTED MOVES -->
+            
+            <div class="hud-panel p-0 rounded-sm overflow-hidden">
+                <div class="bg-gray-900 border-b border-gray-800 p-2 px-4">
+                    <span class="text-xs font-bold text-gray-400">EXPECTED.MOVES</span>
+                </div>
+                <table class="w-full text-[10px]">
+                    <thead>
+                        <tr class="text-gray-500 border-b border-gray-800 font-mono">
+                            <th class="p-2 text-left font-normal">EXPIRATION</th>
+                            <th class="p-2 text-right font-normal">DTE</th>
+                            <th class="p-2 text-right font-normal">EXP MOVE</th>
+                            <th class="p-2 text-right font-normal">RANGE</th>
+                            <th class="p-2 text-right font-normal">IV</th>
+                        </tr>
+                    </thead>
+                    <tbody class="font-mono text-gray-300 divide-y divide-gray-800/50">
+                        
+                        <tr class="hover:bg-gray-800/50">
+                            <td class="p-2">2026-09-11</td>
+                            <td class="p-2 text-right">1</td>
+                            <td class="p-2 text-right text-neon-amber font-bold">$1.59</td>
+                            <td class="p-2 text-right text-gray-400">220.41 - 223.59</td>
+                            <td class="p-2 text-right text-neon-blue">13.7%</td>
+                        </tr>
+                        
+                        <tr class="hover:bg-gray-800/50">
+                            <td class="p-2">2026-09-14</td>
+                            <td class="p-2 text-right">2</td>
+                            <td class="p-2 text-right text-neon-amber font-bold">$1.42</td>
+                            <td class="p-2 text-right text-gray-400">220.58 - 223.42</td>
+                            <td class="p-2 text-right text-neon-blue">8.7%</td>
+                        </tr>
+                        
+                        <tr class="hover:bg-gray-800/50">
+                            <td class="p-2">2026-09-16</td>
+                            <td class="p-2 text-right">4</td>
+                            <td class="p-2 text-right text-neon-amber font-bold">$3.55</td>
+                            <td class="p-2 text-right text-gray-400">218.45 - 225.55</td>
+                            <td class="p-2 text-right text-neon-blue">15.3%</td>
+                        </tr>
+                        
+                        <tr class="hover:bg-gray-800/50">
+                            <td class="p-2">2026-09-18</td>
+                            <td class="p-2 text-right">6</td>
+                            <td class="p-2 text-right text-neon-amber font-bold">$5.07</td>
+                            <td class="p-2 text-right text-gray-400">216.93 - 227.07</td>
+                            <td class="p-2 text-right text-neon-blue">17.8%</td>
+                        </tr>
+                        
+                    </tbody>
+                </table>
+            </div>
+            
+
+        </div>
+
+        <!-- COLUMN 3: RIGHT SIDEBAR -->
+        <div class="col-span-12 lg:col-span-3 space-y-4">
+
+            <!-- OPTIONS FLOW -->
+            
+            <div class="hud-panel p-4 rounded-sm border-r-4 border-neon-blue">
+                <div class="hud-header">
+                    <span class="hud-title text-neon-blue">OPTIONS.FLOW</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center mb-3">
+                    <div>
+                        <div class="text-[9px] text-gray-500">CALLS</div>
+                        <div class="text-sm font-bold text-neon-green">183,196</div>
+                    </div>
+                    <div>
+                        <div class="text-[9px] text-gray-500">PUTS</div>
+                        <div class="text-sm font-bold text-neon-red">114,108</div>
+                    </div>
+                    <div>
+                        <div class="text-[9px] text-gray-500">TOTAL</div>
+                        <div class="text-sm font-bold text-white">297,304</div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs font-mono">
+                    <div class="bg-gray-900/50 p-2 rounded border border-gray-800">
+                        <div class="text-[9px] text-gray-500">P/C (VOL)</div>
+                        <div
+                            class="text-lg font-bold text-neon-green">
+                            0.62</div>
+                    </div>
+                    <div class="bg-gray-900/50 p-2 rounded border border-gray-800">
+                        <div class="text-[9px] text-gray-500">P/C (OI)</div>
+                        <div
+                            class="text-lg font-bold text-neon-green">
+                            0.68</div>
+                    </div>
+                </div>
+            </div>
+            
+
+            <!-- TICKERTRACE INSTITUTIONAL -->
+            
+            <div class="hud-panel p-4 rounded-sm border-r-4 border-neon-green">
+                <div class="hud-header">
+                    <span class="hud-title text-neon-green">INSTITUTIONAL.INTEL</span>
+                    <span class="text-[9px] text-gray-600">TICKERTRACE</span>
+                </div>
+                
+                <div
+                    class="mb-3 p-2 rounded border border-neon-red/30 bg-neon-red/5">
+                    <div
+                        class="text-[10px] text-neon-red font-bold">
+                        buying</div>
+                    <div class="text-[9px] text-gray-400 mt-1">Conv: 12.801
+                        · Funds: AVLV, CMAG, DIVO</div>
+                </div>
+                
+                
+            </div>
+            
+
+            <!-- INSIDERS -->
+            <div class="hud-panel p-0 rounded-sm border-r-4 border-neon-red">
+                <div class="p-3 border-b border-gray-800 bg-gray-900/50">
+                    <span class="hud-title text-neon-red">INSIDER.ACTIVITY</span>
+                </div>
+                <table class="w-full text-left text-[10px]">
+                    <thead>
+                        <tr class="text-gray-500 border-b border-gray-800 font-mono">
+                            <th class="p-2 font-normal">DATE</th>
+                            <th class="p-2 font-normal">WHO</th>
+                            <th class="p-2 font-normal text-right">VAL</th>
+                        </tr>
+                    </thead>
+                    <tbody class="font-mono text-gray-300 divide-y divide-gray-800/50">
+                        
+                        <tr class="hover:bg-gray-800/50">
+                            <td class="p-2">2026-09-04</td>
+                            <td class="p-2 truncate max-w-[100px]">STEVENS MARK A</td>
+                            <td class="p-2 text-right font-bold text-neon-green">$235.64M</td>
+                        </tr>
+                        
+                        <tr class="hover:bg-gray-800/50">
+                            <td class="p-2">2026-09-02</td>
+                            <td class="p-2 truncate max-w-[100px]">STEVENS MARK A</td>
+                            <td class="p-2 text-right font-bold text-neon-green">$410.84M</td>
+                        </tr>
+                        
+                        <tr class="hover:bg-gray-800/50">
+                            <td class="p-2">2026-09-02</td>
+                            <td class="p-2 truncate max-w-[100px]">COXE TENCH C</td>
+                            <td class="p-2 text-right font-bold text-neon-green">$0</td>
+                        </tr>
+                        
+                        <tr class="hover:bg-gray-800/50">
+                            <td class="p-2">2026-08-31</td>
+                            <td class="p-2 truncate max-w-[100px]">TETER TIMOTHY S</td>
+                            <td class="p-2 text-right font-bold text-neon-green">$6.54M</td>
+                        </tr>
+                        
+                        <tr class="hover:bg-gray-800/50">
+                            <td class="p-2">2026-08-10</td>
+                            <td class="p-2 truncate max-w-[100px]">NORA JOHNSON SUZANNE M</td>
+                            <td class="p-2 text-right font-bold text-neon-green">$0</td>
+                        </tr>
+                        
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- NEWS FEED -->
+            
+            <div class="hud-panel p-4 rounded-sm">
+                <div class="hud-header">
+                    <span class="hud-title text-gray-400">NEWS.FEED</span>
+                </div>
+                <div class="space-y-2 max-h-48 overflow-y-auto">
+                    
+                    <div class="border-b border-gray-800/50 pb-2">
+                        <a href="https://finance.yahoo.com/m/061e595e-cb5c-3c1c-90f4-b7b5e8176ae4/stock-market-today%3A-dow.html?.tsrc=rss" target="_blank"
+                            class="text-[10px] text-gray-300 hover:text-neon-blue transition-colors">Stock Market Today: Dow Rallies On Surprise Inflation Data; Nvidia Rebounds, Oracle Jumps (Live Coverage)</a>
+                        <div class="text-[9px] text-gray-600 mt-0.5"></div>
+                    </div>
+                    
+                    <div class="border-b border-gray-800/50 pb-2">
+                        <a href="https://beincrypto.com/jensen-huang-ai-cybersecurity-demand-creation/?.tsrc=rss" target="_blank"
+                            class="text-[10px] text-gray-300 hover:text-neon-blue transition-colors">Nvidia CEO Jensen Huang Calls AI Cybersecurity Panic a Sales Pitch</a>
+                        <div class="text-[9px] text-gray-600 mt-0.5"></div>
+                    </div>
+                    
+                    <div class="border-b border-gray-800/50 pb-2">
+                        <a href="https://www.fool.com/investing/2026/09/11/why-alight-stock-is-plummeting-this-week/?.tsrc=rss" target="_blank"
+                            class="text-[10px] text-gray-300 hover:text-neon-blue transition-colors">Why Alight Stock Is Plummeting This Week</a>
+                        <div class="text-[9px] text-gray-600 mt-0.5"></div>
+                    </div>
+                    
+                </div>
+            </div>
+            
+
+            <!-- SYSTEM FOOTER -->
+            <div class="text-[9px] text-gray-600 font-mono text-center mt-8 opacity-50">
+                generated by Sam the Ghost Quant // 2026-09-11 09:04 AM CST <br>
+                ALPHA.HUD V2 // DEEP DIVE
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- JSON EXPORT MODAL -->
+    <div id="jsonModal" class="fixed inset-0 bg-black/90 z-[100] hidden flex items-center justify-center p-8">
+        <div
+            class="bg-gray-900 border border-neon-blue w-full max-w-4xl h-full max-h-[80vh] flex flex-col rounded shadow-[0_0_30px_rgba(0,243,255,0.2)]">
+            <div class="flex justify-between items-center p-4 border-b border-gray-800 bg-gray-900/50">
+                <span class="text-neon-blue font-tech text-lg">SOURCE.JSON // EXPORT</span>
+                <div class="flex space-x-4">
+                    <button onclick="copyToClipboard()"
+                        class="px-4 py-1 bg-neon-blue/20 text-neon-blue border border-neon-blue/50 hover:bg-neon-blue/40 text-xs font-mono uppercase transition-colors">>>
+                        COPY TO CLIPBOARD</button>
+                    <button onclick="closeModal()" class="text-gray-500 hover:text-white">X</button>
+                </div>
+            </div>
+            <div class="flex-1 overflow-auto p-4 bg-black/50">
+                <pre class="text-[10px] text-gray-400 font-mono whitespace-pre-wrap select-all" id="jsonContent"></pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const rawJson = {"ticker": "NVDA", "companyName": "NVIDIA Corporation", "sector": "Technology", "industry": "Semiconductors", "currentPrice": 222.0, "priceChange": 3.64, "priceChangePct": 1.67, "timestamp": "2026-09-11 09:04 AM CST", "logo_url": "https://logo.clearbit.com/www.nvidia.com", "generated_at": "2026-09-11 09:04 AM CST", "impliedVolatility": 16.42, "historicVolatility": 41.54, "ivRank": 0, "ivPercentile": 0, "trendOverall": "Bullish", "trendShort": "Strong", "trendMed": "Strong", "trendLong": "Strong", "expectedMoves": [{"expiration": "2026-09-11", "expectedMove": 1.59, "expectedRange": "220.41 - 223.59", "iv": 13.7, "dte": 1}, {"expiration": "2026-09-14", "expectedMove": 1.42, "expectedRange": "220.58 - 223.42", "iv": 8.7, "dte": 2}, {"expiration": "2026-09-16", "expectedMove": 3.55, "expectedRange": "218.45 - 225.55", "iv": 15.3, "dte": 4}, {"expiration": "2026-09-18", "expectedMove": 5.07, "expectedRange": "216.93 - 227.07", "iv": 17.8, "dte": 6}], "volumeStats": {"callVolume": 183196, "putVolume": 114108, "totalVolume": 297304, "pcRatioVol": 0.62, "callOpenInt": 660247, "putOpenInt": 448971, "totalOpenInt": 1109218, "pcRatioOi": 0.68}, "market_snapshot": {"price": 222.0, "market_cap": "$5360.63B", "beta": 2.22, "range_52w": "163.9 - 236.0", "analyst_target": 327.18}, "technical_analysis": {"trend": {"outlook": "Bullish", "sma_50": 212.42, "sma_200": 197.12, "crossover": "Golden Cross"}, "ema": {"8": 222.26, "21": 219.82, "34": 217.3, "55": 214.16, "89": 210.14}, "ema_stack": "FULL BULLISH", "volume": {"current": "20,039,350", "avg_20d": "124,253,697", "rel_vol": 0.15, "rel_vol_pct": 7}, "pivots": {"R2": 222.64, "R1": 220.5, "PP": 218.85, "S1": 216.71, "S2": 215.06}, "fibonacci": {"100": 236.0, "61.8": 191.44, "50": 199.95, "38.2": 208.46, "0": 163.9}, "oscillators": {"rsi_14": 54.63, "adx_14": 13.84, "macd_hist": -0.29, "stoch_k": 53.21}}, "volatility": {"hv_30d": 41.54, "iv_current": 16.42}, "valuation": {"status": "UNDERVALUED", "gap_pct": 78.4, "target_price": 395.47, "method": "BLENDED (Graham+Lynch+Analyst)"}, "scores": {"technical": 95, "fundamental": 80, "grade": "A"}, "tradingview": {"recommendation": "NEUTRAL", "buy": 9, "sell": 8, "neutral": 9}, "insider_transactions": [{"date": "2026-09-04", "insider": "STEVENS MARK A", "type": "", "value": "$235.64M"}, {"date": "2026-09-02", "insider": "STEVENS MARK A", "type": "", "value": "$410.84M"}, {"date": "2026-09-02", "insider": "COXE TENCH C", "type": "", "value": "$0"}, {"date": "2026-08-31", "insider": "TETER TIMOTHY S", "type": "", "value": "$6.54M"}, {"date": "2026-08-10", "insider": "NORA JOHNSON SUZANNE M", "type": "", "value": "$0"}], "news": [{"title": "Stock Market Today: Dow Rallies On Surprise Inflation Data; Nvidia Rebounds, Oracle Jumps (Live Coverage)", "link": "https://finance.yahoo.com/m/061e595e-cb5c-3c1c-90f4-b7b5e8176ae4/stock-market-today%3A-dow.html?.tsrc=rss", "summary": "Stock Market Today: The Dow Jones index rallies Friday after a surprise CPI inflation report. Nvidia stock rebounded in morning trading.", "source": "Yahoo Finance"}, {"title": "Nvidia CEO Jensen Huang Calls AI Cybersecurity Panic a Sales Pitch", "link": "https://beincrypto.com/jensen-huang-ai-cybersecurity-demand-creation/?.tsrc=rss", "summary": "Nvidia CEO Jensen Huang says the AI cybersecurity scare sells products. Crypto attack data tells a harder story.", "source": "Yahoo Finance"}, {"title": "Why Alight Stock Is Plummeting This Week", "link": "https://www.fool.com/investing/2026/09/11/why-alight-stock-is-plummeting-this-week/?.tsrc=rss", "summary": "Alight stock has been hit with a huge valuation pullback in 2026.", "source": "Yahoo Finance"}], "tickertrace": {"detail": {"ticker": "NVDA", "name": "NVIDIA CORP COMMON STOCK USD.001", "sector": "INFORMATION TECHNOLOGY", "fundCount": 26, "holdings": [{"fund": "NVDW", "provider": "Roundhill", "weight": 20.111298255083607, "shares": 110151.0, "isOption": false, "aum": 0.122390303}, {"fund": "CMAG", "provider": "Corgi Funds", "weight": 11.2692264809561, "shares": 1051.0, "isOption": false, "aum": 0.00208367824}, {"fund": "NVDY", "provider": "YieldMax", "weight": 10.88753526073873, "shares": 63300.0, "isOption": true, "aum": 1.40817075, "optionDetails": {"type": "Call", "strike": 210.0, "expiry": "2026-11-20"}}, {"fund": "QDVO", "provider": "Amplify", "weight": 10.59302937531169, "shares": 354965.0, "isOption": false, "aum": 0.748674225}, {"fund": "GAMR", "provider": "Amplify", "weight": 10.361581402892284, "shares": 18634.0, "isOption": false, "aum": 0.040179918}, {"fund": "FDRS", "provider": "Corgi Funds", "weight": 9.233716527225557, "shares": 21014.0, "isOption": false, "aum": 0.05084570082}, {"fund": "CGUS", "provider": "Capital Group", "weight": 7.582676776725992, "shares": 4003508.0, "isOption": false, "aum": 11.793038154109995}, {"fund": "CHPY", "provider": "YieldMax", "weight": 6.5172556812946345, "shares": 344997.0, "isOption": false, "aum": 1.18262838}, {"fund": "CGDV", "provider": "Capital Group", "weight": 6.486849223148737, "shares": 11260974.0, "isOption": false, "aum": 38.75320021385001}, {"fund": "AVUS", "provider": "Avantis", "weight": 5.672998333850954, "shares": 3674489.0, "isOption": false, "aum": 14.471234736570025}, {"fund": "BLOX", "provider": "Tidal / NicholasX", "weight": 5.111541775800406, "shares": 70154.0, "isOption": false, "aum": 0.3066576375}, {"fund": "NVII", "provider": "REX Shares", "weight": 5.032547796887452, "shares": 6652.0, "isOption": true, "aum": 0.12157459775999999, "optionDetails": {"type": "Call", "strike": 216.85, "expiry": "2026-09-18"}}, {"fund": "ARKQ", "provider": "ARK Invest", "weight": 5.017997980878344, "shares": 428976.0, "isOption": false, "aum": 1.9099612691200003}, {"fund": "CGGR", "provider": "Capital Group", "weight": 4.959414735017859, "shares": 5630871.0, "isOption": false, "aum": 25.363405621730003}, {"fund": "AIEQ", "provider": "Amplify", "weight": 4.441576627691988, "shares": 23723.0, "isOption": false, "aum": 0.11933376}, {"fund": "DIVO", "provider": "Amplify", "weight": 3.960393239511175, "shares": 1392488.0, "isOption": false, "aum": 7.85561615}, {"fund": "ARKW", "provider": "ARK Invest", "weight": 3.4454032287718492, "shares": 281072.0, "isOption": false, "aum": 1.7777179391199998}, {"fund": "KQQQ", "provider": "Kurv", "weight": 3.2601049823077557, "shares": 18482.0, "isOption": false, "aum": 0.12651825515999998}, {"fund": "ARKK", "provider": "ARK Invest", "weight": 2.5518498664764016, "shares": 744407.0, "isOption": false, "aum": 6.4992220023600025}, {"fund": "ARKX", "provider": "ARK Invest", "weight": 2.530018297800529, "shares": 70102.0, "isOption": false, "aum": 0.5167560650200002}, {"fund": "ULTY", "provider": "YieldMax", "weight": 2.3156604579677533, "shares": 76200.0, "isOption": false, "aum": 0.73531409863}, {"fund": "BLOK", "provider": "Amplify", "weight": 1.836928073424054, "shares": 92533.0, "isOption": false, "aum": 1.1254705}, {"fund": "ARKF", "provider": "ARK Invest", "weight": 1.507972730657608, "shares": 89295.0, "isOption": false, "aum": 1.1022407961599998}, {"fund": "CGGO", "provider": "Capital Group", "weight": 0.94047803311174, "shares": 504883.0, "isOption": false, "aum": 11.993343519319994}, {"fund": "ETHO", "provider": "Amplify", "weight": 0.37860285043818953, "shares": 3237.0, "isOption": false, "aum": 0.19102344}, {"fund": "KQQQ", "provider": "Kurv", "weight": 0.3564277419331428, "shares": 307.0, "isOption": true, "aum": 0.12651825515999998, "optionDetails": {"type": "Call", "strike": 210.0, "expiry": "2026-09-18"}}, {"fund": "AVLV", "provider": "Avantis", "weight": 0.2364909679501566, "shares": 232900.0, "isOption": false, "aum": 22.002750655140026}, {"fund": "BLOX", "provider": "Tidal / NicholasX", "weight": 0.11259048280744595, "shares": 701.0, "isOption": true, "aum": 0.3066576375, "optionDetails": {"type": "Put", "strike": 227.5, "expiry": "2026-09-11"}}, {"fund": "NVDY", "provider": "YieldMax", "weight": 0.021797187211433033, "shares": 30700.0, "isOption": true, "aum": 1.40817075, "optionDetails": {"type": "Call", "strike": 237.5, "expiry": "2026-09-11"}}, {"fund": "NVDY", "provider": "YieldMax", "weight": 0.01936896635595743, "shares": 17600.0, "isOption": true, "aum": 1.40817075, "optionDetails": {"type": "Call", "strike": 235.0, "expiry": "2026-09-11"}}, {"fund": "ULTY", "provider": "YieldMax", "weight": 0.012541174264349574, "shares": 1524.0, "isOption": true, "aum": 0.73531409863, "optionDetails": {"type": "Put", "strike": 217.5, "expiry": "2026-09-11"}}, {"fund": "NVDY", "provider": "YieldMax", "weight": 0.007455064029968953, "shares": 15000.0, "isOption": true, "aum": 1.40817075, "optionDetails": {"type": "Call", "strike": 240.0, "expiry": "2026-09-11"}}, {"fund": "CHPY", "provider": "YieldMax", "weight": 0.0020413554266726433, "shares": 3449.0, "isOption": true, "aum": 1.18262838, "optionDetails": {"type": "Call", "strike": 240.0, "expiry": "2026-09-11"}}, {"fund": "KQQQ", "provider": "Kurv", "weight": -0.0035824869654327907, "shares": -245.0, "isOption": true, "aum": 0.12651825515999998, "optionDetails": {"type": "Call", "strike": 250.0, "expiry": "2026-09-18"}}, {"fund": "CHPY", "provider": "YieldMax", "weight": -0.008311232808595762, "shares": -3449.0, "isOption": true, "aum": 1.18262838, "optionDetails": {"type": "Call", "strike": 232.5, "expiry": "2026-09-11"}}, {"fund": "ULTY", "provider": "YieldMax", "weight": -0.010571898966641789, "shares": -762.0, "isOption": true, "aum": 0.73531409863, "optionDetails": {"type": "Call", "strike": 227.5, "expiry": "2026-09-11"}}, {"fund": "KQQQ", "provider": "Kurv", "weight": -0.02229493282556585, "shares": -307.0, "isOption": true, "aum": 0.12651825515999998, "optionDetails": {"type": "Put", "strike": 210.0, "expiry": "2026-09-18"}}, {"fund": "ULTY", "provider": "YieldMax", "weight": -0.033684972197633146, "shares": -762.0, "isOption": true, "aum": 0.73531409863, "optionDetails": {"type": "Put", "strike": 225.0, "expiry": "2026-09-11"}}, {"fund": "NVDY", "provider": "YieldMax", "weight": -0.052306149246458364, "shares": -13900.0, "isOption": true, "aum": 1.40817075, "optionDetails": {"type": "Call", "strike": 230.0, "expiry": "2026-09-11"}}, {"fund": "NVDY", "provider": "YieldMax", "weight": -0.06434785267010346, "shares": -31800.0, "isOption": true, "aum": 1.40817075, "optionDetails": {"type": "Call", "strike": 232.5, "expiry": "2026-09-11"}}, {"fund": "NVDY", "provider": "YieldMax", "weight": -0.12746029472952633, "shares": -17600.0, "isOption": true, "aum": 1.40817075, "optionDetails": {"type": "Call", "strike": 227.5, "expiry": "2026-09-11"}}, {"fund": "BLOX", "provider": "Tidal / NicholasX", "weight": -0.21032130798548282, "shares": -701.0, "isOption": true, "aum": 0.3066576375, "optionDetails": {"type": "Put", "strike": 232.5, "expiry": "2026-09-11"}}, {"fund": "NVDY", "provider": "YieldMax", "weight": -3.918793599689795, "shares": -63300.0, "isOption": true, "aum": 1.40817075, "optionDetails": {"type": "Put", "strike": 210.01, "expiry": "2026-11-20"}}], "totalWeight": 130.3231, "changes": [{"fund": "NVDY", "ticker": "NVDA  260918C00195000", "name": "NVDA US 09/18/26 C195", "sector": "", "weightDelta": -13.7864, "activeWeightDelta": -13.7524, "sharesDelta": -63300.0, "currentWeight": 0.0, "previousWeight": 13.7864, "currentShares": 0.0, "previousShares": 63300.0, "type": "REMOVED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 195.0, "expiry": "2026-09-18", "underlying": "NVDA"}}, {"fund": "NVDY", "ticker": "NVDA  261120C00210000", "name": "NVIDIA C CLL OPT 11/26 210", "sector": "", "weightDelta": 10.8875, "activeWeightDelta": 10.8875, "sharesDelta": 63300.0, "currentWeight": 10.8875, "previousWeight": 0.0, "currentShares": 63300.0, "previousShares": 0.0, "type": "NEW", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 210.0, "expiry": "2026-11-20", "underlying": "NVDA"}}, {"fund": "NVII", "ticker": "2NVDA 260918C00216850", "name": "NVDA 09/18/2026 216.85 C", "sector": "", "weightDelta": -6.0181, "activeWeightDelta": -6.0176, "sharesDelta": -6530.0, "currentWeight": 0.0, "previousWeight": 6.0181, "currentShares": 0.0, "previousShares": 6530.0, "type": "REMOVED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 216.85, "expiry": "2026-09-18", "underlying": "NVDA"}}, {"fund": "NVII", "ticker": "OTHER", "name": "NVDA 09/18/2026 216.85 C", "sector": "", "weightDelta": 5.0325, "activeWeightDelta": 5.0325, "sharesDelta": 6652.0, "currentWeight": 5.0325, "previousWeight": 0.0, "currentShares": 6652.0, "previousShares": 0.0, "type": "NEW", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 216.85, "expiry": "2026-09-18", "underlying": "NVDA"}}, {"fund": "NVDY", "ticker": "2NVDA 261120P00210010", "name": "2NVDA US 11/20/26 P210.01 FLX", "sector": "", "weightDelta": -3.9188, "activeWeightDelta": -3.9188, "sharesDelta": -63300.0, "currentWeight": -3.9188, "previousWeight": 0.0, "currentShares": -63300.0, "previousShares": 0.0, "type": "NEW", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Put", "strike": 210.01, "expiry": "2026-11-20", "underlying": "NVDA"}}, {"fund": "NVII", "ticker": "2NVDA 260918P00216850", "name": "NVDA 09/18/2026 216.85 P", "sector": "", "weightDelta": 1.0823, "activeWeightDelta": 1.0822, "sharesDelta": 6530.0, "currentWeight": 0.0, "previousWeight": -1.0823, "currentShares": 0.0, "previousShares": -6530.0, "type": "REMOVED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Put", "strike": 216.85, "expiry": "2026-09-18", "underlying": "NVDA"}}, {"fund": "AVLV", "ticker": "NVDA", "name": "NVIDIA CORP COMMON STOCK USD.001", "sector": "INFORMATION TECHNOLOGY", "weightDelta": 0.2164, "activeWeightDelta": 0.2165, "sharesDelta": 213744.0, "currentWeight": 0.2365, "previousWeight": 0.0201, "currentShares": 232900.0, "previousShares": 19156.0, "type": "CHANGED", "isOption": false, "fundCategory": "active-equity"}, {"fund": "NVII", "ticker": "2NVDA 260911C00233020", "name": "NVDA 09/11/2026 233.02 C", "sector": "", "weightDelta": 0.1942, "activeWeightDelta": 0.1942, "sharesDelta": 3265.0, "currentWeight": 0.0, "previousWeight": -0.1942, "currentShares": 0.0, "previousShares": -3265.0, "type": "REMOVED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 233.02, "expiry": "2026-09-11", "underlying": "NVDA"}}, {"fund": "NVDY", "ticker": "2NVDA 260918P00195010", "name": "NVDA 09/18/2026 195.01 P", "sector": "", "weightDelta": 0.1358, "activeWeightDelta": 0.1354, "sharesDelta": 63300.0, "currentWeight": 0.0, "previousWeight": -0.1358, "currentShares": 0.0, "previousShares": -63300.0, "type": "REMOVED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Put", "strike": 195.01, "expiry": "2026-09-18", "underlying": "NVDA"}}, {"fund": "CHPY", "ticker": "NVDA", "name": "NVIDIA Corp", "sector": "INFORMATION TECHNOLOGY", "weightDelta": -0.1948, "activeWeightDelta": -0.1006, "sharesDelta": -3728.0, "currentWeight": 6.5173, "previousWeight": 6.7121, "currentShares": 344997.0, "previousShares": 348725.0, "type": "CHANGED", "isOption": false, "fundCategory": "option-income"}, {"fund": "CMAG", "ticker": "NVDA", "name": "NVIDIA Corp", "sector": "INFORMATION TECHNOLOGY", "weightDelta": -0.0076, "activeWeightDelta": 0.0479, "sharesDelta": -715.0, "currentWeight": 11.2692, "previousWeight": 11.2769, "currentShares": 1051.0, "previousShares": 1766.0, "type": "CHANGED", "isOption": false, "fundCategory": "active-equity"}, {"fund": "AVUS", "ticker": "NVDA", "name": "NVIDIA CORP COMMON STOCK USD.001", "sector": "INFORMATION TECHNOLOGY", "weightDelta": -0.0547, "activeWeightDelta": -0.0276, "sharesDelta": 0.0, "currentWeight": 5.673, "previousWeight": 5.7277, "currentShares": 3674489.0, "previousShares": 3674489.0, "type": "CHANGED", "isOption": false, "fundCategory": "active-equity"}, {"fund": "DIVO", "ticker": "NVDA", "name": "NVIDIA Corp", "sector": "INFORMATION TECHNOLOGY", "weightDelta": -0.0044, "activeWeightDelta": 0.0214, "sharesDelta": 3376.0, "currentWeight": 3.9604, "previousWeight": 3.9648, "currentShares": 1392488.0, "previousShares": 1389112.0, "type": "CHANGED", "isOption": false, "fundCategory": "option-income"}, {"fund": "ULTY", "ticker": "NVDA  260911C00227500", "name": "NVDA US 09/11/26 C227.5", "sector": "", "weightDelta": -0.0106, "activeWeightDelta": -0.0106, "sharesDelta": -762.0, "currentWeight": -0.0106, "previousWeight": 0.0, "currentShares": -762.0, "previousShares": 0.0, "type": "NEW", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 227.5, "expiry": "2026-09-11", "underlying": "NVDA"}}, {"fund": "ULTY", "ticker": "NVDA  260911C00235000", "name": "NVDA US 09/11/26 C235", "sector": "", "weightDelta": 0.0048, "activeWeightDelta": 0.0048, "sharesDelta": 762.0, "currentWeight": 0.0, "previousWeight": -0.0048, "currentShares": 0.0, "previousShares": -762.0, "type": "REMOVED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 235.0, "expiry": "2026-09-11", "underlying": "NVDA"}}, {"fund": "ARKK", "ticker": "NVDA", "name": "NVIDIA CORP", "sector": "INFORMATION TECHNOLOGY", "weightDelta": 0.0189, "activeWeightDelta": -0.0038, "sharesDelta": -966.0, "currentWeight": 2.5518, "previousWeight": 2.533, "currentShares": 744407.0, "previousShares": 745373.0, "type": "CHANGED", "isOption": false, "fundCategory": "active-equity"}, {"fund": "FDRS", "ticker": "NVDA", "name": "NVIDIA Corp", "sector": "INFORMATION TECHNOLOGY", "weightDelta": -0.0701, "activeWeightDelta": 0.0032, "sharesDelta": -1957.0, "currentWeight": 9.2337, "previousWeight": 9.3039, "currentShares": 21014.0, "previousShares": 22971.0, "type": "CHANGED", "isOption": false, "fundCategory": "active-equity"}, {"fund": "ULTY", "ticker": "NVDA", "name": "NVIDIA Corp", "sector": "INFORMATION TECHNOLOGY", "weightDelta": -0.0079, "activeWeightDelta": 0.0019, "sharesDelta": 0.0, "currentWeight": 2.3157, "previousWeight": 2.3236, "currentShares": 76200.0, "previousShares": 76200.0, "type": "CHANGED", "isOption": false, "fundCategory": "option-income"}, {"fund": "NVDY", "ticker": "NVDA  260911C00227500", "name": "NVDA US 09/11/26 C227.5", "sector": "", "weightDelta": 0.1423, "activeWeightDelta": -0.0019, "sharesDelta": 0.0, "currentWeight": -0.1275, "previousWeight": -0.2697, "currentShares": -17600.0, "previousShares": -17600.0, "type": "CHANGED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 227.5, "expiry": "2026-09-11", "underlying": "NVDA"}}, {"fund": "QDVO", "ticker": "NVDA", "name": "NVIDIA Corp", "sector": "INFORMATION TECHNOLOGY", "weightDelta": -0.089, "activeWeightDelta": -0.0012, "sharesDelta": 0.0, "currentWeight": 10.593, "previousWeight": 10.682, "currentShares": 354965.0, "previousShares": 354965.0, "type": "CHANGED", "isOption": false, "fundCategory": "option-income"}, {"fund": "GAMR", "ticker": "NVDA", "name": "NVIDIA Corp", "sector": "INFORMATION TECHNOLOGY", "weightDelta": -0.1256, "activeWeightDelta": -0.001, "sharesDelta": 0.0, "currentWeight": 10.3616, "previousWeight": 10.4872, "currentShares": 18634.0, "previousShares": 18634.0, "type": "CHANGED", "isOption": false, "fundCategory": "active-equity"}, {"fund": "NVDY", "ticker": "NVDA  260911C00232500", "name": "NVDA US 09/11/26 C232.5", "sector": "", "weightDelta": 0.1119, "activeWeightDelta": -0.0009, "sharesDelta": 0.0, "currentWeight": -0.0643, "previousWeight": -0.1762, "currentShares": -31800.0, "previousShares": -31800.0, "type": "CHANGED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 232.5, "expiry": "2026-09-11", "underlying": "NVDA"}}, {"fund": "NVDW", "ticker": "NVDA", "name": "NVIDIA Corp", "sector": "INFORMATION TECHNOLOGY", "weightDelta": 0.0179, "activeWeightDelta": -0.0008, "sharesDelta": 0.0, "currentWeight": 20.1113, "previousWeight": 20.0934, "currentShares": 110151.0, "previousShares": 110151.0, "type": "CHANGED", "isOption": false, "fundCategory": "option-income"}, {"fund": "NVDY", "ticker": "NVDA  260911C00230000", "name": "NVDA US 09/11/26 C230", "sector": "", "weightDelta": 0.0783, "activeWeightDelta": -0.0008, "sharesDelta": 0.0, "currentWeight": -0.0523, "previousWeight": -0.1306, "currentShares": -13900.0, "previousShares": -13900.0, "type": "CHANGED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 230.0, "expiry": "2026-09-11", "underlying": "NVDA"}}, {"fund": "BLOX", "ticker": "NVDA", "name": "NVIDIA Corp", "sector": "INFORMATION TECHNOLOGY", "weightDelta": 0.0619, "activeWeightDelta": -0.0007, "sharesDelta": -324.0, "currentWeight": 5.1115, "previousWeight": 5.0497, "currentShares": 70154.0, "previousShares": 70478.0, "type": "CHANGED", "isOption": false, "fundCategory": "option-income"}, {"fund": "CGUS", "ticker": "NVDA", "name": "NVIDIA CORP COMMON STOCK USD.001", "sector": "INFORMATION TECHNOLOGY", "weightDelta": -0.0278, "activeWeightDelta": -0.0006, "sharesDelta": 0.0, "currentWeight": 7.5827, "previousWeight": 7.6105, "currentShares": 4003508.0, "previousShares": 4003508.0, "type": "CHANGED", "isOption": false, "fundCategory": "active-equity"}, {"fund": "ARKW", "ticker": "NVDA", "name": "NVIDIA CORP", "sector": "INFORMATION TECHNOLOGY", "weightDelta": 0.0048, "activeWeightDelta": 0.0004, "sharesDelta": 0.0, "currentWeight": 3.4454, "previousWeight": 3.4406, "currentShares": 281072.0, "previousShares": 281072.0, "type": "CHANGED", "isOption": false, "fundCategory": "active-equity"}, {"fund": "NVDY", "ticker": "NVDA  260911C00235000", "name": "NVDA US 09/11/26 C235", "sector": "", "weightDelta": -0.038, "activeWeightDelta": 0.0003, "sharesDelta": 0.0, "currentWeight": 0.0194, "previousWeight": 0.0574, "currentShares": 17600.0, "previousShares": 17600.0, "type": "CHANGED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 235.0, "expiry": "2026-09-11", "underlying": "NVDA"}}, {"fund": "NVDY", "ticker": "NVDA  260911C00237500", "name": "NVDA US 09/11/26 C237.5", "sector": "", "weightDelta": -0.0396, "activeWeightDelta": 0.0003, "sharesDelta": 0.0, "currentWeight": 0.0218, "previousWeight": 0.0614, "currentShares": 30700.0, "previousShares": 30700.0, "type": "CHANGED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 237.5, "expiry": "2026-09-11", "underlying": "NVDA"}}, {"fund": "KQQQ", "ticker": "NVDA", "name": "NVIDIA Corp", "sector": "INFORMATION TECHNOLOGY", "weightDelta": -0.0324, "activeWeightDelta": -0.0002, "sharesDelta": 0.0, "currentWeight": 3.2601, "previousWeight": 3.2925, "currentShares": 18482.0, "previousShares": 18482.0, "type": "CHANGED", "isOption": false, "fundCategory": "option-income"}, {"fund": "AIEQ", "ticker": "NVDA", "name": "NVIDIA Corp", "sector": "INFORMATION TECHNOLOGY", "weightDelta": -0.0068, "activeWeightDelta": -0.0002, "sharesDelta": 0.0, "currentWeight": 4.4416, "previousWeight": 4.4483, "currentShares": 23723.0, "previousShares": 23723.0, "type": "CHANGED", "isOption": false, "fundCategory": "active-equity"}, {"fund": "CGDV", "ticker": "NVDA", "name": "NVIDIA CORP COMMON STOCK USD.001", "sector": "INFORMATION TECHNOLOGY", "weightDelta": -0.0203, "activeWeightDelta": -0.0002, "sharesDelta": 7803.0, "currentWeight": 6.4868, "previousWeight": 6.5072, "currentShares": 11260974.0, "previousShares": 11253171.0, "type": "CHANGED", "isOption": false, "fundCategory": "active-equity"}, {"fund": "CGGR", "ticker": "NVDA", "name": "NVIDIA CORP COMMON STOCK USD.001", "sector": "INFORMATION TECHNOLOGY", "weightDelta": -0.0406, "activeWeightDelta": -0.0002, "sharesDelta": 1456.0, "currentWeight": 4.9594, "previousWeight": 5.0001, "currentShares": 5630871.0, "previousShares": 5629415.0, "type": "CHANGED", "isOption": false, "fundCategory": "active-equity"}, {"fund": "CHPY", "ticker": "NVDA  260911C00232500", "name": "NVDA US 09/11/26 C232.5", "sector": "", "weightDelta": 0.0152, "activeWeightDelta": 0.0001, "sharesDelta": 38.0, "currentWeight": -0.0083, "previousWeight": -0.0235, "currentShares": -3449.0, "previousShares": -3487.0, "type": "CHANGED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 232.5, "expiry": "2026-09-11", "underlying": "NVDA"}}, {"fund": "NVDY", "ticker": "NVDA  260911C00240000", "name": "NVDA US 09/11/26 C240", "sector": "", "weightDelta": -0.012, "activeWeightDelta": 0.0001, "sharesDelta": 0.0, "currentWeight": 0.0075, "previousWeight": 0.0195, "currentShares": 15000.0, "previousShares": 15000.0, "type": "CHANGED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 240.0, "expiry": "2026-09-11", "underlying": "NVDA"}}, {"fund": "KQQQ", "ticker": "2NVDA 260918C00210000", "name": "NVDA 09/18/2026 210 C", "sector": "", "weightDelta": -0.0497, "activeWeightDelta": -0.0, "sharesDelta": 0.0, "currentWeight": 0.3564, "previousWeight": 0.4062, "currentShares": 307.0, "previousShares": 307.0, "type": "CHANGED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 210.0, "expiry": "2026-09-18", "underlying": "NVDA"}}, {"fund": "KQQQ", "ticker": "2NVDA 260918P00210000", "name": "NVDA 09/18/2026 210 P", "sector": "", "weightDelta": 0.0001, "activeWeightDelta": 0.0, "sharesDelta": 0.0, "currentWeight": -0.0223, "previousWeight": -0.0224, "currentShares": -307.0, "previousShares": -307.0, "type": "CHANGED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Put", "strike": 210.0, "expiry": "2026-09-18", "underlying": "NVDA"}}, {"fund": "KQQQ", "ticker": "NVDA  260918C00250000", "name": "NVDA US 09/18/26 C250", "sector": "", "weightDelta": 0.0017, "activeWeightDelta": 0.0, "sharesDelta": 0.0, "currentWeight": -0.0036, "previousWeight": -0.0053, "currentShares": -245.0, "previousShares": -245.0, "type": "CHANGED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 250.0, "expiry": "2026-09-18", "underlying": "NVDA"}}, {"fund": "BLOX", "ticker": "NVDA  260911P00227500", "name": "NVDA US 09/11/26 P227.5", "sector": "", "weightDelta": 0.0226, "activeWeightDelta": 0.0, "sharesDelta": -3.0, "currentWeight": 0.1126, "previousWeight": 0.0899, "currentShares": 701.0, "previousShares": 704.0, "type": "CHANGED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Put", "strike": 227.5, "expiry": "2026-09-11", "underlying": "NVDA"}}, {"fund": "BLOX", "ticker": "NVDA  260911P00232500", "name": "NVDA US 09/11/26 P232.5", "sector": "", "weightDelta": -0.0394, "activeWeightDelta": -0.0, "sharesDelta": 3.0, "currentWeight": -0.2103, "previousWeight": -0.1709, "currentShares": -701.0, "previousShares": -704.0, "type": "CHANGED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Put", "strike": 232.5, "expiry": "2026-09-11", "underlying": "NVDA"}}, {"fund": "ULTY", "ticker": "NVDA  260911P00217500", "name": "NVDA US 09/11/26 P217.5", "sector": "", "weightDelta": -0.0005, "activeWeightDelta": 0.0, "sharesDelta": 0.0, "currentWeight": 0.0125, "previousWeight": 0.0131, "currentShares": 1524.0, "previousShares": 1524.0, "type": "CHANGED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Put", "strike": 217.5, "expiry": "2026-09-11", "underlying": "NVDA"}}, {"fund": "ULTY", "ticker": "NVDA  260911P00225000", "name": "NVDA US 09/11/26 P225", "sector": "", "weightDelta": -0.0058, "activeWeightDelta": -0.0, "sharesDelta": 0.0, "currentWeight": -0.0337, "previousWeight": -0.0279, "currentShares": -762.0, "previousShares": -762.0, "type": "CHANGED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Put", "strike": 225.0, "expiry": "2026-09-11", "underlying": "NVDA"}}, {"fund": "CHPY", "ticker": "NVDA  260911C00240000", "name": "NVDA US 09/11/26 C240", "sector": "", "weightDelta": -0.0035, "activeWeightDelta": -0.0, "sharesDelta": -38.0, "currentWeight": 0.002, "previousWeight": 0.0055, "currentShares": 3449.0, "previousShares": 3487.0, "type": "CHANGED", "isOption": true, "fundCategory": "option-income", "optionDetails": {"type": "Call", "strike": 240.0, "expiry": "2026-09-11", "underlying": "NVDA"}}, {"fund": "ARKQ", "ticker": "NVDA", "name": "NVIDIA CORP", "sector": "INFORMATION TECHNOLOGY", "weightDelta": 0.0299, "activeWeightDelta": 0.0, "sharesDelta": 1370.0, "currentWeight": 5.018, "previousWeight": 4.9881, "currentShares": 428976.0, "previousShares": 427606.0, "type": "CHANGED", "isOption": false, "fundCategory": "active-equity"}, {"fund": "BLOK", "ticker": "NVDA", "name": "NVIDIA Corp", "sector": "INFORMATION TECHNOLOGY", "weightDelta": 0.0182, "activeWeightDelta": -0.0, "sharesDelta": 0.0, "currentWeight": 1.8369, "previousWeight": 1.8187, "currentShares": 92533.0, "previousShares": 92533.0, "type": "CHANGED", "isOption": false, "fundCategory": "active-equity"}, {"fund": "ETHO", "ticker": "NVDA", "name": "NVIDIA Corp", "sector": "INFORMATION TECHNOLOGY", "weightDelta": -0.0006, "activeWeightDelta": 0.0, "sharesDelta": 0.0, "currentWeight": 0.3786, "previousWeight": 0.3792, "currentShares": 3237.0, "previousShares": 3237.0, "type": "CHANGED", "isOption": false, "fundCategory": "active-equity"}, {"fund": "CGGO", "ticker": "NVDA", "name": "NVIDIA CORP COMMON STOCK USD.001", "sector": "INFORMATION TECHNOLOGY", "weightDelta": -0.0028, "activeWeightDelta": 0.0, "sharesDelta": 0.0, "currentWeight": 0.9405, "previousWeight": 0.9432, "currentShares": 504883.0, "previousShares": 504883.0, "type": "CHANGED", "isOption": false, "fundCategory": "active-equity"}]}, "signal": {"direction": "buying", "ticker": "NVDA", "name": "NVIDIA Corp", "sector": "INFORMATION TECHNOLOGY", "weightDelta": 0.2858, "funds": ["AVLV", "CMAG", "DIVO"], "providers": ["Amplify", "Avantis", "Corgi Funds"], "conviction": 12.801, "fundDetails": [{"fund": "AVLV", "weightDelta": 0.2165, "rawWeightDelta": 0.2164, "activeWeightDelta": 0.2165, "sharesDelta": 213744.0, "currentWeight": 0.2365, "type": "CHANGED", "aum": 22.002750655140026}, {"fund": "CMAG", "weightDelta": 0.0479, "rawWeightDelta": -0.0076, "activeWeightDelta": 0.0479, "sharesDelta": -715.0, "currentWeight": 11.2692, "type": "CHANGED", "aum": 0.00208367824}, {"fund": "DIVO", "weightDelta": 0.0214, "rawWeightDelta": -0.0044, "activeWeightDelta": 0.0214, "sharesDelta": 3376.0, "currentWeight": 3.9604, "type": "CHANGED", "aum": 7.85561615}], "fundCount": 3, "providerCount": 3, "totalWeightDelta": 0.2858, "rawWeightDelta": 0.2044, "avgWeightDelta": 0.0953, "convictionScore": 8.5341, "streak": 3}}, "sec_insights": {"operations": "NVIDIA Corporation // Technology [Semiconductors]. Mkt Cap: $5360.63B. Rev Growth: 105.9%. PM: 63.7%.", "forward_looking": "Beta: 2.22. Range(52W): 163.9 - 236.0. Analyst Tgt: 327.18."}, "ai_analysis": "<span class='text-neon-blue font-bold'>AI.SYNTHESIS // </span><br>Asset demonstrates a <span class='text-neon-green'>STRONG</span> technical posture (Score: 95/100) within a wider Bullish trend. Asset appears undervalued relative to growth and book value. <br><br><span class='text-gray-400 font-bold'>RISK.PROFILE // </span>Volatility within normal range. <br><br><span class='text-neon-amber font-bold'>VERDICT // </span>ACCUMULATE on dips"};
+
+        try {
+            const chartData = [{"time": "2026-03-11", "open": 185.49, "high": 187.19, "low": 184.03, "close": 185.61}, {"time": "2026-03-12", "open": 183.63, "high": 184.52, "low": 181.34, "close": 182.72}, {"time": "2026-03-13", "open": 184.5, "high": 185.67, "low": 179.53, "close": 179.84}, {"time": "2026-03-16", "open": 182.55, "high": 188.45, "low": 181.0, "close": 182.8}, {"time": "2026-03-17", "open": 184.64, "high": 184.98, "low": 181.27, "close": 181.52}, {"time": "2026-03-18", "open": 182.06, "high": 182.96, "low": 179.92, "close": 179.99}, {"time": "2026-03-19", "open": 177.6, "high": 179.57, "low": 175.39, "close": 178.15}, {"time": "2026-03-20", "open": 177.59, "high": 177.85, "low": 171.33, "close": 172.31}, {"time": "2026-03-23", "open": 176.86, "high": 177.96, "low": 174.36, "close": 175.24}, {"time": "2026-03-24", "open": 174.43, "high": 175.82, "low": 173.58, "close": 174.8}, {"time": "2026-03-25", "open": 176.7, "high": 180.81, "low": 176.45, "close": 178.27}, {"time": "2026-03-26", "open": 175.67, "high": 176.11, "low": 170.75, "close": 170.85}, {"time": "2026-03-27", "open": 169.61, "high": 170.58, "low": 166.63, "close": 167.14}, {"time": "2026-03-30", "open": 168.4, "high": 169.06, "low": 163.9, "close": 164.79}, {"time": "2026-03-31", "open": 166.59, "high": 174.22, "low": 166.58, "close": 174.0}, {"time": "2026-04-01", "open": 175.6, "high": 176.97, "low": 174.35, "close": 175.35}, {"time": "2026-04-02", "open": 171.79, "high": 177.09, "low": 170.98, "close": 176.99}, {"time": "2026-04-06", "open": 176.76, "high": 177.38, "low": 175.36, "close": 177.23}, {"time": "2026-04-07", "open": 175.33, "high": 177.82, "low": 173.26, "close": 177.69}, {"time": "2026-04-08", "open": 184.08, "high": 184.84, "low": 179.89, "close": 181.66}, {"time": "2026-04-09", "open": 181.43, "high": 183.66, "low": 180.21, "close": 183.49}, {"time": "2026-04-10", "open": 183.89, "high": 189.57, "low": 183.88, "close": 188.2}, {"time": "2026-04-13", "open": 185.61, "high": 189.23, "low": 185.32, "close": 188.88}, {"time": "2026-04-14", "open": 190.4, "high": 196.06, "low": 190.33, "close": 196.06}, {"time": "2026-04-15", "open": 196.09, "high": 199.94, "low": 195.29, "close": 198.42}, {"time": "2026-04-16", "open": 196.98, "high": 199.39, "low": 195.36, "close": 197.9}, {"time": "2026-04-17", "open": 199.44, "high": 201.24, "low": 198.82, "close": 201.22}, {"time": "2026-04-20", "open": 199.52, "high": 201.71, "low": 197.39, "close": 201.6}, {"time": "2026-04-21", "open": 201.67, "high": 202.29, "low": 198.55, "close": 199.42}, {"time": "2026-04-22", "open": 200.53, "high": 202.04, "low": 198.55, "close": 202.04}, {"time": "2026-04-23", "open": 202.0, "high": 203.37, "low": 196.77, "close": 199.18}, {"time": "2026-04-24", "open": 199.5, "high": 210.47, "low": 199.35, "close": 207.8}, {"time": "2026-04-27", "open": 209.17, "high": 216.34, "low": 206.91, "close": 216.12}, {"time": "2026-04-28", "open": 209.01, "high": 214.24, "low": 207.73, "close": 212.68}, {"time": "2026-04-29", "open": 212.21, "high": 212.23, "low": 207.11, "close": 208.77}, {"time": "2026-04-30", "open": 209.45, "high": 209.82, "low": 198.25, "close": 199.11}, {"time": "2026-05-01", "open": 200.82, "high": 202.54, "low": 196.67, "close": 198.0}, {"time": "2026-05-04", "open": 199.05, "high": 201.27, "low": 194.3, "close": 198.03}, {"time": "2026-05-05", "open": 198.85, "high": 199.78, "low": 195.58, "close": 196.05}, {"time": "2026-05-06", "open": 199.43, "high": 207.8, "low": 198.16, "close": 207.36}, {"time": "2026-05-07", "open": 207.86, "high": 213.71, "low": 206.03, "close": 211.02}, {"time": "2026-05-08", "open": 212.54, "high": 217.3, "low": 212.4, "close": 214.71}, {"time": "2026-05-11", "open": 213.55, "high": 221.79, "low": 213.4, "close": 218.94}, {"time": "2026-05-12", "open": 218.05, "high": 223.24, "low": 214.43, "close": 220.28}, {"time": "2026-05-13", "open": 224.42, "high": 227.32, "low": 221.06, "close": 225.31}, {"time": "2026-05-14", "open": 229.33, "high": 236.0, "low": 228.78, "close": 235.2}, {"time": "2026-05-15", "open": 229.24, "high": 230.97, "low": 223.73, "close": 224.81}, {"time": "2026-05-18", "open": 229.35, "high": 229.48, "low": 217.87, "close": 221.81}, {"time": "2026-05-19", "open": 219.12, "high": 223.97, "low": 217.41, "close": 220.11}, {"time": "2026-05-20", "open": 222.67, "high": 225.61, "low": 220.0, "close": 222.96}, {"time": "2026-05-21", "open": 221.78, "high": 226.88, "low": 217.43, "close": 219.01}, {"time": "2026-05-22", "open": 220.4, "high": 220.51, "low": 214.31, "close": 214.84}, {"time": "2026-05-26", "open": 216.05, "high": 217.68, "low": 211.52, "close": 214.37}, {"time": "2026-05-27", "open": 213.63, "high": 213.66, "low": 208.3, "close": 212.12}, {"time": "2026-05-28", "open": 210.8, "high": 215.03, "low": 210.74, "close": 213.76}, {"time": "2026-05-29", "open": 214.09, "high": 217.36, "low": 210.65, "close": 210.66}, {"time": "2026-06-01", "open": 215.24, "high": 224.36, "low": 215.21, "close": 223.85}, {"time": "2026-06-02", "open": 226.66, "high": 231.75, "low": 220.85, "close": 222.31}, {"time": "2026-06-03", "open": 221.21, "high": 222.31, "low": 214.02, "close": 214.26}, {"time": "2026-06-04", "open": 213.67, "high": 221.35, "low": 210.73, "close": 218.42}, {"time": "2026-06-05", "open": 214.29, "high": 214.63, "low": 204.1, "close": 204.87}, {"time": "2026-06-08", "open": 209.95, "high": 210.23, "low": 205.77, "close": 208.41}, {"time": "2026-06-09", "open": 210.38, "high": 211.16, "low": 199.12, "close": 207.96}, {"time": "2026-06-10", "open": 204.2, "high": 206.99, "low": 199.7, "close": 200.2}, {"time": "2026-06-11", "open": 201.26, "high": 205.43, "low": 199.32, "close": 204.64}, {"time": "2026-06-12", "open": 204.63, "high": 206.84, "low": 203.21, "close": 204.96}, {"time": "2026-06-15", "open": 208.69, "high": 212.47, "low": 208.11, "close": 212.21}, {"time": "2026-06-16", "open": 210.94, "high": 211.25, "low": 207.06, "close": 207.18}, {"time": "2026-06-17", "open": 208.3, "high": 208.98, "low": 202.85, "close": 204.42}, {"time": "2026-06-18", "open": 207.1, "high": 211.15, "low": 206.27, "close": 210.45}, {"time": "2026-06-22", "open": 211.2, "high": 213.75, "low": 207.49, "close": 208.42}, {"time": "2026-06-23", "open": 201.94, "high": 203.54, "low": 199.78, "close": 199.82}, {"time": "2026-06-24", "open": 199.9, "high": 201.44, "low": 196.36, "close": 198.78}, {"time": "2026-06-25", "open": 199.86, "high": 200.58, "low": 191.92, "close": 195.52}, {"time": "2026-06-26", "open": 192.9, "high": 195.33, "low": 191.01, "close": 192.31}, {"time": "2026-06-29", "open": 193.63, "high": 195.96, "low": 189.59, "close": 194.75}, {"time": "2026-06-30", "open": 197.02, "high": 200.41, "low": 194.89, "close": 199.87}, {"time": "2026-07-01", "open": 195.98, "high": 199.63, "low": 193.23, "close": 197.36}, {"time": "2026-07-02", "open": 196.92, "high": 199.84, "low": 192.14, "close": 194.61}, {"time": "2026-07-06", "open": 194.2, "high": 197.33, "low": 193.77, "close": 195.33}, {"time": "2026-07-07", "open": 192.15, "high": 198.19, "low": 190.93, "close": 196.71}, {"time": "2026-07-08", "open": 194.96, "high": 204.93, "low": 194.84, "close": 203.89}, {"time": "2026-07-09", "open": 204.23, "high": 204.36, "low": 198.74, "close": 202.55}, {"time": "2026-07-10", "open": 201.77, "high": 210.76, "low": 201.69, "close": 210.72}, {"time": "2026-07-13", "open": 208.31, "high": 210.33, "low": 202.77, "close": 203.3}, {"time": "2026-07-14", "open": 207.97, "high": 212.31, "low": 203.57, "close": 211.56}, {"time": "2026-07-15", "open": 211.72, "high": 213.57, "low": 205.81, "close": 212.26}, {"time": "2026-07-16", "open": 209.94, "high": 210.84, "low": 205.62, "close": 207.17}, {"time": "2026-07-17", "open": 202.41, "high": 206.42, "low": 197.75, "close": 202.58}, {"time": "2026-07-20", "open": 205.64, "high": 207.51, "low": 202.05, "close": 203.05}, {"time": "2026-07-21", "open": 207.31, "high": 208.42, "low": 203.78, "close": 207.06}, {"time": "2026-07-22", "open": 205.58, "high": 214.15, "low": 204.72, "close": 211.82}, {"time": "2026-07-23", "open": 209.23, "high": 210.63, "low": 205.73, "close": 208.53}, {"time": "2026-07-24", "open": 207.22, "high": 211.67, "low": 204.58, "close": 206.61}, {"time": "2026-07-27", "open": 207.97, "high": 208.52, "low": 195.22, "close": 196.29}, {"time": "2026-07-28", "open": 194.78, "high": 198.48, "low": 192.52, "close": 196.79}, {"time": "2026-07-29", "open": 195.63, "high": 196.85, "low": 189.8, "close": 189.8}, {"time": "2026-07-30", "open": 193.23, "high": 197.03, "low": 191.31, "close": 194.82}, {"time": "2026-07-31", "open": 198.22, "high": 201.77, "low": 194.73, "close": 200.53}, {"time": "2026-08-03", "open": 197.47, "high": 208.51, "low": 196.63, "close": 206.41}, {"time": "2026-08-04", "open": 211.06, "high": 212.82, "low": 208.82, "close": 211.7}, {"time": "2026-08-05", "open": 216.62, "high": 221.97, "low": 216.16, "close": 218.97}, {"time": "2026-08-06", "open": 221.28, "high": 223.38, "low": 216.76, "close": 218.75}, {"time": "2026-08-07", "open": 221.29, "high": 224.51, "low": 220.41, "close": 223.71}, {"time": "2026-08-10", "open": 223.15, "high": 223.89, "low": 216.53, "close": 217.31}, {"time": "2026-08-11", "open": 221.92, "high": 221.95, "low": 215.96, "close": 217.26}, {"time": "2026-08-12", "open": 220.79, "high": 224.85, "low": 219.95, "close": 223.84}, {"time": "2026-08-13", "open": 224.81, "high": 226.98, "low": 223.46, "close": 225.05}, {"time": "2026-08-14", "open": 226.52, "high": 227.24, "low": 224.25, "close": 224.91}, {"time": "2026-08-17", "open": 225.73, "high": 227.67, "low": 224.61, "close": 224.76}, {"time": "2026-08-18", "open": 220.2, "high": 221.39, "low": 218.45, "close": 219.49}, {"time": "2026-08-19", "open": 221.42, "high": 222.62, "low": 216.52, "close": 217.32}, {"time": "2026-08-20", "open": 218.12, "high": 219.61, "low": 215.42, "close": 216.61}, {"time": "2026-08-21", "open": 218.18, "high": 218.5, "low": 214.26, "close": 214.48}, {"time": "2026-08-24", "open": 215.29, "high": 215.35, "low": 207.02, "close": 208.25}, {"time": "2026-08-25", "open": 210.79, "high": 214.49, "low": 209.88, "close": 212.81}, {"time": "2026-08-26", "open": 212.4, "high": 213.36, "low": 209.0, "close": 209.43}, {"time": "2026-08-27", "open": 222.61, "high": 230.21, "low": 220.65, "close": 227.73}, {"time": "2026-08-28", "open": 227.11, "high": 229.0, "low": 216.57, "close": 217.31}, {"time": "2026-08-31", "open": 218.63, "high": 221.05, "low": 215.97, "close": 220.53}, {"time": "2026-09-01", "open": 216.51, "high": 220.16, "low": 214.86, "close": 217.2}, {"time": "2026-09-02", "open": 218.55, "high": 227.7, "low": 218.24, "close": 224.16}, {"time": "2026-09-03", "open": 225.77, "high": 230.14, "low": 224.5, "close": 228.19}, {"time": "2026-09-04", "open": 230.83, "high": 234.5, "low": 229.37, "close": 230.1}, {"time": "2026-09-08", "open": 232.85, "high": 233.45, "low": 224.6, "close": 225.48}, {"time": "2026-09-09", "open": 225.03, "high": 225.93, "low": 223.21, "close": 223.42}, {"time": "2026-09-10", "open": 220.53, "high": 220.99, "low": 217.2, "close": 218.36}, {"time": "2026-09-11", "open": 221.25, "high": 222.0, "low": 219.03, "close": 222.0}];
+        const emaData = {"8": [{"time": "2026-03-11", "value": 185.61}, {"time": "2026-03-12", "value": 184.96}, {"time": "2026-03-13", "value": 183.83}, {"time": "2026-03-16", "value": 183.6}, {"time": "2026-03-17", "value": 183.14}, {"time": "2026-03-18", "value": 182.44}, {"time": "2026-03-19", "value": 181.48}, {"time": "2026-03-20", "value": 179.44}, {"time": "2026-03-23", "value": 178.51}, {"time": "2026-03-24", "value": 177.69}, {"time": "2026-03-25", "value": 177.82}, {"time": "2026-03-26", "value": 176.27}, {"time": "2026-03-27", "value": 174.24}, {"time": "2026-03-30", "value": 172.14}, {"time": "2026-03-31", "value": 172.55}, {"time": "2026-04-01", "value": 173.18}, {"time": "2026-04-02", "value": 174.02}, {"time": "2026-04-06", "value": 174.74}, {"time": "2026-04-07", "value": 175.39}, {"time": "2026-04-08", "value": 176.79}, {"time": "2026-04-09", "value": 178.28}, {"time": "2026-04-10", "value": 180.48}, {"time": "2026-04-13", "value": 182.35}, {"time": "2026-04-14", "value": 185.4}, {"time": "2026-04-15", "value": 188.29}, {"time": "2026-04-16", "value": 190.42}, {"time": "2026-04-17", "value": 192.82}, {"time": "2026-04-20", "value": 194.77}, {"time": "2026-04-21", "value": 195.81}, {"time": "2026-04-22", "value": 197.19}, {"time": "2026-04-23", "value": 197.63}, {"time": "2026-04-24", "value": 199.89}, {"time": "2026-04-27", "value": 203.5}, {"time": "2026-04-28", "value": 205.54}, {"time": "2026-04-29", "value": 206.26}, {"time": "2026-04-30", "value": 204.67}, {"time": "2026-05-01", "value": 203.19}, {"time": "2026-05-04", "value": 202.04}, {"time": "2026-05-05", "value": 200.71}, {"time": "2026-05-06", "value": 202.19}, {"time": "2026-05-07", "value": 204.15}, {"time": "2026-05-08", "value": 206.5}, {"time": "2026-05-11", "value": 209.26}, {"time": "2026-05-12", "value": 211.71}, {"time": "2026-05-13", "value": 214.73}, {"time": "2026-05-14", "value": 219.28}, {"time": "2026-05-15", "value": 220.51}, {"time": "2026-05-18", "value": 220.8}, {"time": "2026-05-19", "value": 220.65}, {"time": "2026-05-20", "value": 221.16}, {"time": "2026-05-21", "value": 220.68}, {"time": "2026-05-22", "value": 219.38}, {"time": "2026-05-26", "value": 218.27}, {"time": "2026-05-27", "value": 216.9}, {"time": "2026-05-28", "value": 216.2}, {"time": "2026-05-29", "value": 214.97}, {"time": "2026-06-01", "value": 216.94}, {"time": "2026-06-02", "value": 218.14}, {"time": "2026-06-03", "value": 217.28}, {"time": "2026-06-04", "value": 217.53}, {"time": "2026-06-05", "value": 214.72}, {"time": "2026-06-08", "value": 213.31}, {"time": "2026-06-09", "value": 212.12}, {"time": "2026-06-10", "value": 209.47}, {"time": "2026-06-11", "value": 208.4}, {"time": "2026-06-12", "value": 207.64}, {"time": "2026-06-15", "value": 208.65}, {"time": "2026-06-16", "value": 208.32}, {"time": "2026-06-17", "value": 207.46}, {"time": "2026-06-18", "value": 208.12}, {"time": "2026-06-22", "value": 208.19}, {"time": "2026-06-23", "value": 206.33}, {"time": "2026-06-24", "value": 204.65}, {"time": "2026-06-25", "value": 202.62}, {"time": "2026-06-26", "value": 200.33}, {"time": "2026-06-29", "value": 199.09}, {"time": "2026-06-30", "value": 199.26}, {"time": "2026-07-01", "value": 198.84}, {"time": "2026-07-02", "value": 197.9}, {"time": "2026-07-06", "value": 197.33}, {"time": "2026-07-07", "value": 197.19}, {"time": "2026-07-08", "value": 198.68}, {"time": "2026-07-09", "value": 199.54}, {"time": "2026-07-10", "value": 202.03}, {"time": "2026-07-13", "value": 202.31}, {"time": "2026-07-14", "value": 204.37}, {"time": "2026-07-15", "value": 206.12}, {"time": "2026-07-16", "value": 206.35}, {"time": "2026-07-17", "value": 205.52}, {"time": "2026-07-20", "value": 204.97}, {"time": "2026-07-21", "value": 205.43}, {"time": "2026-07-22", "value": 206.85}, {"time": "2026-07-23", "value": 207.22}, {"time": "2026-07-24", "value": 207.09}, {"time": "2026-07-27", "value": 204.69}, {"time": "2026-07-28", "value": 202.93}, {"time": "2026-07-29", "value": 200.01}, {"time": "2026-07-30", "value": 198.86}, {"time": "2026-07-31", "value": 199.23}, {"time": "2026-08-03", "value": 200.83}, {"time": "2026-08-04", "value": 203.24}, {"time": "2026-08-05", "value": 206.74}, {"time": "2026-08-06", "value": 209.41}, {"time": "2026-08-07", "value": 212.59}, {"time": "2026-08-10", "value": 213.63}, {"time": "2026-08-11", "value": 214.44}, {"time": "2026-08-12", "value": 216.53}, {"time": "2026-08-13", "value": 218.42}, {"time": "2026-08-14", "value": 219.86}, {"time": "2026-08-17", "value": 220.95}, {"time": "2026-08-18", "value": 220.63}, {"time": "2026-08-19", "value": 219.89}, {"time": "2026-08-20", "value": 219.16}, {"time": "2026-08-21", "value": 218.12}, {"time": "2026-08-24", "value": 215.93}, {"time": "2026-08-25", "value": 215.23}, {"time": "2026-08-26", "value": 213.94}, {"time": "2026-08-27", "value": 217.01}, {"time": "2026-08-28", "value": 217.07}, {"time": "2026-08-31", "value": 217.84}, {"time": "2026-09-01", "value": 217.7}, {"time": "2026-09-02", "value": 219.13}, {"time": "2026-09-03", "value": 221.15}, {"time": "2026-09-04", "value": 223.14}, {"time": "2026-09-08", "value": 223.66}, {"time": "2026-09-09", "value": 223.6}, {"time": "2026-09-10", "value": 222.44}, {"time": "2026-09-11", "value": 222.34}], "21": [{"time": "2026-03-11", "value": 185.61}, {"time": "2026-03-12", "value": 185.34}, {"time": "2026-03-13", "value": 184.84}, {"time": "2026-03-16", "value": 184.66}, {"time": "2026-03-17", "value": 184.37}, {"time": "2026-03-18", "value": 183.97}, {"time": "2026-03-19", "value": 183.44}, {"time": "2026-03-20", "value": 182.43}, {"time": "2026-03-23", "value": 181.78}, {"time": "2026-03-24", "value": 181.14}, {"time": "2026-03-25", "value": 180.88}, {"time": "2026-03-26", "value": 179.97}, {"time": "2026-03-27", "value": 178.8}, {"time": "2026-03-30", "value": 177.53}, {"time": "2026-03-31", "value": 177.21}, {"time": "2026-04-01", "value": 177.04}, {"time": "2026-04-02", "value": 177.04}, {"time": "2026-04-06", "value": 177.05}, {"time": "2026-04-07", "value": 177.11}, {"time": "2026-04-08", "value": 177.53}, {"time": "2026-04-09", "value": 178.07}, {"time": "2026-04-10", "value": 178.99}, {"time": "2026-04-13", "value": 179.89}, {"time": "2026-04-14", "value": 181.36}, {"time": "2026-04-15", "value": 182.91}, {"time": "2026-04-16", "value": 184.27}, {"time": "2026-04-17", "value": 185.81}, {"time": "2026-04-20", "value": 187.25}, {"time": "2026-04-21", "value": 188.35}, {"time": "2026-04-22", "value": 189.6}, {"time": "2026-04-23", "value": 190.47}, {"time": "2026-04-24", "value": 192.05}, {"time": "2026-04-27", "value": 194.23}, {"time": "2026-04-28", "value": 195.91}, {"time": "2026-04-29", "value": 197.08}, {"time": "2026-04-30", "value": 197.26}, {"time": "2026-05-01", "value": 197.33}, {"time": "2026-05-04", "value": 197.39}, {"time": "2026-05-05", "value": 197.27}, {"time": "2026-05-06", "value": 198.19}, {"time": "2026-05-07", "value": 199.36}, {"time": "2026-05-08", "value": 200.75}, {"time": "2026-05-11", "value": 202.4}, {"time": "2026-05-12", "value": 204.03}, {"time": "2026-05-13", "value": 205.96}, {"time": "2026-05-14", "value": 208.62}, {"time": "2026-05-15", "value": 210.09}, {"time": "2026-05-18", "value": 211.16}, {"time": "2026-05-19", "value": 211.97}, {"time": "2026-05-20", "value": 212.97}, {"time": "2026-05-21", "value": 213.52}, {"time": "2026-05-22", "value": 213.64}, {"time": "2026-05-26", "value": 213.71}, {"time": "2026-05-27", "value": 213.56}, {"time": "2026-05-28", "value": 213.58}, {"time": "2026-05-29", "value": 213.31}, {"time": "2026-06-01", "value": 214.27}, {"time": "2026-06-02", "value": 215.0}, {"time": "2026-06-03", "value": 214.94}, {"time": "2026-06-04", "value": 215.25}, {"time": "2026-06-05", "value": 214.31}, {"time": "2026-06-08", "value": 213.77}, {"time": "2026-06-09", "value": 213.24}, {"time": "2026-06-10", "value": 212.06}, {"time": "2026-06-11", "value": 211.38}, {"time": "2026-06-12", "value": 210.8}, {"time": "2026-06-15", "value": 210.93}, {"time": "2026-06-16", "value": 210.59}, {"time": "2026-06-17", "value": 210.03}, {"time": "2026-06-18", "value": 210.07}, {"time": "2026-06-22", "value": 209.92}, {"time": "2026-06-23", "value": 209.0}, {"time": "2026-06-24", "value": 208.07}, {"time": "2026-06-25", "value": 206.93}, {"time": "2026-06-26", "value": 205.6}, {"time": "2026-06-29", "value": 204.61}, {"time": "2026-06-30", "value": 204.18}, {"time": "2026-07-01", "value": 203.56}, {"time": "2026-07-02", "value": 202.75}, {"time": "2026-07-06", "value": 202.07}, {"time": "2026-07-07", "value": 201.59}, {"time": "2026-07-08", "value": 201.8}, {"time": "2026-07-09", "value": 201.86}, {"time": "2026-07-10", "value": 202.67}, {"time": "2026-07-13", "value": 202.73}, {"time": "2026-07-14", "value": 203.53}, {"time": "2026-07-15", "value": 204.32}, {"time": "2026-07-16", "value": 204.58}, {"time": "2026-07-17", "value": 204.4}, {"time": "2026-07-20", "value": 204.28}, {"time": "2026-07-21", "value": 204.53}, {"time": "2026-07-22", "value": 205.19}, {"time": "2026-07-23", "value": 205.5}, {"time": "2026-07-24", "value": 205.6}, {"time": "2026-07-27", "value": 204.75}, {"time": "2026-07-28", "value": 204.03}, {"time": "2026-07-29", "value": 202.73}, {"time": "2026-07-30", "value": 202.02}, {"time": "2026-07-31", "value": 201.88}, {"time": "2026-08-03", "value": 202.29}, {"time": "2026-08-04", "value": 203.15}, {"time": "2026-08-05", "value": 204.59}, {"time": "2026-08-06", "value": 205.87}, {"time": "2026-08-07", "value": 207.49}, {"time": "2026-08-10", "value": 208.39}, {"time": "2026-08-11", "value": 209.19}, {"time": "2026-08-12", "value": 210.52}, {"time": "2026-08-13", "value": 211.84}, {"time": "2026-08-14", "value": 213.03}, {"time": "2026-08-17", "value": 214.1}, {"time": "2026-08-18", "value": 214.59}, {"time": "2026-08-19", "value": 214.84}, {"time": "2026-08-20", "value": 215.0}, {"time": "2026-08-21", "value": 214.95}, {"time": "2026-08-24", "value": 214.34}, {"time": "2026-08-25", "value": 214.2}, {"time": "2026-08-26", "value": 213.77}, {"time": "2026-08-27", "value": 215.04}, {"time": "2026-08-28", "value": 215.24}, {"time": "2026-08-31", "value": 215.72}, {"time": "2026-09-01", "value": 215.86}, {"time": "2026-09-02", "value": 216.61}, {"time": "2026-09-03", "value": 217.67}, {"time": "2026-09-04", "value": 218.8}, {"time": "2026-09-08", "value": 219.4}, {"time": "2026-09-09", "value": 219.77}, {"time": "2026-09-10", "value": 219.64}, {"time": "2026-09-11", "value": 219.86}], "34": [{"time": "2026-03-11", "value": 185.61}, {"time": "2026-03-12", "value": 185.44}, {"time": "2026-03-13", "value": 185.12}, {"time": "2026-03-16", "value": 184.99}, {"time": "2026-03-17", "value": 184.79}, {"time": "2026-03-18", "value": 184.52}, {"time": "2026-03-19", "value": 184.15}, {"time": "2026-03-20", "value": 183.48}, {"time": "2026-03-23", "value": 183.0}, {"time": "2026-03-24", "value": 182.54}, {"time": "2026-03-25", "value": 182.29}, {"time": "2026-03-26", "value": 181.64}, {"time": "2026-03-27", "value": 180.81}, {"time": "2026-03-30", "value": 179.89}, {"time": "2026-03-31", "value": 179.56}, {"time": "2026-04-01", "value": 179.32}, {"time": "2026-04-02", "value": 179.18}, {"time": "2026-04-06", "value": 179.07}, {"time": "2026-04-07", "value": 178.99}, {"time": "2026-04-08", "value": 179.15}, {"time": "2026-04-09", "value": 179.39}, {"time": "2026-04-10", "value": 179.9}, {"time": "2026-04-13", "value": 180.41}, {"time": "2026-04-14", "value": 181.31}, {"time": "2026-04-15", "value": 182.28}, {"time": "2026-04-16", "value": 183.18}, {"time": "2026-04-17", "value": 184.21}, {"time": "2026-04-20", "value": 185.2}, {"time": "2026-04-21", "value": 186.01}, {"time": "2026-04-22", "value": 186.93}, {"time": "2026-04-23", "value": 187.63}, {"time": "2026-04-24", "value": 188.78}, {"time": "2026-04-27", "value": 190.34}, {"time": "2026-04-28", "value": 191.62}, {"time": "2026-04-29", "value": 192.6}, {"time": "2026-04-30", "value": 192.97}, {"time": "2026-05-01", "value": 193.26}, {"time": "2026-05-04", "value": 193.53}, {"time": "2026-05-05", "value": 193.68}, {"time": "2026-05-06", "value": 194.46}, {"time": "2026-05-07", "value": 195.4}, {"time": "2026-05-08", "value": 196.51}, {"time": "2026-05-11", "value": 197.79}, {"time": "2026-05-12", "value": 199.07}, {"time": "2026-05-13", "value": 200.57}, {"time": "2026-05-14", "value": 202.55}, {"time": "2026-05-15", "value": 203.82}, {"time": "2026-05-18", "value": 204.85}, {"time": "2026-05-19", "value": 205.72}, {"time": "2026-05-20", "value": 206.71}, {"time": "2026-05-21", "value": 207.41}, {"time": "2026-05-22", "value": 207.84}, {"time": "2026-05-26", "value": 208.21}, {"time": "2026-05-27", "value": 208.43}, {"time": "2026-05-28", "value": 208.74}, {"time": "2026-05-29", "value": 208.85}, {"time": "2026-06-01", "value": 209.7}, {"time": "2026-06-02", "value": 210.42}, {"time": "2026-06-03", "value": 210.64}, {"time": "2026-06-04", "value": 211.09}, {"time": "2026-06-05", "value": 210.73}, {"time": "2026-06-08", "value": 210.6}, {"time": "2026-06-09", "value": 210.45}, {"time": "2026-06-10", "value": 209.86}, {"time": "2026-06-11", "value": 209.56}, {"time": "2026-06-12", "value": 209.3}, {"time": "2026-06-15", "value": 209.47}, {"time": "2026-06-16", "value": 209.34}, {"time": "2026-06-17", "value": 209.06}, {"time": "2026-06-18", "value": 209.14}, {"time": "2026-06-22", "value": 209.09}, {"time": "2026-06-23", "value": 208.56}, {"time": "2026-06-24", "value": 208.01}, {"time": "2026-06-25", "value": 207.29}, {"time": "2026-06-26", "value": 206.44}, {"time": "2026-06-29", "value": 205.77}, {"time": "2026-06-30", "value": 205.43}, {"time": "2026-07-01", "value": 204.97}, {"time": "2026-07-02", "value": 204.38}, {"time": "2026-07-06", "value": 203.86}, {"time": "2026-07-07", "value": 203.45}, {"time": "2026-07-08", "value": 203.48}, {"time": "2026-07-09", "value": 203.42}, {"time": "2026-07-10", "value": 203.84}, {"time": "2026-07-13", "value": 203.81}, {"time": "2026-07-14", "value": 204.25}, {"time": "2026-07-15", "value": 204.71}, {"time": "2026-07-16", "value": 204.85}, {"time": "2026-07-17", "value": 204.72}, {"time": "2026-07-20", "value": 204.63}, {"time": "2026-07-21", "value": 204.77}, {"time": "2026-07-22", "value": 205.17}, {"time": "2026-07-23", "value": 205.36}, {"time": "2026-07-24", "value": 205.43}, {"time": "2026-07-27", "value": 204.91}, {"time": "2026-07-28", "value": 204.45}, {"time": "2026-07-29", "value": 203.61}, {"time": "2026-07-30", "value": 203.11}, {"time": "2026-07-31", "value": 202.96}, {"time": "2026-08-03", "value": 203.16}, {"time": "2026-08-04", "value": 203.64}, {"time": "2026-08-05", "value": 204.52}, {"time": "2026-08-06", "value": 205.33}, {"time": "2026-08-07", "value": 206.38}, {"time": "2026-08-10", "value": 207.01}, {"time": "2026-08-11", "value": 207.59}, {"time": "2026-08-12", "value": 208.52}, {"time": "2026-08-13", "value": 209.47}, {"time": "2026-08-14", "value": 210.35}, {"time": "2026-08-17", "value": 211.17}, {"time": "2026-08-18", "value": 211.65}, {"time": "2026-08-19", "value": 211.97}, {"time": "2026-08-20", "value": 212.24}, {"time": "2026-08-21", "value": 212.36}, {"time": "2026-08-24", "value": 212.13}, {"time": "2026-08-25", "value": 212.17}, {"time": "2026-08-26", "value": 212.01}, {"time": "2026-08-27", "value": 212.91}, {"time": "2026-08-28", "value": 213.16}, {"time": "2026-08-31", "value": 213.58}, {"time": "2026-09-01", "value": 213.79}, {"time": "2026-09-02", "value": 214.38}, {"time": "2026-09-03", "value": 215.17}, {"time": "2026-09-04", "value": 216.02}, {"time": "2026-09-08", "value": 216.56}, {"time": "2026-09-09", "value": 216.96}, {"time": "2026-09-10", "value": 217.04}, {"time": "2026-09-11", "value": 217.32}], "55": [{"time": "2026-03-11", "value": 185.61}, {"time": "2026-03-12", "value": 185.5}, {"time": "2026-03-13", "value": 185.3}, {"time": "2026-03-16", "value": 185.21}, {"time": "2026-03-17", "value": 185.08}, {"time": "2026-03-18", "value": 184.9}, {"time": "2026-03-19", "value": 184.66}, {"time": "2026-03-20", "value": 184.22}, {"time": "2026-03-23", "value": 183.89}, {"time": "2026-03-24", "value": 183.57}, {"time": "2026-03-25", "value": 183.38}, {"time": "2026-03-26", "value": 182.93}, {"time": "2026-03-27", "value": 182.37}, {"time": "2026-03-30", "value": 181.74}, {"time": "2026-03-31", "value": 181.47}, {"time": "2026-04-01", "value": 181.25}, {"time": "2026-04-02", "value": 181.09}, {"time": "2026-04-06", "value": 180.96}, {"time": "2026-04-07", "value": 180.84}, {"time": "2026-04-08", "value": 180.87}, {"time": "2026-04-09", "value": 180.96}, {"time": "2026-04-10", "value": 181.22}, {"time": "2026-04-13", "value": 181.5}, {"time": "2026-04-14", "value": 182.02}, {"time": "2026-04-15", "value": 182.6}, {"time": "2026-04-16", "value": 183.15}, {"time": "2026-04-17", "value": 183.79}, {"time": "2026-04-20", "value": 184.43}, {"time": "2026-04-21", "value": 184.96}, {"time": "2026-04-22", "value": 185.57}, {"time": "2026-04-23", "value": 186.06}, {"time": "2026-04-24", "value": 186.84}, {"time": "2026-04-27", "value": 187.88}, {"time": "2026-04-28", "value": 188.77}, {"time": "2026-04-29", "value": 189.48}, {"time": "2026-04-30", "value": 189.83}, {"time": "2026-05-01", "value": 190.12}, {"time": "2026-05-04", "value": 190.4}, {"time": "2026-05-05", "value": 190.6}, {"time": "2026-05-06", "value": 191.2}, {"time": "2026-05-07", "value": 191.91}, {"time": "2026-05-08", "value": 192.72}, {"time": "2026-05-11", "value": 193.66}, {"time": "2026-05-12", "value": 194.61}, {"time": "2026-05-13", "value": 195.71}, {"time": "2026-05-14", "value": 197.12}, {"time": "2026-05-15", "value": 198.11}, {"time": "2026-05-18", "value": 198.95}, {"time": "2026-05-19", "value": 199.71}, {"time": "2026-05-20", "value": 200.54}, {"time": "2026-05-21", "value": 201.2}, {"time": "2026-05-22", "value": 201.69}, {"time": "2026-05-26", "value": 202.14}, {"time": "2026-05-27", "value": 202.49}, {"time": "2026-05-28", "value": 202.9}, {"time": "2026-05-29", "value": 203.17}, {"time": "2026-06-01", "value": 203.91}, {"time": "2026-06-02", "value": 204.57}, {"time": "2026-06-03", "value": 204.92}, {"time": "2026-06-04", "value": 205.4}, {"time": "2026-06-05", "value": 205.38}, {"time": "2026-06-08", "value": 205.49}, {"time": "2026-06-09", "value": 205.58}, {"time": "2026-06-10", "value": 205.38}, {"time": "2026-06-11", "value": 205.36}, {"time": "2026-06-12", "value": 205.34}, {"time": "2026-06-15", "value": 205.59}, {"time": "2026-06-16", "value": 205.64}, {"time": "2026-06-17", "value": 205.6}, {"time": "2026-06-18", "value": 205.77}, {"time": "2026-06-22", "value": 205.87}, {"time": "2026-06-23", "value": 205.65}, {"time": "2026-06-24", "value": 205.41}, {"time": "2026-06-25", "value": 205.05}, {"time": "2026-06-26", "value": 204.6}, {"time": "2026-06-29", "value": 204.25}, {"time": "2026-06-30", "value": 204.09}, {"time": "2026-07-01", "value": 203.85}, {"time": "2026-07-02", "value": 203.52}, {"time": "2026-07-06", "value": 203.23}, {"time": "2026-07-07", "value": 203.0}, {"time": "2026-07-08", "value": 203.03}, {"time": "2026-07-09", "value": 203.01}, {"time": "2026-07-10", "value": 203.29}, {"time": "2026-07-13", "value": 203.29}, {"time": "2026-07-14", "value": 203.58}, {"time": "2026-07-15", "value": 203.89}, {"time": "2026-07-16", "value": 204.01}, {"time": "2026-07-17", "value": 203.96}, {"time": "2026-07-20", "value": 203.93}, {"time": "2026-07-21", "value": 204.04}, {"time": "2026-07-22", "value": 204.32}, {"time": "2026-07-23", "value": 204.47}, {"time": "2026-07-24", "value": 204.54}, {"time": "2026-07-27", "value": 204.25}, {"time": "2026-07-28", "value": 203.98}, {"time": "2026-07-29", "value": 203.48}, {"time": "2026-07-30", "value": 203.17}, {"time": "2026-07-31", "value": 203.07}, {"time": "2026-08-03", "value": 203.19}, {"time": "2026-08-04", "value": 203.49}, {"time": "2026-08-05", "value": 204.05}, {"time": "2026-08-06", "value": 204.57}, {"time": "2026-08-07", "value": 205.26}, {"time": "2026-08-10", "value": 205.69}, {"time": "2026-08-11", "value": 206.1}, {"time": "2026-08-12", "value": 206.73}, {"time": "2026-08-13", "value": 207.39}, {"time": "2026-08-14", "value": 208.01}, {"time": "2026-08-17", "value": 208.61}, {"time": "2026-08-18", "value": 209.0}, {"time": "2026-08-19", "value": 209.3}, {"time": "2026-08-20", "value": 209.56}, {"time": "2026-08-21", "value": 209.73}, {"time": "2026-08-24", "value": 209.68}, {"time": "2026-08-25", "value": 209.79}, {"time": "2026-08-26", "value": 209.78}, {"time": "2026-08-27", "value": 210.42}, {"time": "2026-08-28", "value": 210.67}, {"time": "2026-08-31", "value": 211.02}, {"time": "2026-09-01", "value": 211.24}, {"time": "2026-09-02", "value": 211.7}, {"time": "2026-09-03", "value": 212.29}, {"time": "2026-09-04", "value": 212.93}, {"time": "2026-09-08", "value": 213.37}, {"time": "2026-09-09", "value": 213.73}, {"time": "2026-09-10", "value": 213.9}, {"time": "2026-09-11", "value": 214.19}], "89": [{"time": "2026-03-11", "value": 185.61}, {"time": "2026-03-12", "value": 185.54}, {"time": "2026-03-13", "value": 185.41}, {"time": "2026-03-16", "value": 185.36}, {"time": "2026-03-17", "value": 185.27}, {"time": "2026-03-18", "value": 185.15}, {"time": "2026-03-19", "value": 185.0}, {"time": "2026-03-20", "value": 184.72}, {"time": "2026-03-23", "value": 184.51}, {"time": "2026-03-24", "value": 184.29}, {"time": "2026-03-25", "value": 184.16}, {"time": "2026-03-26", "value": 183.86}, {"time": "2026-03-27", "value": 183.49}, {"time": "2026-03-30", "value": 183.07}, {"time": "2026-03-31", "value": 182.87}, {"time": "2026-04-01", "value": 182.7}, {"time": "2026-04-02", "value": 182.58}, {"time": "2026-04-06", "value": 182.46}, {"time": "2026-04-07", "value": 182.35}, {"time": "2026-04-08", "value": 182.34}, {"time": "2026-04-09", "value": 182.36}, {"time": "2026-04-10", "value": 182.49}, {"time": "2026-04-13", "value": 182.64}, {"time": "2026-04-14", "value": 182.93}, {"time": "2026-04-15", "value": 183.28}, {"time": "2026-04-16", "value": 183.6}, {"time": "2026-04-17", "value": 183.99}, {"time": "2026-04-20", "value": 184.39}, {"time": "2026-04-21", "value": 184.72}, {"time": "2026-04-22", "value": 185.1}, {"time": "2026-04-23", "value": 185.42}, {"time": "2026-04-24", "value": 185.91}, {"time": "2026-04-27", "value": 186.59}, {"time": "2026-04-28", "value": 187.17}, {"time": "2026-04-29", "value": 187.65}, {"time": "2026-04-30", "value": 187.9}, {"time": "2026-05-01", "value": 188.12}, {"time": "2026-05-04", "value": 188.34}, {"time": "2026-05-05", "value": 188.52}, {"time": "2026-05-06", "value": 188.93}, {"time": "2026-05-07", "value": 189.43}, {"time": "2026-05-08", "value": 189.99}, {"time": "2026-05-11", "value": 190.63}, {"time": "2026-05-12", "value": 191.29}, {"time": "2026-05-13", "value": 192.05}, {"time": "2026-05-14", "value": 193.0}, {"time": "2026-05-15", "value": 193.71}, {"time": "2026-05-18", "value": 194.34}, {"time": "2026-05-19", "value": 194.91}, {"time": "2026-05-20", "value": 195.53}, {"time": "2026-05-21", "value": 196.05}, {"time": "2026-05-22", "value": 196.47}, {"time": "2026-05-26", "value": 196.87}, {"time": "2026-05-27", "value": 197.21}, {"time": "2026-05-28", "value": 197.58}, {"time": "2026-05-29", "value": 197.87}, {"time": "2026-06-01", "value": 198.44}, {"time": "2026-06-02", "value": 198.97}, {"time": "2026-06-03", "value": 199.31}, {"time": "2026-06-04", "value": 199.74}, {"time": "2026-06-05", "value": 199.85}, {"time": "2026-06-08", "value": 200.04}, {"time": "2026-06-09", "value": 200.22}, {"time": "2026-06-10", "value": 200.22}, {"time": "2026-06-11", "value": 200.32}, {"time": "2026-06-12", "value": 200.42}, {"time": "2026-06-15", "value": 200.68}, {"time": "2026-06-16", "value": 200.83}, {"time": "2026-06-17", "value": 200.91}, {"time": "2026-06-18", "value": 201.12}, {"time": "2026-06-22", "value": 201.28}, {"time": "2026-06-23", "value": 201.25}, {"time": "2026-06-24", "value": 201.19}, {"time": "2026-06-25", "value": 201.07}, {"time": "2026-06-26", "value": 200.87}, {"time": "2026-06-29", "value": 200.74}, {"time": "2026-06-30", "value": 200.72}, {"time": "2026-07-01", "value": 200.64}, {"time": "2026-07-02", "value": 200.51}, {"time": "2026-07-06", "value": 200.39}, {"time": "2026-07-07", "value": 200.31}, {"time": "2026-07-08", "value": 200.39}, {"time": "2026-07-09", "value": 200.44}, {"time": "2026-07-10", "value": 200.67}, {"time": "2026-07-13", "value": 200.73}, {"time": "2026-07-14", "value": 200.97}, {"time": "2026-07-15", "value": 201.22}, {"time": "2026-07-16", "value": 201.35}, {"time": "2026-07-17", "value": 201.38}, {"time": "2026-07-20", "value": 201.41}, {"time": "2026-07-21", "value": 201.54}, {"time": "2026-07-22", "value": 201.77}, {"time": "2026-07-23", "value": 201.92}, {"time": "2026-07-24", "value": 202.02}, {"time": "2026-07-27", "value": 201.9}, {"time": "2026-07-28", "value": 201.78}, {"time": "2026-07-29", "value": 201.52}, {"time": "2026-07-30", "value": 201.37}, {"time": "2026-07-31", "value": 201.35}, {"time": "2026-08-03", "value": 201.46}, {"time": "2026-08-04", "value": 201.69}, {"time": "2026-08-05", "value": 202.07}, {"time": "2026-08-06", "value": 202.44}, {"time": "2026-08-07", "value": 202.92}, {"time": "2026-08-10", "value": 203.24}, {"time": "2026-08-11", "value": 203.55}, {"time": "2026-08-12", "value": 204.0}, {"time": "2026-08-13", "value": 204.47}, {"time": "2026-08-14", "value": 204.92}, {"time": "2026-08-17", "value": 205.36}, {"time": "2026-08-18", "value": 205.68}, {"time": "2026-08-19", "value": 205.93}, {"time": "2026-08-20", "value": 206.17}, {"time": "2026-08-21", "value": 206.36}, {"time": "2026-08-24", "value": 206.4}, {"time": "2026-08-25", "value": 206.54}, {"time": "2026-08-26", "value": 206.6}, {"time": "2026-08-27", "value": 207.07}, {"time": "2026-08-28", "value": 207.3}, {"time": "2026-08-31", "value": 207.6}, {"time": "2026-09-01", "value": 207.81}, {"time": "2026-09-02", "value": 208.17}, {"time": "2026-09-03", "value": 208.62}, {"time": "2026-09-04", "value": 209.09}, {"time": "2026-09-08", "value": 209.46}, {"time": "2026-09-09", "value": 209.77}, {"time": "2026-09-10", "value": 209.96}, {"time": "2026-09-11", "value": 210.23}]};
+
+        if (chartData && chartData.length > 0) {
+            const dates = chartData.map(d => d.time);
+            const open = chartData.map(d => d.open);
+            const high = chartData.map(d => d.high);
+            const low = chartData.map(d => d.low);
+            const close = chartData.map(d => d.close);
+
+            const candlestick = {
+                x: dates, open, high, low, close,
+                type: 'candlestick', name: 'OHLC',
+                increasing: { line: { color: '#22c55e' }, fillcolor: '#22c55e' },
+                decreasing: { line: { color: '#ef4444' }, fillcolor: '#ef4444' }
+            };
+
+            const plotData = [candlestick];
+
+            const emaConfigs = [
+                { span: "8", color: "#22d3ee", width: 2 },
+                { span: "21", color: "#4ade80", width: 2 },
+                { span: "34", color: "#facc15", width: 1.5 },
+                { span: "55", color: "#fb923c", width: 1.5 },
+                { span: "89", color: "#f87171", width: 1.5 }
+            ];
+
+            emaConfigs.forEach(config => {
+                if (emaData[config.span]) {
+                    plotData.push({
+                        x: emaData[config.span].map(d => d.time),
+                        y: emaData[config.span].map(d => d.value),
+                        type: 'scatter', mode: 'lines',
+                        name: `EMA ${config.span}`,
+                        line: { color: config.color, width: config.width, shape: 'spline' },
+                        opacity: 0.8
+                    });
+                }
+            });
+
+            const layout = {
+                dragmode: 'zoom', showlegend: false,
+                margin: { r: 10, t: 10, b: 30, l: 40 },
+                xaxis: { rangeslider: { visible: false }, gridcolor: '#1e293b', zeroline: false, tickfont: { color: '#94a3b8', size: 10, family: 'JetBrains Mono' }, type: 'date' },
+                yaxis: { gridcolor: '#1e293b', zeroline: false, autorange: true, tickfont: { color: '#94a3b8', size: 10, family: 'JetBrains Mono' }, side: 'right' },
+                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+                hovermode: 'x unified',
+                hoverlabel: { bgcolor: '#0a0a0a', bordercolor: '#333', font: { color: '#fff', size: 10, family: 'JetBrains Mono' } }
+            };
+
+            Plotly.newPlot('plotly-chart', plotData, layout, {
+                responsive: true, displayModeBar: true,
+                modeBarButtonsToRemove: ['select2d', 'lasso2d', 'autoScale2d'],
+                displaylogo: false, scrollZoom: true
+            });
+
+            window.resetChart = () => Plotly.relayout('plotly-chart', { 'xaxis.autorange': true, 'yaxis.autorange': true });
+        }
+        } catch (e) { console.error("CRITICAL :: Chart Initialization Failed ::", e); }
+
+        document.getElementById('jsonContent').textContent = JSON.stringify(rawJson, null, 2);
+
+        function openModal() { document.getElementById('jsonModal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('jsonModal').classList.add('hidden'); }
+        function copyToClipboard() {
+            navigator.clipboard.writeText(JSON.stringify(rawJson, null, 2)).then(() => alert('JSON Copied!'));
+        }
+
+        // ── Page View Tracking ──
+        (function () {
+            const KEY = 'ghost_dossier_analytics';
+            let a = {};
+            try { a = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { }
+            const page = 'ticker:NVDA';
+            a[page] = (a[page] || 0) + 1;
+            localStorage.setItem(KEY, JSON.stringify(a));
+        })();
+    </script>
+</body>
+
+</html>

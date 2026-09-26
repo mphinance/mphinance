@@ -6,6 +6,18 @@
 
 > *Something new: I'm tagging every post by what it's actually made of, by weight. That line up top is the recipe, so you know what you're walking into before you spend a minute on it.*
 
+## If you already pay me, read this first
+
+You didn't get a price increase. You got a promotion.
+
+Everyone who was already paying when I flipped this switch is a Founder now. It didn't cost you a dollar, and nothing you get changes, because you've already been getting all of it: every setup, every tool, every build and raw prompt I ship, the live portfolio, a direct line to me. Now it just has a name on it, and your rate is locked there for as long as you stay.
+
+That isn't a discount. It's a thank-you. You were here when it was just me, a spreadsheet, and a felony record, betting my own money out loud. Being early was the whole price of admission, and you already paid it.
+
+Founder is a paid tier now. You got in for free by getting in first.
+
+## Why I charge at all
+
 There's a dumb way to ask why I charge and a smart way.
 
 The dumb way is "those who can't do, teach." You can wave that off in a sentence, so I won't waste your time on it.
@@ -75,16 +87,6 @@ Sam thought I should charge more. We finished negotiating. She won.
 New prices, and they land on Fibonacci levels, because of course they do. Thirty-four a month. Two-thirty-three a year. Six-ten for Founders, who get every tool, build, and raw prompt I ship, plus a direct line to me.
 
 ![New pricing on Fibonacci levels: $34 monthly, $233 annual, $610 Founders](pricing-fib-ladder.png)
-
-## If you already pay me, read this first
-
-You didn't get a price increase. You got a promotion.
-
-Everyone who was already paying when I flipped this switch is a Founder now. It didn't cost you a dollar, and nothing you get changes, because you've already been getting all of it: every setup, every tool, every build and raw prompt I ship, the live portfolio, a direct line to me. Now it just has a name on it, and your rate is locked there for as long as you stay.
-
-That isn't a discount. It's a thank-you. You were here when it was just me, a spreadsheet, and a felony record, betting my own money out loud. Being early was the whole price of admission, and you already paid it.
-
-Founder is a paid tier now. You got in for free by getting in first.
 
 ## If you've been reading free
 

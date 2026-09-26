@@ -351,7 +351,7 @@ def main():
     data["meta"] = {"generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
                     "session": datetime.now(ET).strftime("%Y-%m-%d"),
                     "marketOpen": market_open, "source": "TraderDaddy Pro + Tradier",
-                    "ref": "8DUEMWAJ"}
+                    "ref": "MPHINANCE"}
 
     tmp = OUT + ".tmp"
     json.dump(data, open(tmp, "w"), indent=2)

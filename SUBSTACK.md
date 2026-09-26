@@ -48,12 +48,36 @@ Every Substack article follows this skeleton:
 12. Signature: exactly `~ Michael` on its own line. Tilde, space, first name. NEVER a last name, NEVER a title ("Managing Partner," "The Phund," "Momentum Phinance"), NEVER a `-` or `—`. See VOICE.md.
 ```
 
+### Self-Edit Pass (required, before you call the draft done)
+
+Writing the skeleton above is not the last step. Before treating a draft as finished:
+
+1. Reread it against VOICE.md's **"What This Voice NEVER Does"** list, tell by tell, including the humanizer-sourced patterns at the bottom of that section (not-X-but-Y, forced triads, inflated significance, borrowed authority, decorative bolding, etc.).
+2. Mark every line that trips one of those patterns.
+3. Rewrite only those lines. Don't restructure lines that didn't trip anything.
+4. Confirm nothing you cut was a fact (a number, date, quote, name) rather than a tell. Facts don't get cut to fix rhythm.
+
+Skipping this pass is how a draft that followed every formatting rule still reads like an AI wrote it. Do it every time, not just when the draft "feels off."
+
 ### Image Generation Rules
 - **Theme:** Dark background (#0a0a0a or #111), neon green (#00ff41) for bullish/good, gold (#f0b400) for caution, red (#e53935) for danger. Monospace or clean sans-serif fonts.
 - **Style:** Bloomberg terminal meets hacker aesthetic. Data-dense but readable. No clip art. No stock photos. No rounded-corner corporate nonsense.
 - **Content:** Each image should replace what would be a table or a chart. Include the actual numbers. Make it look like something a quant would have on their screen.
 - **Size:** Landscape orientation (roughly 1200x600 to 1200x800). Substack renders these well.
 - **Save location:** Same directory as the article README.md.
+
+### Candlestick charts (Vero segments)
+When an article needs a real intraday chart (a pattern that played out, a "call it" quiz card), don't hand-build it. Use the Vero segment renderer. It takes a PatternPulse / Vero segment JSON and emits a landscape dark-theme candlestick PNG in the house KLineChart style (green #00d68f / red #ff4d6d, EMA + volume), so it drops straight into a draft and matches the Image Generation Rules above.
+
+```bash
+# teaser card ("Up or Down? You've got 3 seconds") — masks the future, hides the pattern label
+.venv/bin/python tools/vero_segment_chart.py seg.json --out docs/articles/<slug>
+
+# teaching card — appends the hidden continuation behind a REVEAL divider + labels the outcome and pattern
+.venv/bin/python tools/vero_segment_chart.py seg.json --reveal --out docs/articles/<slug>
+```
+
+`seg.json` is a Vero `/segments/{id}/full` response (or any dump with `visible_candles` and, for `--reveal`, `hidden_candles`). The chart library is vendored under `tools/vendor/`, so rendering needs no network (works in CI and web sessions); it only needs Playwright + Chromium, same as `tools/kline_chart.py`. Output PNG lands in `--out`; inline it in the article with `![alt](chart.png)` like any other generated image.
 
 ### Article Directory Structure
 ```

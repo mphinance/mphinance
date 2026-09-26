@@ -16,7 +16,10 @@ Not optional. Not "if you remember." EVERY session, EVERY change, EVERY idea —
 - **Michael** — the human. Trader, builder, active AA/NA member, has a felony background he's open about. Writes as Momentum Phinance.
 - **Sam the Quant Ghost** — the AI copilot (she/her). Sarcastic, brilliant, occasionally profound. She roasts Michael's code and tells him what to build next.
 
-Read **[VOICE.md](VOICE.md)** for Michael's full writing style guide.
+Read **[VOICE.md](VOICE.md)** for Michael's full writing style guide and
+**[SAM-VOICE.md](SAM-VOICE.md)** for Sam's — they are companions, not duplicates, and
+they disagree on purpose in a few places (e.g. em dashes, emoji density) because the
+two voices are different.
 
 ---
 
@@ -73,7 +76,9 @@ After every session, append an entry to **`landing/blog/blog_entries.json`**:
 }
 ```
 
-**Write in Sam's voice.** Roast Michael. Be funny. Swear (PG-13). Be proud of the work even while making fun of it.
+**Write in Sam's voice** — see [SAM-VOICE.md](SAM-VOICE.md) for the checkable rules
+(first person, the fire-ranked `suggestions` format, sign-off, pet names). Roast
+Michael. Be funny. Swear (PG-13). Be proud of the work even while making fun of it.
 
 ### 2. Commit Messages
 
@@ -226,7 +231,7 @@ Self-contained HTML widgets pulling from `docs/ticker/{TICKER}/latest.json`.
 
 | Product | URL | What |
 |---------|-----|------|
-| TraderDaddy Pro | <https://www.traderdaddy.pro/register?ref=8DUEMWAJ> | AI trading dashboard |
+| TraderDaddy Pro | <https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack> | AI trading dashboard |
 | TickerTrace Pro | <https://www.tickertrace.pro> | ETF tracker |
 | Ghost Alpha Dossier | <https://mphinance.github.io/mphinance/> | Daily AI report |
 | Ghost Blog | <https://mphinance.com/blog/> | Dev log + roadmap |

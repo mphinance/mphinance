@@ -326,7 +326,10 @@ def _save_picks(result: dict, date: str):
                 "regime_note": regime_note,
             })
 
-        # Full ranking (compact — just ticker + score + pullback flag)
+        # Full ranking (compact). change_pct and sector must be carried: the
+        # Follow-Through Index and Sector Leadership widgets read them off these dicts,
+        # and while they were missing both silently defaulted (0.0 / "Other") and
+        # published a fixed verdict every session.
         all_ranked = []
         for s in result.get("all_ranked", []):
             all_ranked.append({
@@ -335,6 +338,8 @@ def _save_picks(result: dict, date: str):
                 "grade": s.get("grade", ""),
                 "is_pullback": s.get("is_pullback_setup", False),
                 "ema_stack": s.get("ema_stack", ""),
+                "change_pct": s.get("change_pct"),
+                "sector": s.get("sector"),
             })
 
         api_payload = {
