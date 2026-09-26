@@ -17,6 +17,7 @@ a manifest linter, a connector manifest), not their institutional content.
 | [`0dte-flow`](0dte-flow/SKILL.md) | 0DTE XSP day-trading decision support (signals → exit cascade) |
 | [`batch-scanner`](batch-scanner/SKILL.md) | Run all screener strategies → Google Sheets |
 | [`stock-analyzer`](stock-analyzer/SKILL.md) | ML 5-day price-range prediction + technical insights |
+| [`voice-interview`](voice-interview/SKILL.md) | One-question-at-a-time voice interview → Substack draft built from Michael's own words |
 
 Each skill links back to its full root-level guide as the source of truth.
 
