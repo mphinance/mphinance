@@ -28,7 +28,14 @@ The Q1 Earnings Report is the gold standard. It pulled the highest engagement be
 - Bold key numbers and takeaways. Readers skim. Make the scan worth it.
 - PG-13 profanity. "bullsh*t", "damn", "hell" are fine. Keep it bar-conversation, not locker-room (save that for Discord).
 - No passive voice. No hedging. No "it could be argued that."
-- End with a recovery quote that ties into the market theme.
+
+### Before You Draft
+Search Michael's own pre-AI posts for the topic and tickers first:
+`grep -i "<ticker or topic>"` against the `body` fields in `data/afterhour/mphinance.json`
+(only posts before 2026-01-31 are AI-free, see VOICE.md "What This Voice Is Allowed To Do").
+Past calls on the same ticker are receipts, and his own earlier jokes on the topic are callbacks.
+Reading VOICE.md alone produced a draft that was rule-compliant and still too tidy; searching the
+corpus is what surfaced the material that made it sound like him.
 
 ### Structure
 Every Substack article follows this skeleton:
@@ -44,8 +51,7 @@ Every Substack article follows this skeleton:
 8. <!--paywall--> (if applicable)
 9. Paid-only deep dive (live data, next trades, insider view)
 10. CTA (subscribe nudge, never desperate)
-11. Recovery wisdom closer
-12. Signature: exactly `~ Michael` on its own line. Tilde, space, first name. NEVER a last name, NEVER a title ("Managing Partner," "The Phund," "Momentum Phinance"), NEVER a `-` or `—`. See VOICE.md.
+11. Signature: exactly `~ Michael` on its own line. Tilde, space, first name. NEVER a last name, NEVER a title ("Managing Partner," "The Phund," "Momentum Phinance"), NEVER a `-` or `—`. See VOICE.md.
 ```
 
 ### Self-Edit Pass (required, before you call the draft done)
