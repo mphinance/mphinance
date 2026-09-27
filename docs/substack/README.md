@@ -57,6 +57,9 @@ his favorite animal family). `professor` swaps it for a small snowy owl
 wearing matching glasses, since the professor/owl pairing was too good to
 pass up. Never a ghost, on Michael's explicit ban.
 
+**October Breast Cancer Awareness Editions (`pink_*`):**
+All 10 poses also have an October BCA edition (`pink_<pose>`, e.g. `pink_midnight_builder`, `pink_casino_dealer`, `pink_circle_chair`). These feature pink ribbon pins, pink attire/accents, and Alpha with glowing magenta-pink circuit veins. `scripts/generate_hero.py` seamlessly maps them to the calibrated chalkboard coordinates of the base poses.
+
 To build a hero image for a draft:
 
 ```sh

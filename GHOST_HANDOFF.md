@@ -1,5 +1,25 @@
 # Ghost Handoff — Last Updated 2026-09-26
 
+## 2026-09-26 - October Breast Cancer Awareness Mascots (All 10 Poses) & Hero CLI Integration
+- **What got done:**
+  - Created October Breast Cancer Awareness ("Think Pink") edition for all 10 core Phinance brand mascots in `docs/substack/assets/mascot/` as 1024x1024 PNGs:
+    - `mascot_pink_calm_edge.png` (vibrant pink pullover, ribbon pin, magenta circuit Alpha)
+    - `mascot_pink_casino_dealer.png` (pink dress shirt, visor trim, ribbon pin, pink chips, glowing Alpha)
+    - `mascot_pink_midnight_builder.png` (charcoal hoodie, pink ribbon & PHINANCE, pink code charts, glowing Alpha)
+    - `mascot_pink_surfer.png` (wetsuit with hot-pink stripes, pink ribbon & board, glowing Alpha)
+    - `mascot_pink_circle_chair.png` (heather pink hoodie, ribbon pin, pink ribbon coffee sleeve, medallion)
+    - `mascot_pink_data_detective.png` (fedora with pink ribbon band, ribbon pin on trench coat, pink magnifying glass)
+    - `mascot_pink_professor.png` (tweed blazer with ribbon pin, owl companion wearing pink awareness ribbon)
+    - `mascot_pink_aisle_auditor.png` (pink cart accents, pink Air Jordan 1s, receipt highlights, glowing Alpha)
+    - `mascot_pink_stressed_ego.png` (panic pose, pink ribbon hoodie, pink sticky notes, glowing Alpha)
+    - `mascot_pink_ap_clerk.png` (pink-tinted visor, pink ribbon tie, pink PAID stamp, glowing Alpha)
+  - Updated `scripts/generate_hero.py` so any pose prefixed with `pink_` seamlessly inherits the calibrated chalkboard coordinates of the base pose.
+  - Tested hero image generation on `pink_midnight_builder` with clean headless Chromium chalkboard text rendering.
+  - Documented pink poses in `docs/substack/README.md`.
+  - Added full gallery artifact for Michael's review.
+- **What's left:**
+  - Ready for October Substack post covers using `python3 scripts/generate_hero.py --pose pink_<pose> --chalk "<text>" --out ...`.
+
 ## 2026-09-26 - Breast Cancer Awareness Pink Hat Mockups & Cricut Universal Cut Kit
 - **What got done:**
   - Decoded Michael's QWERTY left-hand shifted typing ("diear mw rqo PNF" -> "first me two PNG").

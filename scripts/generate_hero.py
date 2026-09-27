@@ -90,10 +90,18 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 """
 
 
+def get_coords(pose: str):
+    if pose in DEFAULT_COORDS:
+        return DEFAULT_COORDS[pose]
+    if pose.startswith("pink_"):
+        return DEFAULT_COORDS.get(pose.removeprefix("pink_"))
+    return None
+
+
 def list_poses():
     for f in sorted(MASCOT_DIR.glob("mascot_*.png")):
         name = f.stem.replace("mascot_", "")
-        c = DEFAULT_COORDS.get(name)
+        c = get_coords(name)
         flag = "" if c and c["width"] > 0 else "  (no chalkboard calibrated)"
         print(f"  {name}{flag}")
 
@@ -104,7 +112,7 @@ def render(pose: str, text: str, out_path: Path, font_size: int | None,
     if not img_path.exists():
         sys.exit(f"No such pose: {pose} (looked for {img_path}). Use --list-poses.")
 
-    coords = DEFAULT_COORDS.get(pose)
+    coords = get_coords(pose)
     if not coords or coords["width"] == 0:
         sys.exit(f"Pose '{pose}' has no chalkboard region calibrated in hero_chalk_coords "
                   f"(see DEFAULT_COORDS in this script) -- pick a different pose or add coords.")
