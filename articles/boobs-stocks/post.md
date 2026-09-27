@@ -20,7 +20,11 @@ Which is why, when she got breast cancer, we had a pretty good laugh about the f
 
 Probably not funny to most of you. Still funny to us lol. That's the friendship.
 
-She's tougher than I'll ever be. Last October I posted from vacation that when the market's acting like cancer, the breast defense is investing in 80085. This year I figured I should actually do the homework, so I went and looked at the companies making the drugs people like her are actually taking. Because I'm me, and that's how I process things.
+She's tougher than I'll ever be. Last October I posted from vacation that when the market's acting like cancer, the breast defense is investing in 80085.
+
+![80085 on a calculator](calculator_80085.jpg)
+
+This year I figured I should actually do the homework, so I went and looked at the companies making the drugs people like her are actually taking. Because I'm me, and that's how I process things.
 
 ## GILD: the HIV company with a cancer missile
 
@@ -43,6 +47,10 @@ AstraZeneca is British, and oncology is the biggest thing they do. For breast ca
 About **$61.4B** in revenue, a **1.92%** dividend, and analysts rate it a strong buy. If I got to pick one of these companies' drugs to fight for me, I'd probably pick theirs.
 
 I'm still not buying it yet. The chart is broken, and there was a headline Thursday asking whether they can keep growing while their breast cancer market gets narrower. Watchlist for now.
+
+![AZN one year daily with EMAs, topping near 210 in February and rolling over](azn_1y.png)
+
+Look at it. Topped around **$210** in February, then lower highs all summer, and now the slowest EMA (the red 89) is sitting on top of price instead of underneath it. That's what broken looks like. When it gets back above that red line and holds, I'll care.
 
 ## PBYI: the actual boob stock
 
@@ -70,6 +78,8 @@ There are a lot of pink caps with the ribbon already sewn on. I wanted something
 
 Make one. Wear it in October. If anybody asks, tell them you're doing it for Shannon.
 
+The gamma charts below come from TraderMatrix, the platform I help build. If you want to pull these for your own tickers, that's [tradermatrix.pro](https://www.tradermatrix.pro/?ref=MPHINANCE) (my referral link), and we walk through this stuff on video at [youtube.com/@TraderMatrixHQ](https://www.youtube.com/@TraderMatrixHQ).
+
 Paid subs, the setups on GILD and PBYI are below.
 
 <!--paywall-->
@@ -94,9 +104,23 @@ Where it sits now:
 
 Analysts' average target is **$158.65**. `((158.65-150.93)/150.93)x100 = 5.1%` upside. Not a moonshot, just a big pharma with a trend and a dividend.
 
+![GILD gamma chart from TraderMatrix: support 150, apex 155, resistance 157.50 and 160, gamma flip 140.96](gild_gamma.png)
+
+That's where the options dealers are positioned. Quick decoder:
+
+- **Positive gamma** means the dealers' own hedging pushes against big moves. Up days get sold into, down days get bought. Ranges tend to hold.
+- **$150** is support, and GILD closed at **$150.93**, right on top of it.
+- **Apex at $155** is the strike with the most hedging stacked on it. Price tends to react when it gets there. It is not a price target.
+- **$157.50** resistance is basically the 52-week high (**$157.29**). That's the ceiling to beat.
+- **Flip at $140.96** is where the regime changes. Below it, dealers flip to amplifying moves instead of dampening them. If GILD loses $141 the calm, rangey trade I'm describing is gone.
+
 One thing to read before you buy: trailing EPS is **-$2.66** while forward EPS is **+$9.89**. That's a big gap and I'd want to know exactly what's behind it first.
 
 ### PBYI at $9.77
+
+![PBYI one year daily with EMAs, stair-stepping from 5 to nearly 10](pbyi_1y.png)
+
+About as clean a staircase as you'll find. Every pullback all year held above the slower EMAs and went on to a higher high.
 
 - Same bullish EMA stack as GILD.
 - 52-week high is **$9.98**, so it's pressing right up against it.
@@ -104,6 +128,8 @@ One thing to read before you buy: trailing EPS is **-$2.66** while forward EPS i
 - Earnings grew **39.9%** last quarter.
 
 From the 52-week low: `((9.77-4.58)/4.58)x100 = 113%`. It's already run. The trend is still intact, but you're not early.
+
+The options market is thin here, but what's there is all in one place. The **$10** strike has **805** contracts of open interest, more than every other strike combined, and it sits right on the **$9.98** 52-week high. So the round number, the old high, and the options wall are all the same line. A clean close over $10 is the breakout. If it stalls right under, that's the wall doing its job, not the trend breaking.
 
 The fun part: **9.8%** of the float is sold short, and at normal volume it'd take shorts **14.6** days to buy it all back. Somebody out there really hates boobs. If Puma drops good news, those people have to buy, and that's fuel.
 

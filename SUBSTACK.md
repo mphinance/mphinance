@@ -37,6 +37,14 @@ Past calls on the same ticker are receipts, and his own earlier jokes on the top
 Reading VOICE.md alone produced a draft that was rule-compliant and still too tidy; searching the
 corpus is what surfaced the material that made it sound like him.
 
+### Every Post
+- **Charts for every ticker you discuss.** A post that talks setups with no chart is not done.
+  TraderMatrix gamma charts first when Michael supplies them; otherwise `mcp__momentum__generate_chart`
+  (EMA chart) plus `mcp__traderdaddy__get_apex_levels` for the options picture. Never let an image
+  model draw numbers (Gemini rendered "80085" as "80008,5").
+- **TraderMatrix links, before the paywall:** [tradermatrix.pro](https://www.tradermatrix.pro/?ref=MPHINANCE)
+  (say it's his referral link) and [youtube.com/@TraderMatrixHQ](https://www.youtube.com/@TraderMatrixHQ).
+
 ### Structure
 Every Substack article follows this skeleton:
 
