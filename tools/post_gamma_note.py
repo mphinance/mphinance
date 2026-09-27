@@ -75,7 +75,7 @@ def compose(d):
         f"Flip {d['flip']:.2f}. Pin {d['pin']}. "
         f"A typical day from here is about {d['expected']:.2f} points."
     )
-    if d.get("expiringShare"):
+    if (d.get("expiringShare") or 0) >= 0.005:
         # Runs at 21:00 ET, so "expires tonight" is already past tense, and on a
         # Sunday run nothing expired that night at all.
         lines.append(

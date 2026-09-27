@@ -369,8 +369,12 @@ const PAST_W = Math.round(PLOT_W * 0.42);          // the drive so far
 const FWD_X = PAD_L + PAST_W;                       // tomorrow starts here
 const FWD_W = PLOT_W - PAST_W;
 
-const yLo = Math.min(lo, ...pts.map((p) => p.px)) - 0.25;
-const yHi = Math.max(hi, ...pts.map((p) => p.px)) + 0.25;
+const yRaw = [lo, hi, ...pts.map((p) => p.px)];
+const ySpan = Math.max(...yRaw) - Math.min(...yRaw);
+// Waypoint labels hang below their dot, so the bottom needs more room than the
+// top or the furthest road gets its caption sliced off by the frame.
+const yLo = Math.min(...yRaw) - ySpan * 0.06;
+const yHi = Math.max(...yRaw) + ySpan * 0.03;
 const Y = (px) => PAD_T + PLOT_H - ((px - yLo) / (yHi - yLo)) * PLOT_H;
 const X = (i) => PAD_L + (pts.length > 1 ? i / (pts.length - 1) : 0.5) * PAST_W;
 
@@ -460,7 +464,7 @@ push(`<rect width="${W}" height="${H}" fill="${C.bg}"/>`);
 
 // header
 push(`<text x="${PAD_L}" y="46" font-family="'Share Tech Mono',monospace" font-size="30" fill="${C.text}" letter-spacing="1">TOMORROW'S MAP <tspan fill="${C.green}">${esc(sym)}</tspan></text>`);
-push(`<text x="${PAD_L}" y="72" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">spot ${spot.toFixed(2)} · flip ${flip.toFixed(2)} · pin ${pin} · net GEX ${fmtM(gex.totalGEX)}${survivors ? ` · levels exclude the ${(expiringShare * 100).toFixed(0)}% of gamma that does not survive to the next session` : ''}</text>`);
+push(`<text x="${PAD_L}" y="72" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">spot ${spot.toFixed(2)} · flip ${flip.toFixed(2)} · pin ${pin} · net GEX ${fmtM(gex.totalGEX)}${survivors && expiringShare >= 0.005 ? ` · levels exclude the ${(expiringShare * 100).toFixed(0)}% of gamma that does not survive to the next session` : ''}</text>`);
 const pillC = negGamma ? C.coral : C.green;
 push(`<rect x="${W - PAD_R - 330}" y="26" width="330" height="34" rx="17" fill="${negGamma ? '#1a0e11' : '#0c1a13'}" stroke="${pillC}" stroke-opacity="0.45"/>`);
 push(`<text x="${W - PAD_R - 165}" y="48" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14" fill="${pillC}">${negGamma ? 'NEGATIVE GAMMA / moves get amplified' : 'POSITIVE GAMMA / moves get damped'}</text>`);
@@ -634,14 +638,17 @@ for (const r of roads) {
       tx: last ? x + 12 : x - 12,
       anchor: last ? 'start' : 'end',
       ty: y + (r.labelBelow ? 30 : r.side < 0 ? -28 : 24),
-      tag: w.tag, note: w.note, col: r.col,
+      tag: last && !r.wave ? `${r.key} · ${w.tag}` : w.tag, note: w.note, col: r.col,
       faint: !(w.at <= emHi && w.at >= emLo),
     });
   });
 
-  // road name at the far end
-  const endY = r.wave ? Y(pin) : Y(r.pts[n - 1].at);
-  push(`<text x="${ROAD_X0 + ROAD_W + 12}" y="${endY + 4}" font-family="'Share Tech Mono',monospace" font-size="15" fill="${r.col}" letter-spacing="1">${r.key}</text>`);
+  // Road name: folded into the final waypoint's tag for the directional roads
+  // (see the label loop), drawn on its own only for the wave, which has no
+  // waypoint at the far end to carry it.
+  if (r.wave) {
+    push(`<text x="${ROAD_X0 + ROAD_W + 12}" y="${Y(pin) + 4}" font-family="'Share Tech Mono',monospace" font-size="15" fill="${r.col}" letter-spacing="1">${r.key}</text>`);
+  }
 }
 
 // Waypoint labels are placed last, as one pass, so labels from different roads
@@ -652,6 +659,7 @@ const LBL_H = 34;
 let lastTy = -Infinity;
 for (const L of labels) {
   if (L.ty - lastTy < LBL_H) L.ty = lastTy + LBL_H;
+  L.ty = Math.min(Math.max(L.ty, PAD_T + 16), PAD_T + PLOT_H - 40); // -40 leaves room for the note line that hangs 15px below the tag
   lastTy = L.ty;
 }
 for (const L of labels) {
