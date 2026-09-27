@@ -40,7 +40,8 @@ buying), **Mon-Wed = daily CSP**, **Thu = CSP + Friday gamma read**. Work in /ho
      (the backend diffs them to find Michael's edits; a changed character counts as his edit).
    - Save `{"watchlistId":N,"name":...}` to `data/wheel-desk/<date>/watchlist.json`.
 7. `node tools/wheel_desk/publish.mjs draft --watchlist-id N` → POSTs the structured draft to TMPro.
-8. Commit `data/wheel-desk/<date>/` (not charts/raw if large) and push.
+8. Commit: `git add -f data/wheel-desk/<date>/*.json data/wheel-desk/<date>/packet.md` (repo .gitignore has `*.json`;
+   charts/ and raw/ stay out), commit, `git pull --rebase`, push.
 9. Final message (Discord): mode, counts (selling/watching/passed), the Selling names with
    strike/expiry/premium one-liners, the best PASS reason, the list name, and:
    "Review it in TMPro (Watchlists → Desk MM-DD). Edit any note, delete any name, then hit
