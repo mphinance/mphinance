@@ -28,6 +28,36 @@
   class); wire `tests/` into CI. `browser-cli` still parked pending a real
   authenticated-scraping job.
 
+## 2026-09-26 - Breast Cancer Awareness Pink Hat Mockups & Cricut Universal Cut Kit
+- **What got done:**
+  - Decoded Michael's QWERTY left-hand shifted typing ("diear mw rqo PNF" -> "first me two PNG").
+  - Inspected DSG Adult All Sport Cap (Web ID `24qyfadsgllsprtcpdsg`, SKU `25309154`) in Fuego Pink / Pink Spirit.
+  - Generated photorealistic studio product mockups for Breast Cancer Awareness hats:
+    - Option 1 (Front + Side Temple): `FUCK CANCER` on front crown, `I LOVE BOOBS` on left temple.
+    - Option 2 (Back Keyhole Arch): `FUCK CANCER` on front, `I LOVE BOOBS` arched over rear strap opening.
+    - Option 3 (Unified Front Stack): `FUCK CANCER` stacked over `SAVE THE BOOBS`.
+    - Multiple styling variants: Collegiate Varsity Arch, Vintage Baseball Script, Circular Roundel Badge, Modern Streetwear Box.
+  - **Key Innovation (The Universal Add-Around Frame Kit):** Solved the problem of applying decals to existing caps with pre-sewn 3D embroidered ribbons. Engineered an SVG cut path that arches `FUCK CANCER` over the top of any standard 1.25"-1.5" sewn ribbon and grounds `SAVE THE BOOBS` beneath the tails with zero vinyl-on-thread overlap, printable on a single sheet of transfer tape.
+  - Generated full vector SVGs (native cut paths, no font dependencies) and 300 DPI transparent PNG cut files in both white and black HTV variants.
+  - Documented everything with Cricut press instructions, sizing, and weeding guidelines in `docs/cricut/README.md`.
+  - Mirrored all assets to `landing/assets/cricut/` and `docs/cricut/`.
+- **What's left:**
+  - Send `docs/cricut/universal_ribbon_frame_kit.svg` to Mom for test-cutting on white HTV.
+  - Optional: Host the SVGs as a free community download bundle for Breast Cancer Awareness month on `mphinance.com`.
+
+## 2026-09-15 - Substack Pipeline Bake-Off, Ling 3.0 Flash Teardown & Alpha Soul Post
+- **What got done:**
+  - Tested Substack draft pipeline end-to-end using `tools/push_substack.py` with `.venv/bin/python` and authenticated session via `secrets.env`.
+  - Ran bake-off using `inclusionai/ling-3.0-flash` on OpenRouter (key from `projects/alphaclaw/.env.alphaclaw`) to compare generative voice mimicry vs. structural red-team critique.
+  - Used Ling 3.0 Flash across 2 rounds to ruthlessly audit the post (killed 3-adjective stacks, eliminated bullet symmetry, tightened transitions).
+  - Wrote, restructured, and polished `articles/alphaclaw-soul/substack-post.md` (Title: *The Soul Of A Trading Agent*). Flipped structure to put NotebookLM free goods first for general readers, followed by the builder deep-dive on Alpha and `SOUL.md`.
+  - Generated two bespoke 16:9 dark-theme Bloomberg/quant graphics (`hero_banner.png` and `second_brain_diagram.png`).
+  - Uploaded both images directly to Substack's S3 media endpoint and pushed the complete post with native inline `captionedImage` nodes: **Draft #215920355**.
+  - Weaved in Michael's public NotebookLM second brain instance (`b41f138d-7993-4085-84b4-2ef230a62007`).
+- **What's left:**
+  - Review and publish Draft #215920355 on Substack.
+  - Michael's Big Book Ch. 10 essay (`articles/victims-of-our-destruction/substack-post.md`) is sitting untracked ready to push whenever he wants.
+
 ## 2026-06-28 - Convergence Scan vs. Competitor 7-Pick List
 - **What got done:** Ran the full `stock-recap` end-to-end (gather.mjs) plus direct MCP pulls for sector flow, market stats, put/call. Graded the output against a competitor's 2026-06-28 list: HIVE, AMC, HTZ, PURR, QS, TE, WYNN.
 - **Verdict:** Only **PURR** crossed (CSP Wheel screener — fat-IV / premium-sell flag, NOT a directional long). The other 6 appeared in ZERO legs (screeners, 13F/TickerTrace, CBOE listings).
