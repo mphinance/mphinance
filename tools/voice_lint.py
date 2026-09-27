@@ -30,16 +30,44 @@ BANNED_PHRASES = [
     r"nobody talks about", r"no one talks about", r"everyone gets (this|it) wrong",
     r"(the part )?(that )?no ?one tells you", r"what nobody tells you",
 ]
-AI_VOCAB = r"\b(delve[sd]?|delving|testament|tapestry|showcas(e|es|ed|ing)|foster(s|ed|ing)?|boast(s|ed|ing)?)\b"
+# Tier 1A per conorbronsdon/avoid-ai-writing (MIT): words claimed to appear far
+# more often in AI text, safe to hard-ban alone. Distinct from Tier 2 below.
+AI_VOCAB = (
+    r"\b(delve[sd]?|delving|testament|tapestry|showcas(e|es|ed|ing)|realm|paradigm"
+    r"|embark(s|ed|ing)?|beacon|underscores?|synerg(y|ies)|interplay"
+    r"|watershed moment|the future looks bright|only time will tell|ever-evolving"
+    r"|thought leader(ship)?|at its core|game[- ]changer|game[- ]changing)\b"
+)
 
 # ── heuristics (WARN) ──────────────────────────────────────────────────────────
-SOFT_VOCAB = r"\b(landscape|navigat(e|es|ing)|robust|pivotal|seamless(ly)?|genuinely|truly)\b"
+SOFT_VOCAB = (
+    r"\b(landscape|navigat(e|es|ing)|robust|pivotal|seamless(ly)?|genuinely|truly"
+    r"|vibrant|thriving|showcasing|bustling|intricat(e|acies)|complexities"
+    r"|ever[- ]evolving|enduring|daunting|holistic(ally)?|actionable|impactful"
+    r"|learnings|best practices|deep dive|dive into|unpack(ing)?)\b"
+)
+# Tier 2 per avoid-ai-writing: individually fine, only a real signal when 2+
+# distinct matches land in the same paragraph. foster/boast moved here from
+# AI_VOCAB — their own evidence says these are weak alone, cluster-only.
+CLUSTER_VOCAB = (
+    r"\b(foster(s|ed|ing)?|boast(s|ed|ing)?|harness(es|ed|ing)?|navigat(e|es|ing)"
+    r"|elevat(e|es|ed|ing)|unleash(es|ed|ing)?|streamlin(e|es|ed|ing)|empower(s|ed|ing)?"
+    r"|bolster(s|ed|ing)?|spearhead(s|ed|ing)?|resonat(e|es|ed|ing)|revolutioniz(e|es|ed|ing)"
+    r"|facilitat(e|es|ed|ing)|underpin(s|ned|ning)?|nuanced?|crucial|multifaceted"
+    r"|ecosystem|myriad|plethora|encompass(es|ed|ing)?|catalyz(e|es|ed|ing)"
+    r"|reimagin(e|es|ed|ing)|galvaniz(e|es|ed|ing)|augment(s|ed|ing)?|cultivat(e|es|ed|ing)"
+    r"|illuminat(e|es|ed|ing)|elucidat(e|es|ed|ing)|juxtapos(e|es|ed|ing)"
+    r"|paradigm[- ]shifting|transformative|transformation|cornerstone|paramount"
+    r"|poised|burgeoning|nascent|quintessential|overarching)\b"
+)
 WINDUPS = [
     r"^here'?s (what|the thing|why|how|where)\b", r"\bi want to be clear\b", r"\bto be clear\b",
     r"\bmake no mistake\b", r"\blet that sink in\b", r"\bthat was the problem\b",
     r"\bthat'?s the (whole )?(point|problem|post)\b", r"\bit'?s the whole post\b",
     r"\bkeep that (last sentence|in mind)\b", r"\bthe rest of this post\b",
     r"\bat the end of the day\b", r"\bthe real lesson\b", r"\btaught me\b",
+    r"\bquite frankly\b", r"\bit'?s worth noting that\b",
+    r"\bworth (reading|exploring|a look|checking out|your time|paying attention to)\b",
 ]
 # "isn't X, it's Y" inside one sentence
 CONTRAST_INLINE = re.compile(
@@ -132,6 +160,10 @@ def lint(blocks, check_signoff=True):
         m = re.search(SOFT_VOCAB, low)
         if m:
             w(i, f"soft AI vocabulary: '{m.group(0)}'")
+        cluster_hits = sorted(set(re.findall(CLUSTER_VOCAB, low)))
+        cluster_hits = [h[0] if isinstance(h, tuple) else h for h in cluster_hits]
+        if len(cluster_hits) >= 2:
+            w(i, f"clustered AI vocabulary (2+ in one paragraph): {cluster_hits}")
         for pat in WINDUPS:
             if re.search(pat, low):
                 w(i, f"wind-up / announced point /{pat}/")

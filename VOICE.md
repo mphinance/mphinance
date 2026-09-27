@@ -141,6 +141,60 @@ When a draft has a thesis and no origin story, ask whether there's a real-life o
 - **Bold as decoration.** Bolding a term or a mini-label instead of a number. Bold the figures the Structural Patterns section calls for, nothing else.
 - **Repeated sentence openings back to back.** "He noted... He noted... He filed..." Merge the sentences or vary the subject.
 
+**Cross-checked 2026-09-27** against `conorbronsdon/avoid-ai-writing` (MIT) and `ossa-ma`'s
+`tropes.fyi` (no license, concept-reference only, nothing copied). Nothing above needs
+correcting — see "The Proof" below for why the ban list itself checks out.
+
+---
+
+## What This Voice Is Allowed To Do
+
+> Orwell's sixth rule (*Politics and the English Language*, 1946), after five rules that are
+> the ancestor of the ban list above (no dead metaphors, no long word for a short one, cut
+> what can be cut, active over passive, no jargon without a plain word): **"Break any of these
+> rules sooner than say anything outright barbarous."** This section is that rule, applied.
+
+The section above is a list of "don't." On its own, a pure prohibition list produces prose
+that's *safe*, and safe reads as careful, and careful reads like the thing it's trying not
+to be. This section is the other half: what the raw, pre-assistance version of this voice
+actually did, so drafts have permission to do it too instead of just avoiding the banned
+list into blandness.
+
+**The proof.** `data/afterhour/mphinance.json` holds ~1,180 of Michael's own AfterHour posts,
+Dec 2024 through the present. Sorted chronologically, there's a hard, dateable pivot at
+**2026-01-31** — the day before that, ordinary trade notes; that day, a fully-formed literary
+allegory that appears nowhere in the prior 14 months, and by 2026-03-04 a post literally
+opens *"Human Michael at the top here... I generated this last night,"* separating his own
+voice from an AI-assisted one in his own words. The ~1,103 posts before 2026-01-31 are
+therefore ground truth for what this voice sounds like with zero AI involvement, and they
+contain **zero em dashes, zero forced triads, zero "not just X, it's Y."** The ban list above
+is validated by that, not undermined by it. What's missing from VOICE.md is the positive
+half: what those posts *do* instead.
+
+- **Sentence fragments as a complete thought, not a stray.** *"Attendance. Lift off?"*
+  (2025-10-04). *"I no think good. Oops"* (2025-08-14) — the typo stays, "Oops" is the whole
+  correction, nothing gets smoothed over.
+- **Comma splices and run-ons when that's the actual shape of the thought landing.**
+  *"life's too short to hesitate when you see something you like., and ain't nobody going to
+  bring the price down for me"* (2025-05-18). Don't fix the seam just because it's a seam.
+- **Direct, aimed irritation at the reader, with no walk-back into a lesson.** *"Fuck you
+  people who save my free shit and not also use your fat lazy damn finger to hit the heart
+  that's half a fucking centimeter from it."* (2025-11-22). The rant ends, then the post just
+  moves on to the next thing — it doesn't apologize into a moral.
+- **An ending that doesn't resolve.** The 2025-03-26 post about getting fired over a 4th DUI
+  ends on *"So, what's a recovering degenerate analyst to do? Give them the 🖕"* — no
+  tidy takeaway, no silver lining sentence. Not every post needs the Structural Patterns
+  "closing CTA" to double as an emotional bow; the subscribe nudge and the emotional
+  resolution are two different jobs and don't have to happen in the same sentence.
+- **Petty, specific, and left unresolved.** *"This may drop to .4 as well, marked YOLO for
+  that reason."* (2025-11-04) — a real number, a real shrug, no reframing it into wisdom
+  after the fact.
+
+**Scope note:** this doesn't override the Substack-specific mechanics elsewhere in this file
+(subtitle format, closing CTA, PG-13 profanity ceiling) — those exist for a public, indexed,
+revenue platform that AfterHour never was. This section is about sentence-level texture and
+directness, not about dropping the structural conventions the Substack pipeline depends on.
+
 ---
 
 ## Vocabulary & Tics
