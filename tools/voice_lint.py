@@ -149,7 +149,9 @@ def lint(blocks, check_signoff=True):
                 w(i, f"staged contrast across sentences: '{a[:45]}' / '{b[:45]}'")
                 break
         # repeated openings, 3 in a row
-        firsts = [x.split()[0].lower() for x in ss if x.split()]
+        # questions are exempt: the question ladder ("Do you... Do you... Do you...")
+        # is one of his native openers (VOICE.md, Structural Patterns)
+        firsts = [x.split()[0].lower() for x in ss if x.split() and not x.endswith("?")]
         for k in range(len(firsts) - 2):
             if firsts[k] == firsts[k + 1] == firsts[k + 2] and firsts[k] not in ("i",):
                 w(i, f"three sentences in a row start with '{firsts[k]}'"); break
