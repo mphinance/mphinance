@@ -52,6 +52,13 @@ Every Substack article follows this skeleton:
 
 Writing the skeleton above is not the last step. Before treating a draft as finished:
 
+0. Run the linter and fix everything it flags before a human sees the draft:
+   `python3 tools/voice_lint.py <post.md>` (or `--draft <id>` for a draft already in Substack).
+   ERRORs are hard bans and `tools/push_substack.py` refuses to push while any remain. WARNs are
+   the staged contrasts, button endings, wind-ups and templated headings that kept shipping even
+   with this checklist written down. Treat each one as guilty until you've reread the line.
+   The linter is a floor: it can't see forced triads, aphorism-ending bullets or a moral bow,
+   which is what steps 1-3 are for.
 1. Reread it against VOICE.md's **"What This Voice NEVER Does"** list, tell by tell, including the humanizer-sourced patterns at the bottom of that section (not-X-but-Y, forced triads, inflated significance, borrowed authority, decorative bolding, etc.).
 2. Mark every line that trips one of those patterns.
 3. Rewrite only those lines. Don't restructure lines that didn't trip anything.
