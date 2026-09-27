@@ -4,7 +4,7 @@
 
 ![Phinance professor in pink at the chalkboard](../../docs/substack/musings/2026-09-27_boobs-stocks_hero.png)
 
-**TLDR: October is Breast Cancer Awareness Month and one of my oldest friends is on the wrong end of it. So I dug into the companies making the drugs. Three worth knowing (GILD, AZN, PBYI), two everybody asks about that I'm skipping (PFE, NVS), a free hat, and for paid subs, the setups on the two I'd actually buy.**
+**TLDR: October is Breast Cancer Awareness Month and one of my oldest friends is on the wrong end of it. So I dug into the companies making the drugs. Three worth knowing (GILD, AZN, PBYI), two everybody asks about that I'm skipping (PFE, NVS), a hat I designed, and for paid subs, the setups on the two I'd actually buy.**
 
 Scroll to GILD if you don't care about my personal story here.
 
@@ -36,6 +36,10 @@ About **$30.5B** in revenue, a **2.17%** dividend, and a beta of **0.35**, which
 
 So if you buy GILD for breast cancer, know that you're mostly buying an HIV company. Trodelvy comes along for the ride.
 
+Here's where the options dealers are sitting on it right now.
+
+![GILD gamma chart from TraderMatrix: support 150, apex 155, resistance 157.50 and 160, gamma flip 140.96](gild_gamma.png)
+
 ## AZN: the one I'd want in my corner
 
 AstraZeneca is British, and oncology is the biggest thing they do. For breast cancer they've got two big ones.
@@ -62,6 +66,10 @@ Two things surprised me. It's profitable, which small biotechs usually aren't, w
 
 And yeah, one drug means if a better one shows up or a trial goes sideways, there's nothing else propping it up.
 
+And its options picture. Keep an eye on that yellow line at $10, it comes up again in the paid part.
+
+![PBYI gamma chart from TraderMatrix: apex 10, resistance 12.50, support 7.50](pbyi_gamma.png)
+
 ## PFE and NVS: why I skipped them
 
 **Pfizer** makes **Ibrance**, one of the standard drugs for the most common kind of breast cancer. Everybody already writes about Pfizer. You don't need me for that one. Just do the math on that **6%** dividend before you fall in love: `$1.72 dividend / $0.76 trailing EPS = 226%`. They paid out more than twice what they earned last year.
@@ -74,11 +82,9 @@ And yeah, one drug means if a better one shows up or a trial goes sideways, ther
 
 There are a lot of pink caps with the ribbon already sewn on. I wanted something you could add to one of those with a Cricut, so I made cut files that go around a sewn-on ribbon without touching the thread. "F*ck Cancer" arched over the top, "Save The Boobs" or "I Love Boobs" underneath.
 
-[TK: link to the SVG kit, and whether it's free]
-
 Make one. Wear it in October. If anybody asks, tell them you're doing it for Shannon.
 
-The gamma charts below come from TraderMatrix, the platform I help build. If you want to pull these for your own tickers, that's [tradermatrix.pro](https://www.tradermatrix.pro/?ref=MPHINANCE) (my referral link), and we walk through this stuff on video at [youtube.com/@TraderMatrixHQ](https://www.youtube.com/@TraderMatrixHQ).
+The gamma charts above come from TraderMatrix, the platform I help build. If you want to pull these for your own tickers, that's [tradermatrix.pro](https://www.tradermatrix.pro/?ref=MPHINANCE) (my referral link), and we walk through this stuff on video at [youtube.com/@TraderMatrixHQ](https://www.youtube.com/@TraderMatrixHQ).
 
 Paid subs, the setups on GILD and PBYI are below.
 
@@ -92,8 +98,6 @@ Everything below is as of Friday's close.
 
 Receipts first. On 2025-08-26 I posted on AfterHour that GILD was "hard bouncing off the 88 EMA, soft off the 55" and I'd grab $115 calls if it dipped into **$110.12 - $112.91**. From the top of that range to Friday: `((150.93-112.91)/112.91)x100 = 33.7%`.
 
-[TK: did you actually take those calls, and how'd it go]
-
 Where it sits now:
 
 - Every EMA stacked in order, 8 over 21 over 34 over 55 over 89. That's a real uptrend.
@@ -104,9 +108,7 @@ Where it sits now:
 
 Analysts' average target is **$158.65**. `((158.65-150.93)/150.93)x100 = 5.1%` upside. Not a moonshot, just a big pharma with a trend and a dividend.
 
-![GILD gamma chart from TraderMatrix: support 150, apex 155, resistance 157.50 and 160, gamma flip 140.96](gild_gamma.png)
-
-That's where the options dealers are positioned. Quick decoder:
+Back to the GILD gamma chart up top. Quick decoder:
 
 - **Positive gamma** means the dealers' own hedging pushes against big moves. Up days get sold into, down days get bought. Ranges tend to hold.
 - **$150** is support, and GILD closed at **$150.93**, right on top of it.
@@ -134,8 +136,6 @@ The options market is thin here, but what's there is all in one place. The **$10
 The fun part: **9.8%** of the float is sold short, and at normal volume it'd take shorts **14.6** days to buy it all back. Somebody out there really hates boobs. If Puma drops good news, those people have to buy, and that's fuel.
 
 The not-fun part: there's no analyst consensus on it in the data I pulled, and it's small enough that one bad headline hurts. Size it like a lottery ticket you actually thought about.
-
-[TK: your actual positions, if any. "I bought X shares of Y" or "I'm not in any of these yet" either way]
 
 Send this to somebody who'd wear the hat.
 
