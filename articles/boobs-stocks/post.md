@@ -6,7 +6,7 @@
 
 **TLDR: October is Breast Cancer Awareness Month and one of my oldest friends is on the wrong end of it. So I dug into the companies making the drugs. Three worth knowing (GILD, AZN, PBYI), two everybody asks about that I'm skipping (PFE, NVS), a free hat, and for paid subs, the setups on the two I'd actually buy.**
 
-Scroll to 📈 if you don't care about my personal story here.
+Scroll to GILD if you don't care about my personal story here.
 
 My mom was born in 1958. When she was 17 she used to borrow her friend Sue's ID to get into dance clubs, because Sue was 18 and apparently that was close enough in the 70s. They're still friends. Still get lunch. That's somewhere north of 50 years.
 
@@ -22,7 +22,7 @@ Probably not funny to most of you. Still funny to us lol. That's the friendship.
 
 She's tougher than I'll ever be. Last October I posted from vacation that when the market's acting like cancer, the breast defense is investing in 80085. This year I figured I should actually do the homework, so I went and looked at the companies making the drugs people like her are actually taking. Because I'm me, and that's how I process things.
 
-## 📈 GILD: the HIV company with a cancer missile
+## GILD: the HIV company with a cancer missile
 
 Most people know Gilead for HIV. Biktarvy is the biggest-selling HIV drug in the world, and their newest thing, lenacapavir, is an HIV prevention shot you get a couple times a year instead of a pill every day. Every Gilead headline this month is about that shot rolling out to more countries.
 
@@ -60,7 +60,7 @@ And yeah, one drug means if a better one shows up or a trial goes sideways, ther
 
 **Novartis** makes **Kisqali**, which competes head to head with Ibrance. Good drug. But earnings are down **17%** year over year, analysts have it at hold, and the recent headlines are a paused cell therapy trial, a heart drug that failed, and a top shareholder saying the party's over for their dealmakers. Too many problems that have nothing to do with breast cancer.
 
-## The hat 👑
+## The hat
 
 ![Pink cap, F*CK CANCER over I LOVE BOOBS, ribbon down the middle](../../docs/cricut/mockup_option3_stacked.jpg)
 

@@ -31,7 +31,8 @@ def upload_image(client, path):
     """Upload a PNG via Substack's working image endpoint. Returns the JSON
     (url + imageWidth/imageHeight + bytes) or None."""
     try:
-        b64 = "data:image/png;base64," + base64.b64encode(open(path, "rb").read()).decode()
+        mime = "image/jpeg" if path.lower().endswith((".jpg", ".jpeg")) else "image/png"
+        b64 = f"data:{mime};base64," + base64.b64encode(open(path, "rb").read()).decode()
         r = client.session.post(IMAGE_ENDPOINT, json={"image": b64},
                                 headers=client.headers, timeout=60)
         if r.status_code in (200, 201):
@@ -169,7 +170,13 @@ def build_doc(md_path, client, dry):
                 i += 1
             nodes.append(bullet_list(items))
             continue
-        if s.startswith("## "):
+        if s.startswith("<!--"):
+            # SUBSTACK.md step 8: the break itself is set by hand in the editor
+            if "paywall" in s.lower():
+                nodes.append(p(bold("[PAYWALL: set the break here in the editor]")))
+        elif s.startswith("### "):
+            nodes.append(h(3, _ascii_safe(s[4:].strip())))
+        elif s.startswith("## "):
             nodes.append(h(2, _ascii_safe(s[3:].strip())))
         elif s.startswith("# "):
             nodes.append(h(2, _ascii_safe(s[2:].strip())))
