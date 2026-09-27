@@ -42,6 +42,11 @@ corpus is what surfaced the material that made it sound like him.
   TraderMatrix gamma charts first when Michael supplies them; otherwise `mcp__momentum__generate_chart`
   (EMA chart) plus `mcp__traderdaddy__get_apex_levels` for the options picture. Never let an image
   model draw numbers (Gemini rendered "80085" as "80008,5").
+- **Layout Michael set by hand on 2026-09-27** (`tools/push_substack.py` renders all of it):
+  the TLDR is a blockquote (`> **TLDR: ...**`); `<!--subscribe-->` goes right after the intro,
+  before the story starts; `<!--share-->` goes right before `<!--paywall-->`, because the closing
+  share line is behind the paywall and free readers never see it; section headings lead with the
+  ticker as `$GILD` so it renders as a Substack cashtag chip; a list holds only like items.
 - **TraderMatrix links, before the paywall:** [tradermatrix.pro](https://www.tradermatrix.pro/?ref=MPHINANCE)
   (say it's his referral link) and [youtube.com/@TraderMatrixHQ](https://www.youtube.com/@TraderMatrixHQ).
 

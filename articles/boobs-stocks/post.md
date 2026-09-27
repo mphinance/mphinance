@@ -4,9 +4,11 @@
 
 ![Phinance professor in pink at the chalkboard](../../docs/substack/musings/2026-09-27_boobs-stocks_hero.png)
 
-**TLDR: October is Breast Cancer Awareness Month and one of my oldest friends is on the wrong end of it. So I dug into the companies making the drugs. Three worth knowing (GILD, AZN, PBYI), two everybody asks about that I'm skipping (PFE, NVS), a hat I designed, and for paid subs, the setups on the two I'd actually buy.**
+> **TLDR: October is Breast Cancer Awareness Month and one of my oldest friends is on the wrong end of it. So I dug into the companies making the drugs. Three worth knowing (GILD, AZN, PBYI), two everybody asks about that I'm skipping (PFE, NVS), a hat I designed, and for paid subs, the setups on the two I'd actually buy.**
 
 Scroll to GILD if you don't care about my personal story here.
+
+<!--subscribe-->
 
 My mom was born in 1958. When she was 17 she used to borrow her friend Sue's ID to get into dance clubs, because Sue was 18 and apparently that was close enough in the 70s. They're still friends. Still get lunch. That's somewhere north of 50 years.
 
@@ -26,7 +28,7 @@ She's tougher than I'll ever be. Last October I posted from vacation that when t
 
 This year I figured I should actually do the homework, so I went and looked at the companies making the drugs people like her are actually taking. Because I'm me, and that's how I process things.
 
-## GILD: the HIV company with a cancer missile
+## $GILD: the HIV company with a cancer missile
 
 Most people know Gilead for HIV. Biktarvy is the biggest-selling HIV drug in the world, and their newest thing, lenacapavir, is an HIV prevention shot you get a couple times a year instead of a pill every day. Every Gilead headline this month is about that shot rolling out to more countries.
 
@@ -40,13 +42,12 @@ Here's where the options dealers are sitting on it right now.
 
 ![GILD gamma chart from TraderMatrix: support 150, apex 155, resistance 157.50 and 160, gamma flip 140.96](gild_gamma.png)
 
-## AZN: the one I'd want in my corner
+## $AZN: the one I'd want in my corner
 
 AstraZeneca is British, and oncology is the biggest thing they do. For breast cancer they've got two big ones.
 
-**Enhertu**, made with Japan's Daiichi Sankyo, is another guided missile like Trodelvy, aimed at a protein called HER2. The reason doctors got excited about it: it works on tumors with only a little HER2 on them, which used to be treated like they had none. That opened the drug up to a lot more patients.
-
-**Lynparza** is for people with the BRCA gene mutation, the one that made Angelina Jolie get a preventive double mastectomy back in 2013. It goes after the cancer cell's ability to repair its own DNA, which BRCA cells are already bad at.
+- **Enhertu**, made with Japan's Daiichi Sankyo, is another guided missile like Trodelvy, aimed at a protein called HER2. The reason doctors got excited about it: it works on tumors with only a little HER2 on them, which used to be treated like they had none. That opened the drug up to a lot more patients.
+- **Lynparza** is for people with the BRCA gene mutation, the one that made Angelina Jolie get a preventive double mastectomy back in 2013. It goes after the cancer cell's ability to repair its own DNA, which BRCA cells are already bad at.
 
 About **$61.4B** in revenue, a **1.92%** dividend, and analysts rate it a strong buy. If I got to pick one of these companies' drugs to fight for me, I'd probably pick theirs.
 
@@ -56,7 +57,7 @@ I'm still not buying it yet. The chart is broken, and there was a headline Thurs
 
 Look at it. Topped around **$210** in February, then lower highs all summer, and now the slowest EMA (the red 89) is sitting on top of price instead of underneath it. That's what broken looks like. When it gets back above that red line and holds, I'll care.
 
-## PBYI: the actual boob stock
+## $PBYI: the actual boob stock
 
 Puma Biotechnology is small, about **$504M**, and it basically sells one drug. **Nerlynx** is a pill for HER2-positive breast cancer, mostly used after someone's already done a year of the standard treatment, to lower the odds it comes back.
 
@@ -70,7 +71,7 @@ And its options picture. Keep an eye on that yellow line at $10, it comes up aga
 
 ![PBYI gamma chart from TraderMatrix: apex 10, resistance 12.50, support 7.50](pbyi_gamma.png)
 
-## PFE and NVS: why I skipped them
+## $PFE and $NVS: why I skipped them
 
 **Pfizer** makes **Ibrance**, one of the standard drugs for the most common kind of breast cancer. Everybody already writes about Pfizer. You don't need me for that one. Just do the math on that **6%** dividend before you fall in love: `$1.72 dividend / $0.76 trailing EPS = 226%`. They paid out more than twice what they earned last year.
 
@@ -88,13 +89,15 @@ The gamma charts above come from TraderMatrix, the platform I help build. If you
 
 Paid subs, the setups on GILD and PBYI are below.
 
+<!--share-->
+
 <!--paywall-->
 
 ## The setups
 
 Everything below is as of Friday's close.
 
-### GILD at $150.93
+### $GILD at $150.93
 
 Receipts first. On 2025-08-26 I posted on AfterHour that GILD was "hard bouncing off the 88 EMA, soft off the 55" and I'd grab $115 calls if it dipped into **$110.12 - $112.91**. From the top of that range to Friday: `((150.93-112.91)/112.91)x100 = 33.7%`.
 
@@ -118,7 +121,7 @@ Back to the GILD gamma chart up top. Quick decoder:
 
 One thing to read before you buy: trailing EPS is **-$2.66** while forward EPS is **+$9.89**. That's a big gap and I'd want to know exactly what's behind it first.
 
-### PBYI at $9.77
+### $PBYI at $9.77
 
 ![PBYI one year daily with EMAs, stair-stepping from 5 to nearly 10](pbyi_1y.png)
 

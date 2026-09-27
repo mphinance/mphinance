@@ -127,6 +127,25 @@ def bullet_list(items):
         {"type": "listItem", "content": [p(*it)]} for it in items]}
 
 
+BUTTONS = {"subscribe": ("%%checkout_url%%", "Subscribe now"), "share": ("%%share_url%%", "Share")}
+
+
+def button(kind):
+    url, text = BUTTONS[kind]
+    return {"type": "button", "attrs": {"url": url, "text": text, "action": None, "class": None}}
+
+
+def heading(level, text):
+    """Heading whose $TICKER tokens become native cashtag chips."""
+    content = []
+    for part in re.split(r"(\$[A-Z]{1,5}\b)", _ascii_safe(text)):
+        if re.fullmatch(r"\$[A-Z]{1,5}", part):
+            content.append({"type": "cashtag", "attrs": {"symbol": part}})
+        elif part:
+            content.append({"type": "text", "text": part})
+    return {"type": "heading", "attrs": {"level": level}, "content": content}
+
+
 def build_doc(md_path, client, dry):
     lines = open(md_path, encoding="utf-8").read().split("\n")
     title, subtitle, nodes, i = "", "", [], 0
@@ -174,12 +193,15 @@ def build_doc(md_path, client, dry):
             # SUBSTACK.md step 8: the break itself is set by hand in the editor
             if "paywall" in s.lower():
                 nodes.append(p(bold("[PAYWALL: set the break here in the editor]")))
+            for kind in BUTTONS:
+                if s.lower() == f"<!--{kind}-->":
+                    nodes.append(button(kind))
         elif s.startswith("### "):
-            nodes.append(h(3, _ascii_safe(s[4:].strip())))
+            nodes.append(heading(3, s[4:].strip()))
         elif s.startswith("## "):
-            nodes.append(h(2, _ascii_safe(s[3:].strip())))
+            nodes.append(heading(2, s[3:].strip()))
         elif s.startswith("# "):
-            nodes.append(h(2, _ascii_safe(s[2:].strip())))
+            nodes.append(heading(2, s[2:].strip()))
         elif s == "---":
             nodes.append(hr())
         elif s.startswith("!["):
