@@ -90,6 +90,20 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 """
 
 
+
+def _chromium():
+    """System chromium if present, else the newest Playwright Chromium (the exec box has only that)."""
+    import glob, os, shutil
+    if os.environ.get("CHROMIUM"):
+        return os.environ["CHROMIUM"]
+    for name in ("chromium", "chromium-browser", "google-chrome"):
+        if shutil.which(name):
+            return name
+    found = sorted(glob.glob(os.path.expanduser("~/.cache/ms-playwright/chromium-*/chrome-linux64/chrome")))
+    if found:
+        return found[-1]
+    raise FileNotFoundError("no chromium: set CHROMIUM or install playwright chromium")
+
 def get_coords(pose: str):
     if pose in DEFAULT_COORDS:
         return DEFAULT_COORDS[pose]
@@ -150,7 +164,7 @@ def render(pose: str, text: str, out_path: Path, font_size: int | None,
 
     tmp_shot = Path("/tmp") / "phinance_hero_render_shot.png"
     subprocess.run([
-        "chromium", "--headless", "--disable-gpu", "--no-sandbox",
+        _chromium(), "--headless", "--disable-gpu", "--no-sandbox",
         "--window-size=1024,1024", f"--screenshot={tmp_shot}",
         # Without this the shot fires before the Kalam webfont loads and the
         # chalk falls back to a default serif.
