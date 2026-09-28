@@ -8,9 +8,20 @@ Helps answer "which Itch Slot ETF should I buy this month?"
 """
 
 import math
+import sys
 from datetime import datetime
 import pandas as pd
 import yfinance as yf
+
+try:
+    from dossier.utils.validate_api import check_yfinance_history
+except ImportError:
+    def check_yfinance_history(df, ticker, min_rows=2):
+        if df is None or df.empty:
+            return False, f"{ticker}: empty history"
+        if len(df) < min_rows:
+            return False, f"{ticker}: only {len(df)} rows"
+        return True, ""
 
 # Map of underlying -> (REX ticker, Roundhill ticker)
 # If a ticker isn't available in one family, it's None.
@@ -56,10 +67,17 @@ def calculate_rsi(prices, period=14):
     return rsi.iloc[-1] if not rsi.empty and not pd.isna(rsi.iloc[-1]) else 50.0
 
 def score_underlying(ticker: str) -> dict:
-    df = yf.Ticker(ticker).history(period="1y")
-    if df.empty or len(df) < 20:
+    try:
+        df = yf.Ticker(ticker).history(period="1y")
+    except Exception as e:
+        print(f"    [ERR] {ticker}: {e}", file=sys.stderr)
         return None
-    
+
+    ok, reason = check_yfinance_history(df, ticker, min_rows=20)
+    if not ok:
+        print(f"    [WARN] {reason}", file=sys.stderr)
+        return None
+
     current = df["Close"].iloc[-1]
     high_52w = df["High"].max()
     low_52w = df["Low"].min()
