@@ -72,6 +72,7 @@ SCREEN_FILES = {
     "volume_dryup": "volume-dryup-screener.json",
     "dividend_growth": "dividend-growth-screener.json",
     "avwap_reclaim": "avwap-reclaim-screener.json",
+    "gap_hold": "gap-hold-screener.json",
 }
 
 

@@ -1480,6 +1480,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] AVWAP reclaim screen failed: {e}")
 
+    # ── Stage 10j: Gap-and-Hold Screen ──
+    print("\n[10j/16] GAP-AND-HOLD SCREEN (unfilled gap-ups on heavy volume)")
+    gap_hold_results: list[dict] = []
+    with timer.stage("Gap-and-Hold Screen"):
+        try:
+            import time as _gap_time
+            from dossier.gap_hold_screener import score_gap_hold, _save_api_output as _gap_save
+            _gap_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _gap_pool:
+                _r = score_gap_hold(_t)
+                if _r:
+                    gap_hold_results.append(_r)
+                _gap_time.sleep(0.05)
+            gap_hold_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _gap_save(gap_hold_results)
+            _top_gap = [r for r in gap_hold_results if r["grade"] in ("A+", "A")]
+            print(f"  🪟 {len(gap_hold_results)} held gaps — {len(_top_gap)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (+{r['gap_pct']:.1f}%)" for r in _top_gap[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Gap-and-hold screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
