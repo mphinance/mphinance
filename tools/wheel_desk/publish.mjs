@@ -4,8 +4,7 @@
 // and ships the result to TMPro.
 //
 //   node tools/wheel_desk/publish.mjs notes   [--date D]              → prints the exact watchlist note per ticker (JSON)
-//   node tools/wheel_desk/publish.mjs draft   [--date D] --watchlist-id N [--dry-run]
-//                                                                   → POST /api/agent/wheel-desk/drafts
+//   node tools/wheel_desk/publish.mjs draft   [--date D] --watchlist-id N   → writes draft.json for build_post.mjs
 //
 // The watchlist itself is created by the Claude session through the TDPro MCP
 // (it acts as user 8; the agent key can't pick a list). The notes it writes must
@@ -106,7 +105,7 @@ async function main() {
     console.log(JSON.stringify(setups.map((s) => ({ ticker: s.ticker, verdict: s.verdict, note: s.seededNote })), null, 1));
     return;
   }
-  if (cmd !== 'draft') throw new Error('usage: publish.mjs notes|draft [--date D] [--watchlist-id N] [--dry-run]');
+  if (cmd !== 'draft') throw new Error('usage: publish.mjs notes|draft [--date D] [--watchlist-id N]');
 
   const watchlistId = Number(opt('watchlist-id'));
   if (!Number.isInteger(watchlistId) || watchlistId <= 0) throw new Error('--watchlist-id N required');
@@ -132,18 +131,8 @@ async function main() {
     methodology: clip(grades.methodology || METHODOLOGY, 1500),
   };
   await writeFile(join(DIR, 'draft.json'), JSON.stringify(body, null, 1));
-  if (opt('dry-run')) { console.log(`dry run: wrote ${join(DIR, 'draft.json')} (${setups.length} setups)`); return; }
-
-  const keyFile = join(ROOT, '.env_agent_api');
-  const key = (process.env.AGENT_API_KEY || (await readFile(keyFile, 'utf8'))).trim().replace(/^[A-Z_]+=/, '');
-  const res = await fetch(`${TD_BASE}/api/agent/wheel-desk/drafts`, {
-    method: 'POST',
-    headers: { 'User-Agent': UA, 'Content-Type': 'application/json', Authorization: `Bearer ${key}` },
-    body: JSON.stringify(body),
-  });
-  const text = await res.text();
-  if (!res.ok) throw new Error(`draft POST ${res.status}: ${text.slice(0, 300)}`);
-  console.log(text);
+  // Local only: the TMPro desk route was removed 2026-09-28. build_post.mjs reads this file.
+  console.log(`wrote ${join(DIR, 'draft.json')} (${setups.length} setups)`);
 }
 
 const METHODOLOGY =

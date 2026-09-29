@@ -102,3 +102,14 @@ permalink + a Substack draft.
 }
 ```
 Upsert on watchlistId. Response `{ ok, draftId }`.
+
+---
+
+# REVISED 2026-09-28 (Michael): TMPro changes were too drastic
+
+The TMPro Wheel Desk (share kind, /wheel-desk page, publish panel, substack-draft lens, drafts route) is being
+reverted. New split:
+- **mphinance does everything**: scans, grades, writes watchlists through the TDPro MCP as user 8, builds Substack drafts locally.
+- **TMPro change is one small feature**: live watchlist share links (an `is_live` share resolves the list's current
+  tickers and notes on every view). The persistent `Wheel Desk` list (id 25591) is refreshed nightly; its live share link is the permalink.
+- The D1-D3 and D7 decisions above are superseded. The D4-D6 rubric, voice and track-record rules still stand.

@@ -2,8 +2,7 @@
 // wheel_desk / build_post.mjs
 // Builds the Substack DRAFT workspace for a published Wheel Desk.
 //
-//   node tools/wheel_desk/build_post.mjs --share <shareId>      (normal: after the TMPro button)
-//   node tools/wheel_desk/build_post.mjs --date 2026-09-27      (local fallback, no permalink yet)
+//   node tools/wheel_desk/build_post.mjs --date 2026-09-27 [--pink] [--pose data_detective]
 //
 // Protect-the-writing rule: this fills DATA blocks only. Every prose slot is a
 // `[MICHAEL: ...]` marker with fuel bullets under it. It never writes his words.
@@ -29,15 +28,7 @@ const argv = process.argv.slice(2);
 const opt = (k) => { const i = argv.indexOf(`--${k}`); return i >= 0 ? argv[i + 1] : undefined; };
 
 async function main() {
-  let pub = null;
-  const shareId = opt('share');
-  if (shareId) {
-    const r = await fetch(`${API}/api/share/${encodeURIComponent(shareId)}`, { headers: { 'User-Agent': UA, Accept: 'application/json' } });
-    if (!r.ok) throw new Error(`share ${shareId}: HTTP ${r.status}`);
-    const j = await r.json();
-    pub = j.payload ?? j.artifact?.payload ?? j;
-    if (pub?.kind && pub.kind !== 'wheel_desk') throw new Error(`share ${shareId} is a ${pub.kind}, not a wheel_desk`);
-  }
+  const pub = null; // TMPro desk share was removed 2026-09-28; the local draft.json is the source.
   const date = pub?.date || opt('date');
   if (!date) throw new Error('need --share or --date');
   const draftPath = join(ROOT, 'data', 'wheel-desk', date, 'draft.json');
@@ -50,7 +41,9 @@ async function main() {
     const f = full.get(p.ticker) || {};
     return { ...f, ...p, contract: f.contract || p.contract, michaelNote: p.michaelNote ?? null };
   });
-  const permalink = shareId ? `${SITE}/share/wheel_desk/${shareId}` : `${SITE}/wheel`;
+  // The public permalink is the live TMPro share of the persistent "Wheel Desk" list.
+  const liveFile = join(ROOT, 'data', 'wheel-desk', 'live-share.json');
+  const permalink = existsSync(liveFile) ? JSON.parse(await readFile(liveFile, 'utf8')).url : null;
 
   const ws = join(homedir(), '.mph-substack-cache', `${date}_wheel-desk`);
   await mkdir(ws, { recursive: true });
@@ -121,7 +114,7 @@ ${passed.map((s) => `<div style="padding:8px 0;border-top:1px solid #30363d"><b>
   L.push('## Passed, and why', '', 'The screen liked every one of these. The desk did not, and here is why.', '', '![Passed, and why](passed.png)', '');
   for (const s of passed) L.push(`- $${s.ticker}: ${s.whyNot}`);
   L.push('');
-  if (shareId) L.push(`Every name, every grade and a live cushion on each put: [the Wheel Desk](${permalink}). One tap adds the whole list to your watchlist.`, '');
+  if (permalink) L.push(`Every name, every grade and a live cushion on each put: [the Wheel Desk](${permalink}). One tap adds the whole list to your watchlist.`, '');
   L.push('The screens behind this run on [TraderMatrix](https://www.tradermatrix.pro/?ref=MPHINANCE) (my referral link). Walkthroughs: [youtube.com/@TraderMatrixHQ](https://www.youtube.com/@TraderMatrixHQ).', '');
   L.push('<!--share-->', '', '<!--paywall-->', '');
   if (paid.length) {
