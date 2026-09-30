@@ -1504,6 +1504,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Gap-and-hold screen failed: {e}")
 
+    # ── Stage 10k: Failed-Breakdown Screen ──
+    print("\n[10k/16] FAILED-BREAKDOWN SCREEN (support undercut, then reclaimed)")
+    failed_bd_results: list[dict] = []
+    with timer.stage("Failed-Breakdown Screen"):
+        try:
+            import time as _fb_time
+            from dossier.failed_breakdown_screener import score_failed_breakdown, _save_api_output as _fb_save
+            _fb_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _fb_pool:
+                _r = score_failed_breakdown(_t)
+                if _r:
+                    failed_bd_results.append(_r)
+                _fb_time.sleep(0.05)
+            failed_bd_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _fb_save(failed_bd_results)
+            _top_fb = [r for r in failed_bd_results if r["grade"] in ("A+", "A")]
+            print(f"  🪤 {len(failed_bd_results)} bear traps — {len(_top_fb)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (-{r['undercut_pct']:.1f}% undercut)" for r in _top_fb[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Failed-breakdown screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
