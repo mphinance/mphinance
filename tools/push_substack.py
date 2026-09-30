@@ -181,6 +181,16 @@ def build_doc(md_path, client, dry):
                 i += 1
             nodes.append(blockquote(paras))
             continue
+        # "|> " lines = Substack's native pullquote (big centered quote), the
+        # syntax substack-gateway-oss uses. "> " stays the bordered blockquote.
+        if s.startswith("|> "):
+            paras = []
+            while i < len(lines) and lines[i].strip().startswith("|> "):
+                paras.append(inline(lines[i].strip()[3:]))
+                i += 1
+            nodes.append({"type": "pullquote", "attrs": {"align": None, "color": None},
+                          "content": [p(*para) for para in paras]})
+            continue
         # Group consecutive "- " lines into one real bullet_list node.
         if s.startswith("- "):
             items = []
@@ -267,6 +277,15 @@ def main():
         print(f"CREATE FAILED: {res}"); return
     draft_id = res["id"]
     print(f"DRAFT: https://mphinance.substack.com/publish/post/{draft_id}")
+    # Substack's own checks, borrowed from substack-gateway-oss: the Pangram scan is
+    # what drives the reader-facing AI disclosure, so surface it at push time.
+    try:
+        from substack_gateway import Gateway, fmt_ai, fmt_prepublish
+        gw = Gateway(client)
+        print(fmt_ai(gw.ai_detection(draft_id)))
+        print(fmt_prepublish(gw.prepublish(draft_id)))
+    except Exception as e:
+        print(f"  (post-push checks skipped: {e})")
     # --publish flips the draft live. GUARDED: only publishes if it is bound to the
     # requested --section (mph's 'only if it's in the Data section' rule), and always
     # send_email=False (web/app only, never an email blast). Absent --publish -> draft.
