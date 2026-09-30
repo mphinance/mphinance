@@ -11,6 +11,15 @@ a sync port on top of substack_dossier.SubstackClient (same SID cookie, no new d
   python3 tools/substack_gateway.py post-stats [post_id]  # engagement/traffic/growth (default: latest post)
   python3 tools/substack_gateway.py schedule <draft_id> <ISO time> --audience=everyone|only_paid
   python3 tools/substack_gateway.py unschedule <draft_id>
+  python3 tools/substack_gateway.py scorecard [N]         # last N posts: sent/views/open/CTR/signups/likes
+  python3 tools/substack_gateway.py notes [PAGES]         # own notes ranked by likes/restacks/replies
+  python3 tools/substack_gateway.py replies <note_id>     # direct replies in a note thread
+  python3 tools/substack_gateway.py note-reply <note_id> "text"   # PUBLIC
+  python3 tools/substack_gateway.py restack <post_id>              # PUBLIC
+  python3 tools/substack_gateway.py like-note <note_id> | like-post <post_id>  # PUBLIC
+
+Note replies + restack don't exist in vendor/substack-api (its note reply throws
+"not yet implemented"); these are the gateway's verified endpoints.
 
 ai-check matters: Substack shows readers an AI disclosure driven by this scan, and
 it is the same verdict a reader could see. Run it before anything goes out.
@@ -80,6 +89,58 @@ class Gateway:
         """tab: engagement | traffic | growth | recipients | discussion."""
         return self._req("GET", f"post_management/detail/{post_id}/{tab}")
 
+    def published(self, limit=25, offset=0):
+        """Published posts WITH per-post email stats (sent/opens/open_rate/clicks/
+        signups/subscribes/unsubscribes_within_1_day) under `stats`. Richer than
+        anything the gateway exposes."""
+        d = self._req("GET", "post_management/published", params={
+            "offset": offset, "limit": limit,
+            "order_by": "post_date", "order_direction": "desc"})
+        return d.get("posts", [])
+
+    # --- notes / social (substack.com host, same SID cookie) ------------------
+    def _sub(self, method, path, **kw):
+        r = self.c.session.request(method, "https://substack.com/api/v1/" + path,
+                                   headers=self.c.headers, timeout=60, **kw)
+        r.raise_for_status()
+        return r.json() if r.content else None
+
+    def own_notes(self, pages=3):
+        out, cur = [], None
+        for _ in range(pages):
+            d = self._req("GET", "notes", params={"cursor": cur} if cur else {})
+            for it in d.get("items", []):
+                c = it.get("comment") or {}
+                if c and not c.get("ancestor_path"):
+                    out.append(c)
+            cur = d.get("nextCursor")
+            if not cur:
+                break
+        return out
+
+    def note_replies(self, note_id):
+        d = self._sub("GET", f"reader/comment/{note_id}/replies")
+        return [b.get("comment") or {} for b in (d or {}).get("commentBranches") or d.get("branches") or []]
+
+    def reply_to_note(self, parent_id, text):
+        body = {"type": "doc", "attrs": {"schemaVersion": "v1"}, "content": [
+            {"type": "paragraph", "content": [{"type": "text", "text": para}]}
+            for para in text.split("\n\n") if para.strip()]}
+        return self._sub("POST", "comment/feed/", json={
+            "bodyJson": body, "tabId": "for-you", "surface": "feed",
+            "replyMinimumRole": "everyone", "parent_id": parent_id})
+
+    def restack_post(self, post_id):
+        return self._sub("POST", "restack/feed", json={"postId": post_id, "commentId": None})
+
+    def like_note(self, note_id):
+        return self._sub("POST", f"comment/{note_id}/reaction",
+                         json={"publication_id": None, "reaction": "\u2764"})
+
+    def like_post(self, post_id):
+        return self._sub("POST", f"post/{post_id}/reaction",
+                         json={"reaction": "\u2764", "surface": "reader"})
+
     def latest_post(self):
         a = self._req("GET", "archive", params={"sort": "new", "limit": 1})
         return a[0] if a else None
@@ -139,6 +200,33 @@ def main():
         print(f"  growth: signups {(gr.get('signups') or {}).get('total', 0)}  "
               f"subscribes {((gr.get('subscribes') or {}).get('totals') or {}).get('subscribes', 0)}  "
               f"unsubs {(gr.get('unsubscribes') or {}).get('total', 0)}")
+    elif cmd == "scorecard":
+        print(f"{'date':10} {'sent':>5} {'views':>5} {'open':>5} {'ctr':>5} {'sign':>4} {'sub':>3} {'unsub':>5} {'likes':>5}  title")
+        for p in g.published(int(rest[0]) if rest else 15):
+            st = p.get("stats") or {}
+            likes = sum((p.get("reactions") or {}).values())
+            print(f"{p['post_date'][:10]} {st.get('sent', 0):>5} {st.get('views', 0):>5} "
+                  f"{100 * (st.get('open_rate') or 0):>4.0f}% {100 * (st.get('click_through_rate') or 0):>4.1f}% "
+                  f"{st.get('signups', 0):>4} {st.get('subscribes', 0):>3} "
+                  f"{st.get('unsubscribes_within_1_day', 0) + st.get('disables_within_1_day', 0):>5} "
+                  f"{likes:>5}  {'$ ' if p.get('audience') == 'only_paid' else ''}{p['title'][:55]}")
+    elif cmd == "notes":
+        ns = g.own_notes(int(rest[0]) if rest else 3)
+        for c in sorted(ns, key=lambda c: -((c.get("reaction_count") or 0) + 2 * (c.get("restacks") or 0)
+                                            + (c.get("children_count") or 0)))[:20]:
+            print(f"{c['date'][:10]} {c['id']} likes {c.get('reaction_count', 0):>3} restack {c.get('restacks', 0):>2} "
+                  f"replies {c.get('children_count', 0):>2}  {c.get('body', '')[:70].replace(chr(10), ' ')}")
+    elif cmd == "replies":
+        for c in g.note_replies(int(rest[0])):
+            print(f"{c.get('id')} @{c.get('handle')}: {(c.get('body') or '')[:120]}")
+    elif cmd == "note-reply":
+        r = g.reply_to_note(int(rest[0]), rest[1]); print(f"REPLIED {r.get('id')}")
+    elif cmd == "restack":
+        g.restack_post(int(rest[0])); print(f"RESTACKED {rest[0]}")
+    elif cmd == "like-note":
+        g.like_note(int(rest[0])); print(f"LIKED note {rest[0]}")
+    elif cmd == "like-post":
+        g.like_post(int(rest[0])); print(f"LIKED post {rest[0]}")
     elif cmd == "schedule":
         aud = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--audience=")), None)
         if aud not in ("everyone", "only_paid", "founding"):
