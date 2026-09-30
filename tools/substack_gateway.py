@@ -218,7 +218,7 @@ def main():
                   f"replies {c.get('children_count', 0):>2}  {c.get('body', '')[:70].replace(chr(10), ' ')}")
     elif cmd == "replies":
         for c in g.note_replies(int(rest[0])):
-            print(f"{c.get('id')} @{c.get('handle')}: {(c.get('body') or '')[:120]}")
+            print(f"{c.get('id')} @{c.get('handle') or c.get('name')}: {(c.get('body') or '')[:120]}")
     elif cmd == "note-reply":
         r = g.reply_to_note(int(rest[0]), rest[1]); print(f"REPLIED {r.get('id')}")
     elif cmd == "restack":
