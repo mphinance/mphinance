@@ -73,6 +73,7 @@ SCREEN_FILES = {
     "dividend_growth": "dividend-growth-screener.json",
     "avwap_reclaim": "avwap-reclaim-screener.json",
     "gap_hold": "gap-hold-screener.json",
+    "failed_breakdown": "failed-breakdown-screener.json",
 }
 
 
