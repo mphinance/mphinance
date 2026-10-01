@@ -17,7 +17,13 @@ a sync port on top of substack_dossier.SubstackClient (same SID cookie, no new d
   python3 tools/substack_gateway.py note-reply <note_id> "text"   # PUBLIC
   python3 tools/substack_gateway.py restack <post_id>              # PUBLIC
   python3 tools/substack_gateway.py like-note <note_id> | like-post <post_id>  # PUBLIC
+  python3 tools/substack_gateway.py comments [post_id]   # reader comments on a post (default: latest)
+  python3 tools/substack_gateway.py comment-reply <comment_id> "text"   # PUBLIC
+  python3 tools/substack_gateway.py comment <post_id> "text"            # PUBLIC, top-level
+  python3 tools/substack_gateway.py like-comment <comment_id> | delete-comment <comment_id>
 
+Post comments came in a 2nd pass (gateway 4.0.1, upstream unchanged since). The gateway's
+"following" list (user/{id}/subscriber-lists) is Cloudflare-challenged for us, so it's skipped.
 Note replies + restack don't exist in vendor/substack-api (its note reply throws
 "not yet implemented"); these are the gateway's verified endpoints.
 
@@ -141,6 +147,34 @@ class Gateway:
         return self._sub("POST", f"post/{post_id}/reaction",
                          json={"reaction": "\u2764", "surface": "reader"})
 
+    # --- post comments (pub host) ----------------------------------------------
+    def post_comments(self, post_id):
+        """Top-level comments; each carries its replies under `children`."""
+        return (self._req("GET", f"post/{post_id}/comments") or {}).get("comments", [])
+
+    def comment_post_id(self, comment_id):
+        item = (self._req("GET", f"reader/comment/{comment_id}") or {}).get("item") or {}
+        pid = (item.get("post") or {}).get("id")
+        if not pid:
+            raise SystemExit(f"comment {comment_id} has no post (is it a note? use note-reply)")
+        return pid
+
+    def comment_on_post(self, post_id, text, parent_id=None):
+        body = {"body": text}
+        if parent_id:
+            body["parent_id"] = parent_id
+        return self._req("POST", f"post/{post_id}/comment", json=body)
+
+    def reply_to_comment(self, comment_id, text):
+        return self.comment_on_post(self.comment_post_id(comment_id), text, comment_id)
+
+    def like_comment(self, comment_id):
+        return self._req("POST", f"comment/{comment_id}/reaction",
+                         json={"publication_id": None, "reaction": "\u2764"})
+
+    def delete_comment(self, comment_id):
+        self._req("DELETE", f"comment/{comment_id}")
+
     def latest_post(self):
         a = self._req("GET", "archive", params={"sort": "new", "limit": 1})
         return a[0] if a else None
@@ -227,6 +261,25 @@ def main():
         g.like_note(int(rest[0])); print(f"LIKED note {rest[0]}")
     elif cmd == "like-post":
         g.like_post(int(rest[0])); print(f"LIKED post {rest[0]}")
+    elif cmd == "comments":
+        post = {"id": int(rest[0])} if rest else g.latest_post()
+        print(f"POST {post['id']} {post.get('title', '')}")
+
+        def show(c, depth=0):
+            print(f"{'  ' * depth}{c.get('id')} {(c.get('date') or '')[:10]} @{c.get('handle') or c.get('name')}"
+                  f" ({c.get('reaction_count') or 0} likes): {(c.get('body') or '').replace(chr(10), ' ')[:140]}")
+            for ch in c.get("children") or []:
+                show(ch, depth + 1)
+        for c in g.post_comments(post["id"]):
+            show(c)
+    elif cmd == "comment-reply":
+        r = g.reply_to_comment(int(rest[0]), rest[1]); print(f"REPLIED {r.get('id')}")
+    elif cmd == "comment":
+        r = g.comment_on_post(int(rest[0]), rest[1]); print(f"COMMENTED {r.get('id')}")
+    elif cmd == "like-comment":
+        g.like_comment(int(rest[0])); print(f"LIKED comment {rest[0]}")
+    elif cmd == "delete-comment":
+        g.delete_comment(int(rest[0])); print(f"DELETED comment {rest[0]}")
     elif cmd == "schedule":
         aud = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--audience=")), None)
         if aud not in ("everyone", "only_paid", "founding"):
