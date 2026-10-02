@@ -9,7 +9,11 @@ I audited his last 12 weeks of trade recommendations (180 setups) to see how he 
 
 The secret? He is not scanning 5,000 stocks every Sunday. 
 
-He rotates through a static pool of about 70 blue chips and ETFs. FCX was in 8 of the 12 weeks. UNH was in 8 weeks. PLTR was in 6 weeks. When you knock out companies with earnings this month and anything trading below its 200-day moving average, the entire market shrinks to about 20 names. His strikes are literally textbook 0.22 delta monthly puts.
+He rotates through a static pool of about 70 blue chips and ETFs. FCX was in 8 of the 12 weeks. UNH was in 8 weeks. PLTR was in 6 weeks. When you knock out companies with earnings this month and anything trading below its 200-day moving average, the entire market shrinks to about 20 names. 
+
+Here are our backtest stats against his actual published newsletters across all of September:
+- Stock Selection: We hit 58 out of 60 of his picks (96.7% universe overlap across 4 weeks).
+- Strike Accuracy: 90% of our predicted strikes landed within 1 strike interval of what he published, with 55% matching the exact dollar strike.
 
 I looked at TraderMatrix to see why our CSP screener was showing Bitcoin miners (CIFR, MARA) instead of blue chips like his. 
 
@@ -19,7 +23,7 @@ Found two bugs in the defaults:
 
 We just patched the engine and shipped a brand new one-click preset on TraderMatrix:
 
-👉 **"Blue-Chip Wheel (All Grades)"**
+👉 **"Blue-Chip Wheel (All Grades)"**  
 Link: https://www.tradermatrix.pro/screeners/csp-wheel
 
 What it does:
