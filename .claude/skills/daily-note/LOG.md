@@ -64,7 +64,7 @@ Nobody can spend my winnings if I lose them first.
 
 ## 2026-10-05 (Mon) · Do Not Let Success Intoxicate You × Yesterday's Baggage
 
-- Queue id `20261005-0618-5573`, slot 06:18 AM ET (replaced `20261005-0618-5056`)
+- Queue id `20261005-0618-5726`, slot 06:18 AM ET
 - Shape: minted hook + Hoid parable, no math (linter satisfied by "contracts"). Took ~6 rounds; see Learned.
 - Engagement: _pending_
 
@@ -79,7 +79,7 @@ On the seventh he doubled his contracts on margin, because a man that sure of hi
 
 The market had been flipping the same coin the whole time. It just never mentioned it.
 
-The rooms are full of him too. A few years in and an opinion on everybody's program. I've got a few years in myself now. Starting to hear him when I talk.
+The rooms are full of him too. A few years in and an opinion on everybody's program. I've got a few years in myself now. If I ever turn into him, somebody please tell me.
 
 ~ Michael
 ```
