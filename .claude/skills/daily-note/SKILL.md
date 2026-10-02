@@ -113,4 +113,8 @@ Tells Michael has flagged, newest last. Each one is a pattern to hunt, not just 
 - 2026-10-01: Three scene + math paragraph + quip notes in a row read as a formula. Vary the shape. The linter's arithmetic rule pushes toward the formula; a single real dollar figure satisfies it.
 - 2026-10-01: Sundays post later, around 7 AM ET (random minute 6:50 to 7:10). Weekdays and Saturday stay 6:00 to 6:30.
 - 2026-10-01: **Math is seasoning, not the meal.** He rejected a delta/probability walkthrough on Oct 5 ("too much math in this again"). One real number per note is plenty; the story carries the point.
-- 2026-10-01: The Hoid parable is his favorite shape. Lines that work double as recovery subtext without saying so ("By the sixth he had opinions about everybody else's" reads to him as old-timers telling him he works his program wrong). Aim for that double reading; never make it explicit.
+- 2026-10-01: The Hoid parable is his favorite shape. Lines that double as recovery subtext land ("By the sixth he had opinions about everybody else's" = old-timers with opinions on everyone's program). A light, self-deprecating nod to the rooms at the end is fine; time in earns no authority over anyone else.
+- 2026-10-01: **When he riffs mid-review, he's handing over material, not approving.** "I do so love old timers who..." was sarcasm meant to go INTO the note. His examples ("politics, religion, you name it") explain the point; they are not copy. Ask if unsure, he said so.
+- 2026-10-01: **Every note opens with a hook.** If the Greene page has no epigraph, use a minted one (fine) or the day's Daily Law line. Naming Greene is allowed at most very rarely; default to minted.
+- 2026-10-01: Say "margin" over "30% cash buffer"; it's the word traders actually feel.
+- 2026-10-01: When a revision fails, fix only what he flagged. Oct 5 drifted because each rewrite also changed parts he liked (the hook got dropped, then the body wandered).

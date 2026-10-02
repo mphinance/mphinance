@@ -64,20 +64,22 @@ Nobody can spend my winnings if I lose them first.
 
 ## 2026-10-05 (Mon) · Do Not Let Success Intoxicate You × Yesterday's Baggage
 
-- Queue id `20261005-0618-5056`, slot 2026-10-05 06:18 ET
-- Shape: Hoid parable, one number only (30% buffer). Michael loved "By the sixth he had opinions about everybody else's."
+- Queue id `20261005-0618-5573`, slot 06:18 AM ET (replaced `20261005-0618-5056`)
+- Shape: minted hook + Hoid parable, no math (linter satisfied by "contracts"). Took ~6 rounds; see Learned.
 - Engagement: _pending_
 
 ```
+**"Six wins doesn't make a teacher. Neither do six years."**
+
 There once was a trader who won six trades in a row.
 
-By the fourth he had a system. By the sixth he had opinions about everybody else's.
+By the fourth he had a system. By the sixth he had opinions about everybody else's, and handed them out to people who never asked.
 
-On the seventh he looked at his **30%** cash buffer and decided it was being lazy.
+On the seventh he doubled his contracts on margin, because a man that sure of himself shouldn't be trading with only his own money.
 
 The market had been flipping the same coin the whole time. It just never mentioned it.
 
-I have never once called six losers in a row a system, weirdly.
+The rooms are full of him too. A few years in and an opinion on everybody's program. I've got a few years in myself now. Starting to hear him when I talk.
 
 ~ Michael
 ```
