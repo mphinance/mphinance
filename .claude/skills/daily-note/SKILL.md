@@ -118,3 +118,8 @@ Tells Michael has flagged, newest last. Each one is a pattern to hunt, not just 
 - 2026-10-01: **Every note opens with a hook.** If the Greene page has no epigraph, use a minted one (fine) or the day's Daily Law line. Naming Greene is allowed at most very rarely; default to minted.
 - 2026-10-01: Say "margin" over "30% cash buffer"; it's the word traders actually feel.
 - 2026-10-01: When a revision fails, fix only what he flagged. Oct 5 drifted because each rewrite also changed parts he liked (the hook got dropped, then the body wandered).
+- 2026-10-01: Hypothetical scenes cap out at "good." His real moments are what make a note screenshot-worthy; ask for one before settling.
+
+## Ideas parked
+
+- Add a "no rolling a loser past the stop" rule to the `saturday-rules` gist (Michael, 2026-10-01).
