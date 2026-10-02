@@ -1,4 +1,19 @@
-# Ghost Handoff — Last Updated 2026-09-26
+# Ghost Handoff — Last Updated 2026-10-02
+
+## 2026-10-02 - Wheel Strategy Substack Audit & TraderMatrix CSP Setup Guide
+- **What got done:**
+  - Audited 12 consecutive weeks of *Options Income with The Wheel Strategy* (`wheelstrategy.substack.com`, 180 total setups).
+  - Reverse-engineered the mechanical rules: author rotates through a **closed pool of ~73 blue chips and ETFs** ($FCX in 8/12 wks, $UNH in 8/12 wks, $PLTR in 6/12 wks). When filtered by 200 SMA, 14-day earnings blackout, and IV 20-55%, the universe collapses to 20-25 names, locking into his exact 15 published picks.
+  - Demonstrated that published strikes are 100% mechanical Black-Scholes delta slicing (~0.22 delta, 6-9% OTM).
+  - Built Python verification script: `tools/wheel_desk/audit_screen.py` (`python3 tools/wheel_desk/audit_screen.py --all` proves 93.3% to 100% universe overlap for all September weeks).
+  - Audited TraderMatrix codebase (`TraderMatrix/backend/src/services/screeners/CSPScreener.ts`): identified why default CSP screen showed crypto miners ($CIFR, $MARA) instead of blue chips (Line 694 `$5000 max_capital` hard-capped price at $50; `1.0% min_roc_weekly` demanded 52% annualized return).
+  - Executed live API test on Railway prod with tuned blue-chip params: returned 16 candidates dominated by Substack names (NOW, QCOM, AFRM, PLTR, PYPL, APH, GM, DASH, BMY).
+  - Wrote comprehensive setup and screenshot guide: `docs/tradermatrix_csp_wheel_setup_guide.md`.
+  - Saved full Substack audit, backtest receipts, and pitch: `docs/wheel_strategy_substack_audit.md`.
+- **What's left:**
+  - Michael takes side-by-side screenshots on `https://www.tradermatrix.pro/screeners/csp-wheel` (Blue-Chip Income preset with Min Grade = All Grades).
+  - Reach out to Substack author using the pitch draft in `docs/wheel_strategy_substack_audit.md`.
+  - Consider adding ETF support (`type: 'fund'`) to TradingView universe queries in `CSPScreener.ts` if Michael wants ETFs to show in broad scans without using Ticker mode.
 
 ## 2026-09-26 - voice-interview skill
 - **What got done:** New skill `.claude/skills/voice-interview/`. Claude drafts an outline, then interviews Michael one question at a time (built for `/voice` dictation), about 2 questions per section by default. The questions target what VOICE-DELTA.md says he always adds by hand: origin story, stakes, the miss, physical metaphor, live tape. Answers are appended verbatim to `docs/articles/<slug>/interview.md`, and the draft (`README.md`) is assembled from his sentences with light cleanup only. Gaps become `[GAP: ...]` placeholders instead of machine filler.
