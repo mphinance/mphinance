@@ -52,7 +52,8 @@ not approved**, and never generate all 366 days. He wants to go through them one
 7. **Queue on approval only.** Random minute 0 to 30, so the time looks human:
    ```bash
    M=$(( RANDOM % 31 )); T=$(printf "YYYY-MM-DD 06:%02d" $M)
-   ssh coolify "cat > /tmp/note.md" < note.md        # body only: no '#' headers, no '>'
+   sed -i 's/^> //' note.md                           # strip blockquote markers, the queue posts them literally
+   ssh coolify "cat > /tmp/note.md" < note.md        # body only: no '#' headers
    ssh coolify "cd mphinance && python3 tools/note_queue.py add '$T' /tmp/note.md && python3 tools/note_queue.py list"
    ```
    The queue renders `**bold**`, `*italic*`, `[text](url)` and blank-line paragraphs only, so the
@@ -107,3 +108,7 @@ Tells Michael has flagged, newest last. Each one is a pattern to hunt, not just 
 - 2026-10-01: Three-beat fragment runs ("One tap... One swipe...") are borderline; watch them.
 - 2026-10-01: Michael **loves the Hoid parable for self-deprecation** ("I know him pretty well."). Prefer it on days that could turn preachy.
 - 2026-10-01: A note can carry a **small free tool** tied to its theme (Oct 3: the `saturday-rules` gist for Robinhood's Trading MCP). Link inline after the punchline, one plain sentence. He knows it dilutes the ending and chose inline anyway.
+- 2026-10-01: **His real stories beat anything generated.** Oct 4 drafts all missed until he gave the actual event (a ~$9k futures day, then ~$8k given back after a fight about money, relapse-logic "fine, then I'm gonna"). When a draft misses twice, stop iterating and ask him for a real moment that fits the principle.
+- 2026-10-01: **Keep other people out of his stories.** No "her", no spouse doing anything. "A fight about money" and "show everybody" is the ceiling.
+- 2026-10-01: Three scene + math paragraph + quip notes in a row read as a formula. Vary the shape. The linter's arithmetic rule pushes toward the formula; a single real dollar figure satisfies it.
+- 2026-10-01: Sundays post later, around 7 AM ET (random minute 6:50 to 7:10). Weekdays and Saturday stay 6:00 to 6:30.

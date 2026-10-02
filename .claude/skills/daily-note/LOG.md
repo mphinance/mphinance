@@ -41,3 +41,23 @@ Robinhood just opened trading to AI agents, so I put Saturday him in the room. I
 
 ~ Michael
 ```
+
+## 2026-10-04 (Sun) · Analyze, Scrutinize, Question × A Necessary Pruning
+
+- Queue id `20261004-0659-4841`, slot 06:59 AM ET (Michael: Sundays later, around 7)
+- Shape: his real story (best futures day, then a spite day after a fight about money), storybook openers. Partner kept out on purpose.
+- Engagement: _pending_
+
+```
+**"Though you fight against it with all of your might, you want to."** Dostoyevsky
+
+It was a bright and shiny Wednesday. Best day I've ever had trading futures, up about **$9,000**.
+
+It was a dark and stormy Thursday. There was a fight about money, and the old brain from my drinking days showed up right on time. Already think I'm drinking? Fine, then I'm gonna. Real smart.
+
+So I went to show everybody how it works. Gave back at least **$8,000** by the close.
+
+Nobody can spend my winnings if I lose them first.
+
+~ Michael
+```
