@@ -105,3 +105,5 @@ Tells Michael has flagged, newest last. Each one is a pattern to hunt, not just 
   the irony kills it. Let the numbers carry it.
 - 2026-10-01: **"Here is what that X does."** setup sentence before the math. Just start the math.
 - 2026-10-01: Three-beat fragment runs ("One tap... One swipe...") are borderline; watch them.
+- 2026-10-01: Michael **loves the Hoid parable for self-deprecation** ("I know him pretty well."). Prefer it on days that could turn preachy.
+- 2026-10-01: A note can carry a **small free tool** tied to its theme (Oct 3: the `saturday-rules` gist for Robinhood's Trading MCP). Link inline after the punchline, one plain sentence. He knows it dilutes the ending and chose inline anyway.
