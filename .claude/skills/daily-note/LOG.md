@@ -6,7 +6,8 @@ Newest last. Engagement is filled in by the self-improve step (`substack_gateway
 
 - Queue id `20261002-0622-6200`, slot 06:22 AM ET (replaced `20261002-0622-3372`, the "calmer thumb" version)
 - Shape: desk scene, real Chekhov epigraph from the Greene page, two numbers only
-- Engagement: _pending_
+- Posted 06:22 AM ET (sent/20261002-0622-6200.json). Engagement at 09:52 ET: 2 likes, 0 restacks, 1 reply
+- Reply (@The Zero Hour Group): "Hate the quote, love the feature." Real Chekhov epigraph still drew a quote complaint; hook may be the weak spot, not the body.
 
 ```
 **"Man will only become better when you make him see what he is like."** Chekhov
