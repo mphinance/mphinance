@@ -61,3 +61,23 @@ Nobody can spend my winnings if I lose them first.
 
 ~ Michael
 ```
+
+## 2026-10-05 (Mon) · Do Not Let Success Intoxicate You × Yesterday's Baggage
+
+- Queue id `20261005-0618-5056`, slot 2026-10-05 06:18 ET
+- Shape: Hoid parable, one number only (30% buffer). Michael loved "By the sixth he had opinions about everybody else's."
+- Engagement: _pending_
+
+```
+There once was a trader who won six trades in a row.
+
+By the fourth he had a system. By the sixth he had opinions about everybody else's.
+
+On the seventh he looked at his **30%** cash buffer and decided it was being lazy.
+
+The market had been flipping the same coin the whole time. It just never mentioned it.
+
+I have never once called six losers in a row a system, weirdly.
+
+~ Michael
+```

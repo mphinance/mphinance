@@ -112,3 +112,5 @@ Tells Michael has flagged, newest last. Each one is a pattern to hunt, not just 
 - 2026-10-01: **Keep other people out of his stories.** No "her", no spouse doing anything. "A fight about money" and "show everybody" is the ceiling.
 - 2026-10-01: Three scene + math paragraph + quip notes in a row read as a formula. Vary the shape. The linter's arithmetic rule pushes toward the formula; a single real dollar figure satisfies it.
 - 2026-10-01: Sundays post later, around 7 AM ET (random minute 6:50 to 7:10). Weekdays and Saturday stay 6:00 to 6:30.
+- 2026-10-01: **Math is seasoning, not the meal.** He rejected a delta/probability walkthrough on Oct 5 ("too much math in this again"). One real number per note is plenty; the story carries the point.
+- 2026-10-01: The Hoid parable is his favorite shape. Lines that work double as recovery subtext without saying so ("By the sixth he had opinions about everybody else's" reads to him as old-timers telling him he works his program wrong). Aim for that double reading; never make it explicit.
