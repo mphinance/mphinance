@@ -1528,6 +1528,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Failed-breakdown screen failed: {e}")
 
+    # ── Stage 10k: Tight Closes Screen ──
+    print("\n[10k/16] TIGHT CLOSES SCREEN (3-weeks-tight bases near highs)")
+    tight_closes_results: list[dict] = []
+    with timer.stage("Tight Closes Screen"):
+        try:
+            import time as _tc_time
+            from dossier.tight_closes_screener import score_tight_closes, _save_api_output as _tc_save
+            _tc_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _tc_pool:
+                _r = score_tight_closes(_t)
+                if _r:
+                    tight_closes_results.append(_r)
+                _tc_time.sleep(0.05)
+            tight_closes_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _tc_save(tight_closes_results)
+            _top_tc = [r for r in tight_closes_results if r["grade"] in ("A+", "A")]
+            print(f"  🧷 {len(tight_closes_results)} tight bases — {len(_top_tc)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['tight_weeks']}w)" for r in _top_tc[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Tight closes screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
