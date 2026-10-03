@@ -163,25 +163,40 @@ const brake = gate
 // The floor: biggest short-gamma strike below spot.
 const floor = below.filter((s) => s.netGex < -WALL).sort((a, b) => a.netGex - b.netGex)[0] || null;
 
-// The cushion: the best positive-gamma strike below spot. Dealers are long
-// gamma there, so they buy into weakness. This is structurally different from a
-// big negative strike, which is a crowd, not a floor.
-const cushion = floor
-  ? below.filter((s) => s.strike > floor.strike && s.netGex > 0).sort((a, b) => b.netGex - a.netGex)[0] || null
-  : null;
+// Walk DOWN from spot the way price would. The first strike heavy enough to
+// matter is the shelf (long gamma: something to lean on) or the trapdoor
+// (short gamma: dealers sell into it). Below it, the strikes down to the put
+// wall are either one CONTIGUOUS empty band or a grind.
+//
+// Contiguity is the fix. This used to collect every thin strike above the wall
+// whether or not they touched, so on 2026-10-02 it printed "761 to 769 is
+// empty" straight across a -$535M strike at 767. Same rules as the TraderMatrix
+// chart-share port (backend/src/services/share/tomorrowMap.ts) -- change both.
+const walk = below.slice().reverse(); // nearest first
+const firstIdx = walk.findIndex((s) => Math.abs(s.netGex) >= WALL);
+const firstHeavy = firstIdx >= 0 ? walk[firstIdx] : null;
+const shelfLvl = firstHeavy && (!floor || firstHeavy.strike !== floor.strike) ? firstHeavy : null;
 
-// Air pocket: the run of thin strikes between spot and that floor.
+// The band that has to be empty: from the shelf (or from spot, when price is
+// already standing in the air) down to the wall.
+const bandTop = shelfLvl ? shelfLvl.strike : Infinity;
+const between = floor ? walk.filter((s) => s.strike < bandTop && s.strike > floor.strike) : [];
+
+// The cushion: the best positive-gamma strike in that band. Dealers are long
+// gamma there, so they buy into weakness -- structurally different from a big
+// negative strike, which is a crowd, not a floor. Must carry a tenth of a wall
+// to count; a $10M strike in a $1.4B book is not a bid.
+const cushion = between.filter((s) => s.netGex >= WALL * 0.1).sort((a, b) => b.netGex - a.netGex)[0] || null;
+
+// Air pocket: the band, but only if EVERY strike in it is thin.
 let pocket = null;
-if (floor) {
-  const run = below.filter((s) => s.strike > floor.strike && Math.abs(s.netGex) < WALL);
-  if (run.length >= 2) {
-    pocket = {
-      lo: Math.min(...run.map((s) => s.strike)),
-      hi: Math.max(...run.map((s) => s.strike)),
-      net: run.reduce((a, s) => a + Math.abs(s.netGex), 0),
-      n: run.length,
-    };
-  }
+if (floor && between.length >= 2 && between.every((s) => Math.abs(s.netGex) < WALL)) {
+  pocket = {
+    lo: Math.min(...between.map((s) => s.strike)),
+    hi: Math.max(...between.map((s) => s.strike)),
+    net: between.reduce((a, s) => a + Math.abs(s.netGex), 0),
+    n: between.length,
+  };
 }
 
 // ── the ledger: every map this tool publishes gets written down ────────────
@@ -425,32 +440,37 @@ const roads = [
   {
     key: 'DOWN',
     col: C.put,
-    cond: pocket ? `below ${Math.min(pocket.hi + 1, Math.floor(spot))}` : `below ${Math.floor(spot)}`,
-    rule: pocket
-      ? (cushion && cushion.strike < Math.min(pocket.hi + 1, Math.floor(spot))
-          ? `thin air. only real bid is ${cushion.strike}. then ${floor.strike}.`
-          : `open air. ${pocket.lo} to ${pocket.hi} is empty. next stop ${floor.strike}.`)
-      : floor
-        ? `no thin band above ${floor.strike}. grind, not a drop.`
-        : `no readable structure below spot.`,
+    cond: shelfLvl ? `below ${shelfLvl.strike}` : `below ${Math.floor(spot)}`,
+    rule: (() => {
+      // The shelf is a real listed strike (it came off the ladder), so the old
+      // "missing strike defaults to a SHELF" trap cannot recur here.
+      const lead = shelfLvl
+        ? (shelfLvl.netGex >= 0 ? `leans on ${shelfLvl.strike}. lose it and ` : `trapdoor at ${shelfLvl.strike}. through it, `)
+        : '';
+      if (!floor) {
+        return shelfLvl
+          ? (shelfLvl.netGex >= 0 ? `leans on ${shelfLvl.strike}. ` : `trapdoor at ${shelfLvl.strike}. `) + 'no readable structure below it.'
+          : 'no readable structure below spot.';
+      }
+      if (cushion) return `${lead}thin air. only real bid is ${cushion.strike}. then ${floor.strike}.`;
+      if (pocket) return `${lead}open air. ${pocket.lo} to ${pocket.hi} is empty. next stop ${floor.strike}.`;
+      return `${lead}no thin band above ${floor.strike}. grind, not a drop.`;
+    })(),
     side: 1,
-    pts: pocket
+    pts: floor || shelfLvl
       ? [
-          (() => {
-            const shelfK = Math.min(pocket.hi + 1, Math.floor(spot));
-            // Same trap: a missing strike defaulted to netGex 0, and `0 >= 0` is
-            // true, so an unlisted level was always called a SHELF you can lean on.
-            const lv = ladder.find((s) => s.strike === shelfK) || null;
-            if (!lv) return { at: shelfK, tag: `${shelfK}`, note: 'no listed strike here' };
-            return lv.netGex >= 0
-              ? { at: shelfK, tag: `${shelfK} LAST SHELF`, note: 'the last thing to lean on' }
-              : { at: shelfK, tag: `${shelfK} TRAPDOOR`, note: `${oiFmt(lv.putOi)} puts, and dealers sell into it` };
-          })(),
-          cushion && cushion.strike < Math.min(pocket.hi + 1, Math.floor(spot))
+          shelfLvl
+            ? (shelfLvl.netGex >= 0
+                ? { at: shelfLvl.strike, tag: `${shelfLvl.strike} LAST SHELF`, note: 'the last thing to lean on' }
+                : { at: shelfLvl.strike, tag: `${shelfLvl.strike} TRAPDOOR`, note: `${oiFmt(shelfLvl.putOi)} puts, and dealers sell into it` })
+            : null,
+          cushion
             ? { at: cushion.strike, tag: `${cushion.strike} THIN CUSHION`, note: 'only dealer buying down here, and it is small', open: true }
-            : { at: (pocket.lo + pocket.hi) / 2, tag: 'EMPTY', note: `${pocket.lo} to ${pocket.hi}, nothing here`, open: true },
-          { at: floor.strike, tag: `${floor.strike} PUT WALL`, note: `${oiFmt(floor.putOi)} puts. the fight is here` },
-        ]
+            : pocket
+              ? { at: (pocket.lo + pocket.hi) / 2, tag: 'EMPTY', note: `${pocket.lo} to ${pocket.hi}, nothing here`, open: true }
+              : null,
+          floor ? { at: floor.strike, tag: `${floor.strike} PUT WALL`, note: `${oiFmt(floor.putOi)} puts. the fight is here` } : null,
+        ].filter(Boolean)
       : [{ at: Math.round(lo), tag: `${Math.round(lo)}`, note: 'no thin band below' }],
     up: false,
   },
@@ -725,7 +745,7 @@ const entry = {
   accel: accel ? accel.strike : null,
   brake: brake ? brake.strike : null,
   gate: gate ? gate.strike : null,
-  shelf: pocket ? pocket.hi + 1 : null,
+  shelf: shelfLvl ? shelfLvl.strike : null,
   cushion: cushion ? cushion.strike : null,
   wall: floor ? floor.strike : null,
 };
@@ -765,7 +785,7 @@ writeFileSync(sidecar, JSON.stringify({
     ceiling: gate ? gate.strike : null,
     brake: brake ? brake.strike : null,
     accel: accel ? accel.strike : null,
-    shelf: pocket ? Math.min(pocket.hi + 1, Math.floor(spot)) : null,
+    shelf: shelfLvl ? shelfLvl.strike : null,
     cushion: cushion ? cushion.strike : null,
     putWall: floor ? floor.strike : null,
   },
