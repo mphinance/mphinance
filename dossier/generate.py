@@ -1552,6 +1552,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Tight closes screen failed: {e}")
 
+    # ── Stage 10l: Higher Lows Screen ──
+    print("\n[10l/16] HIGHER LOWS SCREEN (weekly staircase uptrends)")
+    higher_lows_results: list[dict] = []
+    with timer.stage("Higher Lows Screen"):
+        try:
+            import time as _hl_time
+            from dossier.higher_lows_screener import score_higher_lows, _save_api_output as _hl_save
+            _hl_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _hl_pool:
+                _r = score_higher_lows(_t)
+                if _r:
+                    higher_lows_results.append(_r)
+                _hl_time.sleep(0.05)
+            higher_lows_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _hl_save(higher_lows_results)
+            _top_hl = [r for r in higher_lows_results if r["grade"] in ("A+", "A")]
+            print(f"  🪜 {len(higher_lows_results)} staircases — {len(_top_hl)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['rising_weeks']}w)" for r in _top_hl[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Higher lows screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}

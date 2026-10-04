@@ -74,6 +74,7 @@ SCREEN_FILES = {
     "avwap_reclaim": "avwap-reclaim-screener.json",
     "gap_hold": "gap-hold-screener.json",
     "tight_closes": "tight-closes-screener.json",
+    "higher_lows": "higher-lows-screener.json",
     "failed_breakdown": "failed-breakdown-screener.json",
 }
 
