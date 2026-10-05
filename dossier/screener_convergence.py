@@ -75,6 +75,7 @@ SCREEN_FILES = {
     "gap_hold": "gap-hold-screener.json",
     "tight_closes": "tight-closes-screener.json",
     "higher_lows": "higher-lows-screener.json",
+    "resilience": "resilience-screener.json",
     "failed_breakdown": "failed-breakdown-screener.json",
 }
 

@@ -1576,6 +1576,35 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Higher lows screen failed: {e}")
 
+    # ── Stage 10m: Resilience Screen ──
+    print("\n[10m/16] RESILIENCE SCREEN (held up on SPY's down days)")
+    resilience_results: list[dict] = []
+    with timer.stage("Resilience Screen"):
+        try:
+            import time as _rs_time
+            from dossier.resilience_screener import (
+                BENCHMARK as _RS_BENCH, _fetch_closes as _rs_fetch,
+                score_resilience, _save_api_output as _rs_save,
+            )
+            _rs_spy = _rs_fetch(_RS_BENCH)
+            if _rs_spy is not None:
+                _rs_pool = [t for t in dict.fromkeys(
+                    list(CORE_WATCHLIST) + scanned_tickers[:15]
+                ) if not _is_junk(t)][:35]
+                for _t in _rs_pool:
+                    _r = score_resilience(_t, spy=_rs_spy)
+                    if _r:
+                        resilience_results.append(_r)
+                    _rs_time.sleep(0.05)
+                resilience_results.sort(key=lambda r: r["score"], reverse=True)
+                if not dry_run:
+                    _rs_save(resilience_results)
+            _top_rs = [r for r in resilience_results if r["grade"] in ("A+", "A")]
+            print(f"  🛡️ {len(resilience_results)} resilient — {len(_top_rs)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (down-cap {r['down_capture']})" for r in _top_rs[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Resilience screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
