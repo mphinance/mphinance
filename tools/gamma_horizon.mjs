@@ -128,6 +128,7 @@ const exps = matrix.expiryStats
   });
 if (!exps.length) throw new Error(`no expiries within ${HORIZON} days`);
 const majors = exps.filter((e) => e.major);
+if (!majors.length) throw new Error(`${sym}: no expiry inside ${HORIZON} days carries ${MIN_SHARE}% of open interest; the book is too thin to map`);
 const largest = exps.find((e) => e.isLargest) || majors.reduce((a, e) => (e.oiSharePct > a.oiSharePct ? e : a), majors[0]);
 const last = exps[exps.length - 1];
 const negGamma = gex.totalGEX < 0;
@@ -188,6 +189,7 @@ const fmt = (v) => (v == null ? '-' : Number.isInteger(v) ? String(v) : v.toFixe
 const fmtM = (v) => {
   const a = Math.abs(v), s = v < 0 ? '−' : '';
   if (a >= 1e9) return `${s}$${(a / 1e9).toFixed(2)}B`;
+  if (a < 1e6) return `${s}$${Math.round(a / 1e3)}K`;
   if (a < 10e6) return `${s}$${(a / 1e6).toFixed(1)}M`;
   return `${s}$${Math.round(a / 1e6)}M`;
 };
@@ -217,10 +219,12 @@ const glowLine = (x1, x2, v, col, { w = 2, dash = '', op = 0.95, glow = 0.55 } =
 
 // ── header ──────────────────────────────────────────────────────────────────
 push(`<text x="${PAD_L}" y="46" font-family="'Share Tech Mono',monospace" font-size="30" fill="${C.text}" letter-spacing="1">THE NEXT ${Math.round(maxDte / 7)} WEEKS <tspan fill="${C.green}">${esc(sym)}</tspan></text>`);
-push(`<text x="${PAD_L}" y="72" ${mono} font-size="13" fill="${C.dim}">spot ${spot.toFixed(2)} · flip ${fmt(flipNow)} · net GEX ${fmtM(gex.totalGEX)} · options price a ±${largest.emPoints.toFixed(2)} move into ${md(largest.expiry)}, the heaviest expiry (${largest.oiSharePct.toFixed(0)}% of OI)</text>`);
+push(`<text x="${PAD_L}" y="72" ${mono} font-size="13" fill="${C.dim}">spot ${spot.toFixed(2)} · ${flipNow != null ? `flip ${fmt(flipNow)}` : 'no flip in range'} · net GEX ${fmtM(gex.totalGEX)} · options price a ±${largest.emPoints.toFixed(2)} move into ${md(largest.expiry)}, the heaviest expiry (${largest.oiSharePct.toFixed(0)}% of OI)</text>`);
 const pillC = negGamma ? C.put : C.call;
 push(`<rect x="${W - PAD_R - 330}" y="26" width="330" height="34" rx="17" fill="${negGamma ? '#1a0e11' : '#0c1a13'}" stroke="${pillC}" stroke-opacity="0.45"/>`);
 push(`<text x="${W - PAD_R - 165}" y="48" text-anchor="middle" ${mono} font-size="14" fill="${pillC}">${negGamma ? 'NEGATIVE GAMMA / moves get amplified' : 'POSITIVE GAMMA / moves get damped'}</text>`);
+// Small names: say the book is thin rather than let the levels look solid.
+if (Math.abs(gex.totalGEX) < 1e6) push(`<text x="${PAD_L}" y="92" ${mono} font-size="12" fill="${C.coral}">THIN BOOK: only ${fmtM(gex.totalGEX)} of net gamma. the levels show where open interest sits, not how hard dealers will defend them.</text>`);
 push(`<text x="${W - PAD_R}" y="76" text-anchor="end" ${mono} font-size="11" fill="${C.dim}">as of ${new Date().toISOString().slice(0, 16).replace('T', ' ')}Z</text>`);
 
 // ── panels + grid ───────────────────────────────────────────────────────────
@@ -436,22 +440,24 @@ const flipRef = flipNow;
 const rules = [
   {
     kw: 'IF', col: C.call,
-    cond: flipRef != null && flipRef > spot ? `it reclaims ${fmt(flipRef)}` : `it holds over ${fmt(flipRef)}`,
+    cond: flipRef == null ? (above ? `it pushes toward ${fmt(above)}` : 'it rallies') : flipRef > spot ? `it reclaims ${fmt(flipRef)}` : `it holds over ${fmt(flipRef)}`,
     rule: above
-      ? `${flipRef > spot ? 'back above the flip, dealers stop chasing and start braking.' : 'above the flip, dealers brake.'} ${fmt(above)} is the ${md(L0.expiry)} call wall, ${above - spot > L0.emPoints ? 'outside what options price by then.' : 'inside the priced move.'}`
+      ? `${flipRef == null ? 'no flip in range, so the call wall is the whole story.' : flipRef > spot ? 'back above the flip, dealers stop chasing and start braking.' : 'above the flip, dealers brake.'} ${fmt(above)} is the ${md(L0.expiry)} call wall, ${above - spot > L0.emPoints ? 'outside what options price by then.' : 'inside the priced move.'}`
       : 'no call wall above spot in the heavy expiry. nothing caps it but the cone.',
   },
   {
     kw: 'IF', col: C.put,
     cond: below ? `it loses ${fmt(below)}` : `it breaks ${(spot - front.emPoints).toFixed(2)}`,
     rule: below
-      ? `${fmt(below)} is the ${md(L0.expiry)} put wall. a crowd, not a floor: below it dealers sell into the drop. cone bottom ${(spot - L0.emPoints).toFixed(2)}.`
+      ? (negGamma
+        ? `${fmt(below)} is the ${md(L0.expiry)} put wall. a crowd, not a floor: below it dealers sell into the drop. cone bottom ${(spot - L0.emPoints).toFixed(2)}.`
+        : `${fmt(below)} is the ${md(L0.expiry)} put wall. long gamma above ${flipRef != null ? fmt(flipRef) : 'it'} still cushions; ${flipRef != null && flipRef < below ? `lose ${fmt(flipRef)} too and dealers start chasing.` : 'below it the cushion thins.'} cone bottom ${(spot - L0.emPoints).toFixed(2)}.`)
       : 'no put wall below spot in the heavy expiry.',
   },
   {
     kw: 'ELSE', col: C.pin,
     cond: below && above ? `it lives between ${fmt(below)} and ${fmt(above)}` : 'it ranges',
-    rule: `settles ${majors.map((e) => fmt(e.settle)).join(' → ')}, biggest pile at ${fmt(L0.magnet)}, into ${md(majors[majors.length - 1].expiry)}. ${negGamma ? 'short gamma, so the range gets knifed at both edges.' : 'long gamma, so it gets pinned.'}`,
+    rule: `settles ${majors.filter((e) => e.settle != null).map((e) => fmt(e.settle)).join(' → ') || fmt(L0.magnet)}, biggest pile at ${fmt(L0.magnet)}, into ${md(majors[majors.length - 1].expiry)}. ${negGamma ? 'short gamma, so the range gets knifed at both edges.' : 'long gamma, so it gets pinned.'}`,
   },
 ];
 rules.push({
