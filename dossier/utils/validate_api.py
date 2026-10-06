@@ -40,6 +40,27 @@ def check_yfinance_history(df, ticker: str, min_rows: int = 2) -> tuple[bool, st
     return True, ""
 
 
+def forward_closes(hist, ticker: str, min_rows: int = 2) -> list[float]:
+    """
+    Return a validated, NaN-free list of closes from a yfinance forward-window
+    history, or [] when the frame is unusable.
+
+    A NaN close (halted/delisted names) would otherwise flow into the forward
+    return math and get serialized as NaN/null into the archive.
+    """
+    # Only Close is needed here, so don't demand the full OHLCV column set.
+    if hist is None or hist.empty or "Close" not in hist.columns:
+        print(f"    [WARN] {ticker}: forward history empty or missing Close",
+              file=sys.stderr)
+        return []
+    closes = [float(p) for p in hist["Close"].dropna().tolist()]
+    if len(closes) < min_rows:
+        print(f"    [WARN] {ticker}: only {len(closes)} valid close(s)",
+              file=sys.stderr)
+        return []
+    return closes
+
+
 def check_yfinance_info(info, ticker: str) -> dict:
     """
     Normalize a yfinance .info result to a non-None dict.

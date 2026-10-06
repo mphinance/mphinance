@@ -40,6 +40,7 @@ def _get_forward_returns(ticker: str, pick_date: str, price_at_pick: float = 0) 
     try:
         import yfinance as yf
         from dossier.utils.retry import retry
+        from dossier.utils.validate_api import forward_closes
 
         dt = datetime.strptime(pick_date, "%Y-%m-%d")
         # Fetch 30 trading days after the pick
@@ -50,10 +51,9 @@ def _get_forward_returns(ticker: str, pick_date: str, price_at_pick: float = 0) 
         hist = ticker_obj.history(start=start.strftime("%Y-%m-%d"),
                                   end=end.strftime("%Y-%m-%d"))
 
-        if hist.empty or len(hist) < 2:
+        prices = forward_closes(hist, ticker, min_rows=2)
+        if len(prices) < 2:
             return {}
-
-        prices = hist["Close"].tolist()
         base_price = price_at_pick if price_at_pick > 0 else prices[0]
         if base_price <= 0:
             return {}
