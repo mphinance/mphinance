@@ -69,7 +69,22 @@ const OUT = arg('out', '/tmp/gamma');
 const BAND = parseFloat(arg('band', '1.4')) / 100;   // % of spot drawn above/below
 
 const gex = await api(`/gex/${sym}`);
-const hist = await api(`/gex/${sym}/historical?hours=168`);
+// The dev API only keeps snapshot history for a whitelist of index ETFs and
+// megacaps. Everything else (single names like ASTS) gets 1-minute regular-
+// session bars from Yahoo, reshaped to the same {snapshotTime, spotPrice} rows.
+const hist = await api(`/gex/${sym}/historical?hours=168`).catch(async (err) => {
+  if (!/only available for/i.test(err.message)) throw err;
+  console.log(`no TDPro history for ${sym}, using Yahoo 1m bars`);
+  const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1m&range=7d`, {
+    headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(30000),
+  });
+  const res = (await r.json())?.chart?.result?.[0];
+  if (!res?.timestamp) throw new Error(`${sym}: no price history from TDPro or Yahoo`);
+  const close = res.indicators.quote[0].close;
+  return res.timestamp
+    .map((t, i) => ({ snapshotTime: new Date(t * 1000).toISOString(), spotPrice: close[i] }))
+    .filter((p) => p.spotPrice != null);
+});
 const matrix = await api(`/gex/${sym}/matrix`).catch(() => null);
 
 const spot = gex.spotPrice;
@@ -120,7 +135,9 @@ const maxAbs = Math.max(...ladder.map((s) => Math.abs(s.netGex)));
 // Relative-only thresholds will happily label a "ceiling" in a book with a few
 // thousand dollars of gamma in it. The absolute floor lets the chart say the
 // structure is too thin to read instead of inventing one.
-const MIN_WALL = 50e6;
+// Default is sized for SPY. A single name's whole book can be a few $M, so
+// --minwall (in $M) lets it be read on its own scale instead of as THIN BOOK.
+const MIN_WALL = parseFloat(arg('minwall', '50')) * 1e6;
 const WALL = Math.max(maxAbs * 0.28, MIN_WALL);
 const thinBook = maxAbs < MIN_WALL * 2;
 
@@ -227,6 +244,7 @@ const flipOnPrice = Math.abs(flip - spot) < spot * 0.0004;
 const fmtM = (v) => {
   const a = Math.abs(v);
   if (a >= 1e9) return `${v < 0 ? '−' : ''}$${(a / 1e9).toFixed(2)}B`;
+  if (a < 10e6) return `${v < 0 ? '−' : ''}$${(a / 1e6).toFixed(1)}M`;
   return `${v < 0 ? '−' : ''}$${Math.round(a / 1e6)}M`;
 };
 const oiFmt = (v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(Math.round(v)));
