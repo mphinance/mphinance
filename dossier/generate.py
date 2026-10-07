@@ -1605,6 +1605,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Resilience screen failed: {e}")
 
+    # ── Stage 10n: RSI(2) Pullback Screen ──
+    print("\n[10n/16] RSI(2) PULLBACK SCREEN (washed-out dips in uptrends)")
+    rsi2_results: list[dict] = []
+    with timer.stage("RSI2 Pullback Screen"):
+        try:
+            import time as _r2_time
+            from dossier.rsi2_pullback_screener import score_rsi2_pullback, _save_api_output as _r2_save
+            _r2_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _r2_pool:
+                _r = score_rsi2_pullback(_t)
+                if _r:
+                    rsi2_results.append(_r)
+                _r2_time.sleep(0.05)
+            rsi2_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _r2_save(rsi2_results)
+            _top_r2 = [r for r in rsi2_results if r["grade"] in ("A+", "A")]
+            print(f"  🎯 {len(rsi2_results)} washed-out dips — {len(_top_r2)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (RSI2 {r['rsi2']})" for r in _top_r2[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] RSI2 pullback screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
