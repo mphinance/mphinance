@@ -76,6 +76,7 @@ SCREEN_FILES = {
     "tight_closes": "tight-closes-screener.json",
     "higher_lows": "higher-lows-screener.json",
     "resilience": "resilience-screener.json",
+    "rsi2_pullback": "rsi2-pullback-screener.json",
     "failed_breakdown": "failed-breakdown-screener.json",
 }
 
