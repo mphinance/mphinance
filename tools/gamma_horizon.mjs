@@ -145,8 +145,13 @@ const plan = {
   entryLo: pw,
   entryHi: r2(Math.min(spot, pw + atrNow * 0.5)),
   stop: r2(pw - atrNow),
-  t1: largest.callWall != null && largest.callWall > spot ? largest.callWall : r2(kcU1[kcU1.length - 1]),
 };
+// T1 has to be a real distance away. A call wall sitting on spot (LITE at
+// 1133 under an 1140 wall) makes a 0.8 R:R plan out of nothing; step out to
+// the next major call wall, then the 1-ATR Keltner, then spot + 1 ATR.
+const minT1 = spot + atrNow * 0.5;
+plan.t1 = [largest.callWall, ...majors.map((e) => e.callWall).sort((a, b) => a - b)].find((v) => v != null && v >= minT1)
+  ?? (kcU1[kcU1.length - 1] >= minT1 ? r2(kcU1[kcU1.length - 1]) : r2(spot + atrNow));
 const k2 = kcU2[kcU2.length - 1];
 plan.t2 = r2(k2 > plan.t1 + atrNow * 0.5 ? k2 : plan.t1 + atrNow);
 plan.mid = (plan.entryLo + plan.entryHi) / 2;
@@ -310,8 +315,15 @@ push(`<polygon points="${pts.join(' ')}" fill="url(#coneG)" stroke="${C.dim}" st
 const lastConeY = Y(clampY(spot + last.emPoints));
 push(`<text x="${XF(last.dte) - 6}" y="${lastConeY - 8}" text-anchor="end" ${mono} font-size="10" fill="${C.dim}">options-implied move (±1σ)</text>`);
 
+// Daily/near-daily expiries (MU, SPCX) collide in the strip. Majors always
+// get a column; a minor only gets one if it has room.
+const shown = [];
+for (const e of [...majors, ...exps.filter((x) => !x.major)]) {
+  if (shown.every((o) => Math.abs(XF(o.dte) - XF(e.dte)) >= 58)) shown.push(e);
+}
+const showSet = new Set(shown.map((e) => e.expiry));
 // Expiry columns: faint vertical, date at the bottom, monthly OPEX louder.
-for (const e of exps) {
+for (const e of exps.filter((x) => showSet.has(x.expiry))) {
   const x = XF(e.dte);
   const op = e.major ? 0.35 : 0.12;
   push(`<line x1="${x}" x2="${x}" y1="${PAD_T + 30}" y2="${PAD_T + PLOT_H}" stroke="${e.isLargest ? C.pin : C.dim}" stroke-opacity="${op}" stroke-dasharray="2 5"/>`);
@@ -425,8 +437,8 @@ const rowsDef = [
 ];
 rowsDef.forEach(([label, f, col], ri) => {
   const y = SY + ri * 17;
-  push(`<text x="${FWD_X + 10}" y="${y}" ${mono} font-size="10.5" fill="${C.dim}">${label}</text>`);
-  for (const e of exps) push(`<text x="${XF(e.dte)}" y="${y}" text-anchor="middle" ${mono} font-size="10.5" fill="${col}" fill-opacity="${e.major ? 1 : 0.45}">${f(e)}</text>`);
+  push(`<text x="${FWD_X - 10}" y="${y}" text-anchor="end" ${mono} font-size="10.5" fill="${C.dim}">${label}</text>`);
+  for (const e of shown) push(`<text x="${XF(e.dte)}" y="${y}" text-anchor="middle" ${mono} font-size="10.5" fill="${col}" fill-opacity="${e.major ? 1 : 0.45}">${f(e)}</text>`);
 });
 
 // ── IF / IF / ELSE ──────────────────────────────────────────────────────────
