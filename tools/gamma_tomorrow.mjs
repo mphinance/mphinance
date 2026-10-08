@@ -197,7 +197,11 @@ const shelfLvl = firstHeavy && (!floor || firstHeavy.strike !== floor.strike) ? 
 // The band that has to be empty: from the shelf (or from spot, when price is
 // already standing in the air) down to the wall.
 const bandTop = shelfLvl ? shelfLvl.strike : Infinity;
-const between = floor ? walk.filter((s) => s.strike < bandTop && s.strike > floor.strike) : [];
+// The pin is never air: ASTS 2026-10-06 printed "57 PIN" inside "56 to 58,
+// nothing here". When the pin sits under spot the band starts below it.
+const between = floor
+  ? walk.filter((s) => s.strike < bandTop && s.strike > floor.strike && (pin == null || pin >= spot || s.strike < pin))
+  : [];
 
 // The cushion: the best positive-gamma strike in that band. Dealers are long
 // gamma there, so they buy into weakness -- structurally different from a big
