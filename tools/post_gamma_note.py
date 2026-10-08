@@ -14,6 +14,12 @@ Guards, because this runs unattended:
   - refuses a sidecar older than 20 hours
   - one note per calendar day, tracked in data/gamma_maps/.note_state.json
 
+Changelog: any entry in data/gamma_maps/CHANGELOG.json with "posted": null is
+appended to the next note under "What changed", then stamped with the date it
+went out, so each change is announced exactly once. Whenever the map or its
+grading changes, add an entry there: one or two plain sentences a reader who
+has never seen the code would follow, saying what changed and why.
+
 Auth: SUBSTACK_SID in secrets.env, same cookie the rest of the pipeline uses.
 """
 import argparse
@@ -22,12 +28,16 @@ import json
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import requests
 
 REPO = Path(__file__).resolve().parent.parent
 STATE = REPO / "data/gamma_maps/.note_state.json"
-ET = timezone(timedelta(hours=-4))
+CHANGELOG = REPO / "data/gamma_maps/CHANGELOG.json"
+# Was a fixed UTC-4, which is EDT only: every winter the once-a-day guard would
+# roll over at 8pm ET instead of midnight.
+ET = ZoneInfo("America/New_York")
 
 
 def secrets():
@@ -48,7 +58,13 @@ def session():
     return s, sec.get("SUBSTACK_PUB_URL", "mphinance.substack.com")
 
 
-def compose(d):
+def pending_changes():
+    if not CHANGELOG.exists():
+        return []
+    return [c for c in json.loads(CHANGELOG.read_text()) if not c.get("posted")]
+
+
+def compose(d, changes=()):
     """The caption. Short, factual, no voice."""
     sym = d["symbol"]
     lines = [f"{sym} next session, from the book as it settled."]
@@ -86,6 +102,11 @@ def compose(d):
             f"Levels exclude the {d['expiringShare'] * 100:.0f}% of gamma that does not "
             f"survive into the next session."
         )
+    if changes:
+        # One paragraph per item: the note body is paragraphs split on blank
+        # lines, and a bare newline inside a paragraph does not render.
+        lines.append("What changed in the map:")
+        lines.extend(f"- {c['text']}" for c in changes)
     lines.append("Where dealers are long gamma they brake, where they are short they chase. Not advice.")
     return "\n\n".join(lines)
 
@@ -150,7 +171,8 @@ def main():
     if state.get("lastPosted") == today and not a.force:
         sys.exit(f"already posted a note today ({today}); use --force to override")
 
-    text = compose(d)
+    changes = pending_changes()
+    text = compose(d, changes)
     print("─" * 70)
     print(text)
     print("─" * 70)
@@ -171,6 +193,15 @@ def main():
 
     STATE.parent.mkdir(parents=True, exist_ok=True)
     STATE.write_text(json.dumps({"lastPosted": today, "noteId": nid}, indent=2) + "\n")
+
+    if changes:
+        log = json.loads(CHANGELOG.read_text())
+        for c in log:
+            if not c.get("posted"):
+                c["posted"] = today
+                c["noteId"] = nid
+        CHANGELOG.write_text(json.dumps(log, indent=2) + "\n")
+        print(f"changelog: announced {len(changes)} change(s)")
 
 
 if __name__ == "__main__":

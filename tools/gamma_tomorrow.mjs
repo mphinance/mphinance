@@ -354,9 +354,21 @@ function gradeEntry(e, day, bars) {
     if (low <= v + tol) nullHits.push(close >= v);
   }
 
+  // The RANGE road's claim: on a day neither road fires, price settles near the
+  // pin. Scored only on RANGE days, as "closed within half a typical day of
+  // the pin", against the nearest $5 round number to spot by the same rule.
+  if (branch === 'RANGE' && e.chartPin != null) {
+    const near = tol * 2;
+    checks.push({ lvl: e.chartPin, side: 'pin', dist: +Math.abs(close - e.chartPin).toFixed(2), thru: 0,
+                  tested: true, ok: Math.abs(close - e.chartPin) <= near, wickHeld: true, label: `${e.chartPin} pin` });
+    const r5 = Math.round(spot / R) * R;
+    nullHits.push(Math.abs(close - r5) <= near);
+  }
+
   const tested = checks.filter((c) => c.tested);
   const untested = checks.filter((c) => !c.tested);
   const verb = (c) => {
+    if (c.side === 'pin') return c.ok ? `settled ${c.dist.toFixed(2)} from the ${c.label}` : `MISS closed ${c.dist.toFixed(2)} from the ${c.label}`;
     if (c.ok && !c.wickHeld) return `wicked ${c.thru.toFixed(2)} through ${c.label}, closed ${c.side === 'high' ? 'under' : 'over'}`;
     return `${c.ok ? 'held' : 'MISS closed through'} ${c.label}${c.ok ? ` by ${c.dist.toFixed(2)}` : ''}`;
   };
@@ -396,7 +408,8 @@ if (argv.includes('--regrade') && !ledgerBroken) {
     if (e.graded.v !== 2) e.graded_v1 = e.graded;
     e.graded = { v: 2, day: g.day, branch: g.branch, hits: g.hits, total: g.total,
                  nullHits: g.nullHits, nullTotal: g.nullTotal,
-                 untested: g.untested.length, summary: g.summary, source: 'daily OHLC regrade' };
+                 untested: g.untested.length, summary: g.summary,
+                 checks: g.tested.map((c) => ({ lvl: c.lvl, side: c.side, ok: c.ok })), source: 'daily OHLC regrade' };
     console.log(`regraded ${e.madeAfter} -> ${g.day}: ${g.hits}/${g.total} (null ${g.nullHits}/${g.nullTotal}) | ${g.summary}`);
   }
   ledgerDirty = true;
@@ -415,7 +428,8 @@ if (!ledgerBroken) {
     const g = gradeEntry(e, day, bars);
     e.graded = { v: 2, day: g.day, branch: g.branch, hits: g.hits, total: g.total,
                  nullHits: g.nullHits, nullTotal: g.nullTotal,
-                 untested: g.untested.length, summary: g.summary };
+                 untested: g.untested.length, summary: g.summary,
+                 checks: g.tested.map((c) => ({ lvl: c.lvl, side: c.side, ok: c.ok })) };
     ledgerDirty = true;
   }
 }
@@ -433,6 +447,13 @@ const inSample = ledger.filter((e) => e.graded && e.graded.source);
 const record = {
   inSample: { sessions: inSample.length, hits: inSample.reduce((a, e) => a + e.graded.hits, 0), total: inSample.reduce((a, e) => a + e.graded.total, 0),
               nullHits: inSample.reduce((a, e) => a + (e.graded.nullHits ?? 0), 0), nullTotal: inSample.reduce((a, e) => a + (e.graded.nullTotal ?? 0), 0) },
+  // Gamma levels that are NOT $5 round numbers. On SPY most brakes are round
+  // strikes, so the round-number baseline cannot separate them from gamma;
+  // this split can. Reported, not published, until it has a sample.
+  nonRound: (() => {
+    const cs = gradedAll.flatMap((e) => e.graded.checks || []).filter((c) => c.side !== 'pin' && c.lvl % 5 !== 0);
+    return { hits: cs.filter((c) => c.ok).length, total: cs.length };
+  })(),
   sessions: gradedAll.length,
   hits: gradedAll.reduce((a, e) => a + e.graded.hits, 0),
   total: gradedAll.reduce((a, e) => a + e.graded.total, 0),
@@ -511,17 +532,21 @@ const roads = [
   {
     key: 'UP',
     col: C.call,
-    cond: flip > spot ? `above ${flip.toFixed(2)}` : "higher",
+    // Led by the brake, not the flip. In the first 10 graded sessions the flip
+    // held on the close 3 of 6 times, a coin flip; brakes and ceilings held 5/5.
+    // The flip is kept as context (which regime dealers are in), not as the
+    // trigger a reader acts on.
+    cond: brake ? `up into ${brake.strike}` : gate ? `up into ${gate.strike}` : 'higher',
     rule: gate
-      ? ((flip <= spot ? 'already above the flip, so dealers are braking. ' : '') + (brake
-          ? `${accel ? `rips through ${accel.strike}, then ` : ''}stalls into ${brake.strike}, dies at ${gate.strike}.`
-          : `${accel ? `rips through ${accel.strike}. ` : ''}nothing gives until ${gate.strike}.`))
+      ? ((flip > spot ? `under the flip (${flip.toFixed(2)}) dealers chase, so it can get there fast. ` : '') + (brake
+          ? `${accel ? `rips through ${accel.strike}, then ` : ''}stalls at ${brake.strike}: it can wick over, it tends to close under. ceiling ${gate.strike}.`
+          : `${accel ? `rips through ${accel.strike}. ` : ''}nothing gives until ${gate.strike}, and it tends to close under that.`))
       : `dealers brake. no ceiling in range.`,
     side: -1,
     pts: [
       flip > spot ? { at: flip, tag: `${flip.toFixed(2)} FLIP`, note: 'dealers stop chasing, start braking' } : null,
       accel ? { at: accel.strike, tag: `${accel.strike} ACCELERANT`, note: `${oiFmt(accel.callOi)} calls, dealers buy into strength` } : null,
-      brake ? { at: brake.strike, tag: `${brake.strike} BRAKE`, note: 'dealers sell rips here, rallies stall' } : null,
+      brake ? { at: brake.strike, tag: `${brake.strike} BRAKE`, note: 'wicks through, closes under' } : null,
       gate ? { at: gate.strike, tag: `${gate.strike} CEILING`, note: 'move dies here' } : null,
     ], up: true,
   },
@@ -843,7 +868,10 @@ await browser.close();
 const entry = {
   madeAfter: sessions[sessions.length - 1],
   asOf: new Date().toISOString(),
-  spot, flip, pin: magnet,
+  // `pin` was always the API's maxGammaStrike (787 on 10/06 with spot 779), not
+  // the pin the chart draws, so the RANGE road could never be graded. Kept for
+  // continuity; chartPin is the one the map actually claims.
+  spot, flip, pin: magnet, chartPin: pin, expected,
   accel: accel ? accel.strike : null,
   brake: brake ? brake.strike : null,
   gate: gate ? gate.strike : null,

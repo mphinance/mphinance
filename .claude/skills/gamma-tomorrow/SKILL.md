@@ -149,6 +149,21 @@ clock restarted 2026-10-08. The ledger `data/gamma_maps/SPY.json` must be
 force-added (`git add -f`): `*.json` is gitignored and the nightly commit had been
 picking up only `SPY.json.bak`, one night stale.
 
+**Every change to the map or its grading gets a changelog entry.** Add it to
+`data/gamma_maps/CHANGELOG.json` as `{"date", "text", "posted": null}` in the same
+commit as the change. `post_gamma_note.py` appends every unposted entry to the next
+note under "What changed in the map" and stamps it posted, so each change is
+announced once. Write `text` for a reader who has never seen the code: what changed
+and why, one or two sentences, no jargon beyond what the chart already uses. Michael
+asked for this on 2026-10-08.
+
+**The RANGE road is graded now.** The ledger used to store the API's
+maxGammaStrike as `pin` (787 with spot at 779), so the pin was never checked. New
+entries carry `chartPin`; on RANGE days the close is scored against it (within half
+a typical day), with the nearest $5 round number as its baseline. The record also
+reports `nonRound`: hits on gamma levels that are not $5 multiples, the only split
+that separates gamma from round numbers on SPY (in-sample 8/11).
+
 **Review the prior days before drawing a new one.** Every run backfills any
 ungraded entry whose session has closed, then builds the new map. The ledger is
 the memory; the chart is just today's view of it.
