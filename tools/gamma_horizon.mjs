@@ -16,7 +16,7 @@
 // No ledger. Tomorrow's Map grades itself nightly; a two-month map cannot be
 // graded until its expiries roll off, and that is a separate build.
 
-import { readFileSync, mkdirSync, existsSync, writeFileSync } from 'fs';
+import { readFileSync, mkdirSync, existsSync, writeFileSync, readdirSync } from 'fs';
 import { join, resolve, dirname } from 'path';
 import { homedir } from 'os';
 
@@ -69,6 +69,93 @@ const OUT = arg('out', '/tmp/gamma');
 const HORIZON = parseInt(arg('days', '60'), 10);
 const BARS = parseInt(arg('bars', '65'), 10);
 const MIN_SHARE = parseFloat(arg('minshare', '5'));
+
+// ── plan ledger ─────────────────────────────────────────────────────────────
+// Every plan this tool draws is written down and graded against the daily
+// bars that follow, the same discipline as Tomorrow's Map: grades are durable
+// once a plan resolves, and no hit rate is printed before MIN_GRADED plans
+// have resolved with a fill. Do not lower that to make a post look better.
+const LEDGER_DIR = join(ROOT, 'data/gamma_maps/horizon');
+const MIN_GRADED = 10;
+const etNow = () => {
+  const f = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false })
+    .formatToParts(new Date()).reduce((a, x) => ((a[x.type] = x.value), a), {});
+  return { date: `${f.year}-${f.month}-${f.day}`, hour: parseInt(f.hour, 10) };
+};
+const dailyBars = async (s) => {
+  const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${s}?interval=1d&range=1y`, {
+    headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(30000),
+  }).then((x) => x.json());
+  const res = r?.chart?.result?.[0];
+  if (!res?.timestamp) return null;
+  const qq = res.indicators.quote[0];
+  return res.timestamp.map((t, i) => ({
+    d: new Date(t * 1000).toISOString().slice(0, 10), o: qq.open[i], h: qq.high[i], l: qq.low[i], c: qq.close[i],
+  })).filter((b) => b.o != null && b.c != null);
+};
+// A plan fills on the first session after it was drawn whose low reaches the
+// zone AND whose close holds the bottom of it (the "daily close that holds"
+// rule printed on the chart). After the fill day: stop first if a bar touches
+// both stop and T1, because a daily bar cannot say which came first.
+const TERMINAL = new Set(['T1', 'STOP', 'EXPIRED', 'NO FILL']);
+function gradePlan(e, bars) {
+  if (TERMINAL.has(e.result?.status)) return e.result;
+  const { date: today, hour } = etNow();
+  const closed = bars.filter((b) => b.d > e.madeOn && b.d <= e.horizon && (b.d < today || hour >= 16));
+  const p = e.plan;
+  let filledOn = null, t2Hit = false;
+  for (const b of closed) {
+    if (!filledOn) {
+      if (b.l <= p.entryHi && b.c >= p.entryLo) filledOn = b.d;
+      continue;
+    }
+    if (b.l <= p.stop) return { status: 'STOP', filledOn, resolvedOn: b.d, ret: +((p.stop / p.mid - 1) * 100).toFixed(2) };
+    if (b.h >= p.t1) {
+      t2Hit = b.h >= p.t2;
+      return { status: 'T1', filledOn, resolvedOn: b.d, t2Hit, ret: +(((t2Hit ? p.t2 : p.t1) / p.mid - 1) * 100).toFixed(2) };
+    }
+  }
+  const pastHorizon = today > e.horizon || (today === e.horizon && hour >= 16);
+  if (pastHorizon) {
+    if (!filledOn) return { status: 'NO FILL' };
+    const lastC = closed[closed.length - 1].c;
+    return { status: 'EXPIRED', filledOn, resolvedOn: e.horizon, ret: +((lastC / p.mid - 1) * 100).toFixed(2) };
+  }
+  return { status: filledOn ? 'OPEN' : 'WAITING', filledOn };
+}
+const readLedger = (s) => {
+  const f = join(LEDGER_DIR, `${s}.json`);
+  return existsSync(f) ? JSON.parse(readFileSync(f, 'utf8')) : [];
+};
+const writeLedger = (s, rows) => {
+  mkdirSync(LEDGER_DIR, { recursive: true });
+  writeFileSync(join(LEDGER_DIR, `${s}.json`), JSON.stringify(rows, null, 2) + '\n');
+};
+function recordSummary() {
+  if (!existsSync(LEDGER_DIR)) return { resolved: 0, open: 0, t1: 0, stop: 0, expired: 0, nofill: 0 };
+  const all = readdirSync(LEDGER_DIR).filter((f) => f.endsWith('.json')).flatMap((f) => JSON.parse(readFileSync(join(LEDGER_DIR, f), 'utf8')));
+  const st = (k) => all.filter((e) => e.result?.status === k).length;
+  const t1 = st('T1'), stop = st('STOP'), expired = st('EXPIRED');
+  return { resolved: t1 + stop + expired, open: st('OPEN') + st('WAITING'), t1, stop, expired, nofill: st('NO FILL') };
+}
+
+// --grade: re-grade every ledger and print the scorecard, no chart.
+if (argv.includes('--grade')) {
+  const files = existsSync(LEDGER_DIR) ? readdirSync(LEDGER_DIR).filter((f) => f.endsWith('.json')) : [];
+  for (const f of files) {
+    const s = f.replace(/\.json$/, '');
+    const rows = readLedger(s);
+    const b = await dailyBars(s);
+    if (!b) { console.log(`${s}: no bars`); continue; }
+    for (const e of rows) e.result = gradePlan(e, b);
+    writeLedger(s, rows);
+    for (const e of rows) console.log(`${s.padEnd(6)} ${e.madeOn} entry ${e.plan.entryLo}-${e.plan.entryHi} stop ${e.plan.stop} T1 ${e.plan.t1}  ${e.result.status}${e.result.filledOn ? ` filled ${e.result.filledOn}` : ''}${e.result.resolvedOn ? ` -> ${e.result.resolvedOn}` : ''}${e.result.ret != null ? ` ${e.result.ret}%` : ''}`);
+  }
+  const r = recordSummary();
+  console.log(`\nresolved ${r.resolved} (T1 ${r.t1} / stop ${r.stop} / expired ${r.expired}), no fill ${r.nofill}, still open ${r.open}`);
+  console.log(r.resolved >= MIN_GRADED ? `T1 hit rate ${(r.t1 / r.resolved * 100).toFixed(0)}%` : `no hit rate until ${MIN_GRADED} resolved fills`);
+  process.exit(0);
+}
 
 // ── data ────────────────────────────────────────────────────────────────────
 const gex = await api(`/gex/${sym}`);
@@ -186,8 +273,9 @@ const plan = {
   stop: r2(pwUse - atrNow),
 };
 const minT1 = spot + atrNow * 0.5;
-plan.t1 = [now.callWall, ...segs.map((g) => g.callWall)].filter((v) => v != null && v >= minT1).sort((a, b) => a - b)[0]
-  ?? (kcU1[kcU1.length - 1] >= minT1 ? r2(kcU1[kcU1.length - 1]) : r2(spot + atrNow));
+const t1Wall = [now.callWall, ...segs.map((g) => g.callWall)].filter((v) => v != null && v >= minT1).sort((a, b) => a - b)[0];
+plan.t1 = t1Wall ?? (kcU1[kcU1.length - 1] >= minT1 ? r2(kcU1[kcU1.length - 1]) : r2(spot + atrNow));
+plan.t1Basis = t1Wall != null ? 'call wall' : kcU1[kcU1.length - 1] >= minT1 ? 'upper 1-ATR Keltner' : 'spot + 1 ATR';
 const k2 = kcU2[kcU2.length - 1];
 plan.t2 = r2(k2 > plan.t1 + atrNow * 0.5 ? k2 : plan.t1 + atrNow);
 plan.mid = (plan.entryLo + plan.entryHi) / 2;
@@ -266,6 +354,13 @@ push(`<rect x="${W - PAD_R - 330}" y="26" width="330" height="34" rx="17" fill="
 push(`<text x="${W - PAD_R - 165}" y="48" text-anchor="middle" ${mono} font-size="14" fill="${pillC}">${negGamma ? 'NEGATIVE GAMMA / moves get amplified' : 'POSITIVE GAMMA / moves get damped'}</text>`);
 // Small names: say the book is thin rather than let the levels look solid.
 if (Math.abs(gex.totalGEX) < 1e6) push(`<text x="${PAD_L}" y="92" ${mono} font-size="12" fill="${C.coral}">THIN BOOK: only ${fmtM(gex.totalGEX)} of net gamma. the levels show where open interest sits, not how hard dealers will defend them.</text>`);
+{
+  const rec = recordSummary();
+  const recTxt = rec.resolved >= MIN_GRADED
+    ? `plan record: T1 ${rec.t1}/${rec.resolved} (${(rec.t1 / rec.resolved * 100).toFixed(0)}%) · ${rec.open} open`
+    : `plan record: ${rec.resolved} resolved, ${rec.open} open · no hit rate until ${MIN_GRADED}`;
+  push(`<text x="${W - PAD_R}" y="94" text-anchor="end" ${mono} font-size="11" fill="${C.entry}" fill-opacity="0.85">${recTxt}</text>`);
+}
 push(`<text x="${W - PAD_R}" y="76" text-anchor="end" ${mono} font-size="11" fill="${C.dim}">as of ${new Date().toISOString().slice(0, 16).replace('T', ' ')}Z</text>`);
 
 // ── panels + grid ───────────────────────────────────────────────────────────
@@ -540,7 +635,7 @@ const rules = [
 rules.push({
   kw: 'PLAN', col: C.entry,
   cond: `long ${fmt(plan.entryLo)}-${fmt(plan.entryHi)}, stop ${fmt(plan.stop)}`,
-  rule: `${plan.basis} entry, only on a daily close that holds ${fmt(plan.entryLo)}. T1 ${fmt(plan.t1)} (call wall), T2 ${fmt(plan.t2)} (${k2 > plan.t1 + atrNow * 0.5 ? 'upper 2-ATR Keltner' : 'T1 + 1 ATR'}). R:R ${plan.rr.toFixed(1)} / ${plan.rr2.toFixed(1)}.`,
+  rule: `${plan.basis} entry, only on a daily close that holds ${fmt(plan.entryLo)}. T1 ${fmt(plan.t1)} (${plan.t1Basis}), T2 ${fmt(plan.t2)} (${k2 > plan.t1 + atrNow * 0.5 ? 'upper 2-ATR Keltner' : 'T1 + 1 ATR'}). R:R ${plan.rr.toFixed(1)} / ${plan.rr2.toFixed(1)}.`,
 });
 const IY = SY + rowsDef.length * 17 + 14;
 rules.forEach((r, i) => {
@@ -581,6 +676,19 @@ const html = `<!doctype html><html><head><meta charset="utf-8">
 <body><svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${svg.join('\n')}</svg></body></html>`;
 mkdirSync(OUT, { recursive: true });
 const stamp = new Date().toISOString().slice(0, 10);
+// Log this plan (one per symbol per ET day; a re-run replaces that day's row)
+// and re-grade the symbol's older plans against the bars we already have.
+{
+  const madeOn = etNow().date;
+  const rows = readLedger(sym).filter((e) => e.madeOn !== madeOn);
+  for (const e of rows) e.result = gradePlan(e, allBars);
+  rows.push({
+    v: 2, madeOn, asOf: new Date().toISOString(), spot, regime: negGamma ? 'negative' : 'positive',
+    horizon: segs[segs.length - 1].end, plan: { ...plan }, result: { status: 'WAITING' },
+  });
+  rows.sort((a, b) => a.madeOn.localeCompare(b.madeOn));
+  if (!argv.includes('--no-log')) writeLedger(sym, rows);
+}
 const base = join(OUT, `${sym.toLowerCase()}_horizon_${stamp}`);
 writeFileSync(`${base}.html`, html);
 const browser = await chromium.launch();
