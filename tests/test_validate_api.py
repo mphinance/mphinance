@@ -229,3 +229,19 @@ class TestSafeTradierQuote:
     def test_quote_null_value(self):
         resp = _FakeResponse('{"quotes": {"quote": null}}')
         assert safe_tradier_quote(resp) is None
+
+
+def test_forward_closes_drops_nan_and_validates():
+    import pandas as pd
+    from dossier.utils.validate_api import forward_closes
+
+    df = pd.DataFrame({
+        "Close": [10.0, float("nan"), 11.0], "High": [1, 1, 1],
+        "Low": [1, 1, 1], "Volume": [1, 1, 1],
+    })
+    assert forward_closes(df, "X") == [10.0, 11.0]
+    assert forward_closes(None, "X") == []
+    assert forward_closes(pd.DataFrame(), "X") == []
+    assert forward_closes(df.drop(columns=["Close"]), "X") == []
+    assert forward_closes(df.iloc[:1], "X", min_rows=2) == []
+    assert forward_closes(df.iloc[:2], "X", min_rows=2) == []  # NaN row dropped

@@ -1528,6 +1528,131 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Failed-breakdown screen failed: {e}")
 
+    # ── Stage 10k: Tight Closes Screen ──
+    print("\n[10k/16] TIGHT CLOSES SCREEN (3-weeks-tight bases near highs)")
+    tight_closes_results: list[dict] = []
+    with timer.stage("Tight Closes Screen"):
+        try:
+            import time as _tc_time
+            from dossier.tight_closes_screener import score_tight_closes, _save_api_output as _tc_save
+            _tc_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _tc_pool:
+                _r = score_tight_closes(_t)
+                if _r:
+                    tight_closes_results.append(_r)
+                _tc_time.sleep(0.05)
+            tight_closes_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _tc_save(tight_closes_results)
+            _top_tc = [r for r in tight_closes_results if r["grade"] in ("A+", "A")]
+            print(f"  🧷 {len(tight_closes_results)} tight bases — {len(_top_tc)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['tight_weeks']}w)" for r in _top_tc[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Tight closes screen failed: {e}")
+
+    # ── Stage 10l: Higher Lows Screen ──
+    print("\n[10l/16] HIGHER LOWS SCREEN (weekly staircase uptrends)")
+    higher_lows_results: list[dict] = []
+    with timer.stage("Higher Lows Screen"):
+        try:
+            import time as _hl_time
+            from dossier.higher_lows_screener import score_higher_lows, _save_api_output as _hl_save
+            _hl_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _hl_pool:
+                _r = score_higher_lows(_t)
+                if _r:
+                    higher_lows_results.append(_r)
+                _hl_time.sleep(0.05)
+            higher_lows_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _hl_save(higher_lows_results)
+            _top_hl = [r for r in higher_lows_results if r["grade"] in ("A+", "A")]
+            print(f"  🪜 {len(higher_lows_results)} staircases — {len(_top_hl)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['rising_weeks']}w)" for r in _top_hl[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Higher lows screen failed: {e}")
+
+    # ── Stage 10m: Resilience Screen ──
+    print("\n[10m/16] RESILIENCE SCREEN (held up on SPY's down days)")
+    resilience_results: list[dict] = []
+    with timer.stage("Resilience Screen"):
+        try:
+            import time as _rs_time
+            from dossier.resilience_screener import (
+                BENCHMARK as _RS_BENCH, _fetch_closes as _rs_fetch,
+                score_resilience, _save_api_output as _rs_save,
+            )
+            _rs_spy = _rs_fetch(_RS_BENCH)
+            if _rs_spy is not None:
+                _rs_pool = [t for t in dict.fromkeys(
+                    list(CORE_WATCHLIST) + scanned_tickers[:15]
+                ) if not _is_junk(t)][:35]
+                for _t in _rs_pool:
+                    _r = score_resilience(_t, spy=_rs_spy)
+                    if _r:
+                        resilience_results.append(_r)
+                    _rs_time.sleep(0.05)
+                resilience_results.sort(key=lambda r: r["score"], reverse=True)
+                if not dry_run:
+                    _rs_save(resilience_results)
+            _top_rs = [r for r in resilience_results if r["grade"] in ("A+", "A")]
+            print(f"  🛡️ {len(resilience_results)} resilient — {len(_top_rs)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (down-cap {r['down_capture']})" for r in _top_rs[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Resilience screen failed: {e}")
+
+    # ── Stage 10n: RSI(2) Pullback Screen ──
+    print("\n[10n/16] RSI(2) PULLBACK SCREEN (washed-out dips in uptrends)")
+    rsi2_results: list[dict] = []
+    with timer.stage("RSI2 Pullback Screen"):
+        try:
+            import time as _r2_time
+            from dossier.rsi2_pullback_screener import score_rsi2_pullback, _save_api_output as _r2_save
+            _r2_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _r2_pool:
+                _r = score_rsi2_pullback(_t)
+                if _r:
+                    rsi2_results.append(_r)
+                _r2_time.sleep(0.05)
+            rsi2_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _r2_save(rsi2_results)
+            _top_r2 = [r for r in rsi2_results if r["grade"] in ("A+", "A")]
+            print(f"  🎯 {len(rsi2_results)} washed-out dips — {len(_top_r2)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (RSI2 {r['rsi2']})" for r in _top_r2[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] RSI2 pullback screen failed: {e}")
+
+    # ── Stage 10o: TTM Squeeze Screen ──
+    print("\n[10o/16] TTM SQUEEZE SCREEN (Bollinger inside Keltner)")
+    squeeze_results: list[dict] = []
+    with timer.stage("TTM Squeeze Screen"):
+        try:
+            import time as _sq_time
+            from dossier.ttm_squeeze_screener import score_ttm_squeeze, _save_api_output as _sq_save
+            _sq_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _sq_pool:
+                _r = score_ttm_squeeze(_t)
+                if _r:
+                    squeeze_results.append(_r)
+                _sq_time.sleep(0.05)
+            squeeze_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _sq_save(squeeze_results)
+            _fired_sq = [r for r in squeeze_results if r["state"] == "fired"]
+            print(f"  🗜️ {len(squeeze_results)} squeezes — {len(_fired_sq)} just fired: "
+                  + (", ".join(f"{r['ticker']} ({r['squeeze_bars']} bars)" for r in _fired_sq[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] TTM squeeze screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}

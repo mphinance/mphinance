@@ -1,13 +1,13 @@
-# Ghost Alpha Dossier — 2026-10-01
+# Ghost Alpha Dossier — 2026-10-07
 
-> 🟡 **Transition** · SPY ▼ 0.1% · VIX 16.8
+> 🟡 **Transition** · SPY ▼ 0.2% · VIX 15.4
 
 ---
 
-Today's market is a certified snoozefest; VIX at 16.
+Today's tape is a snoozefest.
 
 
-## 🥇 Gold Pick: PLTR
+## 🥇 Gold Pick: AAPL
 
 | Metric | Value |
 |--------|-------|
@@ -19,22 +19,26 @@ Today's market is a certified snoozefest; VIX at 16.
 *This is the highest-scoring setup from today's 16-stage analysis pipeline.*
 
 
+### Runners Up
+- 🥈 **TXN** — Score: 37/100
+- 🥉 **MAR** — Score: 33/100
+
 
 ## 📊 Today's Numbers
 
-- **138 scanner signals** across 6 strategies
+- **149 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 0.1% | **VIX:** 16.8
+- **SPY:** ▼ 0.2% | **VIX:** 15.4
 
 ---
 
 ## 👻 Sam Says
 
-> *"Volume precedes price. If nobody's buying, the chart is lying."*
+> *"God, grant me the serenity to accept the trades I cannot change, the courage to cut the ones I can, and the wisdom to know the difference."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-01_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-01)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-07_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-07)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 

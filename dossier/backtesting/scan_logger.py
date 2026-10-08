@@ -202,6 +202,7 @@ def update_forward_returns():
     """Check forward returns for older entries using yfinance."""
     try:
         import yfinance as yf
+        from dossier.utils.validate_api import forward_closes
     except ImportError:
         print("❌ yfinance not installed")
         return
@@ -244,11 +245,11 @@ def update_forward_returns():
             # see track_record_generator.py's _get_forward_returns for the same fix.
             hist = yf.Ticker(ticker).history(start=scan_date.strftime("%Y-%m-%d"),
                                               end=end.strftime("%Y-%m-%d"))
-            if hist.empty:
+            prices = forward_closes(hist, ticker, min_rows=1)
+            if not prices:
                 updated_entries.append(entry)
                 continue
 
-            prices = hist["Close"].tolist()
             for d, key in [(1, "fwd_1d"), (3, "fwd_3d"), (5, "fwd_5d"),
                           (10, "fwd_10d"), (21, "fwd_21d")]:
                 if len(prices) > d:

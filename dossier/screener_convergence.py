@@ -73,6 +73,11 @@ SCREEN_FILES = {
     "dividend_growth": "dividend-growth-screener.json",
     "avwap_reclaim": "avwap-reclaim-screener.json",
     "gap_hold": "gap-hold-screener.json",
+    "tight_closes": "tight-closes-screener.json",
+    "higher_lows": "higher-lows-screener.json",
+    "resilience": "resilience-screener.json",
+    "rsi2_pullback": "rsi2-pullback-screener.json",
+    "ttm_squeeze": "ttm-squeeze-screener.json",
     "failed_breakdown": "failed-breakdown-screener.json",
 }
 
