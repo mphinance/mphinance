@@ -58,9 +58,13 @@ def compose(d):
     # nothing about how well it has done.
     rec = d.get("record") or {}
     if rec.get("publishable"):
+        # Never a rate without its baseline: the same number of plain $5 round
+        # numbers, scored the same way on the same days. On SPY the gamma brakes
+        # are often round strikes, so the gap between the two IS the claim.
         lines.append(
-            f"Running record: {rec['hits']}/{rec['total']} on tested levels "
-            f"across {rec['sessions']} sessions."
+            f"Running record: {rec['hits']}/{rec['total']} tested levels closed on the "
+            f"right side across {rec['sessions']} sessions. Plain $5 round numbers, "
+            f"same days, same rule: {rec.get('nullHits', 0)}/{rec.get('nullTotal', 0)}."
         )
     elif rec.get("sessions"):
         lines.append(

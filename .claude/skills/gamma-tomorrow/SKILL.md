@@ -124,6 +124,31 @@ that it states how many days have been graded and explicitly declines to claim a
 rate. One session is a number, not a track record. Do not lower that threshold to
 make the post look better.
 
+**The 2026-10-08 audit (v2 grading rules).** The first 10 sessions were about to
+publish 12/27, and that number was mostly grader bugs:
+- The flip was always graded as a ceiling, so every night drawn *above* the flip
+  booked a MISS for being above it ("broke 768.1 flip by 13.48"). It is now a
+  ceiling under spot and a floor over spot.
+- Each session got a free point for "not a whipsaw", and UP meant "high over the
+  flip", which is every day once price is above it. The branch is now read off the
+  map's first level each way and is reported, never scored.
+- The put wall was scored as a floor, contradicting "a crowd, not a floor". It is
+  now reported ("tagged the 761 put wall") and not scored.
+- Levels are scored on the CLOSE; the wick is reported ("wicked 1.62 through 780
+  brake, closed under"). Brakes/ceilings held on the close 5/5 and intraday 1/5.
+
+**Every rate ships with its baseline.** Each grade also scores the same number of
+plain $5 round numbers, same days, same rule. On SPY the brakes are often round
+strikes (770/775/780/785), and in-sample the map scored 12/16 against round
+numbers' 11/16: no demonstrated edge yet. The note prints both numbers or neither.
+
+**Only live v2 grades count.** The first 10 sessions were regraded after the fact
+(`--regrade`, daily OHLC, old grade kept as `graded_v1`) under rules chosen while
+looking at them, so they are in-sample and stay out of the public record. The
+clock restarted 2026-10-08. The ledger `data/gamma_maps/SPY.json` must be
+force-added (`git add -f`): `*.json` is gitignored and the nightly commit had been
+picking up only `SPY.json.bak`, one night stale.
+
 **Review the prior days before drawing a new one.** Every run backfills any
 ungraded entry whose session has closed, then builds the new map. The ledger is
 the memory; the chart is just today's view of it.

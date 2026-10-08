@@ -298,44 +298,111 @@ function gradeEntry(e, day, bars) {
   // A level price never went near tells you nothing. Counting "never reached the
   // put wall" as a HIT on a quiet day is something a null model with arbitrary
   // round numbers scores just as well. Untested levels stay out of the ratio.
+  //
+  // Scored on the CLOSE (regraded 2026-10-08). "Rallies stall into long gamma"
+  // means dealers sell the rip: 780 on 10/06 was wicked 1.58 through and closed
+  // under. Across the first 10 sessions the brakes/ceilings held on the close
+  // 5/5 and intraday 1/5. The wick is still reported, it just is not the claim.
   const tol = (e.expected || expected) * 0.25;
   const checks = [];
   const level = (lvl, side, label) => {
     if (lvl == null) return;
     const reached = side === 'low' ? low : high;
     const dist = Math.abs(reached - lvl);
-    const held = side === 'low' ? low >= lvl : high <= lvl;
-    checks.push({ lvl, side, dist: +dist.toFixed(2), tested: dist <= tol || !held, ok: held, label });
+    const wickHeld = side === 'low' ? low >= lvl : high <= lvl;
+    const held = side === 'low' ? close >= lvl : close <= lvl;
+    const thru = side === 'low' ? lvl - low : high - lvl;
+    checks.push({ lvl, side, dist: +dist.toFixed(2), thru: +thru.toFixed(2), tested: dist <= tol || !wickHeld, ok: held, wickHeld, label });
   };
+  // The flip is a ceiling when price is under it and a floor when price is over
+  // it. It used to be graded as a ceiling every time, so every night drawn above
+  // the flip booked a MISS ("broke 768.1 flip by 13.48") for being above it.
+  const spot = e.spot;
+  if (e.flip != null) level(e.flip, spot < e.flip ? 'high' : 'low', `${e.flip} flip`);
   level(e.cushion, 'low', `${e.cushion} cushion`);
-  level(e.wall, 'low', `${e.wall} put wall`);
-  level(e.flip, 'high', `${e.flip} flip`);
   level(e.brake ?? e.battle, 'high', `${e.brake ?? e.battle} brake`);
   level(e.gate, 'high', `${e.gate} ceiling`);
+  // The put wall is not scored: the map calls it "a crowd, not a floor", so a
+  // close under it is not a miss and a close over it is not a hit. Reported only.
+  const wallHit = e.wall != null && low <= e.wall + tol;
 
-  // Exclusive branches. UP and DOWN could both fire, with "took both roads" as a
-  // named outcome, which let the chart claim it called whatever happened.
-  const wentUp = e.flip != null && high > e.flip;
-  const wentDown = e.shelf != null && low < e.shelf;
+  // Which road the session took, read off the map's own first level each way.
+  // Reported, never scored: the map lays out all three roads and does not pick.
+  // (It used to award a point per session for "not a whipsaw", and defined UP
+  // as "high over the flip", which is every day once price is above it.)
+  const ups = [e.flip, e.brake ?? e.battle, e.gate].filter((v) => v != null && v > spot);
+  const dns = [e.shelf, e.cushion, e.flip, e.wall].filter((v) => v != null && v < spot);
+  const upTrig = ups.length ? Math.min(...ups) : null;
+  const dnTrig = dns.length ? Math.max(...dns) : null;
+  const wentUp = upTrig != null && high > upTrig;
+  const wentDown = dnTrig != null && low < dnTrig;
   const branch = wentUp && wentDown ? 'WHIPSAW' : wentUp ? 'UP' : wentDown ? 'DOWN' : 'RANGE';
   const branchOk = branch !== 'WHIPSAW';
 
+  // Baseline: the same number of levels each side, at plain $5 round numbers
+  // stepping away from spot, scored by the same rule. A hit rate without this
+  // is a number with nothing to compare it to.
+  const nUp = checks.filter((c) => c.side === 'high').length;
+  const nDn = checks.filter((c) => c.side === 'low').length;
+  const nullHits = [], R = 5;
+  for (let i = 0; i < nUp; i++) {
+    const v = Math.ceil(spot / R) * R + R * i;
+    if (high >= v - tol) nullHits.push(close <= v);
+  }
+  for (let i = 0; i < nDn; i++) {
+    const v = Math.floor(spot / R) * R - R * i;
+    if (low <= v + tol) nullHits.push(close >= v);
+  }
+
   const tested = checks.filter((c) => c.tested);
   const untested = checks.filter((c) => !c.tested);
+  const verb = (c) => {
+    if (c.ok && !c.wickHeld) return `wicked ${c.thru.toFixed(2)} through ${c.label}, closed ${c.side === 'high' ? 'under' : 'over'}`;
+    return `${c.ok ? 'held' : 'MISS closed through'} ${c.label}${c.ok ? ` by ${c.dist.toFixed(2)}` : ''}`;
+  };
   return {
     day, open, high, low, close, branch, branchOk, checks, tested, untested,
-    hits: tested.filter((c) => c.ok).length + (branchOk ? 1 : 0),
-    total: tested.length + 1,
+    hits: tested.filter((c) => c.ok).length,
+    total: tested.length,
+    nullHits: nullHits.filter(Boolean).length,
+    nullTotal: nullHits.length,
     summary: [
-      branch === 'WHIPSAW' ? 'MISS whipsawed through both roads' : `took the ${branch} road`,
-      ...tested.map((c) => `${c.ok ? 'held' : 'MISS broke'} ${c.label} by ${c.dist.toFixed(2)}`),
+      branch === 'WHIPSAW' ? 'whipsawed both roads' : `took the ${branch} road`,
+      ...tested.map(verb),
+      wallHit ? `tagged the ${e.wall} put wall` : '',
       untested.length ? `${untested.length} level${untested.length > 1 ? 's' : ''} untested` : '',
     ].filter(Boolean).join(' · '),
   };
 }
 
-// Backfill: score any prior entry whose session has closed and is still in reach.
 let ledgerDirty = false;
+// --regrade: rescore every graded entry under the current rules from daily
+// OHLC (Yahoo). The intraday feed only reaches ~5 sessions back, so this is the
+// only way to put old entries on new rules. The previous grade is kept as
+// graded_v1 so the change is auditable. Used once on 2026-10-08 (v2 rules).
+if (argv.includes('--regrade') && !ledgerBroken) {
+  const yr = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=6mo`, {
+    headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(30000),
+  }).then((r) => r.json());
+  const res = yr?.chart?.result?.[0];
+  const qq = res.indicators.quote[0];
+  const daily = res.timestamp.map((t, i) => ({ d: new Date(t * 1000).toISOString().slice(0, 10), o: qq.open[i], h: qq.high[i], l: qq.low[i], c: qq.close[i] }))
+    .filter((b) => b.c != null);
+  for (const e of ledger) {
+    if (!e.graded) continue;
+    const b = daily.find((x) => x.d > e.madeAfter);
+    if (!b || b.d !== e.graded.day) { console.log(`regrade skip ${e.madeAfter}: no matching daily bar`); continue; }
+    const g = gradeEntry(e, b.d, [b.o, b.h, b.l, b.c]);
+    if (e.graded.v !== 2) e.graded_v1 = e.graded;
+    e.graded = { v: 2, day: g.day, branch: g.branch, hits: g.hits, total: g.total,
+                 nullHits: g.nullHits, nullTotal: g.nullTotal,
+                 untested: g.untested.length, summary: g.summary, source: 'daily OHLC regrade' };
+    console.log(`regraded ${e.madeAfter} -> ${g.day}: ${g.hits}/${g.total} (null ${g.nullHits}/${g.nullTotal}) | ${g.summary}`);
+  }
+  ledgerDirty = true;
+}
+
+// Backfill: score any prior entry whose session has closed and is still in reach.
 if (!ledgerBroken) {
   for (const e of ledger) {
     if (e.graded) continue;
@@ -346,7 +413,8 @@ if (!ledgerBroken) {
     const bars = sessionBars(day);
     if (!bars.length) continue;
     const g = gradeEntry(e, day, bars);
-    e.graded = { day: g.day, branch: g.branch, hits: g.hits, total: g.total,
+    e.graded = { v: 2, day: g.day, branch: g.branch, hits: g.hits, total: g.total,
+                 nullHits: g.nullHits, nullTotal: g.nullTotal,
                  untested: g.untested.length, summary: g.summary };
     ledgerDirty = true;
   }
@@ -355,11 +423,23 @@ if (!ledgerBroken) {
 // The running record. Not published until there are enough sessions for it to
 // mean anything: a one-session "4/4" is a number, not a track record.
 const MIN_GRADED = 10;
-const gradedAll = ledger.filter((e) => e.graded);
+// Only sessions graded LIVE under the v2 rules count toward the public record.
+// The 10 sessions before 2026-10-08 were regraded after the fact, under rules
+// chosen while looking at them (close-grading came from seeing the brakes hold
+// on the close). Scoring rules on the data that shaped them is in-sample, so
+// those stay in the ledger as history and the public clock restarts.
+const gradedAll = ledger.filter((e) => e.graded && e.graded.v === 2 && !e.graded.source);
+const inSample = ledger.filter((e) => e.graded && e.graded.source);
 const record = {
+  inSample: { sessions: inSample.length, hits: inSample.reduce((a, e) => a + e.graded.hits, 0), total: inSample.reduce((a, e) => a + e.graded.total, 0),
+              nullHits: inSample.reduce((a, e) => a + (e.graded.nullHits ?? 0), 0), nullTotal: inSample.reduce((a, e) => a + (e.graded.nullTotal ?? 0), 0) },
   sessions: gradedAll.length,
   hits: gradedAll.reduce((a, e) => a + e.graded.hits, 0),
   total: gradedAll.reduce((a, e) => a + e.graded.total, 0),
+  nullHits: gradedAll.reduce((a, e) => a + (e.graded.nullHits ?? 0), 0),
+  nullTotal: gradedAll.reduce((a, e) => a + (e.graded.nullTotal ?? 0), 0),
+  // Every graded entry must be on the v2 rules before the record is claimable;
+  // mixing the old flip-side bug into a published rate would be worse than none.
   publishable: gradedAll.length >= MIN_GRADED,
   minSessions: MIN_GRADED,
 };
