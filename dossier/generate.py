@@ -1629,6 +1629,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] RSI2 pullback screen failed: {e}")
 
+    # ── Stage 10o: TTM Squeeze Screen ──
+    print("\n[10o/16] TTM SQUEEZE SCREEN (Bollinger inside Keltner)")
+    squeeze_results: list[dict] = []
+    with timer.stage("TTM Squeeze Screen"):
+        try:
+            import time as _sq_time
+            from dossier.ttm_squeeze_screener import score_ttm_squeeze, _save_api_output as _sq_save
+            _sq_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _sq_pool:
+                _r = score_ttm_squeeze(_t)
+                if _r:
+                    squeeze_results.append(_r)
+                _sq_time.sleep(0.05)
+            squeeze_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _sq_save(squeeze_results)
+            _fired_sq = [r for r in squeeze_results if r["state"] == "fired"]
+            print(f"  🗜️ {len(squeeze_results)} squeezes — {len(_fired_sq)} just fired: "
+                  + (", ".join(f"{r['ticker']} ({r['squeeze_bars']} bars)" for r in _fired_sq[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] TTM squeeze screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
