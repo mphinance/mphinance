@@ -79,6 +79,7 @@ SCREEN_FILES = {
     "rsi2_pullback": "rsi2-pullback-screener.json",
     "ttm_squeeze": "ttm-squeeze-screener.json",
     "failed_breakdown": "failed-breakdown-screener.json",
+    "ichimoku": "ichimoku-screener.json",
 }
 
 

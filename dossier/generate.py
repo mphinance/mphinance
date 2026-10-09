@@ -1653,6 +1653,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] TTM squeeze screen failed: {e}")
 
+    # ── Stage 10p: Ichimoku Cloud Breakout Screen ──
+    print("\n[10p/16] ICHIMOKU SCREEN (fresh closes above the cloud)")
+    ichimoku_results: list[dict] = []
+    with timer.stage("Ichimoku Screen"):
+        try:
+            import time as _ich_time
+            from dossier.ichimoku_screener import score_ichimoku, _save_api_output as _ich_save
+            _ich_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _ich_pool:
+                _r = score_ichimoku(_t)
+                if _r:
+                    ichimoku_results.append(_r)
+                _ich_time.sleep(0.05)
+            ichimoku_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _ich_save(ichimoku_results)
+            _top_ich = [r for r in ichimoku_results if r["grade"] in ("A+", "A")]
+            print(f"  ☁️ {len(ichimoku_results)} cloud breakouts — {len(_top_ich)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['bars_above_cloud']}d)" for r in _top_ich[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Ichimoku screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
