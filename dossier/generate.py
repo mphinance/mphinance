@@ -1677,6 +1677,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Ichimoku screen failed: {e}")
 
+    # ── Stage 10q: ADX Trend Ignition Screen ──
+    print("\n[10q/16] ADX IGNITION SCREEN (ranges turning into up-trends)")
+    adx_ign_results: list[dict] = []
+    with timer.stage("ADX Ignition Screen"):
+        try:
+            import time as _adx_time
+            from dossier.adx_ignition_screener import score_adx_ignition, _save_api_output as _adx_save
+            _adx_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _adx_pool:
+                _r = score_adx_ignition(_t)
+                if _r:
+                    adx_ign_results.append(_r)
+                _adx_time.sleep(0.05)
+            adx_ign_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _adx_save(adx_ign_results)
+            _top_adx = [r for r in adx_ign_results if r["grade"] in ("A+", "A")]
+            print(f"  🔥 {len(adx_ign_results)} ADX ignitions — {len(_top_adx)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (ADX {r['adx']})" for r in _top_adx[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] ADX ignition screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
