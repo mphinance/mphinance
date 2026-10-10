@@ -80,6 +80,7 @@ SCREEN_FILES = {
     "ttm_squeeze": "ttm-squeeze-screener.json",
     "failed_breakdown": "failed-breakdown-screener.json",
     "ichimoku": "ichimoku-screener.json",
+    "adx_ignition": "adx-ignition-screener.json",
 }
 
 
