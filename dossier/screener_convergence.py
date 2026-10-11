@@ -81,6 +81,7 @@ SCREEN_FILES = {
     "failed_breakdown": "failed-breakdown-screener.json",
     "ichimoku": "ichimoku-screener.json",
     "adx_ignition": "adx-ignition-screener.json",
+    "donchian_breakout": "donchian-breakout-screener.json",
 }
 
 

@@ -1701,6 +1701,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] ADX ignition screen failed: {e}")
 
+    # ── Stage 10r: Donchian Turtle Breakout Screen ──
+    print("\n[10r/16] DONCHIAN BREAKOUT SCREEN (fresh closes above the 55-day high)")
+    donch_results: list[dict] = []
+    with timer.stage("Donchian Breakout Screen"):
+        try:
+            import time as _dc_time
+            from dossier.donchian_breakout_screener import score_donchian_breakout, _save_api_output as _dc_save
+            _dc_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _dc_pool:
+                _r = score_donchian_breakout(_t)
+                if _r:
+                    donch_results.append(_r)
+                _dc_time.sleep(0.05)
+            donch_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _dc_save(donch_results)
+            _top_dc = [r for r in donch_results if r["grade"] in ("A+", "A")]
+            print(f"  🐢 {len(donch_results)} 55-day breakouts — {len(_top_dc)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['volume_ratio']}x vol)" for r in _top_dc[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Donchian breakout screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
