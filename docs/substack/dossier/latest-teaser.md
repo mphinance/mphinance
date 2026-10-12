@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-10-09
+# Ghost Alpha Dossier — 2026-10-12
 
-> 🟢 **Risk On** · SPY ▲ 0.6% · VIX 14.9
+> 🟡 **Transition** · SPY ▼ 0.1% · VIX 15.3
 
 ---
 
-Alright, listen up.
+Market's chill with VIX at 15.
 
 
-## 🥇 Gold Pick: ALAB
+## 🥇 Gold Pick: XOM
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 46/100 (A) |
+| **Score** | 20/100 (A) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -19,26 +19,22 @@ Alright, listen up.
 *This is the highest-scoring setup from today's 16-stage analysis pipeline.*
 
 
-### Runners Up
-- 🥈 **VSXY** — Score: 41/100
-- 🥉 **JCI** — Score: 34/100
-
 
 ## 📊 Today's Numbers
 
-- **137 scanner signals** across 6 strategies
+- **159 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▲ 0.6% | **VIX:** 14.9
+- **SPY:** ▼ 0.1% | **VIX:** 15.3
 
 ---
 
 ## 👻 Sam Says
 
-> *"The two most powerful warriors are patience and time. Also caffeine."*
+> *"First things first. Check the macro, check the VIX, THEN look at your positions."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-09_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-09)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-12_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-12)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
