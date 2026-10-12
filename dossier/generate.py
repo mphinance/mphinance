@@ -1725,6 +1725,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Donchian breakout screen failed: {e}")
 
+    # ── Stage 10s: EMA Pullback Screen ──
+    print("\n[10s/16] EMA PULLBACK SCREEN (uptrends tagging the rising 21-EMA)")
+    emapb_results: list[dict] = []
+    with timer.stage("EMA Pullback Screen"):
+        try:
+            import time as _ep_time
+            from dossier.ema_pullback_screener import score_ema_pullback, _save_api_output as _ep_save
+            _ep_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _ep_pool:
+                _r = score_ema_pullback(_t)
+                if _r:
+                    emapb_results.append(_r)
+                _ep_time.sleep(0.05)
+            emapb_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _ep_save(emapb_results)
+            _top_ep = [r for r in emapb_results if r["grade"] in ("A+", "A")]
+            print(f"  🧲 {len(emapb_results)} EMA21 tags — {len(_top_ep)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['pullback_atr']}N dip)" for r in _top_ep[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] EMA pullback screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
