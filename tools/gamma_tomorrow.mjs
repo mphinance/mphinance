@@ -623,12 +623,17 @@ push(`<rect x="${FWD_X}" y="${PAD_T}" width="${FWD_W}" height="${PLOT_H}" fill="
 
 // Which side of the flip you are on is the single most important fact on this
 // half of the chart, so it gets colour rather than a line to read.
+// The two band captions sit at a fixed offset from the flip, so when a waypoint
+// lands on roughly the same price as the flip they print straight through each
+// other. That happened on 2026-10-12: flip 774.90 and a 775 LAST SHELF rendered
+// one on top of the other and neither was readable. The tint carries the same
+// meaning on its own, so the caption yields to the waypoint rather than moving,
+// which would put it next to a price that is not the flip.
+const flipBandY = Math.max(PAD_T, Math.min(PAD_T + PLOT_H, Y(flip)));
 {
-  const yf = Math.max(PAD_T, Math.min(PAD_T + PLOT_H, Y(flip)));
+  const yf = flipBandY;
   push(`<rect x="${FWD_X}" y="${PAD_T}" width="${FWD_W}" height="${yf - PAD_T}" fill="${C.call}" fill-opacity="0.05"/>`);
   push(`<rect x="${FWD_X}" y="${yf}" width="${FWD_W}" height="${PAD_T + PLOT_H - yf}" fill="${C.put}" fill-opacity="0.055"/>`);
-  push(`<text x="${W - PAD_R - 10}" y="${yf - 10}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${C.call}" fill-opacity="0.75">ABOVE THE FLIP / dealers brake</text>`);
-  push(`<text x="${W - PAD_R - 10}" y="${yf + 20}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${C.put}" fill-opacity="0.75">BELOW THE FLIP / dealers chase</text>`);
 }
 
 // Everything outside a typical day's excursion is a tail. Drawing 772 as far
@@ -666,6 +671,22 @@ for (const k of candles) {
   push(`<rect x="${(x - cw / 2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${cw.toFixed(1)}" height="${Math.max(1, yBot - yTop).toFixed(1)}" fill="${col}" fill-opacity="${up ? 0.85 : 0.95}"/>`);
 }
 push(`<text x="${PAD_L + 8}" y="${PAD_T + 36}" font-family="'JetBrains Mono',monospace" font-size="9.5" fill="${C.dim}">${BUCKET}m candles</text>`);
+// The graded session's high/low markers are price labels centred on their tick.
+// A gap label is pinned at X(i)+5 of the session's first tick, and an opening
+// gap is precisely the case where that first tick is also the session extreme,
+// so the two print through each other. Collect the marker x's up front so the
+// gap label can step clear of them.
+const markerXs = [];
+if (report) {
+  const ri = pts.map((q, i) => (dayKey(q.t) === report.day ? i : -1)).filter((i) => i >= 0);
+  if (ri.length) {
+    markerXs.push(
+      X(ri.reduce((b, i) => (pts[i].px < pts[b].px ? i : b), ri[0])),
+      X(ri.reduce((b, i) => (pts[i].px > pts[b].px ? i : b), ri[0])),
+    );
+  }
+}
+
 sessions.forEach((d, k) => {
   const i = pts.findIndex((p) => dayKey(p.t) === d);
   push(`<text x="${X(i) + 5}" y="${PAD_T + PLOT_H - 8}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}">${d.slice(5)}</text>`);
@@ -677,7 +698,8 @@ sessions.forEach((d, k) => {
   if (Math.abs(g) < 0.4) return;
   const y1 = Y(prevPx[prevPx.length - 1]), y2 = Y(pts[i].px);
   push(`<line x1="${X(i)}" y1="${y1}" x2="${X(i)}" y2="${y2}" stroke="${C.pin}" stroke-width="2" stroke-opacity="0.55"/>`);
-  push(`<text x="${X(i) + 5}" y="${(y1 + y2) / 2 + 3}" font-family="'JetBrains Mono',monospace" font-size="9.5" fill="${C.pin}" fill-opacity="0.85">gap ${g > 0 ? '+' : ''}${g.toFixed(2)}</text>`);
+  const gx = markerXs.some((mx) => Math.abs(mx - X(i)) < 24) ? X(i) + 24 : X(i) + 5;
+  push(`<text x="${gx}" y="${(y1 + y2) / 2 + 3}" font-family="'JetBrains Mono',monospace" font-size="9.5" fill="${C.pin}" fill-opacity="0.85">gap ${g > 0 ? '+' : ''}${g.toFixed(2)}</text>`);
 });
 push(`<text x="${PAD_L + 8}" y="${PAD_T + 20}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" letter-spacing="2">THE LAST ${sessions.length} SESSIONS</text>`);
 // Last night's call, drawn back over the session it was made for. Green means
@@ -816,6 +838,19 @@ for (const L of labels) {
   const op = L.faint ? 0.42 : 1;
   push(`<text x="${L.tx}" y="${L.ty.toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${L.col}" fill-opacity="${op}" font-weight="700">${esc(L.tag)}${L.faint ? ' *' : ''}</text>`);
   push(`<text x="${L.tx}" y="${(L.ty + 15).toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" fill-opacity="${op}">${esc(L.note)}</text>`);
+}
+
+// The flip band captions, now that the waypoint labels have claimed their rows.
+// A placed label occupies roughly ty-11 (tag cap height) to ty+19 (bottom of the
+// note line that hangs 15px under it); a caption occupies yt-9 to yt+2. Drop the
+// caption on any overlap. Both are right-hand text in the forward panel, so the
+// vertical test alone is enough and erring toward dropping one is harmless.
+for (const [yt, col, txt] of [
+  [flipBandY - 10, C.call, 'ABOVE THE FLIP / dealers brake'],
+  [flipBandY + 20, C.put, 'BELOW THE FLIP / dealers chase'],
+]) {
+  if (labels.some((L) => yt + 2 > L.ty - 11 && yt - 9 < L.ty + 19)) continue;
+  push(`<text x="${W - PAD_R - 10}" y="${yt}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${col}" fill-opacity="0.75">${txt}</text>`);
 }
 
 // ── how the last one went ───────────────────────────────────────────────────
