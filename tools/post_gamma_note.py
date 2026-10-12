@@ -64,6 +64,12 @@ def pending_changes():
     return [c for c in json.loads(CHANGELOG.read_text()) if not c.get("posted")]
 
 
+def _day(iso):
+    """2026-09-23 -> Sep 23."""
+    dt = datetime.strptime(iso, "%Y-%m-%d")
+    return f"{dt:%b} {dt.day}"
+
+
 def compose(d, changes=()):
     """The caption. Short, factual, no voice."""
     sym = d["symbol"]
@@ -73,19 +79,33 @@ def compose(d, changes=()):
     # has enough graded sessions this says how many days are on the clock and
     # nothing about how well it has done.
     rec = d.get("record") or {}
+    # Always say how long the map has run and when the record restarted. Counting
+    # only from the restart ("1 session graded") made a two-week-old map look new.
+    history = ""
+    if rec.get("firstMap") and rec.get("restartedOn"):
+        old = (rec.get("inSample") or {}).get("sessions", 0)
+        history = (
+            f"This map has posted nightly since {_day(rec['firstMap'])}. The grading rules "
+            f"were fixed on {_day(rec['restartedOn'])}, so the record restarted then"
+            + (f" ({old} earlier sessions are kept as history, not counted)" if old else "")
+            + ". "
+        )
     if rec.get("publishable"):
         # Never a rate without its baseline: the same number of plain $5 round
         # numbers, scored the same way on the same days. On SPY the gamma brakes
         # are often round strikes, so the gap between the two IS the claim.
         lines.append(
-            f"Running record: {rec['hits']}/{rec['total']} tested levels closed on the "
+            history
+            + f"Since the restart: {rec['hits']}/{rec['total']} tested levels closed on the "
             f"right side across {rec['sessions']} sessions. Plain $5 round numbers, "
             f"same days, same rule: {rec.get('nullHits', 0)}/{rec.get('nullTotal', 0)}."
         )
     elif rec.get("sessions"):
+        need = rec.get("minSessions", 10)
         lines.append(
-            f"Tracking since day one. {rec['sessions']} session(s) graded so far, "
-            f"which is not yet enough to claim a hit rate."
+            history
+            + f"{rec['sessions']} of {need} sessions graded under the current rules. "
+            f"No hit rate until there are {need}."
         )
 
     for b in d["branches"]:

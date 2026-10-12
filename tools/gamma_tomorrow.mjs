@@ -437,6 +437,8 @@ if (!ledgerBroken) {
 // The running record. Not published until there are enough sessions for it to
 // mean anything: a one-session "4/4" is a number, not a track record.
 const MIN_GRADED = 10;
+// The day the v2 grading went live and the public record started over.
+const RECORD_RESTART = '2026-10-08';
 // Only sessions graded LIVE under the v2 rules count toward the public record.
 // The 10 sessions before 2026-10-08 were regraded after the fact, under rules
 // chosen while looking at them (close-grading came from seeing the brakes hold
@@ -463,6 +465,10 @@ const record = {
   // mixing the old flip-side bug into a published rate would be worse than none.
   publishable: gradedAll.length >= MIN_GRADED,
   minSessions: MIN_GRADED,
+  // The note has to say the clock restarted, not just count from it: "1 session
+  // graded" read as a brand-new map when it had run nightly for two weeks.
+  firstMap: ledger.map((e) => e.madeAfter).sort()[0] || null,
+  restartedOn: RECORD_RESTART,
 };
 
 // The panel still shows yesterday, because that is reporting, not a claim.
