@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-10-12
+# Ghost Alpha Dossier — 2026-10-13
 
-> 🟡 **Transition** · SPY ▼ 0.1% · VIX 15.3
+> 🟡 **Transition** · SPY ▼ 0.1% · VIX 15.5
 
 ---
 
-Market's chill with VIX at 15.
+VIX is chilling at 15.
 
 
-## 🥇 Gold Pick: XOM
+## 🥇 Gold Pick: TXN
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 20/100 (A) |
+| **Score** | 48/100 (A) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -19,22 +19,26 @@ Market's chill with VIX at 15.
 *This is the highest-scoring setup from today's 16-stage analysis pipeline.*
 
 
+### Runners Up
+- 🥈 **CDNS** — Score: 39/100
+- 🥉 **FORM** — Score: 36/100
+
 
 ## 📊 Today's Numbers
 
-- **159 scanner signals** across 6 strategies
+- **146 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 0.1% | **VIX:** 15.3
+- **SPY:** ▼ 0.1% | **VIX:** 15.5
 
 ---
 
 ## 👻 Sam Says
 
-> *"First things first. Check the macro, check the VIX, THEN look at your positions."*
+> *"Drink water. Set stop losses. Call your sponsor. In that order."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-12_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-12)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-13_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-13)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
