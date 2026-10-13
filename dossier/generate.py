@@ -1749,6 +1749,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] EMA pullback screen failed: {e}")
 
+    # ── Stage 10t: Trend Template Screen ──
+    print("\n[10t/16] TREND TEMPLATE SCREEN (Minervini Stage 2 checklist)")
+    ttemp_results: list[dict] = []
+    with timer.stage("Trend Template Screen"):
+        try:
+            import time as _tt_time
+            from dossier.trend_template_screener import score_trend_template, _save_api_output as _tt_save
+            _tt_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _tt_pool:
+                _r = score_trend_template(_t)
+                if _r:
+                    ttemp_results.append(_r)
+                _tt_time.sleep(0.05)
+            ttemp_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _tt_save(ttemp_results)
+            _top_tt = [r for r in ttemp_results if r["grade"] in ("A+", "A")]
+            print(f"  📐 {len(ttemp_results)} pass the template — {len(_top_tt)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['pct_below_52w_high']}% off high)" for r in _top_tt[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Trend template screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
