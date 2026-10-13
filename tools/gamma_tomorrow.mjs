@@ -529,8 +529,18 @@ const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt
 // tape has to deal with; its note says what the book does to price THERE, which
 // is the whole point -- the same level behaves differently depending on which
 // way you arrived at it.
-const rangeLo = Math.min(pin, Math.floor(spot)) - 1;
-const rangeHi = Math.max(pin, Math.ceil(flip));
+// The ELSE band is the gap between the two IF triggers, so the three roads are
+// exhaustive: every price tomorrow falls into exactly one of them. It used to be
+// built from the pin and the flip alone, and on 2026-10-13 that printed "it holds
+// between 776 and 777" with spot at 778.10 -- the branch a reader lands in by
+// default excluded the price the map was drawn from. The triggers are the same
+// numbers the IF rows quote (brake/ceiling above, shelf below), and `above`/
+// `below` are strict, so the band always contains spot; the clamp is belt and
+// braces for the no-level fallbacks.
+const upTrigger = brake ? brake.strike : gate ? gate.strike : null;
+const downTrigger = shelfLvl ? shelfLvl.strike : Math.floor(spot);
+const rangeHi = Math.max(upTrigger ?? Math.ceil(Math.max(pin, flip)), Math.ceil(spot));
+const rangeLo = Math.min(downTrigger, Math.floor(spot));
 
 const sideFilter = (pts_, up) => pts_.filter((w) => w && (up ? w.at > spot : w.at < spot));
 
