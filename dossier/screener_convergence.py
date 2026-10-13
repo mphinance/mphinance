@@ -83,6 +83,7 @@ SCREEN_FILES = {
     "adx_ignition": "adx-ignition-screener.json",
     "donchian_breakout": "donchian-breakout-screener.json",
     "ema_pullback": "ema-pullback-screener.json",
+    "trend_template": "trend-template-screener.json",
 }
 
 
