@@ -538,7 +538,16 @@ const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt
 // `below` are strict, so the band always contains spot; the clamp is belt and
 // braces for the no-level fallbacks.
 const upTrigger = brake ? brake.strike : gate ? gate.strike : null;
-const downTrigger = shelfLvl ? shelfLvl.strike : Math.floor(spot);
+// The DOWN trigger is the first level below spot that the road actually names:
+// the shelf, else the thin cushion, else the put wall. It used to fall back to
+// Math.floor(spot) whenever no shelf was readable, and on 2026-10-14 that printed
+// "IF it goes below 778" with spot at 778.01 -- a branch that fires on a one-cent
+// move, and an ELSE band ("holds between 778 and 780") that contained spot only by
+// that cent. Mirrors the UP side, which falls brake -> ceiling. Grading never reads
+// these triggers (it scores e.shelf/e.cushion/e.brake directly), so this is a
+// caption and band change only.
+const downLead = shelfLvl || cushion || floor || null;
+const downTrigger = downLead ? downLead.strike : Math.floor(spot);
 const rangeHi = Math.max(upTrigger ?? Math.ceil(Math.max(pin, flip)), Math.ceil(spot));
 const rangeLo = Math.min(downTrigger, Math.floor(spot));
 
@@ -583,21 +592,35 @@ const roads = [
   {
     key: 'DOWN',
     col: C.put,
-    cond: shelfLvl ? `below ${shelfLvl.strike}` : `below ${Math.floor(spot)}`,
+    cond: `below ${downTrigger}`,
     rule: (() => {
       // The shelf is a real listed strike (it came off the ladder), so the old
       // "missing strike defaults to a SHELF" trap cannot recur here.
-      const lead = shelfLvl
-        ? (shelfLvl.netGex >= 0 ? `leans on ${shelfLvl.strike}. lose it and ` : `trapdoor at ${shelfLvl.strike}. through it, `)
-        : '';
-      if (!floor) {
-        return shelfLvl
-          ? (shelfLvl.netGex >= 0 ? `leans on ${shelfLvl.strike}. ` : `trapdoor at ${shelfLvl.strike}. `) + 'no readable structure below it.'
-          : 'no readable structure below spot.';
+      if (shelfLvl) {
+        const lead = shelfLvl.netGex >= 0
+          ? `leans on ${shelfLvl.strike}. lose it and `
+          : `trapdoor at ${shelfLvl.strike}. through it, `;
+        if (!floor) {
+          return (shelfLvl.netGex >= 0 ? `leans on ${shelfLvl.strike}. ` : `trapdoor at ${shelfLvl.strike}. `)
+            + 'no readable structure below it.';
+        }
+        if (cushion) return `${lead}thin air. only real bid is ${cushion.strike}. then ${floor.strike}.`;
+        if (pocket) return `${lead}open air. ${pocket.lo} to ${pocket.hi} is empty. next stop ${floor.strike}.`;
+        return `${lead}no thin band above ${floor.strike}. grind, not a drop.`;
       }
-      if (cushion) return `${lead}thin air. only real bid is ${cushion.strike}. then ${floor.strike}.`;
-      if (pocket) return `${lead}open air. ${pocket.lo} to ${pocket.hi} is empty. next stop ${floor.strike}.`;
-      return `${lead}no thin band above ${floor.strike}. grind, not a drop.`;
+      // No shelf, so there is nothing to lose between here and the trigger: the
+      // trigger IS the first real bid, and the sentence describes what is under it.
+      if (cushion) {
+        return floor
+          ? `that bid is thin, the only dealer buying above ${floor.strike}. under it the ${floor.strike} put wall, which is a crowd, not a floor.`
+          : 'that bid is thin, and there is no readable structure under it.';
+      }
+      if (floor) {
+        return pocket
+          ? `open air above it: ${pocket.lo} to ${pocket.hi} is empty. the put wall is a crowd, not a floor.`
+          : 'the put wall is a crowd, not a floor, and there is nothing readable under it.';
+      }
+      return 'no readable structure below spot.';
     })(),
     side: 1,
     pts: floor || shelfLvl
@@ -791,9 +814,17 @@ for (const r of roads) {
     // the range road oscillates instead of going anywhere
     const wp = [[FWD_X, ys]];
     const cycles = 3.5, steps = 48;
+    // The wave is centred on the pin, which is rarely centred in the band, so the
+    // amplitude is also capped by the pin's distance to the nearer edge. Without
+    // that cap it drew outside its own box: on 2026-10-14 the band ran 775-780 with
+    // the pin at 779 and the "quiet drift" road swung a full typical day and poked
+    // through the ceiling it was supposed to be held under.
+    const halfBand = (rangeHi - rangeLo) / 2;
+    const toEdge = Math.min(rangeHi - pin, pin - rangeLo);
+    const amp = Math.max(0, Math.min(halfBand * 0.5, toEdge * 0.7));
     for (let i = 1; i <= steps; i++) {
       const f = i / steps;
-      const px = pin + Math.sin(f * Math.PI * 2 * cycles) * ((rangeHi - rangeLo) / 2) * 0.5;
+      const px = pin + Math.sin(f * Math.PI * 2 * cycles) * amp;
       wp.push([ROAD_X0 + ROAD_W * f, Y(px)]);
     }
     path = smooth(wp);
