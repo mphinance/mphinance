@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-10-13
+# Ghost Alpha Dossier — 2026-10-14
 
-> 🟡 **Transition** · SPY ▼ 0.1% · VIX 15.5
+> 🟡 **Transition** · SPY ▼ 0.8% · VIX 15.6
 
 ---
 
-VIX is chilling at 15.
+VIX at 15.
 
 
-## 🥇 Gold Pick: TXN
+## 🥇 Gold Pick: GEV
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 48/100 (A) |
+| **Score** | 45/100 (B) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -19,26 +19,22 @@ VIX is chilling at 15.
 *This is the highest-scoring setup from today's 16-stage analysis pipeline.*
 
 
-### Runners Up
-- 🥈 **CDNS** — Score: 39/100
-- 🥉 **FORM** — Score: 36/100
-
 
 ## 📊 Today's Numbers
 
-- **146 scanner signals** across 6 strategies
+- **55 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 0.1% | **VIX:** 15.5
+- **SPY:** ▼ 0.8% | **VIX:** 15.6
 
 ---
 
 ## 👻 Sam Says
 
-> *"Drink water. Set stop losses. Call your sponsor. In that order."*
+> *"Compound interest is the eighth wonder of the world. Compound losses are the ninth."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-13_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-13)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-14_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-14)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
