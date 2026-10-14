@@ -1773,6 +1773,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Trend template screen failed: {e}")
 
+    # ── Stage 10u: Bullish RSI Divergence Screen ──
+    print("\n[10u/16] RSI DIVERGENCE SCREEN (lower price low, higher RSI low)")
+    rsidiv_results: list[dict] = []
+    with timer.stage("RSI Divergence Screen"):
+        try:
+            import time as _rd_time
+            from dossier.rsi_divergence_screener import score_rsi_divergence, _save_api_output as _rd_save
+            _rd_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _rd_pool:
+                _r = score_rsi_divergence(_t)
+                if _r:
+                    rsidiv_results.append(_r)
+                _rd_time.sleep(0.05)
+            rsidiv_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _rd_save(rsidiv_results)
+            _top_rd = [r for r in rsidiv_results if r["grade"] in ("A+", "A")]
+            print(f"  🪃 {len(rsidiv_results)} bullish divergences — {len(_top_rd)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (RSI {r['rsi_low1']}→{r['rsi_low2']})" for r in _top_rd[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] RSI divergence screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
