@@ -84,6 +84,7 @@ SCREEN_FILES = {
     "donchian_breakout": "donchian-breakout-screener.json",
     "ema_pullback": "ema-pullback-screener.json",
     "trend_template": "trend-template-screener.json",
+    "rsi_divergence": "rsi-divergence-screener.json",
 }
 
 
