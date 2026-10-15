@@ -9,10 +9,9 @@ fingerprint as what he keeps.
 
 **Read this first (honest constraints):**
 
-- **N = 9 clean pairs** (4 anchors + 2 held-out captured 2026-06-25, + 1 live
-  ship 2026-07-07, + 1 live ship 2026-07-09, + 1 dual-voice ship 2026-07-13).
-  Still not statistics, but enough to test whether the rules below GENERALIZE to
-  pairs they weren't derived from.  Every rule is followed by real receipts; if a
+- **N = 22 clean pairs** (10 prior + 12 new from 2026-09-28 refresh spanning
+  June–September live ships across Trading, Mindset, Business/AI, Options).
+  N=22 is real evidence. Every rule is followed by real receipts; if a
   rule has one receipt, it's a hypothesis, not a law.
 - **The 07-15 pair is the first publish-triggers-trade ship** ("Money Where My
   Mouth Is"). Two hypothesis-only tells, both driven by the mechanic: (a) he
@@ -61,6 +60,18 @@ fingerprint as what he keeps.
 
 | Date | Given draft | Shipped | Wall | Role |
 |------|-------------|---------|------|------|
+| 09-25 | "Your Chatbot Is The Least Valuable AI You Will Build" | "The Slowest Part of My AI Pipeline Is Me" | free | live (Business/AI) |
+| 09-20 | "Amazon and I Own Qualcomm From the Same Price (Seven Cents Apart)" | same title | paid | live (Trading) |
+| 08-20 | "Silver Ran 15%. My Strike Never Hit. I Made 57.6%." | "Silver Ran 15% & I Made 57.6%. On A Dare." | paid | live (Options) |
+| 08-04 | "Alt + Tab" | "From Accountant to CTO - It Started With Alt + Tab" | free | live (Business/AI) |
+| 07-20 | "I Asked Sam Why the Rotation Feels Weekly" | "I Asked My Agent Why the Rotation Feels Weekly" | free | live (Macro/AI) |
+| 07-20 | "The Signal Was Right. I Was the One Not Listening." | same title | paid | live (Trading/Mindset) |
+| 07-11 | "How to Accidentally Start a Religion (Or a Bull Market)" | "The Church of Number Go Up" | free | live (Mindset/Trading) |
+| 07-08 | "📊 What Does Your $OPEN Rate Want You to Write?" | "What Does Your $OPEN Rate Want You to Write?" | free | live (Business) |
+| 07-04 | "Someone Asked Me to Read Their Substack. So I Sent an AI." | "…So I Sent an AI (Yes I read it too)" | free | live (Business/Shoutout) |
+| 07-03 | "I Got Out-Recruited By My Own Reader. Now I'm Opening the Door." | "…By Another Writer. Now We're Opening the Door." | free | live (Business) |
+| 06-28 | "You're Not Drowning. You're Fighting the Wave." | same title | free | live (Mindset) |
+| 06-27 | "Stop Vibing Your AI Voice File. Measure It." | "…Measure It. (Write Better With AI)" | free | live (AI/Business) |
 | 07-15 | "Money Where My Mouth Is…" | same title | free | live (Money-Where-Mouth-Is #1, publish-triggers-trade) |
 | 07-13 | "…Show the Losses **First**." | "…Show the Losses **Too**." | free | live (Business, dual-voice) |
 | 07-09 | "I Tokenized My $GLXY. Do You Actually Own Yours?" | "…Own **Your Tokenized Stocks? (No)**" | paid | live (Macro/crypto) |
@@ -82,6 +93,12 @@ mechanism; Michael titles the thing the reader actually wants.
 - `What I build after the market closes` → `BUILDING AFTER MARKET CLOSE WITH KIDS` (the kid is the hook, so it goes in the title)
 - (07-09) `Do You Actually Own Yours?` → `Do You Actually Own Your Tokenized Stocks? (No)` — two moves: expand the vague "Yours" to the keyword phrase ("Tokenized Stocks", better share-card + search), then **answer the question in the title with a parenthetical** `(No)`. He'll spoil the payoff up front if the answer is the hook.
 - (07-13) `Show the Losses **First**.` → `Show the Losses **Too**.` — softened the combative ordering verb ("First" = *I* forced it to show losses before it bragged) to the additive honesty of "Too." When the frame is honesty, he pulls the swagger out of the title verb.
+- (07-04) `Someone Asked Me to Read Their Substack. So I Sent an AI.` → `…So I Sent an AI (Yes I read it too)` — title parenthetical pre-answers the obvious objection before the reader can voice it; the self-correction is the hook.
+- (07-11) `How to Accidentally Start a Religion (Or a Bull Market)` → `The Church of Number Go Up` — strongest R1 yet: the descriptive mechanism discarded entirely; the meme phrase names the congregation itself. Mechanism → label.
+- (07-20) `I Asked Sam Why the Rotation Feels Weekly` → `I Asked My Agent Why the Rotation Feels Weekly` — named AI persona removed from title (stays in body); neutral for discovery without changing the voice.
+- (08-04) `Alt + Tab` → `From Accountant to CTO - It Started With Alt + Tab` — clever shorthand buried inside; the full career arc names the payoff and the shorthand becomes the pivot.
+- (08-20) `Silver Ran 15%. My Strike Never Hit. I Made 57.6%.` → `Silver Ran 15% & I Made 57.6%. On A Dare.` — technical options detail ("My Strike Never Hit") removed; story hook ("On A Dare") elevated to the title.
+- (09-23) `Your Chatbot Is The Least Valuable AI You Will Build` → `The Slowest Part of My AI Pipeline Is Me` — prescriptive reader-advisory flipped to first-person self-indictment; the confession becomes the hook.
 
 **2. Collapse time to "last night / this morning."** The machine writes vague past;
 he compresses to immediate — even at the cost of literal accuracy.  **Held-out
@@ -98,6 +115,8 @@ the corpus — fires in 5/6 pairs.
 - (07-07) `First commit went in at 3:26 in the morning. The last one went in that same afternoon. In one day` → `First commit went in at 3:26 this morning, and I'm just now taking a break to tell you about some of them` (past → live, "this morning", writing mid-build)
 - (07-07) `I vibe-coded the whole family in a day.` → `…in the last 8 hours.` (round "a day" → the specific, load-bearing number)
 - (07-07) `I'm barely one.` → `I'm barely one anymore.` (the extra word is the whole self-deprecating arc)
+- (06-27) `the other night` → `today` — time compression fires on a mindset post, not just a trade recap.
+- (09-23) `I'm writing this while it runs` — real-time anchor added mid-post; 19 agent runs queued, 6 hours of compute ahead of him, writing while it burns. Most explicit live-clock moment in the corpus.
 
 **3. Add the stakes — the *why* under the line.**
 - `twelve browser tabs and a quiet panic.` → `…a quiet panic to see if I can get my trades in before others got into the office.`
@@ -107,6 +126,7 @@ the corpus — fires in 5/6 pairs.
   - `That is a hole in the floor nobody's put a cone in front of yet.` + `And I don't tend to watch where I'm walking all the time.`
   - `Always working is also always exposed.` + `It's why I fell in love with crypto, but it's a double-edged sword.`
   - Takeaway for the writer: end analytical sections with a hook for a personal admission. Don't close on the clean abstract line; leave him room to warm it with an "I".
+- (09-23) **Best story first (inverted pyramid) — 3 pairs: least-valuable-ai, accountant-to-cto, silver-strike.** Given posts open with abstract thesis or career arc; shipped versions move the most dramatic specific anecdote to the opener and bury the thesis. (09-23) given opened `There are sixteen AI agents living in our repo right now. I named all of them.`; shipped opens with run #69 finding a paywall hole, fixing it, running 8,795 tests, and then stopping to leave a PR instead of shipping — the best story in the piece. (08-04) dry career opener `My entire career is one long argument with the idea of typing a number twice` → shipped opens with mom calling about Iceland packing, present-tense stakes. (08-20) analytical framing section → shipped opens with hardware wishlist and workspace mobility. Takeaway for the writer: the confession or the concrete scene goes first; the abstract thesis goes second or not at all.
 
 **3b. Cut the clever metaphor for a bare punch.** Where the machine reached for a
 constructed image, he deleted it and let the raw fact (often + `!`) carry it.
@@ -126,6 +146,7 @@ reaches for an industry image, he cuts it and drops in something you can feel.
 **A2. Injects the live tape the machine couldn't have.** A real, of-the-moment read
 with an actual trade idea.
 - ADD `CSCO came up as the one to keep an eye on. Appears to have held its earnings gap line last night… I'm kinda liking a good strangle or straddle from this spot as it's currently sitting where it's definitely not going to stay.`
+- (08-04) Added entirely new "The boat is also a position" section — NCLH shareholder onboard credit (exact terms, because "go check the IR page" is useless without them), covered call against the same shares, Iceland cruise departing next week. The trade is wired directly to the post's thesis: same automation principle, same 100 shares doing two jobs. Real open position embedded mid-build post.
 
 **A3. Self-corrects mid-sentence. Will not let a clean-but-false line stand.** This
 is the densest tell. He dulls his own sentence rather than overclaim.  **The
@@ -141,11 +162,19 @@ clauses like "and I couldn't find it" or "she's getting upgraded everyday").
 - (06-22 held-out) `you do not buy it.` → `you do not buy it - yet.`
 - (07-07) `he gives me the look.` → `I still get the look (at least I'm pretty sure I do - we are virtual after all).` (undercuts his own certainty; spaced-hyphen aside)
 - (07-07) `once he stops giving me the look.` → `…once he stops giving me the look (he already has - this time, I actually asked permission!).` (won't let the "co-founder resists me" frame stand unqualified — confesses he already got the yes)
+- (07-19) `The only indicator I really use that I didn't write myself is R-Trend Exhaustion.` — clarifies attribution mid-intro; won't let readers assume he built it.
+- (07-19) `(I'm glaring at a few people I know who are currently laughing as they read this - you know who you are)` — names specific readers in the aside; insider warmth that excludes no one while including those who know.
+- (07-20) `it has been (not so) quietly driving me insane` — one-word parenthetical punctures his own qualifier. Shortest A3 in the corpus.
+- (07-02) `kinda without the other founders' permission. That's how we roll. I hope :).` — confession appended to his own announcement; undercuts the bold move immediately after making it.
+- (08-20) `I want to be precise about that, because it would be very easy to write this paragraph as discipline. It wasn't.` — most explicit A3 in the corpus; refuses the heroic framing in real time, mid-paragraph.
+- (09-23) Added classifier screenshots showing its own silly mistakes ("MCP = Most Critical Path", "Assign it to a developer") immediately after selling the system: `It's also pretty dumb. Here's the same classifier…` — confesses the tool's limits at the peak of the pitch.
 
 **A4. Wires the post into the network.** The machine writes in a vacuum; he adds the
 restack bait and the product clicks.
 - ADD `Math & Cynce had a great macro write-up yesterday - go read his if you're not sure what's going on.`
 - ADD `don't forget to follow https://x.com/TraderDaddyBot - she's getting upgraded everyday!` + a direct `traderdaddy.pro/screeners/…` link under each screener.
+- (07-11) Added Tchaikovsky author recommendation mid-post: `Adrian Tchaikovsky is probably my favorite author in this realm. James Lovegrove described his writing as 'superior stuff, tackling big themes — gods, messiahs, artificial intelligence, alienness — with brio'` — book rec dropped into a serious analytical piece; the shoutout is the warmth that makes the dense theology land.
+- (07-19) `This is the chart I have not seen anyone else build, and it's now available for TDPro` — product plug woven into the analysis sentence rather than appearing as a separate call-to-action.
 
 **A5. The self-deprecating tangent.** An unprompted opinion that undercuts himself.
 The machine stays on task; Michael wanders and deflates.
@@ -161,6 +190,10 @@ The machine stays on task; Michael wanders and deflates.
 - `Here is the part that made me sit up. I built this machine…` → `So here's the conviction. I built this machine…`
 - (07-07) cut the two windup lines whole: `So here's the argument I've been losing at dinner, finally written down as the thing that wins it.` and `That's the whole thesis. The rest of this is proof that it's already running.` — he refuses to announce the thesis before making it; the claims just start.
 - (07-13) `Now here is the part I do not get to write. Take it away.` → `Now, to hand the mic to Sam.` — cut the self-referential windup (and the `## Sam:` header + horizontal rule); the handoff line carries the voice change on its own. Also `So here is the deal today.` → `Here's the deal today.` (drop the "So", contract "here is").
+- (07-11) cut `Keep this next one handy, because it's about to cost you money in a different building.` — the announcement of the pivot from theology to trading; the parallel just starts.
+- (07-11) cut `So here is the entire discipline, and it's nothing fancier than keeping the question mark screwed on.` — announced the lesson before giving it; lesson now starts directly with `Every real position has an invalidation level.`
+- (07-19) cut the thesis opener entirely: given `I spent a week trying to prove my favorite indicator was broken. It wasn't. I was.`; shipped starts mid-action: `I sat down to write you a trade on [blank].` — reader discovers the confession through narrative rather than having it stated upfront. (R3 inverted pyramid in action: best story first, thesis buried.)
+- (06-27) `Here's the part that closes the loop.` → `Closing the loop.` — stripped the windup; the signpost stays as a minimal header.
 
 **C2. The doubled metaphor / the extra clause.** Keeps one image, kills the spare.
 - cut the whole "casting director" paragraph (he already had "light money on fire")
@@ -178,6 +211,9 @@ the confession goes.
 - (06-23 held-out) cut `I'm a felon in recovery who builds his own trading tools…`; kept the closing recovery-line as a metaphor.
 - (06-22 held-out) cut `In the rooms they have a line for exactly this: do not just do something, sit there.` — same pattern: AA-room jargon dies, the wisdom would have to be rephrased to survive.
 - (07-13) cut the recovery-adjacent `That is how you stay sick.` and de-confessed the whole opener: `I have been the guy who screenshots only the wins… I did that when I was newer, dumber, and a lot less honest with myself.` → `It must be nice to be the guy who only wins in the market… It's beyond tempting to come up here and pretend it's all wins.` **Nuance / partial counter to rule 3:** normally he ADDS first-person confession; here he REMOVED his own self-implication and made it a wry general observation. Read: he'll drop the "I was sick" self-flagging when a lighter, sardonic frame lands the same honesty without the heavy admission. The recovery *word* ("sick") dies; the humility survives as tone.
+- (07-11) cut the entire closing recovery meditation: `Recovery taught me this before markets did. Half the wreckage in my life came from believing in a story I hadn't checked. I kept holding positions I should have exited because I couldn't separate the trade from the thesis, and I couldn't separate the thesis from the person. Same thing.` — post ends at `You are allowed to love the thing and still read the file.` The wisdom is already implicit in the thesis; the closing paragraph was telling the reader what to feel.
+- (07-19) `In recovery nobody tells you to go find a better program` → `Nobody tells you to go find a better program when you are struggling in recovery and they shouldn't here either.` — framing restructured: recovery moved to a subordinate clause-end; the program-wisdom leads instead of the AA provenance.
+- (09-23) recovery meditation compressed to one wry line: `I did not expect to end up rebuilding the tenth step as an admin page for GitHub issues, but here we are.` (given had `a fourth step for a codebase` as a three-sentence closing meditation). **Step number changed**: fourth → tenth — uses the accurate AA step (tenth = ongoing personal inventory) rather than the more famous fourth. He cares about which step, not just the vibe.
 
 ---
 
@@ -192,6 +228,8 @@ the confession goes.
 - **Typos ship.** `my my uncle`, `it slightly up` survive (07-07 added `an TraderDaddy SDK` and `TL,DR;`). He does not sand the post to corporate-smooth; the small imperfections read as a human was here.
 - **Direct reader-address, unhedged.** He turns third-person copy at the reader mid-line: `a sales team that works for free.` → `…for free. I hope (hint, that's you).` and closes the piece by talking to the co-founder AND the reader: `Art, I solved it. Again.` → `…Again. You might wanna pick up the mic I'm about to drop.` **(07-07 only — single pair, not yet a law.)**
 - **Adds the credibility clause on the product.** `the thing that's actually expensive to build and run.` → `…to build and run, and were designed by a team of professional traders with years of experience.` — when the post is the funnel, he slips the sell in as a subordinate clause, never a sentence of its own. **(07-07 only — watch on next Business post.)**
+- **Section emojis stripped before publish.** Given posts use emojis as section-header markers (🔎💵📉🎯🤖💰🍻) and sometimes in the title (📊). Shipped versions remove them systematically. (07-08) `📊 What Does Your $OPEN Rate Want You to Write?` → bare title; all section-emoji headers removed. (06-26) same stripping of section markers. Does not extend to body-copy emoji (`:).`); only decorative/structural emoji are cleaned. **(2 pairs — consistent pattern.)**
+- **Paywall placed earlier than the given implies.** In trading and options posts, the paid gate moves significantly earlier in the shipped version than the given's full analytical arc suggests. (07-19) given completes the full indicator analysis and names the trade; shipped gates after the FIG setup. (08-20) given completes a second trade setup (BMY, SOFI); shipped gates at the journal link after the SLV story. (09-20) given completes the full van Tharp sizing math and doors A/B/C; shipped gates after the "Two people who wrote about this before me" section. Rule: the confession and story are free; the instrument, the entry, and the sizing math are paid. **(3 pairs — consistent across trading posts.)**
 
 ## What the machine already nails — don't "fix" these
 
