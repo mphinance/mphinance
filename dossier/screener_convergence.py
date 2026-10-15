@@ -85,6 +85,7 @@ SCREEN_FILES = {
     "ema_pullback": "ema-pullback-screener.json",
     "trend_template": "trend-template-screener.json",
     "rsi_divergence": "rsi-divergence-screener.json",
+    "updown_volume": "updown-volume-screener.json",
 }
 
 
