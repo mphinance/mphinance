@@ -16,9 +16,12 @@ on the list is safe to ship in ~20 minutes; say so in the thread.
 - Road weighting: track which road price took vs. which the map leaned toward, once there are 10+ live sessions.
 - The TraderMatrix port (`backend/src/services/share/tomorrowMap.ts`, other repo) now differs on the ELSE band. Sync it next time that repo is open.
 - The DOWN road can now lead with the cushion or the put wall. Check the waypoint label does not collide with the road line when the trigger is also the first drawn dot.
-- The UP trigger has the mirror of tonight's bug waiting in it: if `brake` and `gate` are both null, `upTrigger` is null and `rangeHi` falls back to the pin/flip. Give it the same named-level fallback chain.
+- The RANGE wave is drawn around the pin even when the pin sits outside the ELSE band (tonight the pin 770 is near the band's low edge, 768). Check whether the pin should be clamped into the band or the band anchored on the pin.
+- `brake` is only computed when `gate` exists, so a book with a long-gamma strike above spot but none heavy enough to be a ceiling yields no brake at all. Worth checking whether that is intended or an artifact of the gate-first ordering.
+- Two of the last three sessions graded RANGE and the third was a trend day that missed both levels. Once there are 10 live sessions, check whether misses cluster on trend days, and whether `expected` (the typical-move yardstick) is too small after a gap.
 
 ## Done
+- 2026-10-14: the UP trigger now has the same named-level fallback chain as the DOWN side (brake, else ceiling, else accelerant, else the flip). With brake and gate both null it used to be null, so the IF row read "it goes higher" with no number and the ELSE band collapsed to ceil(spot). Tonight's book had brake and accel null and only the 780 gate standing between the map and that output. Also stopped the no-ceiling rule asserting "dealers brake" when there is no long-gamma strike above spot to brake at. Caption/band only; grading reads the named levels directly.
 - 2026-10-14: the RANGE wave amplitude is capped by the pin's distance to the nearer band edge, not just half the band. Widening the band tonight made it swing a full typical day and draw outside its own box.
 - 2026-10-14: the DOWN trigger is the first level the road actually names (shelf, else cushion, else put wall) instead of `Math.floor(spot)`. The old fallback printed "IF it goes below 778" with spot at 778.01 and squeezed the ELSE band to 778-780. Caption/band only; grading reads `e.shelf`/`e.cushion` directly and is untouched.
 - 2026-10-14: the RANGE road is graded (`chartPin` in the ledger) and was already shipped; candidate removed.

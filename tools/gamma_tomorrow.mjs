@@ -537,7 +537,18 @@ const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt
 // numbers the IF rows quote (brake/ceiling above, shelf below), and `above`/
 // `below` are strict, so the band always contains spot; the clamp is belt and
 // braces for the no-level fallbacks.
-const upTrigger = brake ? brake.strike : gate ? gate.strike : null;
+// Mirror of the DOWN chain below: fall through to the next level the road
+// actually names instead of to nothing. brake -> ceiling stays first because
+// those are the levels a reader acts on and SKILL.md is explicit that the flip
+// is context, not the trigger. accel and the flip are only reached when the book
+// has no long-gamma strike above spot at all -- and with brake and gate both
+// null, upTrigger used to be null, so rangeHi collapsed to ceil(spot): the ELSE
+// band topped out a cent over the current price and the IF row read "it goes
+// higher" with no number. That is the same bug the DOWN side had on 2026-10-14.
+// Tonight's book (brake null, accel null, gate 780) was one missing strike away
+// from printing it.
+const upLead = brake || gate || accel || null;
+const upTrigger = upLead ? upLead.strike : flip > spot ? Number(flip.toFixed(2)) : null;
 // The DOWN trigger is the first level below spot that the road actually names:
 // the shelf, else the thin cushion, else the put wall. It used to fall back to
 // Math.floor(spot) whenever no shelf was readable, and on 2026-10-14 that printed
@@ -561,12 +572,16 @@ const roads = [
     // held on the close 3 of 6 times, a coin flip; brakes and ceilings held 5/5.
     // The flip is kept as context (which regime dealers are in), not as the
     // trigger a reader acts on.
-    cond: brake ? `up into ${brake.strike}` : gate ? `up into ${gate.strike}` : 'higher',
+    cond: brake ? `up into ${brake.strike}`
+      : gate ? `up into ${gate.strike}`
+      : accel ? `up through ${accel.strike}`
+      : upTrigger != null ? `up through the ${upTrigger} flip`
+      : 'higher',
     rule: gate
       ? ((flip > spot ? `under the flip (${flip.toFixed(2)}) dealers chase, so it can get there fast. ` : '') + (brake
           ? `${accel ? `rips through ${accel.strike}, then ` : ''}stalls at ${brake.strike}: it can wick over, it tends to close under. ceiling ${gate.strike}.`
           : `${accel ? `rips through ${accel.strike}. ` : ''}nothing gives until ${gate.strike}, and it tends to close under that.`))
-      : `dealers brake. no ceiling in range.`,
+      : `${accel ? `rips through ${accel.strike}. ` : ''}no long-gamma strike above spot, so nothing in the book brakes it${flip > spot ? `; over ${flip.toFixed(2)} dealers stop chasing` : ''}.`,
     side: -1,
     pts: [
       flip > spot ? { at: flip, tag: `${flip.toFixed(2)} FLIP`, note: 'dealers stop chasing, start braking' } : null,
