@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-10-14
+# Ghost Alpha Dossier — 2026-10-15
 
-> 🟡 **Transition** · SPY ▼ 0.8% · VIX 15.6
+> 🟡 **Transition** · SPY ▼ 0.3% · VIX 17.4
 
 ---
 
-VIX at 15.
+VIX is chilling at 17.
 
 
-## 🥇 Gold Pick: GEV
+## 🥇 Gold Pick: PLTR
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 45/100 (B) |
+| **Score** | 49/100 (A) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -19,12 +19,15 @@ VIX at 15.
 *This is the highest-scoring setup from today's 16-stage analysis pipeline.*
 
 
+### Runners Up
+- 🥈 **COST** — Score: 45/100
+
 
 ## 📊 Today's Numbers
 
-- **55 scanner signals** across 6 strategies
+- **54 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 0.8% | **VIX:** 15.6
+- **SPY:** ▼ 0.3% | **VIX:** 17.4
 
 ---
 
@@ -34,7 +37,7 @@ VIX at 15.
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-14_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-14)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-15_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-15)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
