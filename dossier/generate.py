@@ -1797,6 +1797,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] RSI divergence screen failed: {e}")
 
+    # ── Stage 10v: Up/Down Volume Screen ──
+    print("\n[10v/16] UP/DOWN VOLUME SCREEN (50-day accumulation ratio)")
+    updown_results: list[dict] = []
+    with timer.stage("Up/Down Volume Screen"):
+        try:
+            import time as _ud_time
+            from dossier.updown_volume_screener import score_updown_volume, _save_api_output as _ud_save
+            _ud_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _ud_pool:
+                _r = score_updown_volume(_t)
+                if _r:
+                    updown_results.append(_r)
+                _ud_time.sleep(0.05)
+            updown_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _ud_save(updown_results)
+            _top_ud = [r for r in updown_results if r["grade"] in ("A+", "A")]
+            print(f"  📊 {len(updown_results)} accumulation names — {len(_top_ud)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (U/D {r['updown_ratio_50d']})" for r in _top_ud[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Up/down volume screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
