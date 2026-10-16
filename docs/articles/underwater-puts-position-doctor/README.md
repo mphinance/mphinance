@@ -2,14 +2,16 @@
 
 *Trading 60% | Options 40%*
 
-<!-- hero: python3 scripts/generate_hero.py --pose stressed_ego --chalk "Recovery price: $63.80 (the put made it worse)" --out docs/articles/underwater-puts-position-doctor/hero.png -->
+<!-- hero: python3 scripts/generate_hero.py --pose casino_dealer --chalk "Recovery price: $63.80 (the put made it worse)" --out docs/articles/underwater-puts-position-doctor/hero.png -->
 ![A put is a floor. Your basis is the ceiling you need to get back through.](hero.png)
 
-[GAP: The position. The name you are holding red after this week, what you paid, what it closed at Friday, and the dollar hole. One paragraph, the way you'd say it at the bar. If nothing else is red, Crocs still is.]
+I bought puts last week. [GAP: On what, how many, roughly what you paid, and whether they were sitting on top of shares you own or a straight directional bet. One paragraph, the way you'd say it at the bar.]
 
-Character defect admission time. The first thing I wanted to do Thursday night was buy a put on it. Not because I had a plan. Because I felt sick looking at it and a put is the thing you buy when you feel sick. I opened the chain, found a strike, and then did the one thing I'm about to spend this whole post telling you to do: I checked it against what I paid. The put would have raised the price I need to get back to even. I would have paid money to make my own hole deeper.
+This week they paid. So this is going to sound backwards coming from a guy who is up on puts: do not buy one tonight.
 
-So this post is the math I ran instead, and the tool I built so you can run it in thirty seconds instead of thirty minutes.
+The put that worked was bought before the drop, with the VIX around 16, on [GAP: a gain you were protecting / a thesis you had]. The put you want to buy tonight is after the drop, with the VIX at 20, on a hole. Same instrument. Opposite trade. The difference is one number you have to check before you click buy, and almost no chain screen shows it to you: what you paid for the shares you are trying to fix.
+
+This post is the math for that, and the tool I built so you can run it in thirty seconds instead of thirty minutes.
 
 ## What this week did to you
 
@@ -73,7 +75,7 @@ Four situations.
 
 **You are not hedging shares. You are making a bet.** Buying a put with no stock is a directional trade that the thing goes down. Different animal. The Strategist in Ticker Lab is where that lives, with long puts and bear put spreads ranked by probability of profit.
 
-The case where a put is wrong is the case I was in Thursday night: underwater, no dated event, no reason I cannot sell, and I just felt bad about it. A put charges you for that feeling and leaves it exactly where it was.
+The case where a put is wrong is the one my inbox filled up with this week: underwater, no dated event, no reason you cannot sell, and you just feel sick looking at it. A put charges you for that feeling and leaves it exactly where it was. My puts from last week were not that trade. They were bought on [GAP: the gain / the thesis], before the move, when they were cheap. That is the version that works.
 
 ## What the Position Doctor does
 
@@ -199,7 +201,7 @@ Below that, every card carries the same numbers. Here is which one to look at fi
 
 **The caveat** is the thing that bites. It is on every card because every structure gives something up.
 
-[GAP: The live number. Your actual position through the Doctor. Recovery price for do-nothing, for the at-basis call, for the repair. Three numbers and which one you picked. This is the paragraph people screenshot.]
+[GAP: The live number. You are not underwater, so run a real one from this week through the Doctor instead: a semi or software name at Friday's close with a basis from two weeks ago, or a reader's position if someone sent you one. Recovery price for do-nothing, for the at-basis call, for the repair. Three numbers. Then one line on what your puts from last week are worth now, so the reader sees both sides of the same week. This is the paragraph people screenshot.]
 
 ## The Hedge Shopper, for when you are up
 
