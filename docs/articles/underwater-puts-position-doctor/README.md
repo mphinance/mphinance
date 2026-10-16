@@ -75,7 +75,7 @@ Four situations.
 
 **You are not hedging shares. You are making a bet.** Buying a put with no stock is a directional trade that the thing goes down. Different animal. The Strategist in Ticker Lab is where that lives, with long puts and bear put spreads ranked by probability of profit.
 
-The case where a put is wrong is the one my inbox filled up with this week: underwater, no dated event, no reason you cannot sell, and you just feel sick looking at it. A put charges you for that feeling and leaves it exactly where it was. My puts from last week were not that trade. They were bought on [GAP: the gain / the thesis], before the move, when they were cheap. That is the version that works.
+The case where a put is wrong is the one my inbox filled up with this week: underwater, no dated event, no reason you cannot sell, and you just feel sick looking at it. A put charges you for that feeling and leaves it exactly where it was. My puts from last week were a different trade entirely, bought on [GAP: the gain / the thesis], before the move, when they were cheap. That is the version that works.
 
 ## What the Position Doctor does
 
