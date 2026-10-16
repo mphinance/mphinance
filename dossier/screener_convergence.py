@@ -86,6 +86,7 @@ SCREEN_FILES = {
     "trend_template": "trend-template-screener.json",
     "rsi_divergence": "rsi-divergence-screener.json",
     "updown_volume": "updown-volume-screener.json",
+    "bb_walk": "bb-walk-screener.json",
 }
 
 
