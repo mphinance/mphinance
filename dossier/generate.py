@@ -1821,6 +1821,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Up/down volume screen failed: {e}")
 
+    # ── Stage 10w: Bollinger Band Walk Screen ──
+    print("\n[10w/16] BB WALK SCREEN (trends riding the upper band)")
+    bbwalk_results: list[dict] = []
+    with timer.stage("BB Walk Screen"):
+        try:
+            import time as _bw_time
+            from dossier.bb_walk_screener import score_bb_walk, _save_api_output as _bw_save
+            _bw_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _bw_pool:
+                _r = score_bb_walk(_t)
+                if _r:
+                    bbwalk_results.append(_r)
+                _bw_time.sleep(0.05)
+            bbwalk_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _bw_save(bbwalk_results)
+            _top_bw = [r for r in bbwalk_results if r["grade"] in ("A+", "A")]
+            print(f"  🚶 {len(bbwalk_results)} band walkers — {len(_top_bw)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['walk_days_10d']}/10)" for r in _top_bw[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] BB walk screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
