@@ -693,6 +693,7 @@ const flipBandY = Math.max(PAD_T, Math.min(PAD_T + PLOT_H, Y(flip)));
 // Everything outside a typical day's excursion is a tail. Drawing 772 as far
 // from spot as 761 made a 4-point move look as ordinary as a 7-point one.
 const emHi = spot + expected, emLo = spot - expected;
+let emCaption = null;
 {
   const y1 = Math.max(PAD_T, Y(emHi)), y2 = Math.min(PAD_T + PLOT_H, Y(emLo));
   push(`<rect x="${FWD_X}" y="${PAD_T}" width="${FWD_W}" height="${y1 - PAD_T}" fill="${C.bg}" fill-opacity="0.5"/>`);
@@ -700,7 +701,10 @@ const emHi = spot + expected, emLo = spot - expected;
   for (const yy of [y1, y2]) {
     push(`<line x1="${FWD_X}" y1="${yy}" x2="${W - PAD_R}" y2="${yy}" stroke="${C.dim}" stroke-width="0.8" stroke-opacity="0.45" stroke-dasharray="6 6"/>`);
   }
-  push(`<text x="${FWD_X + 10}" y="${y1 - 8}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}">beyond a typical day (+/- ${expected.toFixed(2)})</text>`);
+  // Deferred to after the waypoint labels have claimed their rows. On 2026-10-16
+  // this caption and the FLIP waypoint's note were written on the same line and
+  // the two sentences overlapped into unreadable mush.
+  emCaption = { y1, text: `beyond a typical day (+/- ${expected.toFixed(2)})` };
 }
 
 // price rail
@@ -813,7 +817,22 @@ function smooth(pp) {
 
 const labels = [];
 const ROAD_X0 = FWD_X + 14;
-const ROAD_W = FWD_W - 210;   // leave room for the waypoint labels
+// The gutter on the right holds the last waypoint's label on each road: the road
+// name plus its note. It used to be a flat 210px, and the note is a sentence, so
+// a long one ran off the edge of the image: on 2026-10-16 the UP road read
+// "31k calls, dealers buy into stre" with the rest of the word outside the
+// canvas. 36 characters of 11px mono is ~245px, so the gutter is now measured
+// from the text that is actually going to be drawn in it, capped so the roads
+// cannot be squeezed to nothing on a night with very wordy notes.
+const textW = (s_, px) => String(s_).length * px * 0.62;
+for (const r of roads) if (r.up !== undefined) r.pts = sideFilter(r.pts, r.up);
+const gutterNeed = Math.max(0, ...roads.map((r) => {
+  if (!r.pts.length) return 0;
+  if (r.wave) return textW(r.key, 15);
+  const w = r.pts[r.pts.length - 1];
+  return Math.max(textW(`${r.key} \u00b7 ${w.tag} *`, 13), textW(w.note, 11));
+}));
+const ROAD_W = FWD_W - Math.min(Math.max(210, Math.ceil(gutterNeed) + 30), Math.round(FWD_W * 0.46));
 
 for (const r of roads) {
   if (r.up !== undefined) r.pts = sideFilter(r.pts, r.up);
@@ -913,6 +932,17 @@ for (const [yt, col, txt] of [
 ]) {
   if (labels.some((L) => yt + 2 > L.ty - 11 && yt - 9 < L.ty + 19)) continue;
   push(`<text x="${W - PAD_R - 10}" y="${yt}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${col}" fill-opacity="0.75">${txt}</text>`);
+}
+
+// Same overlap test for the typical-day band caption. It gets a second row to try
+// (just under the dashed line) before it is dropped, because it is the only thing
+// on the chart that says how far a normal day travels.
+if (emCaption) {
+  const taken = (yt) => labels.some((L) => yt + 2 > L.ty - 11 && yt - 9 < L.ty + 19);
+  const yt = [emCaption.y1 - 8, emCaption.y1 + 14].find((c) => c > PAD_T + 10 && !taken(c));
+  if (yt != null) {
+    push(`<text x="${FWD_X + 10}" y="${yt}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}">${esc(emCaption.text)}</text>`);
+  }
 }
 
 // ── how the last one went ───────────────────────────────────────────────────
