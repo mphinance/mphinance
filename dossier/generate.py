@@ -1845,6 +1845,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] BB walk screen failed: {e}")
 
+    # ── Stage 10x: Aroon Trend Birth Screen ──
+    print("\n[10x/16] AROON SCREEN (fresh highs arriving, old lows)")
+    aroon_results: list[dict] = []
+    with timer.stage("Aroon Screen"):
+        try:
+            import time as _ar_time
+            from dossier.aroon_screener import score_aroon, _save_api_output as _ar_save
+            _ar_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _ar_pool:
+                _r = score_aroon(_t)
+                if _r:
+                    aroon_results.append(_r)
+                _ar_time.sleep(0.05)
+            aroon_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _ar_save(aroon_results)
+            _top_ar = [r for r in aroon_results if r["grade"] in ("A+", "A")]
+            print(f"  🧭 {len(aroon_results)} trend births — {len(_top_ar)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']}" for r in _top_ar[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Aroon screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}

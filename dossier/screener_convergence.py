@@ -87,6 +87,7 @@ SCREEN_FILES = {
     "rsi_divergence": "rsi-divergence-screener.json",
     "updown_volume": "updown-volume-screener.json",
     "bb_walk": "bb-walk-screener.json",
+    "aroon": "aroon-screener.json",
 }
 
 
