@@ -33,7 +33,7 @@ MASCOT_DIR = REPO_ROOT / "docs" / "substack" / "assets" / "mascot"
 DEFAULT_COORDS = {
     "calm_edge":       {"left": 0.68, "top": 0.09, "width": 0.26, "height": 0.09},
     "stressed_ego":    {"left": 0.06, "top": 0.17, "width": 0.14, "height": 0.09},
-    "casino_dealer":   {"left": 0.14, "top": 0.19, "width": 0.62, "height": 0.10},
+    "casino_dealer":   {"left": 0.14, "top": 0.19, "width": 0.25, "height": 0.15},
     "surfer":          {"left": 0.36, "top": 0.20, "width": 0.28, "height": 0.15},
     "ap_clerk":        {"left": 0.625,"top": 0.06, "width": 0.225,"height": 0.23},
     "data_detective":  {"left": 0.10, "top": 0.10, "width": 0.55, "height": 0.12},

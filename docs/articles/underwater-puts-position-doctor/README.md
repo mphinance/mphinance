@@ -2,24 +2,28 @@
 
 *Trading 60% | Options 40%*
 
-<!-- hero: python3 scripts/generate_hero.py --pose casino_dealer --chalk "Recovery price: $63.80 (the put made it worse)" --out docs/articles/underwater-puts-position-doctor/hero.png -->
+<!-- hero: python3 scripts/generate_hero.py --pose casino_dealer --chalk "Recovery: $63.80. The put made it worse." --out docs/articles/underwater-puts-position-doctor/hero.png -->
 ![A put is a floor. Your basis is the ceiling you need to get back through.](hero.png)
 
-I bought puts last week. [GAP: On what, how many, roughly what you paid, and whether they were sitting on top of shares you own or a straight directional bet. One paragraph, the way you'd say it at the bar.]
+If tech put you underwater this week, do not buy a put tonight.
 
-This week they paid. So this is going to sound backwards coming from a guy who is up on puts: do not buy one tonight.
-
-The put that worked was bought before the drop, with the VIX around 16, on [GAP: a gain you were protecting / a thesis you had]. The put you want to buy tonight is after the drop, with the VIX at 20, on a hole. Same instrument. Opposite trade. The difference is one number you have to check before you click buy, and almost no chain screen shows it to you: what you paid for the shares you are trying to fix.
+The puts that paid this week were bought before the drop, when they were cheap. The put you want to buy tonight is after the drop, with the VIX at 20, on a hole. Same instrument. Opposite trade. The difference is one number you have to check before you click buy, and almost no chain screen shows it to you: what you paid for the shares you are trying to fix.
 
 This post is the math for that, and the tool I built so you can run it in thirty seconds instead of thirty minutes.
+
+> **TLDR: Underwater, a put caps the loss and raises the price you need to get back to even. Sell calls at or above your basis, price a 1x2 repair, or sell the shares and wheel. The Position Doctor runs all of it off the live chain against what you actually paid.**
+
+<!--subscribe-->
 
 ## What this week did to you
 
 If you own tech, you had a bad week. If you own anything else, you probably did not notice.
 
-The S&P finished the week down about **1.1%**. Under that, **XLK fell 7.7%**, the semis ETF **SMH fell 10.5%**, cybersecurity fell 10%, software fell 7%. Staples, energy, and healthcare all went *up* 3 to 5 percent. Half the index is still above its 200-day. Equal-weight beat cap-weight. This was a tech beating, not a market crash, and the people who are underwater this week are underwater in the exact sector where the fear just got priced.
+The S&P 500 finished the week down about **2%**. Under that, **XLK fell 7.7%**, the semis ETF **SMH fell 10.5%**, cybersecurity fell 10%, software fell 7%. Staples, energy, and healthcare all went *up* 3 to 5 percent. Half the index is still above its 200-day. Equal-weight beat cap-weight. This was a tech beating, not a market crash, and the people who are underwater this week are underwater in the exact sector where the fear just got priced.
 
-That last part is the whole reason to read the rest. The VIX went from about 16 to **20** this week, up 21%, and the semis names moved a lot more than that. When implied volatility jumps, two things happen at once: the put you want to buy gets expensive, and the call you could sell gets rich. The market just priced your insurance at panic rates, and it priced the premium you could collect at the same panic rates. One of those you pay. One of those you collect. Buying protection after a 10% drop in a name that just doubled its IV is buying fire insurance while the house is on fire, from a guy who can see the smoke.
+![Five days, Friday close to Friday close. Tech got hit, the defensives went up.](week.png)
+
+The VIX closed the week at **20**, and the semis names moved a lot more than that. When implied volatility jumps, two things happen at once: the put you want to buy gets expensive, and the call you could sell gets rich. The market just priced your insurance at panic rates, and it priced the premium you could collect at the same panic rates. One of those you pay. One of those you collect. Buying protection after a 10% drop in a name whose IV just jumped is buying fire insurance while the house is on fire, from a guy who can see the smoke.
 
 That does not mean the put is always wrong. It means the question is not "what is the cheapest protection." The question is "what gets me back to even, and what does it cost me in upside." Those have different answers, and the second one depends on a number almost no chain screen shows you: your cost basis.
 
@@ -75,7 +79,7 @@ Four situations.
 
 **You are not hedging shares. You are making a bet.** Buying a put with no stock is a directional trade that the thing goes down. Different animal. The Strategist in Ticker Lab is where that lives, with long puts and bear put spreads ranked by probability of profit.
 
-The case where a put is wrong is the one my inbox filled up with this week: underwater, no dated event, no reason you cannot sell, and you just feel sick looking at it. A put charges you for that feeling and leaves it exactly where it was. My puts from last week were a different trade entirely, bought on [GAP: the gain / the thesis], before the move, when they were cheap. That is the version that works.
+The case where a put is wrong is the one my inbox filled up with this week: underwater, no dated event, no reason you cannot sell, and you just feel sick looking at it. A put charges you for that feeling and leaves it exactly where it was. The puts that paid this week were a different trade entirely, bought before the move, when they were cheap. That is the version that works.
 
 ## What the Position Doctor does
 
@@ -115,7 +119,7 @@ Sell one call per 100 shares, around 30 delta, above the current price.
 
 **The trap when you are underwater:** The 30-delta strike might be *below* your basis. If it is, the Doctor flags it in red: the cap is below your basis, and if it rips you get assigned into a realized loss. You collected **$150** of premium and then sold your $62 shares at $57. That is a bad trade dressed up as income.
 
-[GAP: Confession tail. You have done this one. Which name, which strike, what the assignment cost. One or two sentences, then move on. Don't moralize it.]
+NBIS this week is the live version. Two weeks underwater, the Doctor's 30-delta call was the $200 strike, **$42.81** under the basis. It pays **$810**, and the card says it in red.
 
 ### Covered call at basis. Income without the trap.
 
@@ -163,7 +167,9 @@ At $58 on expiration:
   Net                                 +$100
 ```
 
-You are out at a small profit at **$58** instead of needing **$62**. Not $1,500 like I had in the first draft. $1,000. The conclusion survives, the number did not, and that is why the arithmetic goes in the post.
+You are whole at **$57.50** and out at a small profit at **$58**, instead of needing **$62**. Not $1,500 like I had in the first draft. $1,000. The conclusion survives, the number did not, and that is why the arithmetic goes in the post.
+
+![The 1x2 at expiration, every cell typed out. Two-for-one between $53 and $58, dead stop at $58.](repair.png)
 
 The Doctor picks the highest upper strike whose two short calls still pay for the long call. Higher cap, more room to run. The trade-off is that a lower upper strike collects more credit, and credit lowers the recovery price. The card shows both so you can pick which you want.
 
@@ -176,6 +182,8 @@ Sell the shares. Book the $900 loss. Then sell a cash-secured put at the strike 
 In the example: sell at $53, sell the $50 put for, say, **$1.20**. If it expires worthless you made $120 on $5,000 of collateral in a month and you still do not own a stock that was going down. If you get assigned, your new basis is **$48.80**, and the climb back to your old $62 is now a climb from $48.80, with premium paying you every month along the way. The hole is the same $900. What changed is that your capital is earning rent at $50 instead of praying at $62.
 
 `50.00 - 1.20 = $48.80 new basis if assigned, versus $62.00 holding`
+
+![Every structure in the $62 / $53 example, ranked by the price you need to get back to.](recovery.png)
 
 This also harvests the loss for taxes, which none of the five structures do. One caution, and it is a real one: if you buy the shares back inside 30 days, or get assigned inside 30 days, the loss does not disappear, it gets deferred into the new basis. And buying a call on the same name inside that window does the same thing. So the sell-and-wheel and the repair ratio are mutually exclusive for a month. I did corporate accounting for a living and I still check this every time.
 
@@ -201,7 +209,21 @@ Below that, every card carries the same numbers. Here is which one to look at fi
 
 **The caveat** is the thing that bites. It is on every card because every structure gives something up.
 
-[GAP: The live number. You are not underwater, so run a real one from this week through the Doctor instead: a semi or software name at Friday's close with a basis from two weeks ago, or a reader's position if someone sent you one. Recovery price for do-nothing, for the at-basis call, for the repair. Three numbers. Then one line on what your puts from last week are worth now, so the reader sees both sides of the same week. This is the paragraph people screenshot.]
+## $NBIS, run through the Doctor
+
+A real one from this week. Say you bought 100 shares of NBIS at the close on Friday, October 2: **$242.81**. It closed this Friday at **$165.47**. You are down **$7,734**, about 32%, and the stock has to climb **46.7%** just to get you level.
+
+Here is what the Doctor said off Friday's closing chain:
+
+- **Do nothing:** recovery at **$242.81**.
+- **Protective put**, the December $145, costs **$1,407.50**. Floor at $145, which is $97.81 under your basis. Recovery moves up to **$256.89**. That is **$14.08 harder**.
+- **Call at basis**, sell the November $250 for **$2.20**. Recovery drops to **$240.61**. That is **$2.20 easier**, and it is the whole improvement.
+- **1x2 repair**, buy the December $165 call, sell two December $200s, for a **$50 credit**. Recovery is a dash. The cap is $200 and the basis is $242.81, so this structure cannot get you whole.
+
+That dash is the lesson. Down 32%, nothing on the chain gets you back to even by December. What the repair does is shrink the hole. If NBIS gets back to $200 by December 18, doing nothing leaves you down **$4,281**. The repair leaves you down **$731**.
+
+`(200 - 242.81) x 100 = -$4,281 doing nothing`
+`-4,281 + (200 - 165) x 100 + 50 = -$731 with the repair`
 
 ## The Hedge Shopper, for when you are up
 
@@ -220,9 +242,13 @@ In profit, start there. Underwater, start with the Doctor. Not sure which you ar
 - **Rank by a single made-up score.** Every card carries its own recovery, floor, cap, delta, and four-scenario P&L. The order comes from the diagnosis. The trade-offs stay visible.
 - **Price the sixth structure.** Selling the shares is a decision you make, not a number the chain hands you.
 
+<!--share-->
+
 ## Where to find it
 
 Open any ticker in Ticker Lab and scroll to the "More on SYM" section. Position Doctor and Hedge Shopper are the last two cards. From the Trade Journal's Positions page, every long share lot of 100 or more has a Diagnose link that opens the Doctor with your numbers already in. You can also ask Arya: give her the ticker, your share count, and your basis, and ask what gets you back to even.
+
+Ticker Lab lives on [tradermatrix.pro](https://www.tradermatrix.pro/?ref=MPHINANCE) (that is my referral link), and the walkthroughs are on [youtube.com/@TraderMatrixHQ](https://www.youtube.com/@TraderMatrixHQ).
 
 Both tools are Premium. If this week put you underwater and you want the numbers instead of the feeling, that is what the subscription is for.
 
