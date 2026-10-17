@@ -215,6 +215,12 @@ The Hedge Shopper sits next to the Doctor in the same section of Ticker Lab and 
 
 It takes your share count, optionally your basis and a daily average true range, and shops four structures: the protective put, the collar, the put-spread collar (a cheaper collar where the floor stops working below a lower put strike), and the bear put spread (a defined-cost tactical hedge). It sizes the move it is protecting against off the chain's expected move, floored by a volatility-scaled estimate so a quiet name is not under-hedged. Then it drops any structure that costs more than the loss it removes and ranks the survivors by cost per dollar protected. Credits and zero-cost structures float to the top.
 
+Here it is on ASTS off Friday's chain. The top pick is the put-spread collar for an **$85 credit**: **$300** protected against an **$11.75** expected drop, and the card tells you the floor stops working below $34. Look at the $48 call it sells, too. If you paid $58.45 for those shares, that cap is under your basis, which is the whole reason underwater starts with the Doctor and not here.
+
+![Hedge Shopper on ASTS, Friday's closing chain.](hedge_shopper_asts.png)
+
+You can run both on ASTS yourself in the [ASTS Ticker Lab](https://www.tradermatrix.pro/ticker-search/ASTS/lab?ref=MPHINANCE).
+
 In profit, start there. Underwater, start with the Doctor. Not sure which you are? The Doctor tells you in the first line.
 
 ## What the Doctor will not do
@@ -308,5 +314,7 @@ NBIS: `2 x 200 - 165 + 0.50 = $235.50`. The October 9 basis of $221.07 is under 
 ASTS: `2 x 45 - 40 + 2.10 = $52.10`. $50.97 is under it. $58.45 is over it.
 
 If your basis is above the ceiling, the 1x2 shrinks the hole and that is all it does. That is the point where selling the shares and wheeling the put belongs in the conversation, because the repair already told you it cannot finish the job. And these are December structures, so look up both earnings dates before you put either one on.
+
+Plug your own basis into the [NBIS lab](https://www.tradermatrix.pro/ticker-search/NBIS/lab?ref=MPHINANCE) or the [ASTS lab](https://www.tradermatrix.pro/ticker-search/ASTS/lab?ref=MPHINANCE) and check which side of the ceiling you are on.
 
 ~ Michael
