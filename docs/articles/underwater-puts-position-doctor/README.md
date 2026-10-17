@@ -15,6 +15,55 @@ This post is the math for that, and the tool I built so you can run it in thirty
 
 <!--subscribe-->
 
+## Got your broker wired to an AI? Paste this
+
+If your broker is connected to Claude, ChatGPT, or any agent through an MCP server, you can have it run the same diagnosis on your actual position. Copy everything in the box, fill in the ticker, and paste it. It is written to read only. It should never place a trade, and if your agent offers to, say no.
+
+```
+You are a position doctor for ONE losing stock position. Read only. Do not place, stage, or preview any order.
+
+TICKER: ____
+
+STEP 1. THE POSITION
+- Pull my position in TICKER from my broker: share count and average cost per share. Say exactly which field you used for cost basis. If the broker has already lowered it for option premium I collected, tell me.
+- Pull the current stock price. If the market is closed, say you are using the last close.
+- If I hold fewer than 100 shares, stop and tell me. Options cover 100-share lots.
+- Classify: UNDERWATER (more than 2% below basis), NEAR BASIS (within 2%), IN PROFIT (more than 2% above).
+- Report dollar P&L, percent P&L, and the percent the stock must climb to get back to my basis.
+
+STEP 2. THE CHAIN
+- Pull the real option chain from my broker. Use mid prices (halfway between bid and ask). Flag any contract whose bid/ask spread is wider than 10% of mid, or open interest under 100.
+- Use the delta the broker reports. Do not estimate it.
+- Check for an earnings date before each expiration you pick. If one falls inside, say so.
+
+STEP 3. PRICE THESE FIVE, PER 100 SHARES
+1. Protective put: buy the put nearest -0.30 delta, about 60 days out.
+2. Covered call: sell the call nearest 0.30 delta, about 35 days out.
+3. Covered call at basis: sell the first call strike at or above my cost basis, about 35 days out.
+4. Collar: the put from #1 plus a call near 0.30 delta, about 40 days out, same expiration for both.
+5. 1x2 repair: buy 1 call at the money, sell 2 calls at a higher strike, 60 to 75 days out. Pick the highest upper strike where the 2 short calls still pay for the long call (net credit or even). One short call is covered by the long call, the other by my shares.
+
+STEP 4. FOR EACH STRUCTURE, REPORT
+- Net debit or credit in dollars.
+- Floor (worst exit price) and cap (where my upside stops), or "none".
+- RECOVERY PRICE: the lowest stock price at expiration where the whole position (my shares at my basis plus the new legs) is back to $0. Show the arithmetic. If the cap is below the price I would need, write NEVER. Do not invent a number.
+- Recovery versus doing nothing (doing nothing recovers at my basis): how many dollars easier or harder.
+- Net delta of shares plus options, in share terms.
+- P&L at four prices: stock down by the expected move, unchanged, at my basis, up by the expected move.
+- In red: any cap below my basis, and any short call that would assign me into a realized loss after premium.
+
+STEP 5. TWO MORE CHECKS
+- Repair ceiling: 2 x short strike - long strike + credit per share. If my basis is above that number, say the repair can shrink the hole but cannot close it.
+- Sell and wheel: price selling the shares now plus a cash-secured put about 35 days out at a strike I would be glad to own. Show the new basis if assigned (strike minus premium). Warn me that buying the shares back, getting assigned, or buying calls on the same stock within 30 days of a loss sale is a wash sale and defers the loss.
+
+STEP 6. VERDICT
+- Order the answer by my state. Underwater: repair, then income, then collar, then protection last. Near basis: income first. In profit: protection first.
+- One plain-English paragraph: how far I am from even, which structure moves my recovery price the most, and what it costs me in upside.
+- No recommendation to buy or sell. Show me the numbers and the trade-offs.
+```
+
+Read the agent's answer the same way you would read the Doctor's, using the sections below. If it hands you a recovery price without showing the arithmetic, make it show the arithmetic.
+
 ## What this week did to you
 
 If you own tech, you had a bad week. If you own anything else, you probably did not notice.
