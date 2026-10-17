@@ -209,22 +209,6 @@ Below that, every card carries the same numbers. Here is which one to look at fi
 
 **The caveat** is the thing that bites. It is on every card because every structure gives something up.
 
-## $NBIS, run through the Doctor
-
-A real one from this week. Say you bought 100 shares of NBIS at the close on Friday, October 2: **$242.81**. It closed this Friday at **$165.47**. You are down **$7,734**, about 32%, and the stock has to climb **46.7%** just to get you level.
-
-Here is what the Doctor said off Friday's closing chain:
-
-- **Do nothing:** recovery at **$242.81**.
-- **Protective put**, the December $145, costs **$1,407.50**. Floor at $145, which is $97.81 under your basis. Recovery moves up to **$256.89**. That is **$14.08 harder**.
-- **Call at basis**, sell the November $250 for **$2.20**. Recovery drops to **$240.61**. That is **$2.20 easier**, and it is the whole improvement.
-- **1x2 repair**, buy the December $165 call, sell two December $200s, for a **$50 credit**. Recovery is a dash. The cap is $200 and the basis is $242.81, so this structure cannot get you whole.
-
-That dash is the lesson. Down 32%, nothing on the chain gets you back to even by December. What the repair does is shrink the hole. If NBIS gets back to $200 by December 18, doing nothing leaves you down **$4,281**. The repair leaves you down **$731**.
-
-`(200 - 242.81) x 100 = -$4,281 doing nothing`
-`-4,281 + (200 - 165) x 100 + 50 = -$731 with the repair`
-
 ## The Hedge Shopper, for when you are up
 
 The Hedge Shopper sits next to the Doctor in the same section of Ticker Lab and answers the other question: what is the cheapest way to protect a gain?
@@ -242,8 +226,6 @@ In profit, start there. Underwater, start with the Doctor. Not sure which you ar
 - **Rank by a single made-up score.** Every card carries its own recovery, floor, cap, delta, and four-scenario P&L. The order comes from the diagnosis. The trade-offs stay visible.
 - **Price the sixth structure.** Selling the shares is a decision you make, not a number the chain hands you.
 
-<!--share-->
-
 ## Where to find it
 
 Open any ticker in Ticker Lab and scroll to the "More on SYM" section. Position Doctor and Hedge Shopper are the last two cards. From the Trade Journal's Positions page, every long share lot of 100 or more has a Diagnose link that opens the Doctor with your numbers already in. You can also ask Arya: give her the ticker, your share count, and your basis, and ask what gets you back to even.
@@ -251,5 +233,80 @@ Open any ticker in Ticker Lab and scroll to the "More on SYM" section. Position 
 Ticker Lab lives on [tradermatrix.pro](https://www.tradermatrix.pro/?ref=MPHINANCE) (that is my referral link), and the walkthroughs are on [youtube.com/@TraderMatrixHQ](https://www.youtube.com/@TraderMatrixHQ).
 
 Both tools are Premium. If this week put you underwater and you want the numbers instead of the feeling, that is what the subscription is for.
+
+
+Below the line: NBIS and ASTS through the Doctor, bought one week ago and two weeks ago. Same trades, opposite answers, and the one-line formula that tells you which side of that you are on.
+
+<!--share-->
+
+<!--paywall-->
+
+## $NBIS and $ASTS, one week vs two
+
+Two of this week's beaten-up names, two entry dates: the close on Friday, October 2, or the close a week later on Friday, October 9. Everything below is the production Doctor off Friday's closing chain, 100 shares. The covered calls and collars are November, the protective puts and repair spreads are December.
+
+![NBIS and ASTS into Friday, with both entry prices and the repair cap marked.](live_charts.png)
+
+### $NBIS, closed Friday at $165.47
+
+**Bought October 2 at $242.81.** Down **$7,734**, 31.9%. The stock has to climb **46.7%** just to get you level.
+
+- **Do nothing:** recovery at **$242.81**.
+- **Protective put**, the December $145 for **$14.08** a share, **$1,407.50** all in. The floor is $97.81 under your basis. Recovery moves up to **$256.89**.
+- **30-delta call**, the November $200 for **$8.10**. Collects **$810**, but the cap is $42.81 under your basis. Assigned at $200, you are out **$3,471**. Cannot recover.
+- **Call at basis**, the November $250 for **$2.20**. Recovery drops to **$240.61**. That is the whole improvement.
+- **1x2 repair**, buy one December $165 call, sell two December $200s, for a **$50 credit**. Cannot recover. If NBIS gets back to $200 by December 18, doing nothing leaves you down **$4,281**. The repair leaves you down **$731**.
+- **Collar**, the November $150 put and $205 call for **$502.50**. Both strikes under your basis. It boxes the loss between **$4,283.50** and **$9,783.50**.
+
+`(200 - 242.81) x 100 = -$4,281 doing nothing at $200`
+`-4,281 + (200 - 165) x 100 + 50 = -$731 with the repair`
+
+**Bought October 9 at $221.07.** Down **$5,560**, 25.1%. Needs **33.6%**.
+
+- **Do nothing:** **$221.07**.
+- **Protective put**, same December $145: recovery **$235.15**.
+- **30-delta call**, same November $200 for $8.10. Cap still under basis. Assigned, you are out **$1,297**.
+- **Call at basis**, the November $230 for **$3.63**: recovery **$217.45**.
+- **1x2 repair**, the exact same December $165/$200 for the exact same $50 credit: recovery **$192.79**. That is **$28.28 easier**, and at $200 you are up **$1,443**.
+
+`(S - 221.07) + (S - 165) + 0.50 = 0, so S = $192.79`
+
+The strikes and the credit did not change. One week of entry price is the difference between "cannot recover" and "whole at $192.79."
+
+### $ASTS, closed Friday at $40.66
+
+**Bought October 2 at $58.45.** Down **$1,779**, 30.4%. Needs **43.8%**.
+
+- **Do nothing:** **$58.45**.
+- **Protective put**, the December $35 for **$2.93**: recovery **$61.38**. The floor is $23.45 under your basis.
+- **30-delta call**, the November $50 for **$1.80**. Cap under basis. Assigned at $50, you are out **$665**.
+- **Call at basis**, the November $60 for **$0.71**: recovery **$57.74**. Seventy-one cents.
+- **1x2 repair**, buy one December $40 call, sell two $45s, for a **$210 credit**. Cannot recover. At $45 you are down **$635** instead of **$1,345**.
+- **Collar**, the November $36 put and $50 call for **$42**. Locks the loss between **$887** and **$2,287**.
+
+**Bought October 9 at $50.97.** Down **$1,031**, 20.2%. Needs **25.4%**.
+
+- **Do nothing:** **$50.97**.
+- **Protective put**, same December $35: recovery **$53.90**.
+- **30-delta call**, the November $50 for **$1.80**. The cap is 97 cents under your basis, but the premium is bigger than the gap, so this one does recover: **$49.17**. Assigned at $50, you are up **$83**. That is the exception to the red flag: a cap under basis only books a loss if the premium does not cover the gap.
+- **Call at basis**, the November $55 for **$1.07**: recovery **$49.91**. Here the nearer call is the better income trade.
+- **1x2 repair**, same December $40/$45 for the same $210 credit: recovery **$44.44**. That is **$6.53 easier**, and at $45 you are up **$113**.
+
+`(50 - 50.97) x 100 + 180 = +$83 if the $50 call is assigned`
+`(S - 50.97) + (S - 40) + 2.10 = 0, so S = $44.44`
+
+![Every structure, both names, both entry dates. CAN'T means the cap is under your basis.](live_grid.png)
+
+### The repair ceiling
+
+You can tell whether a 1x2 can ever get you whole before you open the chain. At the short strike, the shares and the long call both pay you, and that is as good as it gets. So the highest basis a repair can rescue is:
+
+`2 x short strike - long strike + credit per share`
+
+NBIS: `2 x 200 - 165 + 0.50 = $235.50`. The October 9 basis of $221.07 is under it, so the repair works. The October 2 basis of $242.81 is over it, so the repair cannot.
+
+ASTS: `2 x 45 - 40 + 2.10 = $52.10`. $50.97 is under it. $58.45 is over it.
+
+If your basis is above the ceiling, the 1x2 shrinks the hole and that is all it does. That is the point where selling the shares and wheeling the put belongs in the conversation, because the repair already told you it cannot finish the job. And these are December structures, so look up both earnings dates before you put either one on.
 
 ~ Michael

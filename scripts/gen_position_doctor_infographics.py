@@ -192,7 +192,108 @@ def repair():
     save(fig, "repair.png")
 
 
+# ------------------------------------------------------- LIVE NAMES
+# Source: data/doctor_2026-10-17.json, the production Position Doctor
+# (diagnosePositionForSymbol) run 2026-10-17 off the 10/16 closing chain, 100 shares.
+# Bars: data/bars_*.json from the TraderMatrix agent chart-data endpoint.
+import json
+import os
+
+DATA = f"{OUT}/data"
+LIVE = [
+    # (symbol, basis, label)
+    ("NBIS", 242.81, "bought 10/2"),
+    ("NBIS", 221.07, "bought 10/9"),
+    ("ASTS", 58.45, "bought 10/2"),
+    ("ASTS", 50.97, "bought 10/9"),
+]
+REPAIR = {"NBIS": (165, 200), "ASTS": (40, 45)}  # long strike, short strike (Dec 18)
+
+
+def charts():
+    w, h = 12.0, 7.0
+    fig = plt.figure(figsize=(w, h), facecolor=BG)
+    ax0 = fig.add_axes([0, 0, 1, 1]); ax0.axis("off"); ax0.set_xlim(0, w); ax0.set_ylim(0, h)
+    header(ax0, w, h, "TWO ENTRY DATES, ONE CEILING",
+           "Daily candles to Fri 10/16. Red = bought 10/2. Gold = bought 10/9. Green = 1x2 cap")
+    for i, sym in enumerate(("NBIS", "ASTS")):
+        bars = json.load(open(f"{DATA}/bars_{sym}.json"))[-25:]
+        ax = fig.add_axes([0.06 + i * 0.49, 0.08, 0.42, 0.58], facecolor=BG)
+        xs = range(len(bars))
+        for x, b in zip(xs, bars):
+            up = b["close"] >= b["open"]
+            col = GREEN if up else RED
+            ax.plot([x, x], [b["low"], b["high"]], color=col, lw=0.8, alpha=0.8)
+            ax.add_patch(plt.Rectangle((x - 0.3, min(b["open"], b["close"])), 0.6,
+                                       max(abs(b["close"] - b["open"]), 0.01), color=col, alpha=0.85))
+        bases = [bb for (s_, bb, _) in LIVE if s_ == sym]
+        lo_k, cap = REPAIR[sym]
+        for bb, col in zip(bases, (RED, GOLD)):
+            ax.axhline(bb, color=col, lw=1.2, ls="--")
+            ax.text(len(bars) - 0.5, bb, f" ${bb:.2f}", color=col, fontsize=10, family=MONO, va="center")
+        ax.axhline(cap, color=GREEN, lw=1.2, ls=":")
+        ax.text(len(bars) - 0.5, cap, f" cap ${cap}", color=GREEN, fontsize=10, family=MONO, va="center")
+        last = bars[-1]["close"]
+        ax.text(0, ax.get_ylim()[0], "", color=WHITE)
+        ax.set_title(f"${sym}  last ${last:.2f}", color=WHITE, family=MONO, fontsize=15,
+                     fontweight="bold", loc="left")
+        ax.tick_params(colors=DIM, labelsize=9)
+        ax.set_xticks([0, len(bars) - 1])
+        ax.set_xticklabels([bars[0]["date"][5:], bars[-1]["date"][5:]], family=MONO)
+        for sp in ax.spines.values():
+            sp.set_color("#2a2d33")
+        ax.set_xlim(-1, len(bars) + 3)
+    save(fig, "live_charts.png")
+
+
+def money2(v):
+    return f"${v:,.2f}"
+
+
+def live_grid():
+    D = json.load(open(f"{DATA}/doctor_2026-10-17.json"))
+    w, h = 12.0, 7.0
+    fig, ax = new_ax(w, h)
+    header(ax, w, h, "RECOVERY PRICE, STRUCTURE BY STRUCTURE",
+           "Production Position Doctor, 100 shares, Fri 10/16 closing chain. Lower is easier")
+    cols = [f"{s} {lab}" for (s, _, lab) in LIVE]
+    xs = [3.6, 5.75, 7.9, 10.05]
+    yh = h - 2.35
+    for x, (sym, basis, lab) in zip(xs, LIVE):
+        ax.text(x, yh + 0.12, f"{sym}", color=GOLD, fontsize=13, family=MONO, fontweight="bold", va="center")
+        ax.text(x, yh - 0.2, f"{lab} ${basis:.2f}", color=DIM, fontsize=9, family=MONO, va="center")
+    ax.plot([0.4, w - 0.4], [yh - 0.45, yh - 0.45], color=DIM, lw=0.8)
+    rows = [("DO NOTHING", None), ("PROTECTIVE PUT", "protective_put"),
+            ("30-DELTA CALL", "covered_call"), ("CALL AT BASIS", "covered_call_at_basis"),
+            ("1x2 REPAIR", "repair_spread"), ("COLLAR", "collar")]
+    for i, (name, kind) in enumerate(rows):
+        y = yh - 0.95 - i * 0.56
+        ax.text(0.5, y, name, color=WHITE, fontsize=12, family=MONO, fontweight="bold", va="center")
+        for x, (sym, basis, _) in zip(xs, LIVE):
+            d = D[f"{sym}:{basis}"]
+            if kind is None:
+                rec, col = d["doNothing"]["recoveryPrice"], DIM
+            else:
+                c = next(c for c in d["candidates"] if c["kind"] == kind)
+                rec = c["recoveryPrice"]
+                if rec is None:
+                    col = RED
+                elif rec > basis:
+                    col = RED
+                elif rec < basis - 0.005:
+                    col = GREEN
+                else:
+                    col = DIM
+            txt = "CAN'T" if rec is None else money2(rec)
+            ax.text(x, y, txt, color=col, fontsize=14, family=MONO, fontweight="bold", va="center")
+    ax.text(0.5, 0.25, "CAN'T = the structure's cap sits under your basis. It shrinks the hole, it cannot close it.",
+            color=DIM, fontsize=11, family=MONO, va="center")
+    save(fig, "live_grid.png")
+
+
 if __name__ == "__main__":
     week()
     recovery()
     repair()
+    charts()
+    live_grid()
