@@ -2,8 +2,7 @@
 
 *Trading 60% | Options 40%*
 
-<!-- hero: python3 scripts/generate_hero.py --pose casino_dealer --chalk "Recovery: $63.80. The put made it worse." --out docs/articles/underwater-puts-position-doctor/hero.png -->
-![A put is a floor. Your basis is the ceiling you need to get back through.](hero.png)
+<!-- hero (Substack cover image only, not in the body): python3 scripts/generate_hero.py --pose pink_casino_dealer --chalk "Recovery: $63.80. The put made it worse." --out docs/articles/underwater-puts-position-doctor/hero.png -->
 
 If tech put you underwater this week, don't buy a put tonight.
 
