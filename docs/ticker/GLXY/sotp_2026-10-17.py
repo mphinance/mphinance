@@ -42,7 +42,7 @@ scen = {
 }
 print(f"Phase I EBITDA run-rate: ${0.320*MARGIN*1000:.0f}M/yr | stabilized 526MW rev: ${526*RENT_MW:.2f}B")
 for n, (r, h, dax, mtm, opt) in scen.items():
-    hel = helios(r, h)
+    hel = max(helios(r, h), 0.0)  # Helios debt sits in project subs (secured on their assets): equity floors at 0
     da, tc = DA_BOOK * dax, TC_BOOK + mtm
     tot = hel + da + tc + opt
     print(f"{n:5} r={r:.0%} haircut={h:.0%} | Helios eq {hel:5.2f} | DA {da:4.2f} | T&C {tc:4.2f} | pipeline {opt:3.1f} | "
