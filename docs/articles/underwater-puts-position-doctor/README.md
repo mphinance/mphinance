@@ -2,7 +2,8 @@
 
 *Trading 60% | Options 40%*
 
-<!-- hero (Substack cover image only, not in the body): python3 scripts/generate_hero.py --pose pink_casino_dealer --chalk "Recovery: $63.80. The put made it worse." --out docs/articles/underwater-puts-position-doctor/hero.png -->
+<!-- hero (cover image AND first body image; pink mascot composited with data/bull_put_card_*.png in PIL, 1800x1024): python3 scripts/generate_hero.py --pose pink_casino_dealer --chalk "Recovery: $63.80. The put made it worse." --out docs/articles/underwater-puts-position-doctor/hero.png -->
+![Two of my BULL puts, shared 10/7 and 10/14.](hero.png)
 
 If tech put you underwater this week, don't buy a put tonight.
 
