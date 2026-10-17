@@ -1,3 +1,4 @@
+<!-- SOURCE OF TRUTH MOVED: Michael edited the Substack draft directly on 2026-10-17. The live draft (220882641) is canonical; see data/substack_draft_snapshot_2026-10-17.md. This README is the pre-edit version. -->
 # Underwater After This Week? A Put Will Not Get You Back to Even
 
 *Trading 60% | Options 40%*
