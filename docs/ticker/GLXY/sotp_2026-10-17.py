@@ -30,11 +30,15 @@ def helios(r, rent_haircut=0.0, term_mult=5.0):
 # Other segments (equity allocation ~36/36/28 of $2.72B total equity)
 DA_BOOK = 0.36 * 2.72          # Digital Assets segment (trading, lending, AM)
 TC_BOOK = 0.28 * 2.72          # Treasury & Corporate (net crypto + investments, corp notes)
+# Crypto/investment MTM since 6/30 is anchored to the 10-Q Item 3 sensitivities, not wallet tracing:
+#   T&C digital assets: +/-20% -> +/-$106.8M  => ~$534M net exposure; gross mix (21,084 BTC, 97,764 ETH,
+#   760,835 SOL, 1.21M HYPE) moved ~+40% to 10/17 => ~+$0.21B.  Investments: +/-20% -> +/-$296.4M => ~$1.48B.
+# Exchangeables are out of the money at $16: 2026 $500M @ $33.34, 2029 $402.5M @ $23.81, 2031 $1.3B @ $55.76.
 scen = {
     #        r,    haircut, DA x book, crypto MTM, pipeline option
-    'Bear':  (0.14, 0.30,   0.7,       0.20,       0.0),
-    'Base':  (0.11, 0.00,   1.0,       0.30,       0.5),
-    'Bull':  (0.09, 0.00,   1.5,       0.45,       2.0),
+    'Bear':  (0.14, 0.30,   0.7,       0.21,       0.0),
+    'Base':  (0.11, 0.00,   1.0,       0.36,       0.5),
+    'Bull':  (0.09, 0.00,   1.5,       0.51,       2.0),
 }
 print(f"Phase I EBITDA run-rate: ${0.320*MARGIN*1000:.0f}M/yr | stabilized 526MW rev: ${526*RENT_MW:.2f}B")
 for n, (r, h, dax, mtm, opt) in scen.items():
@@ -44,7 +48,7 @@ for n, (r, h, dax, mtm, opt) in scen.items():
     print(f"{n:5} r={r:.0%} haircut={h:.0%} | Helios eq {hel:5.2f} | DA {da:4.2f} | T&C {tc:4.2f} | pipeline {opt:3.1f} | "
           f"total ${tot:5.2f}B = ${tot/SH:5.2f}/sh ({tot/SH/PX-1:+.0%})")
 # Implied discount rate on Helios at today's price, holding base for everything else
-target = PX * SH - (DA_BOOK + TC_BOOK + 0.30)
+target = PX * SH - (DA_BOOK + TC_BOOK + 0.36)
 lo, hi = 0.05, 0.40
 for _ in range(60):
     mid = (lo + hi) / 2
