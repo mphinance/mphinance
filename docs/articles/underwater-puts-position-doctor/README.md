@@ -195,7 +195,7 @@ The page opens with a verdict in plain English. Read it. It names your P&L, how 
 
 Below that, every card carries the same numbers. Here is which one to look at first.
 
-**Recovery** is the headline. The lowest share price at or above the current price where the whole position, your shares at your basis plus the new legs, is back to zero at expiration. Doing nothing recovers exactly at your basis. The card shows the difference in words. "$2.40 easier" means the structure lowered your recovery price by $2.40. "$1.80 harder" means it raised it, which every protective put does. "Cannot recover" means the structure's ceiling sits under water: the position can never get whole at expiration with that structure on. The Doctor returns an honest dash instead of inventing a number.
+**Recovery** is the headline. The lowest share price at or above the current price where the whole position, your shares at your basis plus the new legs, is back to zero at expiration. Doing nothing recovers exactly at your basis. The card shows the difference in words. "$2.40 easier" means the structure lowered your recovery price by $2.40. "$1.80 harder" means it raised it, which every protective put does. "Cannot recover" means the structure's ceiling sits under water: the position can never get whole at expiration with that structure on. The card prints **Never** in red instead of inventing a number.
 
 **Floor** is the worst price per share you can be forced to exit at, or a dash if the downside is still open. Only structures with a long put have one.
 
@@ -277,6 +277,8 @@ Two of this week's beaten-up names, two entry dates: the close on Friday, Octobe
 
 `(S - 221.07) + (S - 165) + 0.50 = 0, so S = $192.79`
 
+![The Doctor on NBIS bought October 9: the 1x2 gets you whole at $192.79.](doctor_nbis_1wk.png)
+
 The strikes and the credit did not change. One week of entry price is the difference between "cannot recover" and "whole at $192.79."
 
 ### $ASTS, closed Friday at $40.66
@@ -288,6 +290,8 @@ The strikes and the credit did not change. One week of entry price is the differ
 - **30-delta call**, the November $50 for **$1.80**. Cap under basis. Assigned at $50, you are out **$665**.
 - **Call at basis**, the November $60 for **$0.71**: recovery **$57.74**. Seventy-one cents.
 - **1x2 repair**, buy one December $40 call, sell two $45s, for a **$210 credit**. Cannot recover. At $45 you are down **$635** instead of **$1,345**.
+
+![The Doctor on ASTS bought October 2: same repair, recovery Never.](doctor_asts_2wk.png)
 - **Collar**, the November $36 put and $50 call for **$42**. Locks the loss between **$887** and **$2,287**.
 
 **Bought October 9 at $50.97.** Down **$1,031**, 20.2%. Needs **25.4%**.
