@@ -88,6 +88,7 @@ SCREEN_FILES = {
     "updown_volume": "updown-volume-screener.json",
     "bb_walk": "bb-walk-screener.json",
     "aroon": "aroon-screener.json",
+    "supertrend": "supertrend-screener.json",
 }
 
 

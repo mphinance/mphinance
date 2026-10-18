@@ -1869,6 +1869,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Aroon screen failed: {e}")
 
+    # ── Stage 10y: Supertrend Flip Screen ──
+    print("\n[10y/16] SUPERTREND SCREEN (ATR trailing stop flipped bullish)")
+    supertrend_results: list[dict] = []
+    with timer.stage("Supertrend Screen"):
+        try:
+            import time as _st_time
+            from dossier.supertrend_screener import score_supertrend, _save_api_output as _st_save
+            _st_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _st_pool:
+                _r = score_supertrend(_t)
+                if _r:
+                    supertrend_results.append(_r)
+                _st_time.sleep(0.05)
+            supertrend_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _st_save(supertrend_results)
+            _top_st = [r for r in supertrend_results if r["grade"] in ("A+", "A")]
+            print(f"  🔄 {len(supertrend_results)} bullish flips — {len(_top_st)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']}" for r in _top_st[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Supertrend screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
