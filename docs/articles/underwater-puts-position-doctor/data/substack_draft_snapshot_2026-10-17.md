@@ -2,7 +2,7 @@
 
 *Trading 60% | Options 40%*
 
-[image]
+[image: Two of my BULL puts, shared 10/7 and 10/14.]
 
 If tech put you underwater this week, don't buy a put Monday.
 
@@ -40,7 +40,7 @@ If you own tech, you had a bad week with me - it wasn’t much fun.
 
 The S&P 500 finished the week down about 2%. Under that, XLK fell 7.7%, the semis ETF SMH fell 10.5%, cybersecurity fell 10%, software fell 7%. Staples, energy, and healthcare all went up 3 to 5 percent. Half the index is still above its 200-day. Equal-weight beat cap-weight. This was a tech beating, and the people who are underwater this week are underwater in the exact sector where the fear just got priced.
 
-[image]
+[image: Five days, Friday close to Friday close. Tech got hit, the defensives went up.]
 
 ## Three ideas, then the tool
 
@@ -84,15 +84,15 @@ Now flip it. Same 100 shares, bought at $40, stock at $53. You're up $1,300. Tha
 
 Four situations.
 
-You have a gain to defend. Basis below the current price, you want to keep most of the upside and cap the downside through a window. That's what the Hedge Shopper in Ticker Lab is for.There's a dated risk inside the window. Earnings, a lockup expiry, a court date, a macro print. You're hedging a day, and short-dated protection is cheap next to standing insurance. Up on the shares, it's often worth it. Down, keep reading.You can't sell the shares. Restricted stock. A long-term holding period that clears in three weeks. A concentrated position that would move the stock if you dumped it. For you, a put under basis is the right tool even though it raises the recovery price, because the alternative is no floor at all. The next few sections aren't written for you.You're making a bet, with no shares under it. A put with no stock is a directional trade that the thing goes down, and the Strategist in Ticker Lab ranks long puts and bear put spreads for it by probability of profit.
+You have a gain to defend. Basis below the current price, you want to keep most of the upside and cap the downside through a window. That's what the Hedge Shopper in Ticker Lab is for.There's a dated risk inside the window. Earnings, a lockup expiry, a court date, a macro print. You're hedging a day, and short-dated protection is cheap next to standing insurance. Up on the shares, it's often worth it. Down, keep reading.You can't sell the shares. Restricted stock. A long-term holding period that clears in three weeks. A concentrated position that would move the stock if you dumped it. You're making a bet, with no shares under it. A put with no stock is a directional trade that the thing goes down, and the Strategist in Ticker Lab ranks long puts and bear put spreads for it by probability of profit.
 
-The case where a put is wrong is the one my inbox filled up with this week: underwater, no dated event, no reason you can't sell, and you feel sick looking at it. A put charges you for that feeling and leaves it exactly where it was.
+The case where a put is wrong is the one we were all tempted to buy this week: underwater, no dated event, no reason you can't sell, and you feel sick looking at it. A put charges you for that feeling and leaves it exactly where it was.
 
 ## What the Position Doctor does
 
 The Doctor asks for two numbers: how many shares you hold, and what you paid per share. Then it reads the live option chain and does three things.
 
-[image]
+[image: Two boxes and a button. Shares held, cost basis, Diagnose.]
 
 It diagnoses the position. More than 2% under your basis is underwater. Within 2% either side is near basis. More than 2% above is in profit. Underwater means repair first, then income, then protection-plus-income, then protection last. Near basis means income first, because there's nothing to defend and nothing to repair. In profit means protection first and repair last.It prices five structures off the real chain. Each on its own horizon, because they do different jobs. Income structures want time decay working for you, so they go short, about 35 days. A repair needs the stock to have room to travel, so it goes long, about 75 days. A protective put is standing insurance, so it sits in the middle, about 60 days.It measures every candidate against what you paid. The current price is only the starting point.
 
@@ -126,9 +126,11 @@ At $58 on expiration:
 
 You're whole at $57.50 and out with a small profit at $58, instead of needing $62. My first draft had the gain at $1,500. It's $1,000. The conclusion survived and the number didn't, which is why the arithmetic goes in the post.
 
-[image]
+[image: The 1x2 at expiration, every cell typed out. Two-for-one between $53 and $58, dead stop at $58.]
 
 The Doctor picks the highest upper strike whose two short calls still pay for the long call. Higher cap, more room to run. The trade-off is that a lower upper strike collects more credit, and credit lowers the recovery price. The card shows both so you can pick.
+
+[image: Two real ones from this week. NBIS bought 10/9: the 1x2 gets you whole at $192.79. ASTS bought 10/2: the cap is under your basis, so the Doctor says Never.]
 
 ### The sixth one. The hardest. Sell the damn shares.
 
@@ -140,7 +142,7 @@ In the example: sell at $53, sell the $50 put for, say, $1.20. If it expires wor
 
 50.00 - 1.20 = $48.80 new basis if assigned, versus $62.00 holding
 
-[image]
+[image: Every structure in the $62 / $53 example, ranked by the price you need to get back to.]
 
 This also harvests the loss for taxes, which none of the five structures do. One caution, and it's a real one: if you buy the shares back inside 30 days, or get assigned inside 30 days, the loss doesn't disappear, it gets deferred into the new basis. Buying a call on the same name inside that window does the same thing. So the sell-and-wheel and the repair ratio are mutually exclusive for a month. I did corporate accounting for a living and I still check this every time.
 
@@ -156,17 +158,13 @@ Ticker Lab lives on tradermatrix.pro (that's my referral link), and the walkthro
 
 The Doctor is a Premium tool. If this week put you underwater and you want the numbers instead of the feeling, that's what the subscription is for.
 
-Below the line: NBIS and ASTS through the Doctor, bought one week ago and two weeks ago. Same trades, opposite answers, and the one-line formula that tells you which side of that you're on.
 
-
-
-[PAYWALL: set the break here in the editor]
 
 ## $NBIS and $ASTS, one week vs two
 
 Two names, two entry dates: the Friday close on October 2, or a week later on October 9. All numbers are the Doctor off Friday's closing chain, 100 shares.
 
-[image]
+[image: NBIS and ASTS into Friday, with both entry prices and the repair cap marked.]
 
 ### $NBIS, closed Friday at $165.47
 
@@ -180,15 +178,11 @@ Bought October 9 at $221.07. Down $5,560, needs 33.6%. Same 1x2, same strikes, s
 
 (S - 221.07) + (S - 165) + 0.50 = 0, so S = $192.79
 
-[image]
-
 The strikes and the credit didn't change. One week of entry price is the difference between "cannot recover" and "whole at $192.79."
 
 ### $ASTS, closed Friday at $40.66
 
 Bought October 2 at $58.45. Down $1,779, needs 43.8%. The 1x2 (December $40/$45, $210 credit) can't get you whole. At $45 it leaves you down $635 instead of $1,345.
-
-[image]
 
 Bought October 9 at $50.97. Down $1,031, needs 25.4%. The same 1x2 gets you whole at $44.44. Here even the plain 30-delta $50 call works: its cap is 97 cents under your basis, but the $1.80 premium covers the gap, so assigned at $50 you're up $83.
 
@@ -196,7 +190,7 @@ Bought October 9 at $50.97. Down $1,031, needs 25.4%. The same 1x2 gets you whol
 
 (S - 50.97) + (S - 40) + 2.10 = 0, so S = $44.44
 
-[image]
+[image: Every structure, both names, both entry dates. CAN'T means the cap is under your basis.]
 
 ### The repair ceiling
 
