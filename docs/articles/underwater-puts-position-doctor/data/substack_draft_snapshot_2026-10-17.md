@@ -84,7 +84,7 @@ Now flip it. Same 100 shares, bought at $40, stock at $53. You're up $1,300. Tha
 
 Four situations.
 
-You have a gain to defend. Basis below the current price, you want to keep most of the upside and cap the downside through a window. That's what the Hedge Shopper in Ticker Lab is for. More on it below.There's a dated risk inside the window. Earnings, a lockup expiry, a court date, a macro print. You're hedging a day, and short-dated protection is cheap next to standing insurance. Up on the shares, it's often worth it. Down, keep reading.You can't sell the shares. Restricted stock. A long-term holding period that clears in three weeks. A concentrated position that would move the stock if you dumped it. For you, a put under basis is the right tool even though it raises the recovery price, because the alternative is no floor at all. The next few sections aren't written for you.You're making a bet, with no shares under it. A put with no stock is a directional trade that the thing goes down, and the Strategist in Ticker Lab ranks long puts and bear put spreads for it by probability of profit.
+You have a gain to defend. Basis below the current price, you want to keep most of the upside and cap the downside through a window. That's what the Hedge Shopper in Ticker Lab is for.There's a dated risk inside the window. Earnings, a lockup expiry, a court date, a macro print. You're hedging a day, and short-dated protection is cheap next to standing insurance. Up on the shares, it's often worth it. Down, keep reading.You can't sell the shares. Restricted stock. A long-term holding period that clears in three weeks. A concentrated position that would move the stock if you dumped it. For you, a put under basis is the right tool even though it raises the recovery price, because the alternative is no floor at all. The next few sections aren't written for you.You're making a bet, with no shares under it. A put with no stock is a directional trade that the thing goes down, and the Strategist in Ticker Lab ranks long puts and bear put spreads for it by probability of profit.
 
 The case where a put is wrong is the one my inbox filled up with this week: underwater, no dated event, no reason you can't sell, and you feel sick looking at it. A put charges you for that feeling and leaves it exactly where it was.
 
@@ -146,27 +146,15 @@ This also harvests the loss for taxes, which none of the five structures do. One
 
 That's the premium seller's answer: become the casino and get rich slowly. The other five are for when, for whatever reason, you're not ready to let the shares go.
 
-## Reading the Doctor's answer
-
-The page opens with a verdict in plain English. Every card under it shows the same numbers, and the one to read first is Recovery: the price where the whole position is back to $0 at expiration. "Easier" means the structure lowered it. "Harder" means it raised it, which every protective put does. Never in red means the cap sits under your basis and that structure can't get you whole.
-
-Floor, cap, net delta, cost and a P&L grid at four prices sit under that, plus one caveat line telling you what each structure gives up.
-
-## The Hedge Shopper, for when you are up
-
-Next to the Doctor, the Hedge Shopper answers the opposite question: what's the cheapest way to protect a gain? It shops puts, collars, put-spread collars and bear put spreads, drops anything that costs more than the loss it removes, and ranks the rest by cost per dollar protected.
-
-You can run both on ASTS yourself in the ASTS Ticker Lab.
-
-In profit, start there. Underwater, start with the Doctor. Not sure which you are? The Doctor's first line tells you.
-
 ## Where to find it
 
-Open any ticker in Ticker Lab and scroll to "More on SYM." The Doctor and the Hedge Shopper are the last two cards. The Trade Journal's Positions page has a Diagnose link on every lot of 100 shares or more, and Arya will run it if you give her the ticker, your shares and your basis.
+Open any ticker in Ticker Lab and scroll to "More on SYM." The Doctor is the last card. The Trade Journal's Positions page also has a Diagnose link on every lot of 100 shares or more.
+
+Try it on ASTS yourself in the ASTS Ticker Lab.
 
 Ticker Lab lives on tradermatrix.pro (that's my referral link), and the walkthroughs are on youtube.com/@TraderMatrixHQ.
 
-Both tools are Premium. If this week put you underwater and you want the numbers instead of the feeling, that's what the subscription is for.
+The Doctor is a Premium tool. If this week put you underwater and you want the numbers instead of the feeling, that's what the subscription is for.
 
 Below the line: NBIS and ASTS through the Doctor, bought one week ago and two weeks ago. Same trades, opposite answers, and the one-line formula that tells you which side of that you're on.
 
