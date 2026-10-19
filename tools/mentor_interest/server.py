@@ -6,6 +6,8 @@ JSON line to RESPONSES, GET /responses?key=ADMIN_KEY shows what came in.
 Bound to the docker0 host IP so only coolify-proxy (Traefik) can reach it.
 """
 import html
+import threading
+import urllib.request
 import json
 import os
 import time
@@ -19,6 +21,9 @@ PORT = int(os.environ.get("MENTOR_PORT", "8772"))
 RESPONSES = Path(os.environ.get(
     "MENTOR_RESPONSES", HERE.parents[1] / "data/mentor-interest/responses.jsonl"))
 ADMIN_KEY = os.environ.get("MENTOR_ADMIN_KEY", "")
+# Optional: ping a Discord channel/thread on each submission (nyx's bot token).
+NOTIFY_TOKEN = os.environ.get("MENTOR_DISCORD_TOKEN", "")
+NOTIFY_CHANNEL = os.environ.get("MENTOR_DISCORD_CHANNEL", "")
 
 FIELDS = ["name", "email", "discord", "experience", "goal", "price", "timing"]
 MAX_LEN = 2000
@@ -27,6 +32,27 @@ _last_post: dict[str, float] = {}
 
 def page(name: str) -> bytes:
     return (HERE / name).read_bytes()
+
+
+def notify(row: dict):
+    """Best-effort Discord ping. A failure here never affects the submission."""
+    if not (NOTIFY_TOKEN and NOTIFY_CHANNEL):
+        return
+    try:
+        count = sum(1 for l in RESPONSES.read_text().splitlines() if l.strip())
+        goal = row["goal"][:300] or "-"
+        msg = (f"📝 **Mentor list #{count}**: {row['name'] or '(no name)'} · {row['email']}"
+               f"{' · ' + row['discord'] if row['discord'] else ''}\n"
+               f"Experience: {row['experience'] or '-'} · At $400: {row['price'] or '-'} · Calls: {row['timing'] or '-'}\n"
+               f"> {goal}")
+        req = urllib.request.Request(
+            f"https://discord.com/api/v10/channels/{NOTIFY_CHANNEL}/messages",
+            data=json.dumps({"content": msg[:1900], "allowed_mentions": {"parse": []}}).encode(),
+            headers={"Authorization": f"Bot {NOTIFY_TOKEN}", "Content-Type": "application/json",
+                     "User-Agent": "mentor-interest (mphinance, 1.0)"})
+        urllib.request.urlopen(req, timeout=10).read()
+    except Exception as e:
+        print(f"notify failed: {e}", flush=True)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -77,6 +103,7 @@ class Handler(BaseHTTPRequestHandler):
         RESPONSES.parent.mkdir(parents=True, exist_ok=True)
         with RESPONSES.open("a") as f:
             f.write(json.dumps(row) + "\n")
+        threading.Thread(target=notify, args=(row,), daemon=True).start()
         self._redirect("/thanks")
 
     def _redirect(self, to: str):
