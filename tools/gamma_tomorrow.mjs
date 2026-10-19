@@ -562,6 +562,36 @@ const downTrigger = downLead ? downLead.strike : Math.floor(spot);
 const rangeHi = Math.max(upTrigger ?? Math.ceil(Math.max(pin, flip)), Math.ceil(spot));
 const rangeLo = Math.min(downTrigger, Math.floor(spot));
 
+// How far each IF trigger sits from the close, measured against a typical day.
+// The three roads are exhaustive, but that says nothing about whether they are
+// comparable: when a trigger is a rounding error away from spot, that road has
+// already fired at the bell and the ELSE band is not a branch a reader waits on.
+// On 2026-10-18 the down trigger (763) sat 0.23 under a 763.23 close with a
+// typical day of 11.01, and the quiet range was 4 points wide. The chart already
+// says so when the FLIP sits on price; this is the same disclosure for the two
+// roads a reader actually acts on. Caption and sidecar only -- grading reads the
+// named levels (e.shelf/e.cushion/e.brake/e.gate), never these triggers.
+const NEAR_TRIGGER = 0.15; // of a typical day
+const NARROW_BAND = 0.5; //  of a typical day
+const gapUp = upTrigger != null ? +(upTrigger - spot).toFixed(2) : null;
+const gapDown = downTrigger != null ? +(spot - downTrigger).toFixed(2) : null;
+const bandWidth = +(rangeHi - rangeLo).toFixed(2);
+const triggerNote = (() => {
+  if (!(expected > 0)) return null;
+  const near = [];
+  if (gapUp != null && gapUp <= expected * NEAR_TRIGGER) near.push(`the up trigger ${upTrigger} is ${gapUp.toFixed(2)} over spot`);
+  if (gapDown != null && gapDown <= expected * NEAR_TRIGGER) near.push(`the down trigger ${downTrigger} is ${gapDown.toFixed(2)} under spot`);
+  if (near.length) {
+    return `${near.join(' and ')}, against a typical day of ${expected.toFixed(2)}: `
+      + `${near.length > 1 ? 'those roads fire' : 'that road fires'} on the open, so ${rangeLo}-${rangeHi} is the narrow branch, not the default.`;
+  }
+  if (bandWidth < expected * NARROW_BAND) {
+    return `the quiet range ${rangeLo}-${rangeHi} is ${bandWidth.toFixed(2)} wide against a typical day of `
+      + `${expected.toFixed(2)}, so holding it is the unlikely branch tonight.`;
+  }
+  return null;
+})();
+
 const sideFilter = (pts_, up) => pts_.filter((w) => w && (up ? w.at > spot : w.at < spot));
 
 const roads = [
@@ -971,6 +1001,12 @@ ifRows.forEach((r, i) => {
   push(`<text x="${PAD_L + 330}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(r.rule)}</text>`);
 });
 
+// Sits between the IF/ELSE block (last row's box bottom is IF_T + rows*42 - 48)
+// and the footer at H-16, so it has its own row and cannot collide with either.
+if (triggerNote) {
+  push(`<text x="${PAD_L}" y="${H - 34}" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${C.pin}" fill-opacity="0.85">${esc(triggerNote)}</text>`);
+}
+
 push(`<text x="${PAD_L}" y="${H - 16}" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${C.dim}">Levels are net gamma exposure by strike. Where dealers are long gamma they brake, where they are short they chase, where there is nothing price travels. Not advice.</text>`);
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${s}</svg>`;
@@ -1051,6 +1087,9 @@ writeFileSync(sidecar, JSON.stringify({
     cond: r.isElse ? `it holds ${r.cond}` : `it goes ${r.cond}`,
     rule: r.rule,
   })),
+  triggers: { up: upTrigger, down: downTrigger, gapUp, gapDown,
+              band: { lo: rangeLo, hi: rangeHi, width: bandWidth } },
+  triggerNote,
   record,
   lastCall: report && !report.partial
     ? { day: report.day, hits: report.hits, total: report.total, branch: report.branch,

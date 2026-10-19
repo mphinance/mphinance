@@ -111,6 +111,12 @@ def compose(d, changes=()):
     for b in d["branches"]:
         lines.append(f"{b['kind']} {b['cond']} -> {b['rule']}")
 
+    # The three roads are exhaustive but not comparable: when an IF trigger sits
+    # a rounding error from the close, that road has already fired at the bell.
+    # Saying so beats letting the reader assume the ELSE is the default branch.
+    if d.get("triggerNote"):
+        lines.append(f"Read the roads with this: {d['triggerNote']}")
+
     lines.append(
         f"Flip {d['flip']:.2f}. Pin {d['pin']}. "
         f"A typical day from here is about {d['expected']:.2f} points."
