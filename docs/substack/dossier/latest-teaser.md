@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-10-16
+# Ghost Alpha Dossier — 2026-10-19
 
-> 🟡 **Transition** · SPY ▼ 0.1% · VIX 16.1
+> 🟡 **Transition** · SPY ▲ 0.6% · VIX 18.1
 
 ---
 
-The VIX is chilling at 16.
+Alright, let's get down to brass tacks.
 
 
-## 🥇 Gold Pick: GEV
+## 🥇 Gold Pick: XOM
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 54/100 (B) |
+| **Score** | 13/100 (B) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -22,19 +22,19 @@ The VIX is chilling at 16.
 
 ## 📊 Today's Numbers
 
-- **39 scanner signals** across 6 strategies
+- **137 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 0.1% | **VIX:** 16.1
+- **SPY:** ▲ 0.6% | **VIX:** 18.1
 
 ---
 
 ## 👻 Sam Says
 
-> *"Your portfolio is like your bathroom — you should clean it more often than you do."*
+> *"Risk management isn't what you do after the trade goes wrong. It's what you do before you enter."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-16_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-16)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-19_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-19)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
