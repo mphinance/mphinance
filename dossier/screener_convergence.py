@@ -89,6 +89,7 @@ SCREEN_FILES = {
     "bb_walk": "bb-walk-screener.json",
     "aroon": "aroon-screener.json",
     "supertrend": "supertrend-screener.json",
+    "cmf": "cmf-screener.json",
 }
 
 
