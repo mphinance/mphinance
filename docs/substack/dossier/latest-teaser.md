@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-10-19
+# Ghost Alpha Dossier — 2026-10-20
 
-> 🟡 **Transition** · SPY ▲ 0.6% · VIX 18.1
+> 🟡 **Transition** · SPY ▲ 0.6% · VIX 17.8
 
 ---
 
-Alright, let's get down to brass tacks.
+Alright, let's cut to the chase.
 
 
-## 🥇 Gold Pick: XOM
+## 🥇 Gold Pick: MSFT
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 13/100 (B) |
+| **Score** | 48/100 (A) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -19,22 +19,26 @@ Alright, let's get down to brass tacks.
 *This is the highest-scoring setup from today's 16-stage analysis pipeline.*
 
 
+### Runners Up
+- 🥈 **HLT** — Score: 29/100
+- 🥉 **TW** — Score: 29/100
+
 
 ## 📊 Today's Numbers
 
-- **137 scanner signals** across 6 strategies
+- **32 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▲ 0.6% | **VIX:** 18.1
+- **SPY:** ▲ 0.6% | **VIX:** 17.8
 
 ---
 
 ## 👻 Sam Says
 
-> *"Risk management isn't what you do after the trade goes wrong. It's what you do before you enter."*
+> *"Volume precedes price. If nobody's buying, the chart is lying."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-19_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-19)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-20_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-20)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
