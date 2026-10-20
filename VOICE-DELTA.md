@@ -9,11 +9,24 @@ fingerprint as what he keeps.
 
 **Read this first (honest constraints):**
 
-- **N = 9 clean pairs** (4 anchors + 2 held-out captured 2026-06-25, + 1 live
-  ship 2026-07-07, + 1 live ship 2026-07-09, + 1 dual-voice ship 2026-07-13).
-  Still not statistics, but enough to test whether the rules below GENERALIZE to
-  pairs they weren't derived from.  Every rule is followed by real receipts; if a
-  rule has one receipt, it's a hypothesis, not a law.
+- **N = 24 unique shipped posts** (27 total pairs — 3 have dual given drafts for
+  the same ship).  October 2026 refresh added 14 new unique ships (06-26 through
+  10-08), across trading, business/AI, mindset, and personal-hobby categories.
+  The N jump is large enough that rules confirmed in ≥3 pairs are approaching
+  law; single-pair receipts remain hypotheses.  Every rule has real receipts.
+- **The 10-08 pair (VictoriousSecret / fantasy football)** is the first personal-
+  hobby post — non-work, non-trading. The story-first rule fired hard: machine
+  led with the data-burnout thesis; he led with a decade-old cigar-bar nostalgia
+  scene. Bold-stripped data pattern also confirmed.
+- **The 09-23 pair** ("Your Chatbot Is The Least Valuable AI" → "The Slowest
+  Part of My AI Pipeline Is Me") is the cleanest example of the title-subject
+  shift rule: machine titled the product; he titled himself.
+- **The 08-19 pair** (silver-strike) has the largest pre-story insertion to date:
+  he added an accessibility-hardware wish-list and a dare before touching the
+  trade narrative. A new personal backstory BEFORE the hook.
+- **Three pairs have dual given drafts** (06-27/undated_weaknesses, 08-04/alt-tab,
+  09-20/qcom-v2) — two machine captures that shipped as one post. Both given drafts
+  map to the same shipped.md; only the primary is used for rule receipts.
 - **The 07-15 pair is the first publish-triggers-trade ship** ("Money Where My
   Mouth Is"). Two hypothesis-only tells, both driven by the mechanic: (a) he
   **converted a decorative figure into a literal machine-readable block** — the
@@ -61,6 +74,20 @@ fingerprint as what he keeps.
 
 | Date | Given draft | Shipped | Wall | Role |
 |------|-------------|---------|------|------|
+| 10-08 | "I Fired Myself From Fantasy Football. Claude Took the Job." | same title | free | live (personal-hobby) |
+| 09-25 | "Your Chatbot Is The Least Valuable AI You Will Build" | "The Slowest Part of My AI Pipeline Is Me" | free | live (AI/Business) |
+| 09-20 | "Amazon and I Own Qualcomm From the Same Price (Seven Cents Apart)" | same title (×2 given drafts) | paid | live (Trading) |
+| 08-20 | "Silver Ran 15%. My Strike Never Hit. I Made 57.6%." | "Silver Ran 15% & I Made 57.6%. On A Dare." | paid | live (Options) |
+| 08-04 | "Alt + Tab" (×2 given drafts) | "From Accountant to CTO - It Started With Alt + Tab" | free | live (Business/AI) |
+| 07-24 | "How to make your own MCP trading agent" | same title | paid | live (AI/Trading) |
+| 07-20 | "I Asked **Sam** Why the Rotation Feels Weekly" | "I Asked **My Agent** Why the Rotation Feels Weekly" | free | live (Macro/AI) |
+| 07-20 | "The Signal Was Right. I Was the One Not Listening." | same title | free | live (Trading) |
+| 07-11 | "How to Accidentally Start a Religion (Or a Bull Market)" | "The Church of Number Go Up" | free | live (Mindset/Macro) |
+| 07-08 | "📊 What Does Your $OPEN Rate Want You to Write?" | " What Does Your $OPEN Rate Want You to Write?" | free | live (Writing) |
+| 07-05 | "Someone Asked Me to Read Their Substack. So I Sent an AI." | same title | free | live (Business) |
+| 07-03 | "I Got Out-Recruited By My Own Reader. Now I'm Opening the Door." | "I Got Out-Recruited By Another Writer. Now We're Opening the Door." | free | live (Business) |
+| 06-28 | "You're Not Drowning. You're Fighting the Wave." | same title (×2 given drafts) | free | live (Mindset) |
+| 06-27 | "Stop Vibing Your AI Voice File. Measure It." | same title | free | live (Writing/AI) |
 | 07-15 | "Money Where My Mouth Is…" | same title | free | live (Money-Where-Mouth-Is #1, publish-triggers-trade) |
 | 07-13 | "…Show the Losses **First**." | "…Show the Losses **Too**." | free | live (Business, dual-voice) |
 | 07-09 | "I Tokenized My $GLXY. Do You Actually Own Yours?" | "…Own **Your Tokenized Stocks? (No)**" | paid | live (Macro/crypto) |
@@ -82,6 +109,19 @@ mechanism; Michael titles the thing the reader actually wants.
 - `What I build after the market closes` → `BUILDING AFTER MARKET CLOSE WITH KIDS` (the kid is the hook, so it goes in the title)
 - (07-09) `Do You Actually Own Yours?` → `Do You Actually Own Your Tokenized Stocks? (No)` — two moves: expand the vague "Yours" to the keyword phrase ("Tokenized Stocks", better share-card + search), then **answer the question in the title with a parenthetical** `(No)`. He'll spoil the payoff up front if the answer is the hook.
 - (07-13) `Show the Losses **First**.` → `Show the Losses **Too**.` — softened the combative ordering verb ("First" = *I* forced it to show losses before it bragged) to the additive honesty of "Too." When the frame is honesty, he pulls the swagger out of the title verb.
+- (07-11) `How to Accidentally Start a Religion (Or a Bull Market)` → `The Church of Number Go Up` — nuked the explanatory frame entirely; the metaphor *is* the title now, no parenthetical safety net.
+- (09-23) `Your Chatbot Is The Least Valuable AI You Will Build` → `The Slowest Part of My AI Pipeline Is Me` — canonical subject-shift: machine titled the product; he titled himself. The bottleneck is him, not the tool. **Strongest single example of the self-as-subject reframe.**
+- (07-03) `I Got Out-Recruited By My Own Reader. Now I'm Opening the Door.` → `I Got Out-Recruited By Another Writer. Now We're Opening the Door.` — two quiet moves: "my reader" → "another writer" (removes the proprietary, slightly weird possessive), "I'm" → "We're" (shifts from solo triumph to shared invite).
+- (08-19) `Silver Ran 15%. My Strike Never Hit. I Made 57.6%.` → `Silver Ran 15% & I Made 57.6%. On A Dare.` — collapsed the loss-acknowledgment into an ampersand (it's not the point) and appended the *emotional* hook, the dare backstory, as a two-word kicker. The dare is the story; it was buried.
+- (07-20) `I Asked **Sam** Why the Rotation Feels Weekly` → `I Asked **My Agent** Why the Rotation Feels Weekly` — title uses the accessible generic ("My Agent") while the body keeps the personal name ("Sam"). External share-card vs. insider reading experience. One pair, hypothesis.
+- (08-04) `Alt + Tab` → `From Accountant to CTO - It Started With Alt + Tab` — machine wrote a cryptic shorthand; he spelled out the full arc and used Alt+Tab as the kicker. Clarity beats cute in the title when the story isn't known yet.
+
+**1b. Subject-shift to himself (≥3 pairs, approaching law).** When the machine titles the product, the tool, or the signal, he flips to himself as the subject.
+- `Your Chatbot Is The Least Valuable AI` → `The Slowest Part of My AI Pipeline Is Me`
+- `How to Accidentally Start a Religion` → `The Church of Number Go Up` (reader-lesson frame → declarative-statement-Michael-discovered)
+- `I Asked **Sam**` → `I Asked **My Agent**` (private persona → public one)
+- `I Got Out-Recruited By My Own Reader` → `I Got Out-Recruited By Another Writer` (his reader, his possession → external peer, shared story)
+Takeaway: if the machine's title is about the product, the indicator, or the tool, reframe it as *Michael's* encounter with it — the story is always what he did, not what the thing is.
 
 **2. Collapse time to "last night / this morning."** The machine writes vague past;
 he compresses to immediate — even at the cost of literal accuracy.  **Held-out
@@ -152,6 +192,13 @@ The machine stays on task; Michael wanders and deflates.
 - ADD `It's called Crossover, because that's what Sam named it because I can't be bothered to actually name the things I create. Side note - if you're one of those that will dwell on a name or colors or logo for longer than the actual product took you to make - for the love of God let AI do it.`
 - ADD (after the FIRE "one more year" math) `Except I can't measure sanity in a little chart.`
 
+**A6. Story-first — anecdote or backstory BEFORE the thesis (≥4 pairs, approaching law).** The machine leads with the claim, the insight, or the framework. Michael leads with the scene, the memory, or the dare that made him care. The thesis appears *after* the story earns it.
+- (09-23 least-valuable-ai) Machine opened with the AI-pipeline-efficiency thesis. He opened with the story of discovering his AI hit a Substack paywall mid-run — the moment of discovery earns the insight.
+- (10-08 victorious-secret) Machine led with the data-burnout / analysis-paralysis frame for fantasy football. He led with a decade-old cigar-bar memory — nostalgia for the human-decision version of the game. The emotional hook came first, the AI argument second.
+- (08-04 accountant-to-cto) Machine opened with a career-ladder aphorism. He opened with the story of his mother packing long-distance-call minutes into his bags before he moved — the origin story, not the lesson.
+- (08-19 silver-strike) Machine opened with the trade setup. He inserted an accessibility-hardware wish-list and the dare backstory BEFORE the trade narrative — the emotional stakes ("a dare") had to be established before the result ("57.6%") could land.
+- Pattern for the writer: before drafting the thesis, ask "what is the moment this idea became real for him?" Write that moment first. The thesis follows as the answer to a question the story already raised.
+
 ---
 
 ## What he CUTS
@@ -161,6 +208,9 @@ The machine stays on task; Michael wanders and deflates.
 - `Here is the part that made me sit up. I built this machine…` → `So here's the conviction. I built this machine…`
 - (07-07) cut the two windup lines whole: `So here's the argument I've been losing at dinner, finally written down as the thing that wins it.` and `That's the whole thesis. The rest of this is proof that it's already running.` — he refuses to announce the thesis before making it; the claims just start.
 - (07-13) `Now here is the part I do not get to write. Take it away.` → `Now, to hand the mic to Sam.` — cut the self-referential windup (and the `## Sam:` header + horizontal rule); the handoff line carries the voice change on its own. Also `So here is the deal today.` → `Here's the deal today.` (drop the "So", contract "here is").
+- (07-11 accidental-religion) cut the machine's "let me explain the metaphor" setup sentence before launching into the bull-market-as-religion observation; the claim just started.
+- (09-23 least-valuable-ai) cut the "here's what I learned" lead-in before the paywall-finding story; the story just started.
+- (07-20 two-cluster-seesaw) cut the explanatory AI-rotation-framework sentence before the question to Sam; the question came first, context after.
 
 **C2. The doubled metaphor / the extra clause.** Keeps one image, kills the spare.
 - cut the whole "casting director" paragraph (he already had "light money on fire")
@@ -178,6 +228,15 @@ the confession goes.
 - (06-23 held-out) cut `I'm a felon in recovery who builds his own trading tools…`; kept the closing recovery-line as a metaphor.
 - (06-22 held-out) cut `In the rooms they have a line for exactly this: do not just do something, sit there.` — same pattern: AA-room jargon dies, the wisdom would have to be rephrased to survive.
 - (07-13) cut the recovery-adjacent `That is how you stay sick.` and de-confessed the whole opener: `I have been the guy who screenshots only the wins… I did that when I was newer, dumber, and a lot less honest with myself.` → `It must be nice to be the guy who only wins in the market… It's beyond tempting to come up here and pretend it's all wins.` **Nuance / partial counter to rule 3:** normally he ADDS first-person confession; here he REMOVED his own self-implication and made it a wry general observation. Read: he'll drop the "I was sick" self-flagging when a lighter, sardonic frame lands the same honesty without the heavy admission. The recovery *word* ("sick") dies; the humility survives as tone.
+- (07-11 accidental-religion) **partial counter: he DEEPENED the faith admission.** Machine had generic spiritual-observation language; he added a Bob Marley analogy and made the "I believe in a higher power" statement more personal and irreverent, not less. Heavy AA-program vocabulary died but the raw personal faith statement survived and intensified. Rule 3 is about jargon, not confession depth — when stripped of the jargon, the faith can go *further*.
+
+**C4. Bold stripped from data points (≥5 pairs, approaching law).** The machine bolds numbers, percentages, and dollar figures to highlight data; Michael ships them plain. Bold is for section headers and brand names, not inline statistics.
+- (08-19 silver-strike) every bolded number in the trade narrative stripped: **15%**, **57.6%**, **$576** → plain.
+- (10-08 victorious-secret) **$20** (entry fee), **6 waiver claims** → plain.
+- (07-03 out-recruited) **122 signups**, **66** paying subscribers, specific conversion ratios → all stripped to plain numbers or replaced with approximate comparisons.
+- (09-20 qcom-seven-cents) **$161.33**, **5.82%**, **$749.56** and all other inline data bolding → plain.
+- (08-04 accountant-to-cto) bold list items in a bulleted section → converted to dash-prefix plain items with no bold on the label.
+- Pattern: **bold = brand/header/emphasis-on-a-word**; numbers need no shouting — they speak for themselves.
 
 ---
 
@@ -190,6 +249,9 @@ the confession goes.
 - **Feature lists become branded product taxonomy, not prose. (07-13, hypothesis — first pair)** When the machine wrote a narrative tour (`It watches the tape for size…`), he rewrote it into named product categories, each a `Label. One-line promise. Component, component, component.` block pulled straight from the live product: `Options Flow. See what smart money is doing before the move happens. …Unusual Activity, Live Flow, Heat Map, Sector & Earnings Flow.` He also ADDED categories/detail the machine under-specified (`Calendars & Intel`, portfolio tracker, AI strategy ranker, CSP setups). Takeaway for the writer: when the post lists what the platform does, give the real taxonomy in his terse label-tagline-components shape, not a friendly prose walk.
 - **Disclaimer moves to the TOP and becomes a bit:** bottom-of-post `Not financial advice…` → top, rewritten: `Hi! I'm a super legit "not financial advice" disclaimer that you've read so you're not going to sue me now. Good talk.`
 - **Typos ship.** `my my uncle`, `it slightly up` survive (07-07 added `an TraderDaddy SDK` and `TL,DR;`). He does not sand the post to corporate-smooth; the small imperfections read as a human was here.
+- **Sam → My Agent in titles (one pair, hypothesis).** The body uses the personal name ("Sam") while the title — the public-facing share card — uses the accessible generic ("My Agent"). Same distinction as Phund/we vs the internal name: external vs insider register. Watch for a second pair.
+- **Section headers made colloquial / personal (≥2 pairs).** The machine writes clean-analytical headers; he rewrites them as first-person observations or questions that add a beat of self-awareness. (07-20 two-cluster-seesaw) `The two clocks` → `The two clocks and why I felt it differently`; (08-04 accountant-to-cto) `The part that actually made me a nerd` → `How I got infected`. The header carries the voice, not just the section label.
+- **Stats de-specified when they reveal competitive or affiliate metrics (one pair, hypothesis).** (07-03 out-recruited) exact subscriber counts and conversion ratios in the machine draft → replaced with approximate comparisons in the ship. When the precise numbers would expose competitive data or feel transactional (subscriber counts, affiliate conversion rates), he softens to ranges or relative claims. One pair — watch for pattern.
 - **Direct reader-address, unhedged.** He turns third-person copy at the reader mid-line: `a sales team that works for free.` → `…for free. I hope (hint, that's you).` and closes the piece by talking to the co-founder AND the reader: `Art, I solved it. Again.` → `…Again. You might wanna pick up the mic I'm about to drop.` **(07-07 only — single pair, not yet a law.)**
 - **Adds the credibility clause on the product.** `the thing that's actually expensive to build and run.` → `…to build and run, and were designed by a team of professional traders with years of experience.` — when the post is the funnel, he slips the sell in as a subordinate clause, never a sentence of its own. **(07-07 only — watch on next Business post.)**
 
