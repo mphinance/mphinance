@@ -967,9 +967,17 @@ for (const [yt, col, txt] of [
 // Same overlap test for the typical-day band caption. It gets a second row to try
 // (just under the dashed line) before it is dropped, because it is the only thing
 // on the chart that says how far a normal day travels.
+// The forward panel's own "TOMORROW" header sits at PAD_T + 20 and is drawn at
+// the same x as this caption. When the typical-day band clamps to the top of the
+// plot, the caption's fallback row lands straight through that header, which is
+// what 2026-10-19 rendered. Reserve the header row and give the caption a third
+// row underneath it.
 if (emCaption) {
-  const taken = (yt) => labels.some((L) => yt + 2 > L.ty - 11 && yt - 9 < L.ty + 19);
-  const yt = [emCaption.y1 - 8, emCaption.y1 + 14].find((c) => c > PAD_T + 10 && !taken(c));
+  const HDR = [PAD_T + 9, PAD_T + 24];
+  const taken = (yt) =>
+    labels.some((L) => yt + 2 > L.ty - 11 && yt - 9 < L.ty + 19) ||
+    (yt + 2 > HDR[0] && yt - 9 < HDR[1]);
+  const yt = [emCaption.y1 - 8, emCaption.y1 + 14, emCaption.y1 + 34].find((c) => c > PAD_T + 10 && !taken(c));
   if (yt != null) {
     push(`<text x="${FWD_X + 10}" y="${yt}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}">${esc(emCaption.text)}</text>`);
   }
