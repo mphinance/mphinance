@@ -1653,6 +1653,246 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] TTM squeeze screen failed: {e}")
 
+    # ── Stage 10p: Ichimoku Cloud Breakout Screen ──
+    print("\n[10p/16] ICHIMOKU SCREEN (fresh closes above the cloud)")
+    ichimoku_results: list[dict] = []
+    with timer.stage("Ichimoku Screen"):
+        try:
+            import time as _ich_time
+            from dossier.ichimoku_screener import score_ichimoku, _save_api_output as _ich_save
+            _ich_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _ich_pool:
+                _r = score_ichimoku(_t)
+                if _r:
+                    ichimoku_results.append(_r)
+                _ich_time.sleep(0.05)
+            ichimoku_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _ich_save(ichimoku_results)
+            _top_ich = [r for r in ichimoku_results if r["grade"] in ("A+", "A")]
+            print(f"  ☁️ {len(ichimoku_results)} cloud breakouts — {len(_top_ich)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['bars_above_cloud']}d)" for r in _top_ich[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Ichimoku screen failed: {e}")
+
+    # ── Stage 10q: ADX Trend Ignition Screen ──
+    print("\n[10q/16] ADX IGNITION SCREEN (ranges turning into up-trends)")
+    adx_ign_results: list[dict] = []
+    with timer.stage("ADX Ignition Screen"):
+        try:
+            import time as _adx_time
+            from dossier.adx_ignition_screener import score_adx_ignition, _save_api_output as _adx_save
+            _adx_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _adx_pool:
+                _r = score_adx_ignition(_t)
+                if _r:
+                    adx_ign_results.append(_r)
+                _adx_time.sleep(0.05)
+            adx_ign_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _adx_save(adx_ign_results)
+            _top_adx = [r for r in adx_ign_results if r["grade"] in ("A+", "A")]
+            print(f"  🔥 {len(adx_ign_results)} ADX ignitions — {len(_top_adx)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (ADX {r['adx']})" for r in _top_adx[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] ADX ignition screen failed: {e}")
+
+    # ── Stage 10r: Donchian Turtle Breakout Screen ──
+    print("\n[10r/16] DONCHIAN BREAKOUT SCREEN (fresh closes above the 55-day high)")
+    donch_results: list[dict] = []
+    with timer.stage("Donchian Breakout Screen"):
+        try:
+            import time as _dc_time
+            from dossier.donchian_breakout_screener import score_donchian_breakout, _save_api_output as _dc_save
+            _dc_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _dc_pool:
+                _r = score_donchian_breakout(_t)
+                if _r:
+                    donch_results.append(_r)
+                _dc_time.sleep(0.05)
+            donch_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _dc_save(donch_results)
+            _top_dc = [r for r in donch_results if r["grade"] in ("A+", "A")]
+            print(f"  🐢 {len(donch_results)} 55-day breakouts — {len(_top_dc)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['volume_ratio']}x vol)" for r in _top_dc[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Donchian breakout screen failed: {e}")
+
+    # ── Stage 10s: EMA Pullback Screen ──
+    print("\n[10s/16] EMA PULLBACK SCREEN (uptrends tagging the rising 21-EMA)")
+    emapb_results: list[dict] = []
+    with timer.stage("EMA Pullback Screen"):
+        try:
+            import time as _ep_time
+            from dossier.ema_pullback_screener import score_ema_pullback, _save_api_output as _ep_save
+            _ep_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _ep_pool:
+                _r = score_ema_pullback(_t)
+                if _r:
+                    emapb_results.append(_r)
+                _ep_time.sleep(0.05)
+            emapb_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _ep_save(emapb_results)
+            _top_ep = [r for r in emapb_results if r["grade"] in ("A+", "A")]
+            print(f"  🧲 {len(emapb_results)} EMA21 tags — {len(_top_ep)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['pullback_atr']}N dip)" for r in _top_ep[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] EMA pullback screen failed: {e}")
+
+    # ── Stage 10t: Trend Template Screen ──
+    print("\n[10t/16] TREND TEMPLATE SCREEN (Minervini Stage 2 checklist)")
+    ttemp_results: list[dict] = []
+    with timer.stage("Trend Template Screen"):
+        try:
+            import time as _tt_time
+            from dossier.trend_template_screener import score_trend_template, _save_api_output as _tt_save
+            _tt_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _tt_pool:
+                _r = score_trend_template(_t)
+                if _r:
+                    ttemp_results.append(_r)
+                _tt_time.sleep(0.05)
+            ttemp_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _tt_save(ttemp_results)
+            _top_tt = [r for r in ttemp_results if r["grade"] in ("A+", "A")]
+            print(f"  📐 {len(ttemp_results)} pass the template — {len(_top_tt)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['pct_below_52w_high']}% off high)" for r in _top_tt[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Trend template screen failed: {e}")
+
+    # ── Stage 10u: Bullish RSI Divergence Screen ──
+    print("\n[10u/16] RSI DIVERGENCE SCREEN (lower price low, higher RSI low)")
+    rsidiv_results: list[dict] = []
+    with timer.stage("RSI Divergence Screen"):
+        try:
+            import time as _rd_time
+            from dossier.rsi_divergence_screener import score_rsi_divergence, _save_api_output as _rd_save
+            _rd_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _rd_pool:
+                _r = score_rsi_divergence(_t)
+                if _r:
+                    rsidiv_results.append(_r)
+                _rd_time.sleep(0.05)
+            rsidiv_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _rd_save(rsidiv_results)
+            _top_rd = [r for r in rsidiv_results if r["grade"] in ("A+", "A")]
+            print(f"  🪃 {len(rsidiv_results)} bullish divergences — {len(_top_rd)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (RSI {r['rsi_low1']}→{r['rsi_low2']})" for r in _top_rd[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] RSI divergence screen failed: {e}")
+
+    # ── Stage 10v: Up/Down Volume Screen ──
+    print("\n[10v/16] UP/DOWN VOLUME SCREEN (50-day accumulation ratio)")
+    updown_results: list[dict] = []
+    with timer.stage("Up/Down Volume Screen"):
+        try:
+            import time as _ud_time
+            from dossier.updown_volume_screener import score_updown_volume, _save_api_output as _ud_save
+            _ud_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _ud_pool:
+                _r = score_updown_volume(_t)
+                if _r:
+                    updown_results.append(_r)
+                _ud_time.sleep(0.05)
+            updown_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _ud_save(updown_results)
+            _top_ud = [r for r in updown_results if r["grade"] in ("A+", "A")]
+            print(f"  📊 {len(updown_results)} accumulation names — {len(_top_ud)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} (U/D {r['updown_ratio_50d']})" for r in _top_ud[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Up/down volume screen failed: {e}")
+
+    # ── Stage 10w: Bollinger Band Walk Screen ──
+    print("\n[10w/16] BB WALK SCREEN (trends riding the upper band)")
+    bbwalk_results: list[dict] = []
+    with timer.stage("BB Walk Screen"):
+        try:
+            import time as _bw_time
+            from dossier.bb_walk_screener import score_bb_walk, _save_api_output as _bw_save
+            _bw_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _bw_pool:
+                _r = score_bb_walk(_t)
+                if _r:
+                    bbwalk_results.append(_r)
+                _bw_time.sleep(0.05)
+            bbwalk_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _bw_save(bbwalk_results)
+            _top_bw = [r for r in bbwalk_results if r["grade"] in ("A+", "A")]
+            print(f"  🚶 {len(bbwalk_results)} band walkers — {len(_top_bw)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']} ({r['walk_days_10d']}/10)" for r in _top_bw[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] BB walk screen failed: {e}")
+
+    # ── Stage 10x: Aroon Trend Birth Screen ──
+    print("\n[10x/16] AROON SCREEN (fresh highs arriving, old lows)")
+    aroon_results: list[dict] = []
+    with timer.stage("Aroon Screen"):
+        try:
+            import time as _ar_time
+            from dossier.aroon_screener import score_aroon, _save_api_output as _ar_save
+            _ar_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _ar_pool:
+                _r = score_aroon(_t)
+                if _r:
+                    aroon_results.append(_r)
+                _ar_time.sleep(0.05)
+            aroon_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _ar_save(aroon_results)
+            _top_ar = [r for r in aroon_results if r["grade"] in ("A+", "A")]
+            print(f"  🧭 {len(aroon_results)} trend births — {len(_top_ar)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']}" for r in _top_ar[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Aroon screen failed: {e}")
+
+    # ── Stage 10y: Supertrend Flip Screen ──
+    print("\n[10y/16] SUPERTREND SCREEN (ATR trailing stop flipped bullish)")
+    supertrend_results: list[dict] = []
+    with timer.stage("Supertrend Screen"):
+        try:
+            import time as _st_time
+            from dossier.supertrend_screener import score_supertrend, _save_api_output as _st_save
+            _st_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _st_pool:
+                _r = score_supertrend(_t)
+                if _r:
+                    supertrend_results.append(_r)
+                _st_time.sleep(0.05)
+            supertrend_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _st_save(supertrend_results)
+            _top_st = [r for r in supertrend_results if r["grade"] in ("A+", "A")]
+            print(f"  🔄 {len(supertrend_results)} bullish flips — {len(_top_st)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']}" for r in _top_st[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] Supertrend screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}

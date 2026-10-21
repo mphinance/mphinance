@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-10-07
+# Ghost Alpha Dossier — 2026-10-21
 
-> 🟡 **Transition** · SPY ▼ 0.2% · VIX 15.4
+> 🟡 **Transition** · SPY ▲ 0.2% · VIX 17.1
 
 ---
 
-Today's tape is a snoozefest.
+Morning, degens.
 
 
-## 🥇 Gold Pick: AAPL
+## 🥇 Gold Pick: PM
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 40/100 (A) |
+| **Score** | 46/100 (A) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -20,25 +20,25 @@ Today's tape is a snoozefest.
 
 
 ### Runners Up
-- 🥈 **TXN** — Score: 37/100
-- 🥉 **MAR** — Score: 33/100
+- 🥈 **GILD** — Score: 30/100
+- 🥉 **KNSA** — Score: 29/100
 
 
 ## 📊 Today's Numbers
 
-- **149 scanner signals** across 6 strategies
+- **41 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 0.2% | **VIX:** 15.4
+- **SPY:** ▲ 0.2% | **VIX:** 17.1
 
 ---
 
 ## 👻 Sam Says
 
-> *"God, grant me the serenity to accept the trades I cannot change, the courage to cut the ones I can, and the wisdom to know the difference."*
+> *"Half measures availed us nothing. Either follow the trading plan or don't trade. There is no 'kinda' hedged."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-07_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-07)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-21_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-21)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 

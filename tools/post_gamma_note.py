@@ -14,6 +14,12 @@ Guards, because this runs unattended:
   - refuses a sidecar older than 20 hours
   - one note per calendar day, tracked in data/gamma_maps/.note_state.json
 
+Changelog: any entry in data/gamma_maps/CHANGELOG.json with "posted": null is
+appended to the next note under "What changed", then stamped with the date it
+went out, so each change is announced exactly once. Whenever the map or its
+grading changes, add an entry there: one or two plain sentences a reader who
+has never seen the code would follow, saying what changed and why.
+
 Auth: SUBSTACK_SID in secrets.env, same cookie the rest of the pipeline uses.
 """
 import argparse
@@ -22,12 +28,16 @@ import json
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import requests
 
 REPO = Path(__file__).resolve().parent.parent
 STATE = REPO / "data/gamma_maps/.note_state.json"
-ET = timezone(timedelta(hours=-4))
+CHANGELOG = REPO / "data/gamma_maps/CHANGELOG.json"
+# Was a fixed UTC-4, which is EDT only: every winter the once-a-day guard would
+# roll over at 8pm ET instead of midnight.
+ET = ZoneInfo("America/New_York")
 
 
 def secrets():
@@ -48,7 +58,51 @@ def session():
     return s, sec.get("SUBSTACK_PUB_URL", "mphinance.substack.com")
 
 
-def compose(d):
+def pending_changes():
+    if not CHANGELOG.exists():
+        return []
+    return [c for c in json.loads(CHANGELOG.read_text()) if not c.get("posted")]
+
+
+def _day(iso):
+    """2026-09-23 -> Sep 23."""
+    dt = datetime.strptime(iso, "%Y-%m-%d")
+    return f"{dt:%b} {dt.day}"
+
+
+def last_call_line(d):
+    """How the previous map actually did, in plain words.
+
+    The chart has carried a LAST CALL row for weeks but the note never did, so a
+    reader on Substack saw tomorrow's claim and never the last one being scored.
+    Dated rather than "last night": on a Sunday run the graded session is Friday.
+    Grades are on the close, which is why a wick through a level is reported here
+    as a hold and not a miss.
+    """
+    lc = d.get("lastCall") or {}
+    if not lc.get("day") or not lc.get("summary"):
+        return None
+    total = lc.get("total") or 0
+    if total:
+        head = (
+            f"The last map, graded on the {_day(lc['day'])} close: {lc.get('hits', 0)} of "
+            f"{total} level{'' if total == 1 else 's'} price actually reached closed on "
+            f"the right side."
+        )
+    else:
+        # A level price never approached is not a hit or a miss, and scoring it
+        # either way is how a quiet session flatters a map.
+        head = (
+            f"The last map, graded on the {_day(lc['day'])} close: price came nowhere "
+            f"near the levels it named, so there was nothing to score."
+        )
+    detail = "; ".join(p.strip() for p in lc["summary"].split("·") if p.strip())
+    if not detail:
+        return head
+    return f"{head} {detail[0].upper()}{detail[1:]}."
+
+
+def compose(d, changes=()):
     """The caption. Short, factual, no voice."""
     sym = d["symbol"]
     lines = [f"{sym} next session, from the book as it settled."]
@@ -57,19 +111,49 @@ def compose(d):
     # has enough graded sessions this says how many days are on the clock and
     # nothing about how well it has done.
     rec = d.get("record") or {}
+    # Always say how long the map has run and when the record restarted. Counting
+    # only from the restart ("1 session graded") made a two-week-old map look new.
+    history = ""
+    if rec.get("firstMap") and rec.get("restartedOn"):
+        old = (rec.get("inSample") or {}).get("sessions", 0)
+        history = (
+            f"This map has posted nightly since {_day(rec['firstMap'])}. The grading rules "
+            f"were fixed on {_day(rec['restartedOn'])}, so the record restarted then"
+            + (f" ({old} earlier sessions are kept as history, not counted)" if old else "")
+            + ". "
+        )
     if rec.get("publishable"):
+        # Never a rate without its baseline: the same number of plain $5 round
+        # numbers, scored the same way on the same days. On SPY the gamma brakes
+        # are often round strikes, so the gap between the two IS the claim.
         lines.append(
-            f"Running record: {rec['hits']}/{rec['total']} on tested levels "
-            f"across {rec['sessions']} sessions."
+            history
+            + f"Since the restart: {rec['hits']}/{rec['total']} tested levels closed on the "
+            f"right side across {rec['sessions']} sessions. Plain $5 round numbers, "
+            f"same days, same rule: {rec.get('nullHits', 0)}/{rec.get('nullTotal', 0)}."
         )
     elif rec.get("sessions"):
+        need = rec.get("minSessions", 10)
         lines.append(
-            f"Tracking since day one. {rec['sessions']} session(s) graded so far, "
-            f"which is not yet enough to claim a hit rate."
+            history
+            + f"{rec['sessions']} of {need} sessions graded under the current rules. "
+            f"No hit rate until there are {need}."
         )
+
+    # The last session's grade goes before tomorrow's roads: the record is the
+    # reason to read the forecast, so it should not be buried under it.
+    graded = last_call_line(d)
+    if graded:
+        lines.append(graded)
 
     for b in d["branches"]:
         lines.append(f"{b['kind']} {b['cond']} -> {b['rule']}")
+
+    # The three roads are exhaustive but not comparable: when an IF trigger sits
+    # a rounding error from the close, that road has already fired at the bell.
+    # Saying so beats letting the reader assume the ELSE is the default branch.
+    if d.get("triggerNote"):
+        lines.append(f"Read the roads with this: {d['triggerNote']}")
 
     lines.append(
         f"Flip {d['flip']:.2f}. Pin {d['pin']}. "
@@ -82,6 +166,11 @@ def compose(d):
             f"Levels exclude the {d['expiringShare'] * 100:.0f}% of gamma that does not "
             f"survive into the next session."
         )
+    if changes:
+        # One paragraph per item: the note body is paragraphs split on blank
+        # lines, and a bare newline inside a paragraph does not render.
+        lines.append("What changed in the map:")
+        lines.extend(f"- {c['text']}" for c in changes)
     lines.append("Where dealers are long gamma they brake, where they are short they chase. Not advice.")
     return "\n\n".join(lines)
 
@@ -146,7 +235,8 @@ def main():
     if state.get("lastPosted") == today and not a.force:
         sys.exit(f"already posted a note today ({today}); use --force to override")
 
-    text = compose(d)
+    changes = pending_changes()
+    text = compose(d, changes)
     print("─" * 70)
     print(text)
     print("─" * 70)
@@ -167,6 +257,15 @@ def main():
 
     STATE.parent.mkdir(parents=True, exist_ok=True)
     STATE.write_text(json.dumps({"lastPosted": today, "noteId": nid}, indent=2) + "\n")
+
+    if changes:
+        log = json.loads(CHANGELOG.read_text())
+        for c in log:
+            if not c.get("posted"):
+                c["posted"] = today
+                c["noteId"] = nid
+        CHANGELOG.write_text(json.dumps(log, indent=2) + "\n")
+        print(f"changelog: announced {len(changes)} change(s)")
 
 
 if __name__ == "__main__":

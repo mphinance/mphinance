@@ -367,7 +367,7 @@ function renderMd(p) {
     const fo = r.fundOptions || {};
     L.push(`### ${r.ticker} — Sell ${r.strike}P ${r.expiry} (${r.dte}d) @ ${r.perShare}  [screen ${r.screen.grade}/${r.screen.score}]`);
     L.push(`px ${r.price} · OTM ${r.strikeOTMPct}% · BE ${r.breakeven} (${r.cushionPct}%) · Δ ${r.delta} · PoP ${r.pop}% · ${r.rocWeekly}%/wk · collateral $${r.collateral}`);
-    L.push(`IV ${r.iv} · IVR ${r.ivRank} (${r.ivRankZone}, n=${r.ivRankSample}, ${r.ivRankSource}) · quote ${r.quoteQuality} · optVol ${r.optVolume} · OI floor ${r.supportOI} · earnings ${r.earnings.inWindow ? r.earnings.date : 'clear'}`);
+    L.push(`IV ${r.iv} · IVR ${r.ivRank} (${r.ivRankZone}, n=${r.ivRankSample}, ${r.ivRankSource}) · quote ${r.quoteQuality} · optVol ${r.optVolume} · OI floor ${r.supportOI} · earnings ${r.earnings.inWindow ? r.earnings.date : r.earnings.date ? 'clear (next ' + r.earnings.date + ')' : 'UNKNOWN (no date from screen; check TMPro feed)'}`);
     L.push(`trend ${c.trend} · 5d ${c.chg5d}% 20d ${c.chg20d}% 60d ${c.chg60d}% · vs21e ${c.vs21ema}% vs50 ${c.vs50sma}% vs200 ${c.vs200sma}% · 52w pos ${c.rangePos52w}% (${c.pctFrom52wHigh}% from high) · ATR ${c.atrPct}% · strike ${c.strikeAtrsOTM} ATRs OTM, vs 60d low ${c.strikeVs60dLow}%, below 200sma ${c.strikeBelowSma200} · RSI ${c.rsi} ADX ${c.adx}`);
     L.push(`sector ${r.sector} / ${r.industry} · cluster ${r.cluster || '-'} · also on: ${r.alsoOn.join(', ') || '-'} · inst: ${r.institutional ? `${r.institutional.dir} ${r.institutional.weightDelta} (${r.institutional.fundCount} funds)` : '-'}`);
     L.push(`fund options (TickerTrace): ${fo.error ? `ERR ${fo.error}` : fo.fundCount ? fo.structures.map((s) => `${s.fund} ${s.expiry}: ${s.text}`).join(' ; ') : 'none'}`, '');

@@ -79,6 +79,16 @@ SCREEN_FILES = {
     "rsi2_pullback": "rsi2-pullback-screener.json",
     "ttm_squeeze": "ttm-squeeze-screener.json",
     "failed_breakdown": "failed-breakdown-screener.json",
+    "ichimoku": "ichimoku-screener.json",
+    "adx_ignition": "adx-ignition-screener.json",
+    "donchian_breakout": "donchian-breakout-screener.json",
+    "ema_pullback": "ema-pullback-screener.json",
+    "trend_template": "trend-template-screener.json",
+    "rsi_divergence": "rsi-divergence-screener.json",
+    "updown_volume": "updown-volume-screener.json",
+    "bb_walk": "bb-walk-screener.json",
+    "aroon": "aroon-screener.json",
+    "supertrend": "supertrend-screener.json",
 }
 
 

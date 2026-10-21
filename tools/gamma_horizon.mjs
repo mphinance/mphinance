@@ -77,6 +77,11 @@ const MIN_SHARE = parseFloat(arg('minshare', '5'));
 // have resolved with a fill. Do not lower that to make a post look better.
 const LEDGER_DIR = join(ROOT, 'data/gamma_maps/horizon');
 const MIN_GRADED = 10;
+// ...and from at least this many different days. Plans drawn on one day share
+// one market: on 2026-10-08, 25 plans went out and a single selloff stopped 13
+// of the first 14 within a week (positive- and negative-gamma names alike).
+// That is one observation about the tape, not 14 about the method.
+const MIN_DAYS = 5;
 const etNow = () => {
   const f = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hour12: false })
     .formatToParts(new Date()).reduce((a, x) => ((a[x.type] = x.value), a), {});
@@ -136,7 +141,9 @@ function recordSummary() {
   const all = readdirSync(LEDGER_DIR).filter((f) => f.endsWith('.json')).flatMap((f) => JSON.parse(readFileSync(join(LEDGER_DIR, f), 'utf8')));
   const st = (k) => all.filter((e) => e.result?.status === k).length;
   const t1 = st('T1'), stop = st('STOP'), expired = st('EXPIRED');
-  return { resolved: t1 + stop + expired, open: st('OPEN') + st('WAITING'), t1, stop, expired, nofill: st('NO FILL') };
+  const days = new Set(all.filter((e) => ['T1', 'STOP', 'EXPIRED'].includes(e.result?.status)).map((e) => e.madeOn)).size;
+  const resolved = t1 + stop + expired;
+  return { resolved, days, publishable: resolved >= MIN_GRADED && days >= MIN_DAYS, open: st('OPEN') + st('WAITING'), t1, stop, expired, nofill: st('NO FILL') };
 }
 
 // --grade: re-grade every ledger and print the scorecard, no chart.
@@ -153,13 +160,40 @@ if (argv.includes('--grade')) {
   }
   const r = recordSummary();
   console.log(`\nresolved ${r.resolved} (T1 ${r.t1} / stop ${r.stop} / expired ${r.expired}), no fill ${r.nofill}, still open ${r.open}`);
-  console.log(r.resolved >= MIN_GRADED ? `T1 hit rate ${(r.t1 / r.resolved * 100).toFixed(0)}%` : `no hit rate until ${MIN_GRADED} resolved fills`);
+  console.log(r.publishable ? `T1 hit rate ${(r.t1 / r.resolved * 100).toFixed(0)}% (${r.days} plan days)`
+    : `no hit rate until ${MIN_GRADED} resolved fills across ${MIN_DAYS} plan days (have ${r.resolved} from ${r.days} day${r.days === 1 ? '' : 's'})`);
   process.exit(0);
 }
 
 // ── data ────────────────────────────────────────────────────────────────────
 const gex = await api(`/gex/${sym}`);
-const matrix = await api(`/gex/${sym}/matrix`);
+// The default ("daily") matrix is 10 columns: near-term plus a monthly tail.
+// NVDA 2026-10-18 was missing its 11/06, 11/13 and 11/27 weeklies. Merge the
+// weekly and monthly grids in so no expiry is dropped. (Strikes are capped at
+// ±15% of spot server-side, STRIKE_RANGE_PCT; the chart marks that edge.)
+const mergeMatrices = (ms) => {
+  ms = ms.filter((m) => m && m.expirations?.length);
+  const cols = new Map(), stats = new Map();
+  for (const m of ms) {
+    m.expirations.forEach((e, i) => {
+      if (!cols.has(e)) cols.set(e, new Map(m.rows.map((r) => [r.strike, r.gex[i]])));
+    });
+    for (const st of m.expiryStats || []) if (!stats.has(st.expiry)) stats.set(st.expiry, st);
+  }
+  const expirations = [...cols.keys()].sort();
+  const strikes = [...new Set(ms.flatMap((m) => m.rows.map((r) => r.strike)))].sort((a, b) => a - b);
+  return {
+    ...ms[0], expirations,
+    rows: strikes.map((k) => ({ strike: k, gex: expirations.map((e) => cols.get(e).get(k) ?? null) })),
+    expiryStats: expirations.filter((e) => stats.has(e)).map((e) => stats.get(e)),
+    strikeLo: strikes[0], strikeHi: strikes[strikes.length - 1],
+  };
+};
+const matrix = mergeMatrices([
+  await api(`/gex/${sym}/matrix`),
+  await api(`/gex/${sym}/matrix?expirations=weekly`).catch(() => null),
+  await api(`/gex/${sym}/matrix?expirations=monthly`).catch(() => null),
+]);
 const yr = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y`, {
   headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(30000),
 }).then((r) => r.json());
@@ -200,10 +234,32 @@ const emaNow = ema[ema.length - 1];
 // and each expiry was read alone, as if dealers hedged one date at a time.
 const todayET = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York' }).format(new Date());
 const colOf = new Map(matrix.expirations.map((e, i) => [e, i]));
-const bookFrom = (date) => {
-  // Net GEX per strike summed over every expiry on or after `date`.
-  const cols = matrix.expirations.map((e, i) => (e >= date && e > todayET ? i : -1)).filter((i) => i >= 0);
-  return matrix.rows.map((r) => ({ strike: r.strike, g: cols.reduce((a, i) => a + (r.gex[i] || 0), 0) }));
+// Project each expiry's gamma to the date instead of freezing today's (v3,
+// 2026-10-18). Gamma at strike K scales with phi(d1)/sqrt(T): ATM strikes
+// swell into expiry, OTM ones fade. Holding spot and each expiry's implied vol
+// (from its priced move) fixed, the board on day t = sum over expiries still
+// alive of today's GEX x that ratio (capped 12x). Frozen boards dropped NVDA's
+// 205 floor to 190 after the weeklies rolled, while the 11/20 monthly's 205
+// puts were about to carry it.
+const statOf = new Map(matrix.expiryStats.map((st) => [st.expiry, st]));
+const sigOf = (st) => (st.dte > 0 && st.emPoints > 0 ? (st.emPoints / spot) / Math.sqrt(st.dte / 365) : null);
+const gammaRatio = (k, sig, tn, td) => {
+  const a = (t) => {
+    const yrs = Math.max(t, 0.25) / 365;
+    const d1 = (Math.log(spot / k) + 0.5 * sig * sig * yrs) / (sig * Math.sqrt(yrs));
+    return Math.exp(-d1 * d1 / 2) / Math.sqrt(yrs);
+  };
+  const base = a(tn);
+  return base > 1e-12 ? Math.min(a(td) / base, 12) : 1;
+};
+const boardAt = (t) => {
+  const live = matrix.expirations.map((e, i) => ({ e, i, st: statOf.get(e) }))
+    .filter(({ e, st }) => st && e > todayET && st.dte > t)
+    .map(({ i, st }) => ({ i, sig: sigOf(st), tn: st.dte }));
+  return matrix.rows.map((r) => ({
+    strike: r.strike,
+    g: live.reduce((a, { i, sig, tn }) => a + (r.gex[i] ? r.gex[i] * (sig && t > 0 ? gammaRatio(r.strike, sig, tn, tn - t) : 1) : 0), 0),
+  }));
 };
 // A strike only counts as a wall if it is big next to the rest of the board.
 // MU's "put wall" was a -$15M strike four dollars under spot on a book with a
@@ -222,7 +278,7 @@ const readBook = (book, em) => {
   return {
     callWall: call?.strike ?? null, callGex: call?.g ?? 0,
     putWall: put?.strike ?? null, putGex: put?.g ?? 0,
-    cushion: cushion?.strike ?? null,
+    cushion: cushion?.strike ?? null, cushGex: cushion?.g ?? 0,
     magnet: mag?.strike ?? null, magGex: mag?.g ?? 0,
     settle: set?.strike ?? null, setGex: set?.g ?? 0,
     net: book.reduce((a, b) => a + b.g, 0),
@@ -232,7 +288,6 @@ const exps = matrix.expiryStats
   .filter((e) => e.dte > 0 && e.dte <= HORIZON && colOf.has(e.expiry))
   .map(({ expiry, dte, emPoints, oiSharePct, isLargest }) => ({
     expiry, dte, emPoints, oiSharePct, isLargest,
-    ...readBook(bookFrom(expiry), emPoints),
     major: oiSharePct >= MIN_SHARE || isLargest,
   }));
 if (!exps.length) throw new Error(`no expiries within ${HORIZON} days`);
@@ -241,8 +296,11 @@ if (!majors.length) throw new Error(`${sym}: no expiry inside ${HORIZON} days ca
 const largest = exps.find((e) => e.isLargest) || majors.reduce((a, e) => (e.oiSharePct > a.oiSharePct ? e : a), majors[0]);
 const last = exps[exps.length - 1];
 const negGamma = gex.totalGEX < 0;
-// The book as it stands right now: everything that survives tonight.
-const now = exps[0];
+// Each expiry (and the segment ending at it) is read from the projected board
+// at the segment's midpoint, so the strip and the roads never disagree.
+exps.forEach((e, k) => Object.assign(e, readBook(boardAt(((k ? exps[k - 1].dte : 0) + e.dte) / 2), e.emPoints)));
+// Today's board at t=0, not just before the first expiry rolls off.
+const now = { ...exps[0], ...readBook(boardAt(0), exps[0].emPoints) };
 
 // Segments: the board is constant between two expiries and changes the
 // moment one rolls off. Every expiry is a boundary, not just the big ones:
@@ -259,7 +317,7 @@ const r2 = (v) => Math.round(v * 100) / 100;
 // Entry: the heaviest significant strike at least half an ATR under spot,
 // put wall or long-gamma cushion, whichever carries more gamma. Anything
 // closer is not a pullback, it is buying here.
-const nowBook = bookFrom(now.expiry);
+const nowBook = boardAt(0);
 const bigNow = Math.max(...nowBook.map((b) => Math.abs(b.g)), 1);
 const support = nowBook
   .filter((b) => b.strike <= spot - atrNow * 0.5 && Math.abs(b.g) >= bigNow * SIG)
@@ -356,9 +414,9 @@ push(`<text x="${W - PAD_R - 165}" y="48" text-anchor="middle" ${mono} font-size
 if (Math.abs(gex.totalGEX) < 1e6) push(`<text x="${PAD_L}" y="92" ${mono} font-size="12" fill="${C.coral}">THIN BOOK: only ${fmtM(gex.totalGEX)} of net gamma. the levels show where open interest sits, not how hard dealers will defend them.</text>`);
 {
   const rec = recordSummary();
-  const recTxt = rec.resolved >= MIN_GRADED
+  const recTxt = rec.publishable
     ? `plan record: T1 ${rec.t1}/${rec.resolved} (${(rec.t1 / rec.resolved * 100).toFixed(0)}%) · ${rec.open} open`
-    : `plan record: ${rec.resolved} resolved, ${rec.open} open · no hit rate until ${MIN_GRADED}`;
+    : `plan record: ${rec.resolved} resolved from ${rec.days} day${rec.days === 1 ? '' : 's'}, ${rec.open} open · no hit rate until ${MIN_GRADED} across ${MIN_DAYS} days`;
   push(`<text x="${W - PAD_R}" y="94" text-anchor="end" ${mono} font-size="11" fill="${C.entry}" fill-opacity="0.85">${recTxt}</text>`);
 }
 push(`<text x="${W - PAD_R}" y="76" text-anchor="end" ${mono} font-size="11" fill="${C.dim}">as of ${new Date().toISOString().slice(0, 16).replace('T', ' ')}Z</text>`);
@@ -481,34 +539,30 @@ tri(plan.t1, C.tp, true); tri(plan.t2, C.tp, true); tri(plan.stop, C.stop, false
 // spline through per-expiry points drew MU at 1200 by Friday when the live
 // lid was 1100 until 10/09.
 const roads = [
-  { key: 'up', col: C.call, name: 'UP', what: 'call wall', val: (g) => g.callWall },
-  { key: 'down', col: C.put, name: 'DOWN', what: 'put wall', val: (g) => g.putWall ?? g.cushion, whatAlt: (g) => (g.putWall == null && g.cushion != null ? 'long-gamma cushion' : null) },
-  { key: 'settle', col: C.pin, name: 'RANGE', what: 'settles near', val: (g) => g.settle },
+  { key: 'up', col: C.call, name: 'UP', what: 'call wall', val: (g) => g.callWall, size: (g) => Math.abs(g.callGex) },
+  { key: 'down', col: C.put, name: 'DOWN', what: 'put wall', val: (g) => g.putWall ?? g.cushion, size: (g) => Math.abs(g.putWall != null ? g.putGex : g.cushGex), whatAlt: (g) => (g.putWall == null && g.cushion != null ? 'long-gamma cushion' : null) },
+  { key: 'settle', col: C.pin, name: 'RANGE', what: 'settles near', val: (g) => g.settle, size: (g) => Math.abs(g.setGex) },
 ];
-const stair = (r) => {
-  let d = '', prev = null;
+// Each segment is drawn on its own so the stroke can carry the wall's size:
+// width scales with projected dollar gamma. A flat max-wall line hid that
+// NVDA's 230 lid was $97M now and ~$22M after the monthly.
+for (const r of roads) {
+  const big = Math.max(...segs.filter((g) => r.val(g) != null).map(r.size), 1);
+  let prev = null;
   segs.forEach((g, k) => {
     const v = r.val(g);
     if (v == null) { prev = null; return; }
     const x0 = XF(g.from), x1 = XF(g.to);
     const ramp = Math.min(k ? 26 : 60, (x1 - x0) * 0.45);
-    const y = Y(clampY(v)).toFixed(1);
-    if (prev == null) {
-      const [sx, sv] = k ? [x0, v] : [XF(0), spot];
-      d += ` M ${sx.toFixed(1)} ${Y(clampY(sv)).toFixed(1)}`;
-      prev = sv;
-    }
-    const yp = Y(clampY(prev)).toFixed(1);
-    d += ` C ${(x0 + ramp / 2).toFixed(1)} ${yp}, ${(x0 + ramp / 2).toFixed(1)} ${y}, ${(x0 + ramp).toFixed(1)} ${y} L ${x1.toFixed(1)} ${y}`;
+    let sx = x0;
+    if (prev == null) { prev = k ? v : spot; sx = k ? x0 : XF(0); }
+    const yp = Y(clampY(prev)).toFixed(1), y = Y(clampY(v)).toFixed(1);
+    const d = `M ${sx.toFixed(1)} ${yp} C ${(x0 + ramp / 2).toFixed(1)} ${yp}, ${(x0 + ramp / 2).toFixed(1)} ${y}, ${(x0 + ramp).toFixed(1)} ${y} L ${x1.toFixed(1)} ${y}`;
+    const w = (r.key === 'settle' ? 1.4 : 1.6) + 4.4 * Math.sqrt(r.size(g) / big);
+    push(`<path d="${d}" fill="none" stroke="${r.col}" stroke-width="${(w * 3).toFixed(1)}" stroke-opacity="0.25" filter="url(#glowS)"/>`);
+    push(`<path d="${d}" fill="none" stroke="${r.col}" stroke-width="${w.toFixed(1)}" stroke-opacity="0.9" stroke-linecap="round" ${r.key === 'settle' ? 'stroke-dasharray="7 5"' : ''}/>`);
     prev = v;
   });
-  return d.trim();
-};
-for (const r of roads) {
-  const d = stair(r);
-  if (!d) continue;
-  push(`<path d="${d}" fill="none" stroke="${r.col}" stroke-width="9" stroke-opacity="0.3" filter="url(#glowS)"/>`);
-  push(`<path d="${d}" fill="none" stroke="${r.col}" stroke-width="${r.key === 'settle' ? 2 : 2.6}" stroke-opacity="0.85" ${r.key === 'settle' ? 'stroke-dasharray="7 5"' : ''}/>`);
   // Name the hand-off where a wall rolls off and the next one takes over.
   if (r.key === 'settle') continue;
   let lastX = -1e9;
@@ -516,10 +570,16 @@ for (const r of roads) {
     const a = r.val(segs[k - 1]), b = r.val(segs[k]);
     if (a == null || b == null || a === b) continue;
     const x = XF(segs[k - 1].to);
-    if (x - lastX < 140) continue;
+    if (x - lastX < 140 || x > XF(maxDte) - 260) continue;
     lastX = x;
     push(`<text x="${x + 32}" y="${Y(clampY(b)) + (r.key === 'down' ? 16 : -8)}" ${mono} font-size="9.5" fill="${r.col}" fill-opacity="0.8">${fmt(b)} once ${md(segs[k - 1].end)} rolls off</text>`);
   }
+}
+// The matrix covers about ±15% of spot: a wall past this line is invisible.
+for (const [edge, lab] of [[matrix.strikeHi, 'strike data ends above'], [matrix.strikeLo, 'strike data ends below']]) {
+  if (edge == null || edge <= yMin || edge >= yMax) continue;
+  push(`<line x1="${FWD_X}" x2="${XF(maxDte) + 6}" y1="${Y(edge).toFixed(1)}" y2="${Y(edge).toFixed(1)}" stroke="${C.tp}" stroke-opacity="0.4" stroke-dasharray="1 5" stroke-width="2"/>`);
+  push(`<text x="${FWD_X + 330}" y="${(Y(edge) + (lab.endsWith('above') ? -6 : 14)).toFixed(1)}" ${mono} font-size="9.5" fill="${C.tp}" fill-opacity="0.75">${lab} ${fmt(edge)}</text>`);
 }
 
 // Per-expiry markers: the walls of the book still alive on that date. Minor
@@ -549,7 +609,7 @@ for (const r of roads) {
   const g = segs[segs.length - 1];
   const v = r.val(g); if (v == null) continue;
   const outside = Math.abs(v - spot) > g.emPoints;
-  push(`<text x="${XF(maxDte) - 14}" y="${Y(clampY(v)) + (r.key === 'down' ? 20 : -10)}" text-anchor="end" font-family="'Share Tech Mono',monospace" font-size="13" fill="${r.col}" fill-opacity="${outside ? 0.55 : 0.95}" letter-spacing="1">${r.name} · ${fmt(v)}${outside ? ' *' : ''}</text>`);
+  push(`<text x="${XF(maxDte) - 14}" y="${Y(clampY(v)) + (r.key === 'down' ? 20 : -10)}" text-anchor="end" font-family="'Share Tech Mono',monospace" font-size="13" fill="${r.col}" fill-opacity="${outside ? 0.55 : 0.95}" letter-spacing="1">${r.name} · ${fmt(v)} · ${fmtM(r.size(g))}${outside ? ' *' : ''}</text>`);
 }
 
 // Plan pills down the right edge, pushed apart so none overlap.
@@ -596,10 +656,16 @@ push(`<text x="${FWD_X - 10}" y="${SY + rowsDef.length * 17 - 2}" text-anchor="e
 // ── IF / IF / ELSE ──────────────────────────────────────────────────────────
 // Read off the live board, and say when it changes: a wall that rolls off
 // next week is a different trade from one that holds for six.
+// First change from TODAY's level. With projected gamma a lid can change
+// before the first expiry (a weekly's OTM wall fades as it nears): that reads
+// "now, X by <first expiry>", not "until".
 const handoff = (val) => {
-  const k = segs.findIndex((g, i) => i > 0 && val(g) !== val(segs[0]) && val(g) != null);
-  return k > 0 ? { at: segs[k - 1].end, to: val(segs[k]) } : null;
+  const base = val(now);
+  const k = segs.findIndex((g) => val(g) != null && val(g) !== base);
+  if (k < 0) return null;
+  return k === 0 ? { at: null, by: segs[0].end, to: val(segs[0]) } : { at: segs[k - 1].end, to: val(segs[k]) };
 };
+const untilTxt = (h) => (!h ? '' : h.at ? ` until ${md(h.at)}, then ${fmt(h.to)}` : ` now, ${fmt(h.to)} by ${md(h.by)}`);
 const above = now.callWall != null && now.callWall > spot ? now.callWall : null;
 const below = now.putWall != null && now.putWall < spot ? now.putWall : null;
 const cushion = below == null && now.cushion != null && now.cushion < spot ? now.cushion : null;
@@ -612,7 +678,7 @@ const rules = [
     kw: 'IF', col: C.call,
     cond: flipRef == null ? (above ? `it pushes toward ${fmt(above)}` : 'it rallies') : flipRef > spot ? `it reclaims ${fmt(flipRef)}` : `it holds over ${fmt(flipRef)}`,
     rule: above
-      ? `${flipRef == null ? 'no flip in range, so the call wall is the whole story.' : flipRef > spot ? 'back above the flip, dealers stop chasing and start braking.' : 'above the flip, dealers brake.'} ${fmt(above)} is the lid${upNext ? ` until ${md(upNext.at)}, then ${fmt(upNext.to)}` : ''}.`
+      ? `${flipRef == null ? 'no flip in range, so the call wall is the whole story.' : flipRef > spot ? 'back above the flip, dealers stop chasing and start braking.' : 'above the flip, dealers brake.'} ${fmt(above)} is the lid${untilTxt(upNext)}. it can wick over, it tends to close under.`
       : 'no call wall above spot. nothing caps it but the cone.',
   },
   {
@@ -620,10 +686,10 @@ const rules = [
     cond: below ? `it loses ${fmt(below)}` : cushion ? `it loses ${fmt(cushion)}` : `it breaks ${(spot - em0).toFixed(2)}`,
     rule: below
       ? (negGamma
-        ? `${fmt(below)} is the put wall${dnNext ? ` until ${md(dnNext.at)}, then ${fmt(dnNext.to)}` : ''}. a crowd, not a floor: below it dealers sell into the drop.`
-        : `${fmt(below)} is the put wall${dnNext ? ` until ${md(dnNext.at)}, then ${fmt(dnNext.to)}` : ''}. ${flipRef != null && flipRef < below ? `long gamma holds down to ${fmt(flipRef)}; lose that and dealers start chasing.` : 'below it the cushion thins.'}`)
+        ? `${fmt(below)} is the put wall${untilTxt(dnNext)}. a crowd, not a floor: below it dealers sell into the drop.`
+        : `${fmt(below)} is the put wall${untilTxt(dnNext)}. ${flipRef != null && flipRef < below ? `long gamma holds down to ${fmt(flipRef)}; lose that and dealers start chasing.` : 'below it the cushion thins.'}`)
       : cushion
-        ? `no put wall. ${fmt(cushion)} is long gamma below spot, real dealer buying${dnNext ? ` until ${md(dnNext.at)}` : ''}. under it the board is thin.`
+        ? `no put wall. ${fmt(cushion)} is long gamma below spot, real dealer buying${dnNext ? ` until ${md(dnNext.at ?? dnNext.by)}` : ''}. under it the board is thin.`
         : 'nothing below spot on the board.',
   },
   {
@@ -683,7 +749,7 @@ const stamp = new Date().toISOString().slice(0, 10);
   const rows = readLedger(sym).filter((e) => e.madeOn !== madeOn);
   for (const e of rows) e.result = gradePlan(e, allBars);
   rows.push({
-    v: 2, madeOn, asOf: new Date().toISOString(), spot, regime: negGamma ? 'negative' : 'positive',
+    v: 3, madeOn, asOf: new Date().toISOString(), spot, regime: negGamma ? 'negative' : 'positive',
     horizon: segs[segs.length - 1].end, plan: { ...plan }, result: { status: 'WAITING' },
   });
   rows.sort((a, b) => a.madeOn.localeCompare(b.madeOn));

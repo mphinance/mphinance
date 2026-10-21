@@ -298,44 +298,124 @@ function gradeEntry(e, day, bars) {
   // A level price never went near tells you nothing. Counting "never reached the
   // put wall" as a HIT on a quiet day is something a null model with arbitrary
   // round numbers scores just as well. Untested levels stay out of the ratio.
+  //
+  // Scored on the CLOSE (regraded 2026-10-08). "Rallies stall into long gamma"
+  // means dealers sell the rip: 780 on 10/06 was wicked 1.58 through and closed
+  // under. Across the first 10 sessions the brakes/ceilings held on the close
+  // 5/5 and intraday 1/5. The wick is still reported, it just is not the claim.
   const tol = (e.expected || expected) * 0.25;
   const checks = [];
   const level = (lvl, side, label) => {
     if (lvl == null) return;
     const reached = side === 'low' ? low : high;
     const dist = Math.abs(reached - lvl);
-    const held = side === 'low' ? low >= lvl : high <= lvl;
-    checks.push({ lvl, side, dist: +dist.toFixed(2), tested: dist <= tol || !held, ok: held, label });
+    const wickHeld = side === 'low' ? low >= lvl : high <= lvl;
+    const held = side === 'low' ? close >= lvl : close <= lvl;
+    const thru = side === 'low' ? lvl - low : high - lvl;
+    checks.push({ lvl, side, dist: +dist.toFixed(2), thru: +thru.toFixed(2), tested: dist <= tol || !wickHeld, ok: held, wickHeld, label });
   };
+  // The flip is a ceiling when price is under it and a floor when price is over
+  // it. It used to be graded as a ceiling every time, so every night drawn above
+  // the flip booked a MISS ("broke 768.1 flip by 13.48") for being above it.
+  const spot = e.spot;
+  if (e.flip != null) level(e.flip, spot < e.flip ? 'high' : 'low', `${e.flip} flip`);
   level(e.cushion, 'low', `${e.cushion} cushion`);
-  level(e.wall, 'low', `${e.wall} put wall`);
-  level(e.flip, 'high', `${e.flip} flip`);
   level(e.brake ?? e.battle, 'high', `${e.brake ?? e.battle} brake`);
   level(e.gate, 'high', `${e.gate} ceiling`);
+  // The put wall is not scored: the map calls it "a crowd, not a floor", so a
+  // close under it is not a miss and a close over it is not a hit. Reported only.
+  const wallHit = e.wall != null && low <= e.wall + tol;
 
-  // Exclusive branches. UP and DOWN could both fire, with "took both roads" as a
-  // named outcome, which let the chart claim it called whatever happened.
-  const wentUp = e.flip != null && high > e.flip;
-  const wentDown = e.shelf != null && low < e.shelf;
+  // Which road the session took, read off the map's own first level each way.
+  // Reported, never scored: the map lays out all three roads and does not pick.
+  // (It used to award a point per session for "not a whipsaw", and defined UP
+  // as "high over the flip", which is every day once price is above it.)
+  const ups = [e.flip, e.brake ?? e.battle, e.gate].filter((v) => v != null && v > spot);
+  const dns = [e.shelf, e.cushion, e.flip, e.wall].filter((v) => v != null && v < spot);
+  const upTrig = ups.length ? Math.min(...ups) : null;
+  const dnTrig = dns.length ? Math.max(...dns) : null;
+  const wentUp = upTrig != null && high > upTrig;
+  const wentDown = dnTrig != null && low < dnTrig;
   const branch = wentUp && wentDown ? 'WHIPSAW' : wentUp ? 'UP' : wentDown ? 'DOWN' : 'RANGE';
   const branchOk = branch !== 'WHIPSAW';
 
+  // Baseline: the same number of levels each side, at plain $5 round numbers
+  // stepping away from spot, scored by the same rule. A hit rate without this
+  // is a number with nothing to compare it to.
+  const nUp = checks.filter((c) => c.side === 'high').length;
+  const nDn = checks.filter((c) => c.side === 'low').length;
+  const nullHits = [], R = 5;
+  for (let i = 0; i < nUp; i++) {
+    const v = Math.ceil(spot / R) * R + R * i;
+    if (high >= v - tol) nullHits.push(close <= v);
+  }
+  for (let i = 0; i < nDn; i++) {
+    const v = Math.floor(spot / R) * R - R * i;
+    if (low <= v + tol) nullHits.push(close >= v);
+  }
+
+  // The RANGE road's claim: on a day neither road fires, price settles near the
+  // pin. Scored only on RANGE days, as "closed within half a typical day of
+  // the pin", against the nearest $5 round number to spot by the same rule.
+  if (branch === 'RANGE' && e.chartPin != null) {
+    const near = tol * 2;
+    checks.push({ lvl: e.chartPin, side: 'pin', dist: +Math.abs(close - e.chartPin).toFixed(2), thru: 0,
+                  tested: true, ok: Math.abs(close - e.chartPin) <= near, wickHeld: true, label: `${e.chartPin} pin` });
+    const r5 = Math.round(spot / R) * R;
+    nullHits.push(Math.abs(close - r5) <= near);
+  }
+
   const tested = checks.filter((c) => c.tested);
   const untested = checks.filter((c) => !c.tested);
+  const verb = (c) => {
+    if (c.side === 'pin') return c.ok ? `settled ${c.dist.toFixed(2)} from the ${c.label}` : `MISS closed ${c.dist.toFixed(2)} from the ${c.label}`;
+    if (c.ok && !c.wickHeld) return `wicked ${c.thru.toFixed(2)} through ${c.label}, closed ${c.side === 'high' ? 'under' : 'over'}`;
+    return `${c.ok ? 'held' : 'MISS closed through'} ${c.label}${c.ok ? ` by ${c.dist.toFixed(2)}` : ''}`;
+  };
   return {
     day, open, high, low, close, branch, branchOk, checks, tested, untested,
-    hits: tested.filter((c) => c.ok).length + (branchOk ? 1 : 0),
-    total: tested.length + 1,
+    hits: tested.filter((c) => c.ok).length,
+    total: tested.length,
+    nullHits: nullHits.filter(Boolean).length,
+    nullTotal: nullHits.length,
     summary: [
-      branch === 'WHIPSAW' ? 'MISS whipsawed through both roads' : `took the ${branch} road`,
-      ...tested.map((c) => `${c.ok ? 'held' : 'MISS broke'} ${c.label} by ${c.dist.toFixed(2)}`),
+      branch === 'WHIPSAW' ? 'whipsawed both roads' : `took the ${branch} road`,
+      ...tested.map(verb),
+      wallHit ? `tagged the ${e.wall} put wall` : '',
       untested.length ? `${untested.length} level${untested.length > 1 ? 's' : ''} untested` : '',
     ].filter(Boolean).join(' · '),
   };
 }
 
-// Backfill: score any prior entry whose session has closed and is still in reach.
 let ledgerDirty = false;
+// --regrade: rescore every graded entry under the current rules from daily
+// OHLC (Yahoo). The intraday feed only reaches ~5 sessions back, so this is the
+// only way to put old entries on new rules. The previous grade is kept as
+// graded_v1 so the change is auditable. Used once on 2026-10-08 (v2 rules).
+if (argv.includes('--regrade') && !ledgerBroken) {
+  const yr = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=6mo`, {
+    headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(30000),
+  }).then((r) => r.json());
+  const res = yr?.chart?.result?.[0];
+  const qq = res.indicators.quote[0];
+  const daily = res.timestamp.map((t, i) => ({ d: new Date(t * 1000).toISOString().slice(0, 10), o: qq.open[i], h: qq.high[i], l: qq.low[i], c: qq.close[i] }))
+    .filter((b) => b.c != null);
+  for (const e of ledger) {
+    if (!e.graded) continue;
+    const b = daily.find((x) => x.d > e.madeAfter);
+    if (!b || b.d !== e.graded.day) { console.log(`regrade skip ${e.madeAfter}: no matching daily bar`); continue; }
+    const g = gradeEntry(e, b.d, [b.o, b.h, b.l, b.c]);
+    if (e.graded.v !== 2) e.graded_v1 = e.graded;
+    e.graded = { v: 2, day: g.day, branch: g.branch, hits: g.hits, total: g.total,
+                 nullHits: g.nullHits, nullTotal: g.nullTotal,
+                 untested: g.untested.length, summary: g.summary,
+                 checks: g.tested.map((c) => ({ lvl: c.lvl, side: c.side, ok: c.ok })), source: 'daily OHLC regrade' };
+    console.log(`regraded ${e.madeAfter} -> ${g.day}: ${g.hits}/${g.total} (null ${g.nullHits}/${g.nullTotal}) | ${g.summary}`);
+  }
+  ledgerDirty = true;
+}
+
+// Backfill: score any prior entry whose session has closed and is still in reach.
 if (!ledgerBroken) {
   for (const e of ledger) {
     if (e.graded) continue;
@@ -346,8 +426,10 @@ if (!ledgerBroken) {
     const bars = sessionBars(day);
     if (!bars.length) continue;
     const g = gradeEntry(e, day, bars);
-    e.graded = { day: g.day, branch: g.branch, hits: g.hits, total: g.total,
-                 untested: g.untested.length, summary: g.summary };
+    e.graded = { v: 2, day: g.day, branch: g.branch, hits: g.hits, total: g.total,
+                 nullHits: g.nullHits, nullTotal: g.nullTotal,
+                 untested: g.untested.length, summary: g.summary,
+                 checks: g.tested.map((c) => ({ lvl: c.lvl, side: c.side, ok: c.ok })) };
     ledgerDirty = true;
   }
 }
@@ -355,13 +437,38 @@ if (!ledgerBroken) {
 // The running record. Not published until there are enough sessions for it to
 // mean anything: a one-session "4/4" is a number, not a track record.
 const MIN_GRADED = 10;
-const gradedAll = ledger.filter((e) => e.graded);
+// The day the v2 grading went live and the public record started over.
+const RECORD_RESTART = '2026-10-08';
+// Only sessions graded LIVE under the v2 rules count toward the public record.
+// The 10 sessions before 2026-10-08 were regraded after the fact, under rules
+// chosen while looking at them (close-grading came from seeing the brakes hold
+// on the close). Scoring rules on the data that shaped them is in-sample, so
+// those stay in the ledger as history and the public clock restarts.
+const gradedAll = ledger.filter((e) => e.graded && e.graded.v === 2 && !e.graded.source);
+const inSample = ledger.filter((e) => e.graded && e.graded.source);
 const record = {
+  inSample: { sessions: inSample.length, hits: inSample.reduce((a, e) => a + e.graded.hits, 0), total: inSample.reduce((a, e) => a + e.graded.total, 0),
+              nullHits: inSample.reduce((a, e) => a + (e.graded.nullHits ?? 0), 0), nullTotal: inSample.reduce((a, e) => a + (e.graded.nullTotal ?? 0), 0) },
+  // Gamma levels that are NOT $5 round numbers. On SPY most brakes are round
+  // strikes, so the round-number baseline cannot separate them from gamma;
+  // this split can. Reported, not published, until it has a sample.
+  nonRound: (() => {
+    const cs = gradedAll.flatMap((e) => e.graded.checks || []).filter((c) => c.side !== 'pin' && c.lvl % 5 !== 0);
+    return { hits: cs.filter((c) => c.ok).length, total: cs.length };
+  })(),
   sessions: gradedAll.length,
   hits: gradedAll.reduce((a, e) => a + e.graded.hits, 0),
   total: gradedAll.reduce((a, e) => a + e.graded.total, 0),
+  nullHits: gradedAll.reduce((a, e) => a + (e.graded.nullHits ?? 0), 0),
+  nullTotal: gradedAll.reduce((a, e) => a + (e.graded.nullTotal ?? 0), 0),
+  // Every graded entry must be on the v2 rules before the record is claimable;
+  // mixing the old flip-side bug into a published rate would be worse than none.
   publishable: gradedAll.length >= MIN_GRADED,
   minSessions: MIN_GRADED,
+  // The note has to say the clock restarted, not just count from it: "1 session
+  // graded" read as a brand-new map when it had run nightly for two weeks.
+  firstMap: ledger.map((e) => e.madeAfter).sort()[0] || null,
+  restartedOn: RECORD_RESTART,
 };
 
 // The panel still shows yesterday, because that is reporting, not a claim.
@@ -422,8 +529,68 @@ const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt
 // tape has to deal with; its note says what the book does to price THERE, which
 // is the whole point -- the same level behaves differently depending on which
 // way you arrived at it.
-const rangeLo = Math.min(pin, Math.floor(spot)) - 1;
-const rangeHi = Math.max(pin, Math.ceil(flip));
+// The ELSE band is the gap between the two IF triggers, so the three roads are
+// exhaustive: every price tomorrow falls into exactly one of them. It used to be
+// built from the pin and the flip alone, and on 2026-10-13 that printed "it holds
+// between 776 and 777" with spot at 778.10 -- the branch a reader lands in by
+// default excluded the price the map was drawn from. The triggers are the same
+// numbers the IF rows quote (brake/ceiling above, shelf below), and `above`/
+// `below` are strict, so the band always contains spot; the clamp is belt and
+// braces for the no-level fallbacks.
+// Mirror of the DOWN chain below: fall through to the next level the road
+// actually names instead of to nothing. brake -> ceiling stays first because
+// those are the levels a reader acts on and SKILL.md is explicit that the flip
+// is context, not the trigger. accel and the flip are only reached when the book
+// has no long-gamma strike above spot at all -- and with brake and gate both
+// null, upTrigger used to be null, so rangeHi collapsed to ceil(spot): the ELSE
+// band topped out a cent over the current price and the IF row read "it goes
+// higher" with no number. That is the same bug the DOWN side had on 2026-10-14.
+// Tonight's book (brake null, accel null, gate 780) was one missing strike away
+// from printing it.
+const upLead = brake || gate || accel || null;
+const upTrigger = upLead ? upLead.strike : flip > spot ? Number(flip.toFixed(2)) : null;
+// The DOWN trigger is the first level below spot that the road actually names:
+// the shelf, else the thin cushion, else the put wall. It used to fall back to
+// Math.floor(spot) whenever no shelf was readable, and on 2026-10-14 that printed
+// "IF it goes below 778" with spot at 778.01 -- a branch that fires on a one-cent
+// move, and an ELSE band ("holds between 778 and 780") that contained spot only by
+// that cent. Mirrors the UP side, which falls brake -> ceiling. Grading never reads
+// these triggers (it scores e.shelf/e.cushion/e.brake directly), so this is a
+// caption and band change only.
+const downLead = shelfLvl || cushion || floor || null;
+const downTrigger = downLead ? downLead.strike : Math.floor(spot);
+const rangeHi = Math.max(upTrigger ?? Math.ceil(Math.max(pin, flip)), Math.ceil(spot));
+const rangeLo = Math.min(downTrigger, Math.floor(spot));
+
+// How far each IF trigger sits from the close, measured against a typical day.
+// The three roads are exhaustive, but that says nothing about whether they are
+// comparable: when a trigger is a rounding error away from spot, that road has
+// already fired at the bell and the ELSE band is not a branch a reader waits on.
+// On 2026-10-18 the down trigger (763) sat 0.23 under a 763.23 close with a
+// typical day of 11.01, and the quiet range was 4 points wide. The chart already
+// says so when the FLIP sits on price; this is the same disclosure for the two
+// roads a reader actually acts on. Caption and sidecar only -- grading reads the
+// named levels (e.shelf/e.cushion/e.brake/e.gate), never these triggers.
+const NEAR_TRIGGER = 0.15; // of a typical day
+const NARROW_BAND = 0.5; //  of a typical day
+const gapUp = upTrigger != null ? +(upTrigger - spot).toFixed(2) : null;
+const gapDown = downTrigger != null ? +(spot - downTrigger).toFixed(2) : null;
+const bandWidth = +(rangeHi - rangeLo).toFixed(2);
+const triggerNote = (() => {
+  if (!(expected > 0)) return null;
+  const near = [];
+  if (gapUp != null && gapUp <= expected * NEAR_TRIGGER) near.push(`the up trigger ${upTrigger} is ${gapUp.toFixed(2)} over spot`);
+  if (gapDown != null && gapDown <= expected * NEAR_TRIGGER) near.push(`the down trigger ${downTrigger} is ${gapDown.toFixed(2)} under spot`);
+  if (near.length) {
+    return `${near.join(' and ')}, against a typical day of ${expected.toFixed(2)}: `
+      + `${near.length > 1 ? 'those roads fire' : 'that road fires'} on the open, so ${rangeLo}-${rangeHi} is the narrow branch, not the default.`;
+  }
+  if (bandWidth < expected * NARROW_BAND) {
+    return `the quiet range ${rangeLo}-${rangeHi} is ${bandWidth.toFixed(2)} wide against a typical day of `
+      + `${expected.toFixed(2)}, so holding it is the unlikely branch tonight.`;
+  }
+  return null;
+})();
 
 const sideFilter = (pts_, up) => pts_.filter((w) => w && (up ? w.at > spot : w.at < spot));
 
@@ -431,17 +598,25 @@ const roads = [
   {
     key: 'UP',
     col: C.call,
-    cond: flip > spot ? `above ${flip.toFixed(2)}` : "higher",
+    // Led by the brake, not the flip. In the first 10 graded sessions the flip
+    // held on the close 3 of 6 times, a coin flip; brakes and ceilings held 5/5.
+    // The flip is kept as context (which regime dealers are in), not as the
+    // trigger a reader acts on.
+    cond: brake ? `up into ${brake.strike}`
+      : gate ? `up into ${gate.strike}`
+      : accel ? `up through ${accel.strike}`
+      : upTrigger != null ? `up through the ${upTrigger} flip`
+      : 'higher',
     rule: gate
-      ? ((flip <= spot ? 'already above the flip, so dealers are braking. ' : '') + (brake
-          ? `${accel ? `rips through ${accel.strike}, then ` : ''}stalls into ${brake.strike}, dies at ${gate.strike}.`
-          : `${accel ? `rips through ${accel.strike}. ` : ''}nothing gives until ${gate.strike}.`))
-      : `dealers brake. no ceiling in range.`,
+      ? ((flip > spot ? `under the flip (${flip.toFixed(2)}) dealers chase, so it can get there fast. ` : '') + (brake
+          ? `${accel ? `rips through ${accel.strike}, then ` : ''}stalls at ${brake.strike}: it can wick over, it tends to close under. ceiling ${gate.strike}.`
+          : `${accel ? `rips through ${accel.strike}. ` : ''}nothing gives until ${gate.strike}, and it tends to close under that.`))
+      : `${accel ? `rips through ${accel.strike}. ` : ''}no long-gamma strike above spot, so nothing in the book brakes it${flip > spot ? `; over ${flip.toFixed(2)} dealers stop chasing` : ''}.`,
     side: -1,
     pts: [
       flip > spot ? { at: flip, tag: `${flip.toFixed(2)} FLIP`, note: 'dealers stop chasing, start braking' } : null,
       accel ? { at: accel.strike, tag: `${accel.strike} ACCELERANT`, note: `${oiFmt(accel.callOi)} calls, dealers buy into strength` } : null,
-      brake ? { at: brake.strike, tag: `${brake.strike} BRAKE`, note: 'dealers sell rips here, rallies stall' } : null,
+      brake ? { at: brake.strike, tag: `${brake.strike} BRAKE`, note: 'wicks through, closes under' } : null,
       gate ? { at: gate.strike, tag: `${gate.strike} CEILING`, note: 'move dies here' } : null,
     ], up: true,
   },
@@ -462,21 +637,35 @@ const roads = [
   {
     key: 'DOWN',
     col: C.put,
-    cond: shelfLvl ? `below ${shelfLvl.strike}` : `below ${Math.floor(spot)}`,
+    cond: `below ${downTrigger}`,
     rule: (() => {
       // The shelf is a real listed strike (it came off the ladder), so the old
       // "missing strike defaults to a SHELF" trap cannot recur here.
-      const lead = shelfLvl
-        ? (shelfLvl.netGex >= 0 ? `leans on ${shelfLvl.strike}. lose it and ` : `trapdoor at ${shelfLvl.strike}. through it, `)
-        : '';
-      if (!floor) {
-        return shelfLvl
-          ? (shelfLvl.netGex >= 0 ? `leans on ${shelfLvl.strike}. ` : `trapdoor at ${shelfLvl.strike}. `) + 'no readable structure below it.'
-          : 'no readable structure below spot.';
+      if (shelfLvl) {
+        const lead = shelfLvl.netGex >= 0
+          ? `leans on ${shelfLvl.strike}. lose it and `
+          : `trapdoor at ${shelfLvl.strike}. through it, `;
+        if (!floor) {
+          return (shelfLvl.netGex >= 0 ? `leans on ${shelfLvl.strike}. ` : `trapdoor at ${shelfLvl.strike}. `)
+            + 'no readable structure below it.';
+        }
+        if (cushion) return `${lead}thin air. only real bid is ${cushion.strike}. then ${floor.strike}.`;
+        if (pocket) return `${lead}open air. ${pocket.lo} to ${pocket.hi} is empty. next stop ${floor.strike}.`;
+        return `${lead}no thin band above ${floor.strike}. grind, not a drop.`;
       }
-      if (cushion) return `${lead}thin air. only real bid is ${cushion.strike}. then ${floor.strike}.`;
-      if (pocket) return `${lead}open air. ${pocket.lo} to ${pocket.hi} is empty. next stop ${floor.strike}.`;
-      return `${lead}no thin band above ${floor.strike}. grind, not a drop.`;
+      // No shelf, so there is nothing to lose between here and the trigger: the
+      // trigger IS the first real bid, and the sentence describes what is under it.
+      if (cushion) {
+        return floor
+          ? `that bid is thin, the only dealer buying above ${floor.strike}. under it the ${floor.strike} put wall, which is a crowd, not a floor.`
+          : 'that bid is thin, and there is no readable structure under it.';
+      }
+      if (floor) {
+        return pocket
+          ? `open air above it: ${pocket.lo} to ${pocket.hi} is empty. the put wall is a crowd, not a floor.`
+          : 'the put wall is a crowd, not a floor, and there is nothing readable under it.';
+      }
+      return 'no readable structure below spot.';
     })(),
     side: 1,
     pts: floor || shelfLvl
@@ -518,17 +707,23 @@ push(`<rect x="${FWD_X}" y="${PAD_T}" width="${FWD_W}" height="${PLOT_H}" fill="
 
 // Which side of the flip you are on is the single most important fact on this
 // half of the chart, so it gets colour rather than a line to read.
+// The two band captions sit at a fixed offset from the flip, so when a waypoint
+// lands on roughly the same price as the flip they print straight through each
+// other. That happened on 2026-10-12: flip 774.90 and a 775 LAST SHELF rendered
+// one on top of the other and neither was readable. The tint carries the same
+// meaning on its own, so the caption yields to the waypoint rather than moving,
+// which would put it next to a price that is not the flip.
+const flipBandY = Math.max(PAD_T, Math.min(PAD_T + PLOT_H, Y(flip)));
 {
-  const yf = Math.max(PAD_T, Math.min(PAD_T + PLOT_H, Y(flip)));
+  const yf = flipBandY;
   push(`<rect x="${FWD_X}" y="${PAD_T}" width="${FWD_W}" height="${yf - PAD_T}" fill="${C.call}" fill-opacity="0.05"/>`);
   push(`<rect x="${FWD_X}" y="${yf}" width="${FWD_W}" height="${PAD_T + PLOT_H - yf}" fill="${C.put}" fill-opacity="0.055"/>`);
-  push(`<text x="${W - PAD_R - 10}" y="${yf - 10}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${C.call}" fill-opacity="0.75">ABOVE THE FLIP / dealers brake</text>`);
-  push(`<text x="${W - PAD_R - 10}" y="${yf + 20}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${C.put}" fill-opacity="0.75">BELOW THE FLIP / dealers chase</text>`);
 }
 
 // Everything outside a typical day's excursion is a tail. Drawing 772 as far
 // from spot as 761 made a 4-point move look as ordinary as a 7-point one.
 const emHi = spot + expected, emLo = spot - expected;
+let emCaption = null;
 {
   const y1 = Math.max(PAD_T, Y(emHi)), y2 = Math.min(PAD_T + PLOT_H, Y(emLo));
   push(`<rect x="${FWD_X}" y="${PAD_T}" width="${FWD_W}" height="${y1 - PAD_T}" fill="${C.bg}" fill-opacity="0.5"/>`);
@@ -536,7 +731,10 @@ const emHi = spot + expected, emLo = spot - expected;
   for (const yy of [y1, y2]) {
     push(`<line x1="${FWD_X}" y1="${yy}" x2="${W - PAD_R}" y2="${yy}" stroke="${C.dim}" stroke-width="0.8" stroke-opacity="0.45" stroke-dasharray="6 6"/>`);
   }
-  push(`<text x="${FWD_X + 10}" y="${y1 - 8}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}">beyond a typical day (+/- ${expected.toFixed(2)})</text>`);
+  // Deferred to after the waypoint labels have claimed their rows. On 2026-10-16
+  // this caption and the FLIP waypoint's note were written on the same line and
+  // the two sentences overlapped into unreadable mush.
+  emCaption = { y1, text: `beyond a typical day (+/- ${expected.toFixed(2)})` };
 }
 
 // price rail
@@ -561,6 +759,22 @@ for (const k of candles) {
   push(`<rect x="${(x - cw / 2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${cw.toFixed(1)}" height="${Math.max(1, yBot - yTop).toFixed(1)}" fill="${col}" fill-opacity="${up ? 0.85 : 0.95}"/>`);
 }
 push(`<text x="${PAD_L + 8}" y="${PAD_T + 36}" font-family="'JetBrains Mono',monospace" font-size="9.5" fill="${C.dim}">${BUCKET}m candles</text>`);
+// The graded session's high/low markers are price labels centred on their tick.
+// A gap label is pinned at X(i)+5 of the session's first tick, and an opening
+// gap is precisely the case where that first tick is also the session extreme,
+// so the two print through each other. Collect the marker x's up front so the
+// gap label can step clear of them.
+const markerXs = [];
+if (report) {
+  const ri = pts.map((q, i) => (dayKey(q.t) === report.day ? i : -1)).filter((i) => i >= 0);
+  if (ri.length) {
+    markerXs.push(
+      X(ri.reduce((b, i) => (pts[i].px < pts[b].px ? i : b), ri[0])),
+      X(ri.reduce((b, i) => (pts[i].px > pts[b].px ? i : b), ri[0])),
+    );
+  }
+}
+
 sessions.forEach((d, k) => {
   const i = pts.findIndex((p) => dayKey(p.t) === d);
   push(`<text x="${X(i) + 5}" y="${PAD_T + PLOT_H - 8}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}">${d.slice(5)}</text>`);
@@ -572,7 +786,8 @@ sessions.forEach((d, k) => {
   if (Math.abs(g) < 0.4) return;
   const y1 = Y(prevPx[prevPx.length - 1]), y2 = Y(pts[i].px);
   push(`<line x1="${X(i)}" y1="${y1}" x2="${X(i)}" y2="${y2}" stroke="${C.pin}" stroke-width="2" stroke-opacity="0.55"/>`);
-  push(`<text x="${X(i) + 5}" y="${(y1 + y2) / 2 + 3}" font-family="'JetBrains Mono',monospace" font-size="9.5" fill="${C.pin}" fill-opacity="0.85">gap ${g > 0 ? '+' : ''}${g.toFixed(2)}</text>`);
+  const gx = markerXs.some((mx) => Math.abs(mx - X(i)) < 24) ? X(i) + 24 : X(i) + 5;
+  push(`<text x="${gx}" y="${(y1 + y2) / 2 + 3}" font-family="'JetBrains Mono',monospace" font-size="9.5" fill="${C.pin}" fill-opacity="0.85">gap ${g > 0 ? '+' : ''}${g.toFixed(2)}</text>`);
 });
 push(`<text x="${PAD_L + 8}" y="${PAD_T + 20}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" letter-spacing="2">THE LAST ${sessions.length} SESSIONS</text>`);
 // Last night's call, drawn back over the session it was made for. Green means
@@ -632,7 +847,22 @@ function smooth(pp) {
 
 const labels = [];
 const ROAD_X0 = FWD_X + 14;
-const ROAD_W = FWD_W - 210;   // leave room for the waypoint labels
+// The gutter on the right holds the last waypoint's label on each road: the road
+// name plus its note. It used to be a flat 210px, and the note is a sentence, so
+// a long one ran off the edge of the image: on 2026-10-16 the UP road read
+// "31k calls, dealers buy into stre" with the rest of the word outside the
+// canvas. 36 characters of 11px mono is ~245px, so the gutter is now measured
+// from the text that is actually going to be drawn in it, capped so the roads
+// cannot be squeezed to nothing on a night with very wordy notes.
+const textW = (s_, px) => String(s_).length * px * 0.62;
+for (const r of roads) if (r.up !== undefined) r.pts = sideFilter(r.pts, r.up);
+const gutterNeed = Math.max(0, ...roads.map((r) => {
+  if (!r.pts.length) return 0;
+  if (r.wave) return textW(r.key, 15);
+  const w = r.pts[r.pts.length - 1];
+  return Math.max(textW(`${r.key} \u00b7 ${w.tag} *`, 13), textW(w.note, 11));
+}));
+const ROAD_W = FWD_W - Math.min(Math.max(210, Math.ceil(gutterNeed) + 30), Math.round(FWD_W * 0.46));
 
 for (const r of roads) {
   if (r.up !== undefined) r.pts = sideFilter(r.pts, r.up);
@@ -648,9 +878,17 @@ for (const r of roads) {
     // the range road oscillates instead of going anywhere
     const wp = [[FWD_X, ys]];
     const cycles = 3.5, steps = 48;
+    // The wave is centred on the pin, which is rarely centred in the band, so the
+    // amplitude is also capped by the pin's distance to the nearer edge. Without
+    // that cap it drew outside its own box: on 2026-10-14 the band ran 775-780 with
+    // the pin at 779 and the "quiet drift" road swung a full typical day and poked
+    // through the ceiling it was supposed to be held under.
+    const halfBand = (rangeHi - rangeLo) / 2;
+    const toEdge = Math.min(rangeHi - pin, pin - rangeLo);
+    const amp = Math.max(0, Math.min(halfBand * 0.5, toEdge * 0.7));
     for (let i = 1; i <= steps; i++) {
       const f = i / steps;
-      const px = pin + Math.sin(f * Math.PI * 2 * cycles) * ((rangeHi - rangeLo) / 2) * 0.5;
+      const px = pin + Math.sin(f * Math.PI * 2 * cycles) * amp;
       wp.push([ROAD_X0 + ROAD_W * f, Y(px)]);
     }
     path = smooth(wp);
@@ -713,6 +951,38 @@ for (const L of labels) {
   push(`<text x="${L.tx}" y="${(L.ty + 15).toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" fill-opacity="${op}">${esc(L.note)}</text>`);
 }
 
+// The flip band captions, now that the waypoint labels have claimed their rows.
+// A placed label occupies roughly ty-11 (tag cap height) to ty+19 (bottom of the
+// note line that hangs 15px under it); a caption occupies yt-9 to yt+2. Drop the
+// caption on any overlap. Both are right-hand text in the forward panel, so the
+// vertical test alone is enough and erring toward dropping one is harmless.
+for (const [yt, col, txt] of [
+  [flipBandY - 10, C.call, 'ABOVE THE FLIP / dealers brake'],
+  [flipBandY + 20, C.put, 'BELOW THE FLIP / dealers chase'],
+]) {
+  if (labels.some((L) => yt + 2 > L.ty - 11 && yt - 9 < L.ty + 19)) continue;
+  push(`<text x="${W - PAD_R - 10}" y="${yt}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${col}" fill-opacity="0.75">${txt}</text>`);
+}
+
+// Same overlap test for the typical-day band caption. It gets a second row to try
+// (just under the dashed line) before it is dropped, because it is the only thing
+// on the chart that says how far a normal day travels.
+// The forward panel's own "TOMORROW" header sits at PAD_T + 20 and is drawn at
+// the same x as this caption. When the typical-day band clamps to the top of the
+// plot, the caption's fallback row lands straight through that header, which is
+// what 2026-10-19 rendered. Reserve the header row and give the caption a third
+// row underneath it.
+if (emCaption) {
+  const HDR = [PAD_T + 9, PAD_T + 24];
+  const taken = (yt) =>
+    labels.some((L) => yt + 2 > L.ty - 11 && yt - 9 < L.ty + 19) ||
+    (yt + 2 > HDR[0] && yt - 9 < HDR[1]);
+  const yt = [emCaption.y1 - 8, emCaption.y1 + 14, emCaption.y1 + 34].find((c) => c > PAD_T + 10 && !taken(c));
+  if (yt != null) {
+    push(`<text x="${FWD_X + 10}" y="${yt}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}">${esc(emCaption.text)}</text>`);
+  }
+}
+
 // ── how the last one went ───────────────────────────────────────────────────
 let SCORE_H = 0;
 if (report) {
@@ -739,6 +1009,12 @@ ifRows.forEach((r, i) => {
   push(`<text x="${PAD_L + 330}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(r.rule)}</text>`);
 });
 
+// Sits between the IF/ELSE block (last row's box bottom is IF_T + rows*42 - 48)
+// and the footer at H-16, so it has its own row and cannot collide with either.
+if (triggerNote) {
+  push(`<text x="${PAD_L}" y="${H - 34}" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${C.pin}" fill-opacity="0.85">${esc(triggerNote)}</text>`);
+}
+
 push(`<text x="${PAD_L}" y="${H - 16}" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${C.dim}">Levels are net gamma exposure by strike. Where dealers are long gamma they brake, where they are short they chase, where there is nothing price travels. Not advice.</text>`);
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${s}</svg>`;
@@ -763,7 +1039,10 @@ await browser.close();
 const entry = {
   madeAfter: sessions[sessions.length - 1],
   asOf: new Date().toISOString(),
-  spot, flip, pin: magnet,
+  // `pin` was always the API's maxGammaStrike (787 on 10/06 with spot 779), not
+  // the pin the chart draws, so the RANGE road could never be graded. Kept for
+  // continuity; chartPin is the one the map actually claims.
+  spot, flip, pin: magnet, chartPin: pin, expected,
   accel: accel ? accel.strike : null,
   brake: brake ? brake.strike : null,
   gate: gate ? gate.strike : null,
@@ -816,6 +1095,9 @@ writeFileSync(sidecar, JSON.stringify({
     cond: r.isElse ? `it holds ${r.cond}` : `it goes ${r.cond}`,
     rule: r.rule,
   })),
+  triggers: { up: upTrigger, down: downTrigger, gapUp, gapDown,
+              band: { lo: rangeLo, hi: rangeHi, width: bandWidth } },
+  triggerNote,
   record,
   lastCall: report && !report.partial
     ? { day: report.day, hits: report.hits, total: report.total, branch: report.branch,
