@@ -70,6 +70,38 @@ def _day(iso):
     return f"{dt:%b} {dt.day}"
 
 
+def last_call_line(d):
+    """How the previous map actually did, in plain words.
+
+    The chart has carried a LAST CALL row for weeks but the note never did, so a
+    reader on Substack saw tomorrow's claim and never the last one being scored.
+    Dated rather than "last night": on a Sunday run the graded session is Friday.
+    Grades are on the close, which is why a wick through a level is reported here
+    as a hold and not a miss.
+    """
+    lc = d.get("lastCall") or {}
+    if not lc.get("day") or not lc.get("summary"):
+        return None
+    total = lc.get("total") or 0
+    if total:
+        head = (
+            f"The last map, graded on the {_day(lc['day'])} close: {lc.get('hits', 0)} of "
+            f"{total} level{'' if total == 1 else 's'} price actually reached closed on "
+            f"the right side."
+        )
+    else:
+        # A level price never approached is not a hit or a miss, and scoring it
+        # either way is how a quiet session flatters a map.
+        head = (
+            f"The last map, graded on the {_day(lc['day'])} close: price came nowhere "
+            f"near the levels it named, so there was nothing to score."
+        )
+    detail = "; ".join(p.strip() for p in lc["summary"].split("·") if p.strip())
+    if not detail:
+        return head
+    return f"{head} {detail[0].upper()}{detail[1:]}."
+
+
 def compose(d, changes=()):
     """The caption. Short, factual, no voice."""
     sym = d["symbol"]
@@ -107,6 +139,12 @@ def compose(d, changes=()):
             + f"{rec['sessions']} of {need} sessions graded under the current rules. "
             f"No hit rate until there are {need}."
         )
+
+    # The last session's grade goes before tomorrow's roads: the record is the
+    # reason to read the forecast, so it should not be buried under it.
+    graded = last_call_line(d)
+    if graded:
+        lines.append(graded)
 
     for b in d["branches"]:
         lines.append(f"{b['kind']} {b['cond']} -> {b['rule']}")
