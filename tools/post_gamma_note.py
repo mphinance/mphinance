@@ -132,6 +132,22 @@ def compose(d, changes=()):
             f"right side across {rec['sessions']} sessions. Plain $5 round numbers, "
             f"same days, same rule: {rec.get('nullHits', 0)}/{rec.get('nullTotal', 0)}."
         )
+        # Two fractions side by side read as a gap, and a gap reads as an edge.
+        # At this sample size it usually is not one, so the note says how often
+        # chance produces a gap that size rather than leaving it to be subtracted.
+        edge = rec.get("edge") or {}
+        if edge.get("p") is not None:
+            odds = max(1, round(edge["p"] * 100))
+            if edge.get("inNoise"):
+                lines.append(
+                    f"That gap is not an edge yet. With this few graded levels, chance alone "
+                    f"produces a gap at least that big about {odds} times in 100, so treat the "
+                    f"two numbers as the same until the sample grows."
+                )
+            else:
+                lines.append(
+                    f"Chance alone produces a gap at least that big about {odds} times in 100."
+                )
     elif rec.get("sessions"):
         need = rec.get("minSessions", 10)
         lines.append(

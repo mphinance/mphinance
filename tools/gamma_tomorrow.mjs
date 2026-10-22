@@ -437,6 +437,26 @@ if (!ledgerBroken) {
 // The running record. Not published until there are enough sessions for it to
 // mean anything: a one-session "4/4" is a number, not a track record.
 const MIN_GRADED = 10;
+// Two rates printed side by side invite the reader to subtract them, and the
+// first night this record published, 11/15 against the baseline's 9/16 looked
+// like a 17-point edge. At 15 levels it is not one. Fisher's exact test, two
+// tailed, on the 2x2 of hits and misses, so the note can say how often a gap
+// that size turns up by chance instead of letting the subtraction speak.
+const lnF = (n) => { let s = 0; for (let i = 2; i <= n; i++) s += Math.log(i); return s; };
+const tableP = (a, b, c, d) =>
+  Math.exp(lnF(a + b) + lnF(c + d) + lnF(a + c) + lnF(b + d) - lnF(a + b + c + d) - lnF(a) - lnF(b) - lnF(c) - lnF(d));
+function fisherTwoTailed(a, b, c, d) {
+  const n = a + b + c + d, r1 = a + b, c1 = a + c;
+  if (!n || !r1 || !c1 || r1 === n || c1 === n) return 1;
+  const obs = tableP(a, b, c, d);
+  let tot = 0;
+  for (let x = Math.max(0, c1 - (n - r1)); x <= Math.min(r1, c1); x++) {
+    const pr = tableP(x, r1 - x, c1 - x, n - r1 - c1 + x);
+    if (pr <= obs * (1 + 1e-9)) tot += pr;
+  }
+  return Math.min(1, tot);
+}
+
 // The day the v2 grading went live and the public record started over.
 const RECORD_RESTART = '2026-10-08';
 // Only sessions graded LIVE under the v2 rules count toward the public record.
@@ -470,6 +490,16 @@ const record = {
   firstMap: ledger.map((e) => e.madeAfter).sort()[0] || null,
   restartedOn: RECORD_RESTART,
 };
+// How often chance alone produces a gap this big between the map and its $5
+// round-number baseline. Attached whenever both sides have a sample; the note
+// only prints it once the record is publishable.
+record.edge = (() => {
+  const a = record.hits, b = record.total - record.hits;
+  const c = record.nullHits, d = record.nullTotal - record.nullHits;
+  if (record.total < 1 || record.nullTotal < 1) return null;
+  const p = fisherTwoTailed(a, b, c, d);
+  return { p: +p.toFixed(4), inNoise: p >= 0.05, mapRate: +(a / record.total).toFixed(3), nullRate: +(c / record.nullTotal).toFixed(3) };
+})();
 
 // The panel still shows yesterday, because that is reporting, not a claim.
 const priorSession = allSessions[allSessions.length - 2];
