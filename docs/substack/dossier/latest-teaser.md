@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-10-21
+# Ghost Alpha Dossier — 2026-10-22
 
-> 🟡 **Transition** · SPY ▲ 0.2% · VIX 17.1
+> 🟡 **Transition** · SPY ▼ 1.4% · VIX 19.3
 
 ---
 
-Morning, degens.
+Market volatility is chill with VIX at 19.
 
 
-## 🥇 Gold Pick: PM
+## 🥇 Gold Pick: UNP
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 46/100 (A) |
+| **Score** | 37/100 (A) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -20,25 +20,25 @@ Morning, degens.
 
 
 ### Runners Up
-- 🥈 **GILD** — Score: 30/100
-- 🥉 **KNSA** — Score: 29/100
+- 🥈 **TXN** — Score: 37/100
+- 🥉 **ADI** — Score: 35/100
 
 
 ## 📊 Today's Numbers
 
-- **41 scanner signals** across 6 strategies
+- **64 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▲ 0.2% | **VIX:** 17.1
+- **SPY:** ▼ 1.4% | **VIX:** 19.3
 
 ---
 
 ## 👻 Sam Says
 
-> *"Half measures availed us nothing. Either follow the trading plan or don't trade. There is no 'kinda' hedged."*
+> *"The best stop loss is the one you set before you need it."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-21_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-21)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-22_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-22)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
