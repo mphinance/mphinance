@@ -320,6 +320,17 @@ function gradeEntry(e, day, bars) {
   const spot = e.spot;
   if (e.flip != null) level(e.flip, spot < e.flip ? 'high' : 'low', `${e.flip} flip`);
   level(e.cushion, 'low', `${e.cushion} cushion`);
+  // The DOWN road's first waypoint was never scored at all, so the number the
+  // IF row quotes most often on the downside went untested for a month: on
+  // 2026-10-22 the map named a 770 shelf, price closed 763.96, and the grade
+  // never looked at it. It is scored now, but only when it is a long-gamma
+  // SHELF, where dealers are forced to buy and "it holds" is a real claim.
+  // When the same slot is a short-gamma TRAPDOOR the chart's own note says
+  // dealers sell into it, which is the put wall's logic, so it is reported and
+  // not scored. Entries written before this carry no shelfKind and stay
+  // unscored rather than defaulting to the scoreable read.
+  if (e.shelfKind === 'shelf') level(e.shelf, 'low', `${e.shelf} shelf`);
+  const trapHit = e.shelfKind === 'trapdoor' && e.shelf != null && low <= e.shelf + tol;
   level(e.brake ?? e.battle, 'high', `${e.brake ?? e.battle} brake`);
   level(e.gate, 'high', `${e.gate} ceiling`);
   // The put wall is not scored: the map calls it "a crowd, not a floor", so a
@@ -381,6 +392,7 @@ function gradeEntry(e, day, bars) {
     summary: [
       branch === 'WHIPSAW' ? 'whipsawed both roads' : `took the ${branch} road`,
       ...tested.map(verb),
+      trapHit ? `tagged the ${e.shelf} trapdoor` : '',
       wallHit ? `tagged the ${e.wall} put wall` : '',
       untested.length ? `${untested.length} level${untested.length > 1 ? 's' : ''} untested` : '',
     ].filter(Boolean).join(' · '),
@@ -1077,6 +1089,10 @@ const entry = {
   brake: brake ? brake.strike : null,
   gate: gate ? gate.strike : null,
   shelf: shelfLvl ? shelfLvl.strike : null,
+  // Which of the two things that slot is tonight. The grader scores a shelf as
+  // a floor and only reports a trapdoor; without this it could not tell them
+  // apart and scored neither.
+  shelfKind: shelfLvl ? (shelfLvl.netGex >= 0 ? 'shelf' : 'trapdoor') : null,
   cushion: cushion ? cushion.strike : null,
   wall: floor ? floor.strike : null,
 };
@@ -1117,6 +1133,7 @@ writeFileSync(sidecar, JSON.stringify({
     brake: brake ? brake.strike : null,
     accel: accel ? accel.strike : null,
     shelf: shelfLvl ? shelfLvl.strike : null,
+    shelfKind: shelfLvl ? (shelfLvl.netGex >= 0 ? 'shelf' : 'trapdoor') : null,
     cushion: cushion ? cushion.strike : null,
     putWall: floor ? floor.strike : null,
   },
