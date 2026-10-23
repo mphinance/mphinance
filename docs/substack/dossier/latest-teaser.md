@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-10-22
+# Ghost Alpha Dossier — 2026-10-23
 
-> 🟡 **Transition** · SPY ▼ 1.4% · VIX 19.3
+> 🔴 **Elevated** · SPY ▼ 0.6% · VIX 20.3
 
 ---
 
-Market volatility is chill with VIX at 19.
+Alright, degens, Sam the Ghost here with today's intel.
 
 
-## 🥇 Gold Pick: UNP
+## 🥇 Gold Pick: SSNC
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 37/100 (A) |
+| **Score** | 48/100 (A) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -20,25 +20,25 @@ Market volatility is chill with VIX at 19.
 
 
 ### Runners Up
-- 🥈 **TXN** — Score: 37/100
-- 🥉 **ADI** — Score: 35/100
+- 🥈 **MSFT** — Score: 43/100
+- 🥉 **OMC** — Score: 31/100
 
 
 ## 📊 Today's Numbers
 
-- **64 scanner signals** across 6 strategies
+- **34 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 1.4% | **VIX:** 19.3
+- **SPY:** ▼ 0.6% | **VIX:** 20.3
 
 ---
 
 ## 👻 Sam Says
 
-> *"The best stop loss is the one you set before you need it."*
+> *"IV is high for a reason. Selling premium into earnings is not a strategy — it's a prayer."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-22_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-22)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-23_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-23)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
