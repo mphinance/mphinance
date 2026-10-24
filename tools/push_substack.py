@@ -68,10 +68,34 @@ def code(text):
     return {"type": "text", "text": _ascii_safe(text), "marks": [{"type": "code"}]}
 
 
+COLOR_SPAN = re.compile(r'<span style="color:\s*([^";]+);?">(.+?)</span>')
+
+
+def _with_mark(node, mark):
+    node = {"type": "text", "text": node} if isinstance(node, str) else dict(node)
+    node["marks"] = list(node.get("marks", [])) + [mark]
+    return node
+
+
 def inline(text):
     """Split a line into PM text nodes honoring `code` spans, **bold**, [text](url)
-    links, and *italic* runs. Code is matched first so its contents are not
-    re-interpreted as bold/italic."""
+    links, *italic* runs, and <span style="color: #hex">colored text</span>.
+    Code is matched first so its contents are not re-interpreted as bold/italic.
+
+    Colored text is the editor's own text-color tool: TipTap textStyle mark with a
+    color attr (any hex/rgb except pure black; Substack renders it as
+    <span data-color=...> and re-tints it for dark-mode readers)."""
+    if COLOR_SPAN.search(text):
+        out, pos = [], 0
+        for m in COLOR_SPAN.finditer(text):
+            if m.start() > pos:
+                out += inline(text[pos:m.start()])
+            mark = {"type": "textStyle", "attrs": {"color": m.group(1).strip()}}
+            out += [_with_mark(n, mark) for n in inline(m.group(2))]
+            pos = m.end()
+        if pos < len(text):
+            out += inline(text[pos:])
+        return out
     out, pos = [], 0
     pat = re.compile(r"`([^`]+)`|\*\*(.+?)\*\*|\[([^\]]+)\]\(([^)]+)\)|\*([^*\n]+?)\*")
     for m in pat.finditer(text):
