@@ -31,7 +31,9 @@ def upload_image(client, path):
     """Upload a PNG via Substack's working image endpoint. Returns the JSON
     (url + imageWidth/imageHeight + bytes) or None."""
     try:
-        mime = "image/jpeg" if path.lower().endswith((".jpg", ".jpeg")) else "image/png"
+        low = path.lower()
+        mime = ("image/jpeg" if low.endswith((".jpg", ".jpeg"))
+                else "image/gif" if low.endswith(".gif") else "image/png")
         b64 = f"data:{mime};base64," + base64.b64encode(open(path, "rb").read()).decode()
         r = client.session.post(IMAGE_ENDPOINT, json={"image": b64},
                                 headers=client.headers, timeout=60)
