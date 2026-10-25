@@ -1893,6 +1893,30 @@ def run_pipeline(date: str, dry_run: bool = False, generate_pdf: bool = True):
         except Exception as e:
             print(f"  [WARN] Supertrend screen failed: {e}")
 
+    # ── Stage 10z: CMF Accumulation Screen ──
+    print("\n[10z/16] CMF SCREEN (Chaikin Money Flow accumulation in a base)")
+    cmf_results: list[dict] = []
+    with timer.stage("CMF Screen"):
+        try:
+            import time as _cmf_time
+            from dossier.cmf_screener import score_cmf, _save_api_output as _cmf_save
+            _cmf_pool = [t for t in dict.fromkeys(
+                list(CORE_WATCHLIST) + scanned_tickers[:15]
+            ) if not _is_junk(t)][:35]
+            for _t in _cmf_pool:
+                _r = score_cmf(_t)
+                if _r:
+                    cmf_results.append(_r)
+                _cmf_time.sleep(0.05)
+            cmf_results.sort(key=lambda r: r["score"], reverse=True)
+            if not dry_run:
+                _cmf_save(cmf_results)
+            _top_cmf = [r for r in cmf_results if r["grade"] in ("A+", "A")]
+            print(f"  💧 {len(cmf_results)} accumulating — {len(_top_cmf)} A+/A: "
+                  + (", ".join(f"{r['ticker']} {r['grade']}" for r in _top_cmf[:3]) or "none today"))
+        except Exception as e:
+            print(f"  [WARN] CMF screen failed: {e}")
+
     # ── Stage 8d: Daily Trading Setups (3-Style) ──
     print("\n[11/16] DAILY TRADING SETUPS (Day Trade / Swing / CSP)")
     daily_setups_data = {}
