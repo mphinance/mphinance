@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-10-23
+# Ghost Alpha Dossier — 2026-10-26
 
-> 🔴 **Elevated** · SPY ▼ 0.6% · VIX 20.3
+> 🟡 **Transition** · SPY ▲ 0.8% · VIX 18.4
 
 ---
 
-Alright, degens, Sam the Ghost here with today's intel.
+Alright degens, listen up.
 
 
-## 🥇 Gold Pick: SSNC
+## 🥇 Gold Pick: COST
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 48/100 (A) |
+| **Score** | 38/100 (C) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -19,26 +19,22 @@ Alright, degens, Sam the Ghost here with today's intel.
 *This is the highest-scoring setup from today's 16-stage analysis pipeline.*
 
 
-### Runners Up
-- 🥈 **MSFT** — Score: 43/100
-- 🥉 **OMC** — Score: 31/100
-
 
 ## 📊 Today's Numbers
 
-- **34 scanner signals** across 6 strategies
+- **155 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 0.6% | **VIX:** 20.3
+- **SPY:** ▲ 0.8% | **VIX:** 18.4
 
 ---
 
 ## 👻 Sam Says
 
-> *"IV is high for a reason. Selling premium into earnings is not a strategy — it's a prayer."*
+> *"This too shall pass. That drawdown? Temporary. That winning streak? Also temporary. Stay humble."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-23_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-23)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-26_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-26)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
