@@ -1034,8 +1034,12 @@ if (report) {
   const col = report.partial ? C.cyan : allHit ? C.call : report.hits >= report.total / 2 ? C.pin : C.put;
   push(`<rect x="${PAD_L}" y="${y - 20}" width="${PLOT_W}" height="34" rx="6" fill="${col}" fill-opacity="0.07" stroke="${col}" stroke-opacity="0.25"/>`);
   push(`<text x="${PAD_L + 16}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${col}" font-weight="700">${report.partial ? 'IN FLIGHT' : 'LAST CALL'}</text>`);
-  push(`<text x="${PAD_L + 130}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.text}">${report.partial ? `${report.day.slice(5)} still open` : `${report.hits}/${report.total} tested on ${report.day.slice(5)}`}</text>`);
-  push(`<text x="${PAD_L + 290}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(report.summary)}</text>`);
+  const lcStr = report.partial ? `${report.day.slice(5)} still open` : `${report.hits}/${report.total} tested on ${report.day.slice(5)}`;
+  push(`<text x="${PAD_L + 130}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.text}">${lcStr}</text>`);
+  // Same fixed-column trap as the IF rows: a two-digit score ("12/16 tested on
+  // 10-23") already reaches the old 290 summary column.
+  const sumX = PAD_L + Math.max(290, 130 + textW(lcStr, 13) + 18);
+  push(`<text x="${sumX}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(report.summary)}</text>`);
 }
 
 // ── the if / else ───────────────────────────────────────────────────────────
@@ -1047,8 +1051,13 @@ ifRows.forEach((r, i) => {
   const kw = r.isElse ? 'ELSE' : 'IF';
   push(`<rect x="${PAD_L}" y="${y - 20}" width="${PLOT_W}" height="34" rx="6" fill="${r.col}" fill-opacity="0.06"/>`);
   push(`<text x="${PAD_L + 16}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${r.col}" font-weight="700">${kw}</text>`);
-  push(`<text x="${PAD_L + 74}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.text}">${esc(kw === 'ELSE' ? `it holds ${r.cond}` : `it goes ${r.cond}`)}</text>`);
-  push(`<text x="${PAD_L + 330}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(r.rule)}</text>`);
+  const condStr = kw === 'ELSE' ? `it holds ${r.cond}` : `it goes ${r.cond}`;
+  push(`<text x="${PAD_L + 74}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.text}">${esc(condStr)}</text>`);
+  // The rule used to start at a fixed column, so a long condition ran straight
+  // through it. On 2026-10-26 "it goes up through the 773.87 flip" overdrew the
+  // "no" in "no long-gamma strike above spot", which reverses the sentence.
+  const ruleX = PAD_L + Math.max(330, 74 + textW(condStr, 13) + 18);
+  push(`<text x="${ruleX}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(r.rule)}</text>`);
 });
 
 // Sits between the IF/ELSE block (last row's box bottom is IF_T + rows*42 - 48)
