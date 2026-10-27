@@ -898,9 +898,33 @@ const ROAD_X0 = FWD_X + 14;
 // cannot be squeezed to nothing on a night with very wordy notes.
 const textW = (s_, px) => String(s_).length * px * 0.62;
 for (const r of roads) if (r.up !== undefined) r.pts = sideFilter(r.pts, r.up);
+
+// The RANGE pin and the first level on a directional road keep landing on the
+// same strike (763 on 2026-10-18, 765 on 10-19, 765 again on 10-26), and the two
+// labels then stack into a four-line block over one price. They are one level, so
+// they get one label: the pin is folded into the directional waypoint's tag and
+// note, and the wave keeps only its RANGE name at the right edge. Done here, not
+// in the label pass, so the right-hand gutter is still measured from the text
+// that actually gets drawn.
+{
+  const wave = roads.find((r) => r.wave);
+  const pinPt = wave && wave.pts[0];
+  if (pinPt) {
+    for (const r of roads) {
+      if (r.wave || !r.pts.length) continue;
+      const twin = r.pts.find((w) => !w.open && w.at === pinPt.at);
+      if (!twin) continue;
+      twin.tag = `${twin.tag} \u00b7 PIN`;
+      twin.note = `${twin.note} \u00b7 ${pinPt.note}`;
+      wave.pts = [];
+      break;
+    }
+  }
+}
+
 const gutterNeed = Math.max(0, ...roads.map((r) => {
-  if (!r.pts.length) return 0;
   if (r.wave) return textW(r.key, 15);
+  if (!r.pts.length) return 0;
   const w = r.pts[r.pts.length - 1];
   return Math.max(textW(`${r.key} \u00b7 ${w.tag} *`, 13), textW(w.note, 11));
 }));
@@ -908,7 +932,7 @@ const ROAD_W = FWD_W - Math.min(Math.max(210, Math.ceil(gutterNeed) + 30), Math.
 
 for (const r of roads) {
   if (r.up !== undefined) r.pts = sideFilter(r.pts, r.up);
-  if (!r.pts.length) continue;
+  if (!r.pts.length && !r.wave) continue;
   // waypoint x positions march evenly out along the road
   const n = r.pts.length;
   const xs = r.wave
