@@ -19,11 +19,15 @@ SPX closed at 7,722.6. VIX fell **4.74%** to 17.52. Options flow leaned toward c
 
 Who did the work: semis (SMH) **+3.03%**, biotech (XBI) **+2.91%**, tech (XLK) **+1.71%**, discretionary (XLY) **+1.05%**. Who got dragged: energy (XLE) **-2.06%**, staples (XLP) **-0.93%**, real estate (XLRE) **-0.85%**.
 
+![Sector ETF change on the day: semis, biotech and tech led, energy and staples lagged (TraderMatrix sector flow, 4:42 PM ET)](sector-moves.png)
+
 Breadth tells the rest. **60.2%** of S&P members sit above their 50-day average, 59.0% above the 200-day, and 73.1% above the 20-day. Healthy on the 50, mixed on the 200. Not a crime scene. Just not a party either.
 
 Unusual-flow premium for the day totals **$2.49B**, split $1.09B bullish and $1.40B bearish. So the sector gauge says calls and the single-name tape says puts. Both are true. Pick your poison, or better, notice they disagree.
 
 ## The warning lights
+
+![Market health board: three alerts, one watch, five clear (TraderMatrix Market Health, 4:42 PM ET)](market-health.png)
 
 The market health composite scores **3.5 of 5**, which the gauge labels HIGH. Three scored signals are in ALERT and one is on WATCH:
 
@@ -36,6 +40,7 @@ And the clear signals: VIX term structure is in contango at 0.90, equal-weight b
 
 Here's the conflict. Semis led the day by three percent while the risk-appetite gauge says high-beta is fading. One of those is a bounce inside a trend and the other is the trend. Today does not tell us which.
 
+
 ## SPY map for Wednesday
 
 SPY sits at 769.66. Dealer positioning from the next five expirations:
@@ -46,6 +51,8 @@ SPY sits at 769.66. Dealer positioning from the next five expirations:
 - 780 is the next positive strike above, at +$434M.
 
 This is a map of positioning, not a forecast. A magnet is where hedging is heavy, not where price has to go.
+
+![SPY net gamma by strike with spot and flip marked (TraderMatrix Apex levels, 4:43 PM ET)](spy-map.png)
 
 ## Wednesday through Friday
 
@@ -67,7 +74,11 @@ What the screens say, as of 4:43 PM ET:
 - **Volatility:** IV rank **19.9 of 100**, the cheap end of its 52-week range.
 - **Dark pool:** zero off-exchange blocks of $1M or more in the last 7 calendar days. That reads quiet, not bearish.
 
-Now the part where I roast the headline. The two biggest prints are a **$11.46M call** (2,015 contracts, labeled calls opening) and an **$8.04M put** (2,035 contracts, labeled puts closing). Same minute, 2:40 PM ET. Nearly the same size. Open interest on those lines was 8 and 20.
+![STX net gamma by strike with spot and flip marked (TraderMatrix Apex levels, 4:43 PM ET)](stx-map.png)
+
+Now the part where I roast the headline.
+
+ The two biggest prints are a **$11.46M call** (2,015 contracts, labeled calls opening) and an **$8.04M put** (2,035 contracts, labeled puts closing). Same minute, 2:40 PM ET. Nearly the same size. Open interest on those lines was 8 and 20.
 
 Two things follow. First, a call and a put of matching size in the same minute smells like ONE structure wearing two hats, and that can be a hedge or a financing trade as easily as a directional bet. Second, you cannot close 2,035 puts when 20 existed, so the "closing" label is a guess made from bid/ask side, not a fact. The feed marks both lines "volume-only detection," and I'm not going to pretend that's more than it is.
 
