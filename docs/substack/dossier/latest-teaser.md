@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-10-26
+# Ghost Alpha Dossier — 2026-10-27
 
-> 🟡 **Transition** · SPY ▲ 0.8% · VIX 18.4
+> 🟡 **Transition** · SPY ▲ 0.6% · VIX 17.6
 
 ---
 
-Alright degens, listen up.
+The VIX is chilling at 17.
 
 
-## 🥇 Gold Pick: COST
+## 🥇 Gold Pick: PYPL
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 38/100 (C) |
+| **Score** | 51/100 (A) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -19,22 +19,26 @@ Alright degens, listen up.
 *This is the highest-scoring setup from today's 16-stage analysis pipeline.*
 
 
+### Runners Up
+- 🥈 **BRO** — Score: 48/100
+- 🥉 **MPC** — Score: 46/100
+
 
 ## 📊 Today's Numbers
 
-- **155 scanner signals** across 6 strategies
+- **109 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▲ 0.8% | **VIX:** 18.4
+- **SPY:** ▲ 0.6% | **VIX:** 17.6
 
 ---
 
 ## 👻 Sam Says
 
-> *"This too shall pass. That drawdown? Temporary. That winning streak? Also temporary. Stay humble."*
+> *"Easy does it. But do it. Don't just watch the chart — execute the plan."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-26_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-26)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-27_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-27)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
