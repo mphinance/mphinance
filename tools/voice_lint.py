@@ -78,6 +78,17 @@ NEG_SENT = re.compile(r"\b(isn'?t|wasn'?t|aren'?t|weren'?t|never|not|none|no)\b"
 POS_FOLLOW = re.compile(r"^(it'?s|it is|it was|it|they|that|what (i|you|we)\b[^.]*\bwas|this)\b", re.I)
 CONTRAST_MAX_WORDS = 22
 SIGNOFF = "~ Michael"
+# Automated Data-section posts are written as Sam, the Quant Ghost, and close with
+# his own line rather than Michael's. A Sam piece is identified by that closing
+# paragraph; the section it files under is chosen at push time with --section=data.
+SIGNOFF_SAM_RE = re.compile(r"^Posted by Sam, the Quant Ghost\.")
+
+
+def is_signoff(t: str) -> bool:
+    """True for a valid closing paragraph: Michael's or Sam's."""
+    t = (t or "").strip()
+    return t == SIGNOFF or t.startswith("~") or bool(SIGNOFF_SAM_RE.match(t))
+
 
 
 def blocks_from_markdown(md):
@@ -198,8 +209,7 @@ def lint(blocks, check_signoff=True):
         t = plain(raw)
         nxt = blocks[i + 1][0] if i + 1 < len(blocks) else None
         n_words = len(t.split())
-        if n_words <= 12 and len(sentences(t)) <= 2 and nxt in ("h", None) and t != SIGNOFF \
-                and not t.startswith("~"):
+        if n_words <= 12 and len(sentences(t)) <= 2 and nxt in ("h", None) and not is_signoff(t):
             w(i, f"short button paragraph closing a section: '{t[:60]}'")
 
     # heading template
@@ -220,8 +230,9 @@ def lint(blocks, check_signoff=True):
     # subtitle / signature
     if check_signoff:
         tail = [plain(r).strip() for k, r in blocks if k == "p"]
-        if not tail or tail[-1] != SIGNOFF:
-            e(-1, f"last paragraph must be exactly '{SIGNOFF}' (found: '{tail[-1][:40] if tail else ''}')")
+        if not tail or not is_signoff(tail[-1]):
+            e(-1, f"last paragraph must be '{SIGNOFF}' or a Sam sign-off "
+                  f"(found: '{tail[-1][:40] if tail else ''}')")
     if any(re.match(r"^tags:", plain(r), re.I) for _, r in blocks):
         e(-1, "old '*Tags: ...*' subtitle; use '*Trading 60% | Mindset 40%*'")
     return errs, warns
