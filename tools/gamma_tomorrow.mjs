@@ -1013,8 +1013,19 @@ for (const L of labels) {
     push(`<line x1="${L.x}" y1="${L.y}" x2="${L.tx}" y2="${(L.ty - 4).toFixed(1)}" stroke="${L.col}" stroke-width="0.8" stroke-opacity="0.35"/>`);
   }
   const op = L.faint ? 0.42 : 1;
-  push(`<text x="${L.tx}" y="${L.ty.toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${L.col}" fill-opacity="${op}" font-weight="700">${esc(L.tag)}${L.faint ? ' *' : ''}</text>`);
-  push(`<text x="${L.tx}" y="${(L.ty + 15).toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" fill-opacity="${op}">${esc(L.note)}</text>`);
+  // Labels are de-conflicted against each other but never against the roads, and
+  // the roads are curves: smooth() overshoots between waypoints, so a road sits
+  // above a dot it arrives at from below -- the same quadrant the label goes in.
+  // On 2026-10-27 the UP line was drawn straight through "wicks through, closes
+  // under . long gamma, so it settles". Moving the label does not fix this in
+  // general (it just trades one neighbour for another in a crowded panel), so the
+  // text is cut out of whatever runs behind it instead: a background-coloured
+  // outline painted under the glyphs. paint-order keeps the stroke behind the
+  // fill, so the letters themselves are untouched and on empty background the
+  // halo is invisible.
+  const HALO = `stroke="${C.bg}" stroke-width="3" stroke-linejoin="round" paint-order="stroke" stroke-opacity="0.92"`;
+  push(`<text x="${L.tx}" y="${L.ty.toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${L.col}" fill-opacity="${op}" font-weight="700" ${HALO}>${esc(L.tag)}${L.faint ? ' *' : ''}</text>`);
+  push(`<text x="${L.tx}" y="${(L.ty + 15).toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" fill-opacity="${op}" ${HALO}>${esc(L.note)}</text>`);
 }
 
 // The flip band captions, now that the waypoint labels have claimed their rows.
