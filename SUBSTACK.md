@@ -94,7 +94,7 @@ Skipping this pass is how a draft that followed every formatting rule still read
 - **Save location:** Same directory as the article README.md.
 
 ### Candlestick charts (Vero segments)
-When an article needs a real intraday chart (a pattern that played out, a "call it" quiz card), don't hand-build it. Use the Vero segment renderer. It takes a PatternPulse / Vero segment JSON and emits a landscape dark-theme candlestick PNG in the house KLineChart style (green #00d68f / red #ff4d6d, EMA + volume), so it drops straight into a draft and matches the Image Generation Rules above.
+When an article needs a real intraday chart (a pattern that played out, a "call it" quiz card), don't hand-build it. Use the Vero segment renderer. It takes a Vero segment JSON and emits a landscape dark-theme candlestick PNG in the house KLineChart style (green #00d68f / red #ff4d6d, EMA + volume), so it drops straight into a draft and matches the Image Generation Rules above.
 
 ```bash
 # teaser card ("Up or Down? You've got 3 seconds") — masks the future, hides the pattern label

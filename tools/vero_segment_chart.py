@@ -1,6 +1,6 @@
 """Render a Vero segment into a dark-theme, Bloomberg-terminal candlestick PNG.
 
-Turns a PatternPulse / Vero segment (the setup candles, and optionally the hidden
+Turns a Vero segment (the setup candles, and optionally the hidden
 continuation that played out) into a publish-ready chart image. Same look and libs
 as the mphinance Gamma Map / kline_chart.py (klinecharts 9.8.10 + headless
 Playwright screenshot) so the output drops straight into a Substack draft.
