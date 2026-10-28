@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-10-27
+# Ghost Alpha Dossier — 2026-10-28
 
-> 🟡 **Transition** · SPY ▲ 0.6% · VIX 17.6
+> 🟡 **Transition** · SPY ▲ 0.2% · VIX 17.3
 
 ---
 
-The VIX is chilling at 17.
+Alright, listen up, smooth brains.
 
 
-## 🥇 Gold Pick: PYPL
+## 🥇 Gold Pick: ADP
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 51/100 (A) |
+| **Score** | 46/100 (A) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -20,25 +20,25 @@ The VIX is chilling at 17.
 
 
 ### Runners Up
-- 🥈 **BRO** — Score: 48/100
-- 🥉 **MPC** — Score: 46/100
+- 🥈 **MFC** — Score: 40/100
+- 🥉 **CNI** — Score: 32/100
 
 
 ## 📊 Today's Numbers
 
-- **109 scanner signals** across 6 strategies
+- **190 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▲ 0.6% | **VIX:** 17.6
+- **SPY:** ▲ 0.2% | **VIX:** 17.3
 
 ---
 
 ## 👻 Sam Says
 
-> *"Easy does it. But do it. Don't just watch the chart — execute the plan."*
+> *"Cut your losers fast. Let your winners run. And for the love of god, stop averaging down on garbage."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-27_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-27)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-28_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-28)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
