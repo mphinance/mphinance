@@ -888,6 +888,10 @@ function smooth(pp) {
 }
 
 const labels = [];
+// The RANGE road's name is the one piece of right-gutter text that is not a
+// waypoint label, so the caption passes below could not see it. Its row is
+// recorded here for them to test against.
+let waveNameRow = null;
 const ROAD_X0 = FWD_X + 14;
 // The gutter on the right holds the last waypoint's label on each road: the road
 // name plus its note. It used to be a flat 210px, and the note is a sentence, so
@@ -993,7 +997,9 @@ for (const r of roads) {
   // (see the label loop), drawn on its own only for the wave, which has no
   // waypoint at the far end to carry it.
   if (r.wave) {
-    push(`<text x="${ROAD_X0 + ROAD_W + 12}" y="${Y(pin) + 4}" font-family="'Share Tech Mono',monospace" font-size="15" fill="${r.col}" letter-spacing="1">${r.key}</text>`);
+    const ny = Y(pin) + 4;
+    waveNameRow = [ny - 12, ny + 4];
+    push(`<text x="${ROAD_X0 + ROAD_W + 12}" y="${ny}" font-family="'Share Tech Mono',monospace" font-size="15" fill="${r.col}" letter-spacing="1">${r.key}</text>`);
   }
 }
 
@@ -1033,11 +1039,20 @@ for (const L of labels) {
 // note line that hangs 15px under it); a caption occupies yt-9 to yt+2. Drop the
 // caption on any overlap. Both are right-hand text in the forward panel, so the
 // vertical test alone is enough and erring toward dropping one is harmless.
+// The RANGE road's name is right-gutter text too, and it was not in this test:
+// on 2026-10-28 the pin (772) and the flip (771.65) were a third of a point
+// apart, so "RANGE" was painted straight through "ABOVE THE FLIP / dealers
+// brake" and both words were unreadable. The road name wins -- it is the only
+// thing naming that road, while what the flip does is already in the header and
+// the IF rows.
+const rowTaken = (yt) =>
+  labels.some((L) => yt + 2 > L.ty - 11 && yt - 9 < L.ty + 19) ||
+  (waveNameRow != null && yt + 2 > waveNameRow[0] && yt - 9 < waveNameRow[1]);
 for (const [yt, col, txt] of [
   [flipBandY - 10, C.call, 'ABOVE THE FLIP / dealers brake'],
   [flipBandY + 20, C.put, 'BELOW THE FLIP / dealers chase'],
 ]) {
-  if (labels.some((L) => yt + 2 > L.ty - 11 && yt - 9 < L.ty + 19)) continue;
+  if (rowTaken(yt)) continue;
   push(`<text x="${W - PAD_R - 10}" y="${yt}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${col}" fill-opacity="0.75">${txt}</text>`);
 }
 
@@ -1051,9 +1066,7 @@ for (const [yt, col, txt] of [
 // row underneath it.
 if (emCaption) {
   const HDR = [PAD_T + 9, PAD_T + 24];
-  const taken = (yt) =>
-    labels.some((L) => yt + 2 > L.ty - 11 && yt - 9 < L.ty + 19) ||
-    (yt + 2 > HDR[0] && yt - 9 < HDR[1]);
+  const taken = (yt) => rowTaken(yt) || (yt + 2 > HDR[0] && yt - 9 < HDR[1]);
   const yt = [emCaption.y1 - 8, emCaption.y1 + 14, emCaption.y1 + 34].find((c) => c > PAD_T + 10 && !taken(c));
   if (yt != null) {
     push(`<text x="${FWD_X + 10}" y="${yt}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}">${esc(emCaption.text)}</text>`);
