@@ -121,6 +121,41 @@ if (matrix?.rows?.length) {
   expiringShare = tot ? 1 - kept / tot : 0;
 }
 
+// ── the flip, measured three ways ───────────────────────────────────────────
+// The API's gammaFlipLevel is a SIMULATED flip (TraderMatrix gammaExposure.ts,
+// flipFromStrikes): it re-prices every contract at candidate spots, and it runs
+// over the WHOLE book, including contracts that expire at tonight's close. The
+// levels above are built from survivors only, so the flip is the one number on the
+// map that is not on the same footing. Re-pricing needs per-contract IV, which the
+// matrix does not carry, so the survivors-only flip cannot be simulated here. What
+// can be computed is the cumulative zero-cross (running sum of net GEX from the
+// lowest strike, interpolated, nearest to spot), on the survivors book and on the
+// full book. Those two differ only by tonight's expiring gamma, so the gap between
+// them is the 0DTE effect, and the gap to the API's number is the method.
+// Logged into every ledger entry (`flips`) so the disagreement is measured, not
+// guessed. None of these feeds a level or a grade.
+const cumulativeFlip = (pairs) => {
+  const sorted = pairs.slice().sort((a, b) => a[0] - b[0]);
+  let run = 0, best = null;
+  const cum = sorted.map(([k, v]) => ((run += v), [k, run]));
+  for (let i = 0; i < cum.length - 1; i++) {
+    const [k0, a] = cum[i], [k1, b] = cum[i + 1];
+    if ((a > 0 && b < 0) || (a < 0 && b > 0)) {
+      const lvl = k0 + (Math.abs(a) / (Math.abs(a) + Math.abs(b))) * (k1 - k0);
+      if (best == null || Math.abs(lvl - spot) < Math.abs(best - spot)) best = lvl;
+    }
+  }
+  return best == null ? null : +best.toFixed(2);
+};
+let flipSurvivors = null, flipFullBook = null;
+if (matrix?.rows?.length && survivors) {
+  flipSurvivors = cumulativeFlip([...survivors.entries()]);
+  flipFullBook = cumulativeFlip(matrix.rows.map((r) => [r.strike, r.gex.reduce((a, v) => a + (v || 0), 0)]));
+}
+// TradingView's flip cannot be read from a script; pass it by hand when you have
+// it (--flip-tv 769.22) and it is recorded beside the others.
+const flipTV = arg('flip-tv', null) != null ? parseFloat(arg('flip-tv', null)) : null;
+
 const ladder = gex.byStrike
   .filter((s) => s.strike >= lo && s.strike <= hi)
   .map((s) => (survivors?.has(s.strike) ? { ...s, netGex: survivors.get(s.strike), gross: s.netGex } : s))
@@ -513,6 +548,29 @@ record.edge = (() => {
   return { p: +p.toFixed(4), inNoise: p >= 0.05, mapRate: +(a / record.total).toFixed(3), nullRate: +(c / record.nullTotal).toFixed(3) };
 })();
 
+// The flip's own live record: tested flip checks only, same rows the headline
+// ratio uses. Logged 2026-10-29 at 4/9 with every miss "closed through the flip".
+const flipRecord = (() => {
+  let hits = 0, total = 0;
+  for (const e of gradedAll) {
+    if (e.flip == null) continue;
+    const c = (e.graded.checks || []).find((x) => x.side !== 'pin' && Math.abs(x.lvl - e.flip) < 0.006);
+    if (c) { total++; if (c.ok) hits++; }
+  }
+  return { hits, total };
+})();
+// RULE: the flip does not lead the IF row (it is context, not the trigger a
+// reader acts on) when either
+//   (1) it sits within 0.04% of spot (flipOnPrice): it has no information and
+//       "up through the flip" would be a statement about one tick; or
+//   (2) it has missed more than it has hit in the live record, once at least
+//       FLIP_MIN_TESTED levels are on the clock (so one bad night cannot flip it).
+// It is still drawn as a waypoint and still graded. This changes what the IF row
+// quotes, never what is scored.
+const FLIP_MIN_TESTED = 5;
+const flipLosing = flipRecord.total >= FLIP_MIN_TESTED && flipRecord.total - flipRecord.hits > flipRecord.hits;
+const flipLeadOK = !flipOnPrice && !flipLosing;
+
 // The panel still shows yesterday, because that is reporting, not a claim.
 const priorSession = allSessions[allSessions.length - 2];
 const prev = ledgerBroken ? null : ledger.find((e) => e.madeAfter === priorSession);
@@ -590,7 +648,7 @@ const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt
 // Tonight's book (brake null, accel null, gate 780) was one missing strike away
 // from printing it.
 const upLead = brake || gate || accel || null;
-const upTrigger = upLead ? upLead.strike : flip > spot ? Number(flip.toFixed(2)) : null;
+const upTrigger = upLead ? upLead.strike : flipLeadOK && flip > spot ? Number(flip.toFixed(2)) : null;
 // The DOWN trigger is the first level below spot that the road actually names:
 // the shelf, else the thin cushion, else the put wall. It used to fall back to
 // Math.floor(spot) whenever no shelf was readable, and on 2026-10-14 that printed
@@ -601,7 +659,7 @@ const upTrigger = upLead ? upLead.strike : flip > spot ? Number(flip.toFixed(2))
 // caption and band change only.
 const downLead = shelfLvl || cushion || floor || null;
 const downTrigger = downLead ? downLead.strike : Math.floor(spot);
-const rangeHi = Math.max(upTrigger ?? Math.ceil(Math.max(pin, flip)), Math.ceil(spot));
+const rangeHi = Math.max(upTrigger ?? Math.ceil(flipLeadOK ? Math.max(pin, flip) : pin), Math.ceil(spot));
 const rangeLo = Math.min(downTrigger, Math.floor(spot));
 
 // How far each IF trigger sits from the close, measured against a typical day.
@@ -1152,6 +1210,9 @@ const entry = {
   shelfKind: shelfLvl ? (shelfLvl.netGex >= 0 ? 'shelf' : 'trapdoor') : null,
   cushion: cushion ? cushion.strike : null,
   wall: floor ? floor.strike : null,
+  // The flip three ways (see cumulativeFlip), so the TradingView/TDPro gap and the
+  // 0DTE effect are measured. Diagnostic only: the grader reads `flip` above.
+  flips: { api: flip, survivors: flipSurvivors, fullBook: flipFullBook, tv: flipTV },
 };
 if (ledgerBroken) {
   console.log('not writing the ledger: it is unreadable and overwriting it would lose the history');
@@ -1169,6 +1230,7 @@ if (ledgerBroken) {
 console.log(`record so far: ${record.sessions} session(s) graded${record.publishable ? '' : ` -- not publishable until ${MIN_GRADED}`}`);
 if (report) console.log(`${report.partial ? 'in flight' : 'last call'}: ${report.hits}/${report.total} tested on ${report.day} | ${report.summary}`);
 console.log(`spot ${spot} | flip ${flip} | magnet ${magnet} | netGEX ${fmtM(gex.totalGEX)}`);
+console.log(`flips | api ${flip} | survivors ${flipSurvivors} | full book ${flipFullBook} | tv ${flipTV} | record ${flipRecord.hits}/${flipRecord.total} | leads IF row: ${flipLeadOK}`);
 console.log(`gate ${gate?.strike} | brake ${brake?.strike} | accel ${accel?.strike} | floor ${floor?.strike} | pocket ${pocket ? `${pocket.lo}-${pocket.hi}` : 'none'}`);
 // Sidecar so downstream publishers (the daily Substack note) never have to
 // re-derive the map or scrape it back out of the PNG.
@@ -1184,6 +1246,9 @@ writeFileSync(sidecar, JSON.stringify({
   expected,
   expiringShare,
   flipOnPrice,
+  flips: entry.flips,
+  flipRecord,
+  flipLeadOK,
   thinBook,
   levels: {
     ceiling: gate ? gate.strike : null,

@@ -187,5 +187,14 @@ Draft the structure, never the voice. Michael rewrites the sentences.
 - Fonts load from Google on render. On a network-restricted cron the PNG still
   ships, silently, in a fallback monospace.
 - The TradingView indicator's gamma flip disagrees with TDPro's by about 3 points
-  (766.33 vs 769.22 on 9/23). Unresolved, and every up-road waypoint depends on it.
+  (766.33 vs 769.22 on 9/23). Cause not proven. TDPro's flip is simulated over the
+  WHOLE book, including contracts expiring tonight, while every level on the map is
+  survivors-only; that mismatch is the leading suspect, but a survivors-only
+  simulation needs per-contract IV the matrix does not carry. Since 2026-10-29 each
+  ledger entry carries `flips` {api, survivors, fullBook, tv} (cumulative zero-cross
+  proxies are often null in negative gamma; `--flip-tv N` records a hand-read
+  TradingView value) so the gap is measured. Review once ~15 entries have it.
+- The flip is 4/9 live (every miss "closed through"). Rule since 2026-10-29: it does
+  not lead the IF row when within 0.04% of spot, or when it has more misses than hits
+  with at least 5 tested. Still drawn, still graded.
 - The dev API caps at 30 requests/minute. The tool backs off and retries.
