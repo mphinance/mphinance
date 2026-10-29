@@ -1,13 +1,13 @@
-# Ghost Alpha Dossier — 2026-10-28
+# Ghost Alpha Dossier — 2026-10-29
 
-> 🟡 **Transition** · SPY ▲ 0.2% · VIX 17.3
+> 🟡 **Transition** · SPY ▼ 0.5% · VIX 16.4
 
 ---
 
-Alright, listen up, smooth brains.
+The desk is calm with the VIX hovering at 16.
 
 
-## 🥇 Gold Pick: ADP
+## 🥇 Gold Pick: ROKU
 
 | Metric | Value |
 |--------|-------|
@@ -20,25 +20,25 @@ Alright, listen up, smooth brains.
 
 
 ### Runners Up
-- 🥈 **MFC** — Score: 40/100
-- 🥉 **CNI** — Score: 32/100
+- 🥈 **LIN** — Score: 45/100
+- 🥉 **CNI** — Score: 43/100
 
 
 ## 📊 Today's Numbers
 
-- **190 scanner signals** across 6 strategies
+- **187 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▲ 0.2% | **VIX:** 17.3
+- **SPY:** ▼ 0.5% | **VIX:** 16.4
 
 ---
 
 ## 👻 Sam Says
 
-> *"Cut your losers fast. Let your winners run. And for the love of god, stop averaging down on garbage."*
+> *"The market doesn't care about your feelings, your rent, or your divorce. Trade accordingly."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-28_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-28)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-29_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-29)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
