@@ -230,11 +230,43 @@ def publish(s, pub, text, attachment_ids):
     return r.json()
 
 
+DISCORD_KEY = "WEBHOOK_FREE_CHAT"
+
+
+def discord_content(sym, note_url):
+    return f"🗺️ **Tomorrow's Map ({sym})** from tonight's settled book is live on Substack Notes:\n{note_url}"
+
+
+def share_discord(webhook_url, sym, note_url, png_path=None):
+    """Share note link and chart to the free community chat via webhook. Never raises."""
+    content = discord_content(sym, note_url)
+    try:
+        p = Path(png_path) if png_path else None
+        if p and p.exists() and p.stat().st_size < 8 * 1024 * 1024:
+            with open(p, "rb") as f:
+                r = requests.post(
+                    webhook_url,
+                    data={"content": content},
+                    files={"file": (p.name, f, "image/png")},
+                    timeout=30,
+                )
+        else:
+            r = requests.post(webhook_url, json={"content": content}, timeout=30)
+
+        if r.status_code in (200, 204):
+            print("shared note link to Discord free chat")
+        else:
+            print(f"discord share failed ({r.status_code}): {r.text}")
+    except Exception as e:
+        print(f"discord share warning: {e}")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("sidecar")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--force", action="store_true", help="ignore the once-a-day guard")
+    ap.add_argument("--no-discord", action="store_true", help="skip sharing link to Discord")
     a = ap.parse_args()
 
     d = json.loads(Path(a.sidecar).read_text())
@@ -259,7 +291,10 @@ def main():
     print(f"chart: {d['png']}")
 
     if a.dry_run:
-        print("\n[dry run] nothing posted")
+        print("\n[dry run] nothing posted (Substack and Discord skipped)")
+        if not a.no_discord:
+            print(f"[dry run] would share to Discord free chat via {DISCORD_KEY} (not read in dry run):")
+            print(discord_content(d["symbol"], "https://substack.com/@mphinance/note/c-<noteId>"))
         return
 
     s, pub = session()
@@ -282,6 +317,18 @@ def main():
                 c["noteId"] = nid
         CHANGELOG.write_text(json.dumps(log, indent=2) + "\n")
         print(f"changelog: announced {len(changes)} change(s)")
+
+    if not a.no_discord:
+        try:
+            note_url = f"https://substack.com/@mphinance/note/c-{nid}"
+            wh = secrets().get(DISCORD_KEY)
+            if wh and nid:
+                share_discord(wh, d["symbol"], note_url, d.get("png"))
+            else:
+                why = f"{DISCORD_KEY} not set in secrets.env" if not wh else "no note id returned"
+                print(f"Discord share skipped: {why}")
+        except Exception as e:
+            print(f"Discord share skipped: {e}")
 
 
 if __name__ == "__main__":
