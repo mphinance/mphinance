@@ -320,6 +320,17 @@ function gradeEntry(e, day, bars) {
   const spot = e.spot;
   if (e.flip != null) level(e.flip, spot < e.flip ? 'high' : 'low', `${e.flip} flip`);
   level(e.cushion, 'low', `${e.cushion} cushion`);
+  // The DOWN road's first waypoint was never scored at all, so the number the
+  // IF row quotes most often on the downside went untested for a month: on
+  // 2026-10-22 the map named a 770 shelf, price closed 763.96, and the grade
+  // never looked at it. It is scored now, but only when it is a long-gamma
+  // SHELF, where dealers are forced to buy and "it holds" is a real claim.
+  // When the same slot is a short-gamma TRAPDOOR the chart's own note says
+  // dealers sell into it, which is the put wall's logic, so it is reported and
+  // not scored. Entries written before this carry no shelfKind and stay
+  // unscored rather than defaulting to the scoreable read.
+  if (e.shelfKind === 'shelf') level(e.shelf, 'low', `${e.shelf} shelf`);
+  const trapHit = e.shelfKind === 'trapdoor' && e.shelf != null && low <= e.shelf + tol;
   level(e.brake ?? e.battle, 'high', `${e.brake ?? e.battle} brake`);
   level(e.gate, 'high', `${e.gate} ceiling`);
   // The put wall is not scored: the map calls it "a crowd, not a floor", so a
@@ -381,6 +392,7 @@ function gradeEntry(e, day, bars) {
     summary: [
       branch === 'WHIPSAW' ? 'whipsawed both roads' : `took the ${branch} road`,
       ...tested.map(verb),
+      trapHit ? `tagged the ${e.shelf} trapdoor` : '',
       wallHit ? `tagged the ${e.wall} put wall` : '',
       untested.length ? `${untested.length} level${untested.length > 1 ? 's' : ''} untested` : '',
     ].filter(Boolean).join(' · '),
@@ -437,6 +449,26 @@ if (!ledgerBroken) {
 // The running record. Not published until there are enough sessions for it to
 // mean anything: a one-session "4/4" is a number, not a track record.
 const MIN_GRADED = 10;
+// Two rates printed side by side invite the reader to subtract them, and the
+// first night this record published, 11/15 against the baseline's 9/16 looked
+// like a 17-point edge. At 15 levels it is not one. Fisher's exact test, two
+// tailed, on the 2x2 of hits and misses, so the note can say how often a gap
+// that size turns up by chance instead of letting the subtraction speak.
+const lnF = (n) => { let s = 0; for (let i = 2; i <= n; i++) s += Math.log(i); return s; };
+const tableP = (a, b, c, d) =>
+  Math.exp(lnF(a + b) + lnF(c + d) + lnF(a + c) + lnF(b + d) - lnF(a + b + c + d) - lnF(a) - lnF(b) - lnF(c) - lnF(d));
+function fisherTwoTailed(a, b, c, d) {
+  const n = a + b + c + d, r1 = a + b, c1 = a + c;
+  if (!n || !r1 || !c1 || r1 === n || c1 === n) return 1;
+  const obs = tableP(a, b, c, d);
+  let tot = 0;
+  for (let x = Math.max(0, c1 - (n - r1)); x <= Math.min(r1, c1); x++) {
+    const pr = tableP(x, r1 - x, c1 - x, n - r1 - c1 + x);
+    if (pr <= obs * (1 + 1e-9)) tot += pr;
+  }
+  return Math.min(1, tot);
+}
+
 // The day the v2 grading went live and the public record started over.
 const RECORD_RESTART = '2026-10-08';
 // Only sessions graded LIVE under the v2 rules count toward the public record.
@@ -470,6 +502,16 @@ const record = {
   firstMap: ledger.map((e) => e.madeAfter).sort()[0] || null,
   restartedOn: RECORD_RESTART,
 };
+// How often chance alone produces a gap this big between the map and its $5
+// round-number baseline. Attached whenever both sides have a sample; the note
+// only prints it once the record is publishable.
+record.edge = (() => {
+  const a = record.hits, b = record.total - record.hits;
+  const c = record.nullHits, d = record.nullTotal - record.nullHits;
+  if (record.total < 1 || record.nullTotal < 1) return null;
+  const p = fisherTwoTailed(a, b, c, d);
+  return { p: +p.toFixed(4), inNoise: p >= 0.05, mapRate: +(a / record.total).toFixed(3), nullRate: +(c / record.nullTotal).toFixed(3) };
+})();
 
 // The panel still shows yesterday, because that is reporting, not a claim.
 const priorSession = allSessions[allSessions.length - 2];
@@ -846,6 +888,10 @@ function smooth(pp) {
 }
 
 const labels = [];
+// The RANGE road's name is the one piece of right-gutter text that is not a
+// waypoint label, so the caption passes below could not see it. Its row is
+// recorded here for them to test against.
+let waveNameRow = null;
 const ROAD_X0 = FWD_X + 14;
 // The gutter on the right holds the last waypoint's label on each road: the road
 // name plus its note. It used to be a flat 210px, and the note is a sentence, so
@@ -856,9 +902,33 @@ const ROAD_X0 = FWD_X + 14;
 // cannot be squeezed to nothing on a night with very wordy notes.
 const textW = (s_, px) => String(s_).length * px * 0.62;
 for (const r of roads) if (r.up !== undefined) r.pts = sideFilter(r.pts, r.up);
+
+// The RANGE pin and the first level on a directional road keep landing on the
+// same strike (763 on 2026-10-18, 765 on 10-19, 765 again on 10-26), and the two
+// labels then stack into a four-line block over one price. They are one level, so
+// they get one label: the pin is folded into the directional waypoint's tag and
+// note, and the wave keeps only its RANGE name at the right edge. Done here, not
+// in the label pass, so the right-hand gutter is still measured from the text
+// that actually gets drawn.
+{
+  const wave = roads.find((r) => r.wave);
+  const pinPt = wave && wave.pts[0];
+  if (pinPt) {
+    for (const r of roads) {
+      if (r.wave || !r.pts.length) continue;
+      const twin = r.pts.find((w) => !w.open && w.at === pinPt.at);
+      if (!twin) continue;
+      twin.tag = `${twin.tag} \u00b7 PIN`;
+      twin.note = `${twin.note} \u00b7 ${pinPt.note}`;
+      wave.pts = [];
+      break;
+    }
+  }
+}
+
 const gutterNeed = Math.max(0, ...roads.map((r) => {
-  if (!r.pts.length) return 0;
   if (r.wave) return textW(r.key, 15);
+  if (!r.pts.length) return 0;
   const w = r.pts[r.pts.length - 1];
   return Math.max(textW(`${r.key} \u00b7 ${w.tag} *`, 13), textW(w.note, 11));
 }));
@@ -866,7 +936,7 @@ const ROAD_W = FWD_W - Math.min(Math.max(210, Math.ceil(gutterNeed) + 30), Math.
 
 for (const r of roads) {
   if (r.up !== undefined) r.pts = sideFilter(r.pts, r.up);
-  if (!r.pts.length) continue;
+  if (!r.pts.length && !r.wave) continue;
   // waypoint x positions march evenly out along the road
   const n = r.pts.length;
   const xs = r.wave
@@ -927,7 +997,9 @@ for (const r of roads) {
   // (see the label loop), drawn on its own only for the wave, which has no
   // waypoint at the far end to carry it.
   if (r.wave) {
-    push(`<text x="${ROAD_X0 + ROAD_W + 12}" y="${Y(pin) + 4}" font-family="'Share Tech Mono',monospace" font-size="15" fill="${r.col}" letter-spacing="1">${r.key}</text>`);
+    const ny = Y(pin) + 4;
+    waveNameRow = [ny - 12, ny + 4];
+    push(`<text x="${ROAD_X0 + ROAD_W + 12}" y="${ny}" font-family="'Share Tech Mono',monospace" font-size="15" fill="${r.col}" letter-spacing="1">${r.key}</text>`);
   }
 }
 
@@ -947,8 +1019,19 @@ for (const L of labels) {
     push(`<line x1="${L.x}" y1="${L.y}" x2="${L.tx}" y2="${(L.ty - 4).toFixed(1)}" stroke="${L.col}" stroke-width="0.8" stroke-opacity="0.35"/>`);
   }
   const op = L.faint ? 0.42 : 1;
-  push(`<text x="${L.tx}" y="${L.ty.toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${L.col}" fill-opacity="${op}" font-weight="700">${esc(L.tag)}${L.faint ? ' *' : ''}</text>`);
-  push(`<text x="${L.tx}" y="${(L.ty + 15).toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" fill-opacity="${op}">${esc(L.note)}</text>`);
+  // Labels are de-conflicted against each other but never against the roads, and
+  // the roads are curves: smooth() overshoots between waypoints, so a road sits
+  // above a dot it arrives at from below -- the same quadrant the label goes in.
+  // On 2026-10-27 the UP line was drawn straight through "wicks through, closes
+  // under . long gamma, so it settles". Moving the label does not fix this in
+  // general (it just trades one neighbour for another in a crowded panel), so the
+  // text is cut out of whatever runs behind it instead: a background-coloured
+  // outline painted under the glyphs. paint-order keeps the stroke behind the
+  // fill, so the letters themselves are untouched and on empty background the
+  // halo is invisible.
+  const HALO = `stroke="${C.bg}" stroke-width="3" stroke-linejoin="round" paint-order="stroke" stroke-opacity="0.92"`;
+  push(`<text x="${L.tx}" y="${L.ty.toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${L.col}" fill-opacity="${op}" font-weight="700" ${HALO}>${esc(L.tag)}${L.faint ? ' *' : ''}</text>`);
+  push(`<text x="${L.tx}" y="${(L.ty + 15).toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" fill-opacity="${op}" ${HALO}>${esc(L.note)}</text>`);
 }
 
 // The flip band captions, now that the waypoint labels have claimed their rows.
@@ -956,11 +1039,20 @@ for (const L of labels) {
 // note line that hangs 15px under it); a caption occupies yt-9 to yt+2. Drop the
 // caption on any overlap. Both are right-hand text in the forward panel, so the
 // vertical test alone is enough and erring toward dropping one is harmless.
+// The RANGE road's name is right-gutter text too, and it was not in this test:
+// on 2026-10-28 the pin (772) and the flip (771.65) were a third of a point
+// apart, so "RANGE" was painted straight through "ABOVE THE FLIP / dealers
+// brake" and both words were unreadable. The road name wins -- it is the only
+// thing naming that road, while what the flip does is already in the header and
+// the IF rows.
+const rowTaken = (yt) =>
+  labels.some((L) => yt + 2 > L.ty - 11 && yt - 9 < L.ty + 19) ||
+  (waveNameRow != null && yt + 2 > waveNameRow[0] && yt - 9 < waveNameRow[1]);
 for (const [yt, col, txt] of [
   [flipBandY - 10, C.call, 'ABOVE THE FLIP / dealers brake'],
   [flipBandY + 20, C.put, 'BELOW THE FLIP / dealers chase'],
 ]) {
-  if (labels.some((L) => yt + 2 > L.ty - 11 && yt - 9 < L.ty + 19)) continue;
+  if (rowTaken(yt)) continue;
   push(`<text x="${W - PAD_R - 10}" y="${yt}" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="10.5" fill="${col}" fill-opacity="0.75">${txt}</text>`);
 }
 
@@ -974,9 +1066,7 @@ for (const [yt, col, txt] of [
 // row underneath it.
 if (emCaption) {
   const HDR = [PAD_T + 9, PAD_T + 24];
-  const taken = (yt) =>
-    labels.some((L) => yt + 2 > L.ty - 11 && yt - 9 < L.ty + 19) ||
-    (yt + 2 > HDR[0] && yt - 9 < HDR[1]);
+  const taken = (yt) => rowTaken(yt) || (yt + 2 > HDR[0] && yt - 9 < HDR[1]);
   const yt = [emCaption.y1 - 8, emCaption.y1 + 14, emCaption.y1 + 34].find((c) => c > PAD_T + 10 && !taken(c));
   if (yt != null) {
     push(`<text x="${FWD_X + 10}" y="${yt}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.dim}">${esc(emCaption.text)}</text>`);
@@ -992,8 +1082,12 @@ if (report) {
   const col = report.partial ? C.cyan : allHit ? C.call : report.hits >= report.total / 2 ? C.pin : C.put;
   push(`<rect x="${PAD_L}" y="${y - 20}" width="${PLOT_W}" height="34" rx="6" fill="${col}" fill-opacity="0.07" stroke="${col}" stroke-opacity="0.25"/>`);
   push(`<text x="${PAD_L + 16}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${col}" font-weight="700">${report.partial ? 'IN FLIGHT' : 'LAST CALL'}</text>`);
-  push(`<text x="${PAD_L + 130}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.text}">${report.partial ? `${report.day.slice(5)} still open` : `${report.hits}/${report.total} tested on ${report.day.slice(5)}`}</text>`);
-  push(`<text x="${PAD_L + 290}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(report.summary)}</text>`);
+  const lcStr = report.partial ? `${report.day.slice(5)} still open` : `${report.hits}/${report.total} tested on ${report.day.slice(5)}`;
+  push(`<text x="${PAD_L + 130}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.text}">${lcStr}</text>`);
+  // Same fixed-column trap as the IF rows: a two-digit score ("12/16 tested on
+  // 10-23") already reaches the old 290 summary column.
+  const sumX = PAD_L + Math.max(290, 130 + textW(lcStr, 13) + 18);
+  push(`<text x="${sumX}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(report.summary)}</text>`);
 }
 
 // ── the if / else ───────────────────────────────────────────────────────────
@@ -1005,8 +1099,13 @@ ifRows.forEach((r, i) => {
   const kw = r.isElse ? 'ELSE' : 'IF';
   push(`<rect x="${PAD_L}" y="${y - 20}" width="${PLOT_W}" height="34" rx="6" fill="${r.col}" fill-opacity="0.06"/>`);
   push(`<text x="${PAD_L + 16}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${r.col}" font-weight="700">${kw}</text>`);
-  push(`<text x="${PAD_L + 74}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.text}">${esc(kw === 'ELSE' ? `it holds ${r.cond}` : `it goes ${r.cond}`)}</text>`);
-  push(`<text x="${PAD_L + 330}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(r.rule)}</text>`);
+  const condStr = kw === 'ELSE' ? `it holds ${r.cond}` : `it goes ${r.cond}`;
+  push(`<text x="${PAD_L + 74}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.text}">${esc(condStr)}</text>`);
+  // The rule used to start at a fixed column, so a long condition ran straight
+  // through it. On 2026-10-26 "it goes up through the 773.87 flip" overdrew the
+  // "no" in "no long-gamma strike above spot", which reverses the sentence.
+  const ruleX = PAD_L + Math.max(330, 74 + textW(condStr, 13) + 18);
+  push(`<text x="${ruleX}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(r.rule)}</text>`);
 });
 
 // Sits between the IF/ELSE block (last row's box bottom is IF_T + rows*42 - 48)
@@ -1047,6 +1146,10 @@ const entry = {
   brake: brake ? brake.strike : null,
   gate: gate ? gate.strike : null,
   shelf: shelfLvl ? shelfLvl.strike : null,
+  // Which of the two things that slot is tonight. The grader scores a shelf as
+  // a floor and only reports a trapdoor; without this it could not tell them
+  // apart and scored neither.
+  shelfKind: shelfLvl ? (shelfLvl.netGex >= 0 ? 'shelf' : 'trapdoor') : null,
   cushion: cushion ? cushion.strike : null,
   wall: floor ? floor.strike : null,
 };
@@ -1087,6 +1190,7 @@ writeFileSync(sidecar, JSON.stringify({
     brake: brake ? brake.strike : null,
     accel: accel ? accel.strike : null,
     shelf: shelfLvl ? shelfLvl.strike : null,
+    shelfKind: shelfLvl ? (shelfLvl.netGex >= 0 ? 'shelf' : 'trapdoor') : null,
     cushion: cushion ? cushion.strike : null,
     putWall: floor ? floor.strike : null,
   },

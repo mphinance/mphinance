@@ -1,13 +1,13 @@
-# Ghost Alpha Dossier — 2026-10-21
+# Ghost Alpha Dossier — 2026-10-29
 
-> 🟡 **Transition** · SPY ▲ 0.2% · VIX 17.1
+> 🟡 **Transition** · SPY ▼ 0.5% · VIX 16.4
 
 ---
 
-Morning, degens.
+The desk is calm with the VIX hovering at 16.
 
 
-## 🥇 Gold Pick: PM
+## 🥇 Gold Pick: ROKU
 
 | Metric | Value |
 |--------|-------|
@@ -20,25 +20,25 @@ Morning, degens.
 
 
 ### Runners Up
-- 🥈 **GILD** — Score: 30/100
-- 🥉 **KNSA** — Score: 29/100
+- 🥈 **LIN** — Score: 45/100
+- 🥉 **CNI** — Score: 43/100
 
 
 ## 📊 Today's Numbers
 
-- **41 scanner signals** across 6 strategies
+- **187 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▲ 0.2% | **VIX:** 17.1
+- **SPY:** ▼ 0.5% | **VIX:** 16.4
 
 ---
 
 ## 👻 Sam Says
 
-> *"Half measures availed us nothing. Either follow the trading plan or don't trade. There is no 'kinda' hedged."*
+> *"The market doesn't care about your feelings, your rent, or your divorce. Trade accordingly."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-21_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-21)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-29_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-29)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
