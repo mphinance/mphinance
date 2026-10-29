@@ -43,7 +43,7 @@ Keys: `.env_td_api` (bare `X-API-Key` on one line, no `KEY=` prefix).
 | TRAPDOOR / LAST SHELF | first significant strike below spot. "Shelf" if dealers are long gamma there, "trapdoor" if short. |
 | THIN CUSHION | the only positive-gamma strike below spot. Small but it is the real bid. |
 | PUT WALL | heaviest short-gamma strike below spot. A crowd, not a floor. |
-| dimmed + `*` | beyond a typical day's move. A tail, not a plan. |
+| dimmed + `*` | beyond 1.5 typical days (`REACH`) from spot. Drawn, never scored: the ledger stores it as null with the value under `beyond`. |
 
 ## The rules that were learned the hard way
 
@@ -115,6 +115,12 @@ came nowhere near are marked UNTESTED, drawn grey, and excluded from the ratio.
 
 Under that rule 2026-09-24 grades 3/3 on tested levels with 3 levels never in play.
 The headline used to read 4/4.
+
+**Plan levels only (2026-10-29).** Levels beyond 1.5x the typical day (`expected`)
+from spot are not written to the ledger as scoreable (null, kept under `beyond`).
+Replay over the first 15 live sessions: 39 named, 17 untested; 1.5x kept all 17
+tested and dropped 4 untested (1.0x would drop 10). It cannot improve the hit
+ratio, only stops padding the untested pile. Do not widen REACH to pad a sample.
 
 **Never publish an accuracy number before it is one.** A grade is written into its
 ledger entry permanently the first time its session closes, so the record builds

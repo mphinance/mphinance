@@ -692,6 +692,20 @@ const triggerNote = (() => {
   return null;
 })();
 
+// PLAN LEVELS: only levels within a typical day's reach are named (scored).
+// Replay over the 15 live graded sessions (2026-10-29): 17 of 39 named levels
+// were never approached, and 5 sessions graded 0 tested. The --band (default
+// 1.4% of spot, ~10 points on SPY) draws levels no session visits. A level
+// further than REACH x the typical day (`expected`) from spot is still drawn,
+// dimmed with the `*` tail mark, but is written to the ledger as null (kept in
+// `beyond` for audit) so it is never scored. This changes WHAT IS SCORED: it
+// removes levels that could only ever be UNTESTED. Replay at 1.5x kept all 17
+// tested levels and dropped 4 of the 17 untested. Never widen it to pad the
+// sample; a tested level is never dropped by it because tested levels are by
+// construction near price.
+const REACH = 1.5;
+const inReach = (v) => v != null && Math.abs(v - spot) <= REACH * expected;
+
 const sideFilter = (pts_, up) => pts_.filter((w) => w && (up ? w.at > spot : w.at < spot));
 
 const roads = [
@@ -1034,7 +1048,7 @@ for (const r of roads) {
       // an air pocket is drawn as a gap in the road, not a stop on it
       push(`<circle cx="${x}" cy="${y}" r="4" fill="none" stroke="${r.col}" stroke-width="1.6" stroke-dasharray="2 2"/>`);
     } else {
-      const reach = w.at <= emHi && w.at >= emLo;
+      const reach = inReach(w.at);
       push(`<circle cx="${x}" cy="${y}" r="5.5" fill="${C.bg}" stroke="${r.col}" stroke-width="2.4" stroke-opacity="${reach ? 1 : 0.4}"/>`);
     }
     // The road arrives from the lower/upper left and leaves to the right, so the
@@ -1047,7 +1061,7 @@ for (const r of roads) {
       anchor: last ? 'start' : 'end',
       ty: y + (r.labelBelow ? 30 : r.side < 0 ? -28 : 24),
       tag: last && !r.wave ? `${r.key} · ${w.tag}` : w.tag, note: w.note, col: r.col,
-      faint: !(w.at <= emHi && w.at >= emLo),
+      faint: !inReach(w.at),
     });
   });
 
@@ -1199,17 +1213,22 @@ const entry = {
   // `pin` was always the API's maxGammaStrike (787 on 10/06 with spot 779), not
   // the pin the chart draws, so the RANGE road could never be graded. Kept for
   // continuity; chartPin is the one the map actually claims.
-  spot, flip, pin: magnet, chartPin: pin, expected,
+  // Plan levels only (see REACH): anything beyond 1.5 typical days is null here
+  // and listed under `beyond`, so it is drawn but never scored.
+  spot, flip: inReach(flip) ? flip : null, pin: magnet, chartPin: pin, expected,
   accel: accel ? accel.strike : null,
-  brake: brake ? brake.strike : null,
-  gate: gate ? gate.strike : null,
-  shelf: shelfLvl ? shelfLvl.strike : null,
+  brake: brake && inReach(brake.strike) ? brake.strike : null,
+  gate: gate && inReach(gate.strike) ? gate.strike : null,
+  shelf: shelfLvl && inReach(shelfLvl.strike) ? shelfLvl.strike : null,
   // Which of the two things that slot is tonight. The grader scores a shelf as
   // a floor and only reports a trapdoor; without this it could not tell them
   // apart and scored neither.
-  shelfKind: shelfLvl ? (shelfLvl.netGex >= 0 ? 'shelf' : 'trapdoor') : null,
-  cushion: cushion ? cushion.strike : null,
+  shelfKind: shelfLvl && inReach(shelfLvl.strike) ? (shelfLvl.netGex >= 0 ? 'shelf' : 'trapdoor') : null,
+  cushion: cushion && inReach(cushion.strike) ? cushion.strike : null,
   wall: floor ? floor.strike : null,
+  beyond: Object.fromEntries(Object.entries({
+    flip, brake: brake?.strike, gate: gate?.strike, shelf: shelfLvl?.strike, cushion: cushion?.strike,
+  }).filter(([, v]) => v != null && !inReach(v))),
   // The flip three ways (see cumulativeFlip), so the TradingView/TDPro gap and the
   // 0DTE effect are measured. Diagnostic only: the grader reads `flip` above.
   flips: { api: flip, survivors: flipSurvivors, fullBook: flipFullBook, tv: flipTV },
