@@ -1,7 +1,8 @@
 ---
-title: "[pick one] The Line Under Wisconsin / Shorts by Day, Sweatshirts by Night / Your Own Backyard, Part 2"
+title: "Wisconsin"
 subtitle: "Mindset 50% | Travel 30% | Life 20%"
-images: balloon_diptych.jpg (hero), scars_map.png, sausage_smoker.jpg
+cover: holyhill_tower.jpg (Substack cover/social image)
+images: balloon_diptych.jpg (first inline), scars_map.png, holyhill_tower.jpg, sausage_smoker.jpg
 note: "MICHAEL's words = everything outside > blockquotes, lightly cleaned. MACHINE words = the > blockquotes + the city one-liners in 'The drive'. Edit those hardest."
 ---
 
@@ -26,6 +27,10 @@ Milwaukee to Green Bay is the drive everybody from out of town will do this year
 
 [MACHINE, trim to taste:]
 - **Holy Hill.** The basilica sits on a kame, a hill the glacier dumped. I wrote about the one under my house [back in August](https://mphinance.substack.com/p/i-paid-to-be-shown-three-foreign). This morning's balloon was floating over ice-age gravel and almost nobody watching knew it.
+
+![](holyhill_tower.jpg)
+*The view from the Holy Hill tower. [MICHAEL: when was this?] Everything you see is glacier leftovers.*
+
 - **Fond du Lac.** "Bottom of the lake." East of town the land steps up onto the Ledge, the Niagara Escarpment. Same rock Niagara Falls pours over.
 - **Oshkosh.** Lake Winnebago, biggest lake inside the state, shallow, a leftover of a glacial lake.
 - **Appleton.** The Fox River runs north, dropping about 170 feet through a chain of locks to Green Bay. That drop is why the valley made paper.
