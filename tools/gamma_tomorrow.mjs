@@ -340,21 +340,21 @@ function gradeEntry(e, day, bars) {
   // 5/5 and intraday 1/5. The wick is still reported, it just is not the claim.
   const tol = (e.expected || expected) * 0.25;
   const checks = [];
-  const level = (lvl, side, label) => {
+  const level = (lvl, side, label, kind) => {
     if (lvl == null) return;
     const reached = side === 'low' ? low : high;
     const dist = Math.abs(reached - lvl);
     const wickHeld = side === 'low' ? low >= lvl : high <= lvl;
     const held = side === 'low' ? close >= lvl : close <= lvl;
     const thru = side === 'low' ? lvl - low : high - lvl;
-    checks.push({ lvl, side, dist: +dist.toFixed(2), thru: +thru.toFixed(2), tested: dist <= tol || !wickHeld, ok: held, wickHeld, label });
+    checks.push({ lvl, side, kind, dist: +dist.toFixed(2), thru: +thru.toFixed(2), tested: dist <= tol || !wickHeld, ok: held, wickHeld, label });
   };
   // The flip is a ceiling when price is under it and a floor when price is over
   // it. It used to be graded as a ceiling every time, so every night drawn above
   // the flip booked a MISS ("broke 768.1 flip by 13.48") for being above it.
   const spot = e.spot;
-  if (e.flip != null) level(e.flip, spot < e.flip ? 'high' : 'low', `${e.flip} flip`);
-  level(e.cushion, 'low', `${e.cushion} cushion`);
+  if (e.flip != null) level(e.flip, spot < e.flip ? 'high' : 'low', `${e.flip} flip`, 'flip');
+  level(e.cushion, 'low', `${e.cushion} cushion`, 'cushion');
   // The DOWN road's first waypoint was never scored at all, so the number the
   // IF row quotes most often on the downside went untested for a month: on
   // 2026-10-22 the map named a 770 shelf, price closed 763.96, and the grade
@@ -364,10 +364,10 @@ function gradeEntry(e, day, bars) {
   // dealers sell into it, which is the put wall's logic, so it is reported and
   // not scored. Entries written before this carry no shelfKind and stay
   // unscored rather than defaulting to the scoreable read.
-  if (e.shelfKind === 'shelf') level(e.shelf, 'low', `${e.shelf} shelf`);
+  if (e.shelfKind === 'shelf') level(e.shelf, 'low', `${e.shelf} shelf`, 'shelf');
   const trapHit = e.shelfKind === 'trapdoor' && e.shelf != null && low <= e.shelf + tol;
-  level(e.brake ?? e.battle, 'high', `${e.brake ?? e.battle} brake`);
-  level(e.gate, 'high', `${e.gate} ceiling`);
+  level(e.brake ?? e.battle, 'high', `${e.brake ?? e.battle} brake`, 'brake');
+  level(e.gate, 'high', `${e.gate} ceiling`, 'ceiling');
   // The put wall is not scored: the map calls it "a crowd, not a floor", so a
   // close under it is not a miss and a close over it is not a hit. Reported only.
   const wallHit = e.wall != null && low <= e.wall + tol;
@@ -405,7 +405,7 @@ function gradeEntry(e, day, bars) {
   // the pin", against the nearest $5 round number to spot by the same rule.
   if (branch === 'RANGE' && e.chartPin != null) {
     const near = tol * 2;
-    checks.push({ lvl: e.chartPin, side: 'pin', dist: +Math.abs(close - e.chartPin).toFixed(2), thru: 0,
+    checks.push({ lvl: e.chartPin, side: 'pin', kind: 'pin', dist: +Math.abs(close - e.chartPin).toFixed(2), thru: 0,
                   tested: true, ok: Math.abs(close - e.chartPin) <= near, wickHeld: true, label: `${e.chartPin} pin` });
     const r5 = Math.round(spot / R) * R;
     nullHits.push(Math.abs(close - r5) <= near);
@@ -456,7 +456,7 @@ if (argv.includes('--regrade') && !ledgerBroken) {
     e.graded = { v: 2, day: g.day, branch: g.branch, hits: g.hits, total: g.total,
                  nullHits: g.nullHits, nullTotal: g.nullTotal,
                  untested: g.untested.length, summary: g.summary,
-                 checks: g.tested.map((c) => ({ lvl: c.lvl, side: c.side, ok: c.ok })), source: 'daily OHLC regrade' };
+                 checks: g.tested.map((c) => ({ lvl: c.lvl, side: c.side, kind: c.kind, ok: c.ok })), source: 'daily OHLC regrade' };
     console.log(`regraded ${e.madeAfter} -> ${g.day}: ${g.hits}/${g.total} (null ${g.nullHits}/${g.nullTotal}) | ${g.summary}`);
   }
   ledgerDirty = true;
@@ -476,7 +476,7 @@ if (!ledgerBroken) {
     e.graded = { v: 2, day: g.day, branch: g.branch, hits: g.hits, total: g.total,
                  nullHits: g.nullHits, nullTotal: g.nullTotal,
                  untested: g.untested.length, summary: g.summary,
-                 checks: g.tested.map((c) => ({ lvl: c.lvl, side: c.side, ok: c.ok })) };
+                 checks: g.tested.map((c) => ({ lvl: c.lvl, side: c.side, kind: c.kind, ok: c.ok })) };
     ledgerDirty = true;
   }
 }
@@ -511,6 +511,21 @@ const RECORD_RESTART = '2026-10-08';
 // chosen while looking at them (close-grading came from seeing the brakes hold
 // on the close). Scoring rules on the data that shaped them is in-sample, so
 // those stay in the ledger as history and the public clock restarts.
+// Which named level a stored check was. Written onto every check from
+// 2026-10-29; entries graded before that have only the price, so the type is
+// recovered by matching it back against the map that named it. Falls back to
+// the side rather than guessing, so a level that cannot be identified is
+// counted somewhere honest instead of being attributed to the wrong type.
+const checkKind = (e, c) => {
+  if (c.kind) return c.kind;
+  if (c.side === 'pin') return 'pin';
+  if (e.flip === c.lvl) return 'flip';
+  if (e.shelf === c.lvl) return 'shelf';
+  if ((e.brake ?? e.battle) === c.lvl) return 'brake';
+  if (e.gate === c.lvl) return 'ceiling';
+  if (e.cushion === c.lvl) return 'cushion';
+  return c.side === 'low' ? 'other floor' : 'other ceiling';
+};
 const gradedAll = ledger.filter((e) => e.graded && e.graded.v === 2 && !e.graded.source);
 const inSample = ledger.filter((e) => e.graded && e.graded.source);
 const record = {
@@ -522,6 +537,26 @@ const record = {
   nonRound: (() => {
     const cs = gradedAll.flatMap((e) => e.graded.checks || []).filter((c) => c.side !== 'pin' && c.lvl % 5 !== 0);
     return { hits: cs.filter((c) => c.ok).length, total: cs.length };
+  })(),
+  // The record split by which KIND of level was scored. The headline rate is
+  // an average over level types that behave nothing alike, and it hides the
+  // one that matters: through 16 live sessions the gamma flip is the most
+  // frequently scored level on the board and the worst performing one, while
+  // the brakes and ceilings it is averaged with hold most of the time. A level
+  // type that misses repeatedly is a modelling problem, not bad luck, so it
+  // gets counted every night instead of being noticed by hand. Reported, never
+  // published as a rate: ten levels is not a sample.
+  byLevel: (() => {
+    const by = {};
+    for (const e of gradedAll) {
+      for (const c of e.graded.checks || []) {
+        const k = checkKind(e, c);
+        (by[k] ??= { hits: 0, total: 0 });
+        by[k].total++;
+        if (c.ok) by[k].hits++;
+      }
+    }
+    return Object.fromEntries(Object.entries(by).sort((a, b) => b[1].total - a[1].total));
   })(),
   sessions: gradedAll.length,
   hits: gradedAll.reduce((a, e) => a + e.graded.hits, 0),
@@ -1248,6 +1283,7 @@ if (ledgerBroken) {
 
 console.log(`record so far: ${record.sessions} session(s) graded${record.publishable ? '' : ` -- not publishable until ${MIN_GRADED}`}`);
 if (report) console.log(`${report.partial ? 'in flight' : 'last call'}: ${report.hits}/${report.total} tested on ${report.day} | ${report.summary}`);
+console.log(`by level: ${Object.entries(record.byLevel).map(([k, v]) => `${k} ${v.hits}/${v.total}`).join(' | ') || 'nothing scored yet'}`);
 console.log(`spot ${spot} | flip ${flip} | magnet ${magnet} | netGEX ${fmtM(gex.totalGEX)}`);
 console.log(`flips | api ${flip} | survivors ${flipSurvivors} | full book ${flipFullBook} | tv ${flipTV} | record ${flipRecord.hits}/${flipRecord.total} | leads IF row: ${flipLeadOK}`);
 console.log(`gate ${gate?.strike} | brake ${brake?.strike} | accel ${accel?.strike} | floor ${floor?.strike} | pocket ${pocket ? `${pocket.lo}-${pocket.hi}` : 'none'}`);
