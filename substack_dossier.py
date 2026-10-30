@@ -206,6 +206,11 @@ class SubstackClient:
                 print(f"  publish: draft_section_id={bound} != required {require_section_id} "
                       f"— REFUSING to publish (not in the required section)")
                 return None
+        # The pub has a Data section, so Substack 400s "Please choose a section"
+        # unless section_chosen is set, even for the main feed.
+        if not draft.get("section_chosen"):
+            self.session.put(f"https://{self.pub}/api/v1/drafts/{draft_id}",
+                             json={"section_chosen": True}, headers=self.headers, timeout=20)
         r = self.session.post(f"https://{self.pub}/api/v1/drafts/{draft_id}/publish",
                              json={"send": bool(send_email)},
                              headers=self.headers, timeout=60)
