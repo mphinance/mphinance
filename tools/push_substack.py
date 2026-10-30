@@ -14,9 +14,15 @@ tags are a separate manual step in the editor and are not driven from here.
   python3 tools/push_substack.py <workspace>/post.md [--dry-run] [--skip-lint]
 
 Runs tools/voice_lint.py first; lint ERRORs block the push.
+
+Markdown syntax (callouts `!> `, pullquotes `|> `, code fences, `==highlight==`,
+<span style="color: gold">, numbered lists) is documented and render-verified in
+~/.claude/skills/mph-substack-publish/FORMATTING.md. To recolor a draft Michael
+already edited, use tools/substack_draft_color.py instead of re-pushing.
 """
 import base64
 import os
+import uuid
 import re
 import sys
 
@@ -69,6 +75,16 @@ def code(text):
 
 
 COLOR_SPAN = re.compile(r'<span style="color:\s*([^";]+);?">(.+?)</span>')
+HIGHLIGHT = re.compile(r'==(.+?)==')
+
+# Named colors for <span style="color: gold">. Tuned for the dark-gold house look
+# (same hexes as the dataviz charts) and readable in both reader themes; Substack
+# re-tints for dark mode anyway. Raw hex still works for one-offs.
+PALETTE = {
+    "gold": "#E8B75A", "red": "#FF5D6C", "green": "#2FD18B", "blue": "#6FA8FF",
+    "pink": "#FF4FA3", "muted": "#8B90A0",
+    "brewers": "#FFC52F", "packers": "#2E8B57",
+}
 
 
 def _with_mark(node, mark):
@@ -90,8 +106,22 @@ def inline(text):
         for m in COLOR_SPAN.finditer(text):
             if m.start() > pos:
                 out += inline(text[pos:m.start()])
-            mark = {"type": "textStyle", "attrs": {"color": m.group(1).strip()}}
+            c = m.group(1).strip()
+            mark = {"type": "textStyle", "attrs": {"color": PALETTE.get(c.lower(), c)}}
             out += [_with_mark(n, mark) for n in inline(m.group(2))]
+            pos = m.end()
+        if pos < len(text):
+            out += inline(text[pos:])
+        return out
+    # ==text== is the editor's highlighter (yellow background marker). Verified to
+    # render 2026-10-30 as <mark data-color=...>.
+    if HIGHLIGHT.search(text):
+        out, pos = [], 0
+        for m in HIGHLIGHT.finditer(text):
+            if m.start() > pos:
+                out += inline(text[pos:m.start()])
+            mark = {"type": "highlight", "attrs": {"color": PALETTE["brewers"]}}
+            out += [_with_mark(n, mark) for n in inline(m.group(1))]
             pos = m.end()
         if pos < len(text):
             out += inline(text[pos:])
@@ -124,10 +154,28 @@ def inline(text):
     return out or [_ascii_safe(text)]
 
 
-def code_block(text):
-    """Native Substack code_block node (monospace, copyable). Newlines are kept
-    inside a single text node, which is how PM code blocks carry their content."""
-    return {"type": "code_block", "content": [{"type": "text", "text": _ascii_safe(text)}]}
+def code_block(text, language="plaintext"):
+    """The editor's own code block: `highlighted_code_block` (language picker, copy
+    button, themed box). This is what Substack's toolbar inserts; the older bare
+    `code_block` still renders but as a plain <pre>. Language comes from the fence
+    (```python); default plaintext. Verified in the editor 2026-10-30."""
+    return {"type": "highlighted_code_block",
+            "attrs": {"language": language or "plaintext", "nodeId": str(uuid.uuid4())},
+            "content": [{"type": "text", "text": _ascii_safe(text)}]}
+
+
+def callout(paragraphs):
+    """Substack's callout box (`calloutBlock`, rendered as div.callout-block: a
+    shaded, rounded panel). Written as consecutive `!> ` lines, one paragraph each.
+    Node name confirmed from Michael's hand-built glossary draft and a 2026-10-30
+    render test."""
+    return {"type": "calloutBlock", "content": [p(*para) for para in paragraphs]}
+
+
+def ordered_list(items):
+    """Native numbered list (`1. ` lines). camelCase like bulletList."""
+    return {"type": "orderedList", "attrs": {"start": 1}, "content": [
+        {"type": "listItem", "content": [p(*it)]} for it in items]}
 
 
 def blockquote(paragraphs):
@@ -188,12 +236,13 @@ def build_doc(md_path, client, dry):
         # Fenced code block: collect verbatim lines (preserve indentation) until the
         # closing fence. Must run BEFORE the blank-line skip so blank code lines survive.
         if s.startswith("```"):
+            lang = s[3:].strip() or "plaintext"
             code_lines = []
             i += 1
             while i < len(lines) and not lines[i].strip().startswith("```"):
                 code_lines.append(lines[i]); i += 1
             i += 1  # skip closing fence
-            nodes.append(code_block("\n".join(code_lines)))
+            nodes.append(code_block("\n".join(code_lines), lang))
             continue
         if not s:
             i += 1; continue
@@ -216,6 +265,22 @@ def build_doc(md_path, client, dry):
                 i += 1
             nodes.append({"type": "pullquote", "attrs": {"align": None, "color": None},
                           "content": [p(*para) for para in paras]})
+            continue
+        # "!> " lines = callout box (calloutBlock), one paragraph per line.
+        if s.startswith("!> "):
+            paras = []
+            while i < len(lines) and lines[i].strip().startswith("!> "):
+                paras.append(inline(lines[i].strip()[3:]))
+                i += 1
+            nodes.append(callout(paras))
+            continue
+        # "1. " / "2. " lines = numbered list.
+        if re.match(r"\d+\. ", s):
+            items = []
+            while i < len(lines) and re.match(r"\d+\. ", lines[i].strip()):
+                items.append(inline(re.sub(r"^\d+\. ", "", lines[i].strip())))
+                i += 1
+            nodes.append(ordered_list(items))
             continue
         # Group consecutive "- " lines into one real bullet_list node.
         if s.startswith("- "):
