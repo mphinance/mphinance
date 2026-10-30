@@ -58,3 +58,5 @@ It really is about three weeks of difference, honestly. And we've only got about
 - "Shorts during the day, sweatshirts at night are my jam. I wanna cuddle, lol."
 
 ~ Michael
+<!--seo-title: Milwaukee to the Northwoods: The Lines Under Wisconsin-->
+<!--seo-desc: A drive from Milwaukee to Green Bay and up the Wolf River: Holy Hill's kame, the 45th parallel, the Menominee Forest, and why October wind feels different.-->

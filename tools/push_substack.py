@@ -367,6 +367,17 @@ def main():
     if not (res and res.get("id")):
         print(f"CREATE FAILED: {res}"); return
     draft_id = res["id"]
+    # SEO: <!--seo-title: ...--> and <!--seo-desc: ...--> lines in post.md. The
+    # subtitle is a category mix, so without these Google shows "Trading 60% | ...".
+    src = open(md_path, encoding="utf-8").read()
+    seo = {k: m.group(1).strip() for k, pat in (("search_engine_title", r"<!--\s*seo-title:\s*(.+?)-->"),
+                                                ("search_engine_description", r"<!--\s*seo-desc:\s*(.+?)-->"))
+           if (m := re.search(pat, src))}
+    if seo:
+        r = client.session.put(f"https://{client.pub}/api/v1/drafts/{draft_id}", json=seo)
+        print(f"SEO:      {r.status_code} {seo.get('search_engine_title', '')}")
+    else:
+        print("SEO:      none set (add <!--seo-title: ...--> / <!--seo-desc: ...--> to post.md)")
     print(f"DRAFT: https://mphinance.substack.com/publish/post/{draft_id}")
     # Substack's own checks, borrowed from substack-gateway-oss: the Pangram scan is
     # what drives the reader-facing AI disclosure, so surface it at push time.
