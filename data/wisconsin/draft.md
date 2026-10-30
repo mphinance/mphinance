@@ -11,7 +11,7 @@ note: "MICHAEL's words = everything outside > blockquotes, lightly cleaned. MACH
 
 I saw a hot air balloon over Holy Hill at sunrise this morning with the fall colors out in full. Know what that must have looked like from up there? Ugh.
 
-The Brewers just won the World Series. The Packers [CONFIRM: result + score vs Carolina, Thu 10/29]. When else does Wisconsin get a spotlight like this? So if you're from out of state and you're finally looking our way, let me take you for a drive.
+The Brewers just won the World Series. The Packers beat Carolina 27-19 on Thursday night. When else does Wisconsin get a spotlight like this? So if you're from out of state and you're finally looking our way, let me take you for a drive.
 
 ## It's the wind
 
@@ -29,7 +29,7 @@ Milwaukee to Green Bay is the drive everybody from out of town will do this year
 - **Holy Hill.** The basilica sits on a kame, a hill the glacier dumped. I wrote about the one under my house [back in August](https://mphinance.substack.com/p/i-paid-to-be-shown-three-foreign). This morning's balloon was floating over ice-age gravel and almost nobody watching knew it.
 
 ![](holyhill_tower.jpg)
-*The view from the Holy Hill tower. [MICHAEL: when was this?] Everything you see is glacier leftovers.*
+*The view from the Holy Hill tower this afternoon. I went up just to get this shot. Everything you see is glacier leftovers.*
 
 - **Fond du Lac.** "Bottom of the lake." East of town the land steps up onto the Ledge, the Niagara Escarpment. Same rock Niagara Falls pours over.
 - **Oshkosh.** Lake Winnebago, biggest lake inside the state, shallow, a leftover of a glacial lake.
