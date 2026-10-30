@@ -100,7 +100,7 @@ def write():
         body = "\n\n".join(f"### id={p['id']} | title: {p['title']} | subtitle: {p['subtitle']}\n{p['text'][:1200]}"
                            for p in chunk)
         for attempt in range(3):
-            r = subprocess.run(["claude", "-p", "--model", "claude-sonnet-5-5", PROMPT + body],
+            r = subprocess.run([os.path.expanduser("~/.local/bin/claude"), "-p", "--model", "claude-sonnet-5-5", PROMPT + body],
                                capture_output=True, text=True, env=env, timeout=600)
             m = re.search(r"\[.*\]", r.stdout, re.S)
             try:
