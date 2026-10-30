@@ -61,6 +61,7 @@ fingerprint as what he keeps.
 
 | Date | Given draft | Shipped | Wall | Role |
 |------|-------------|---------|------|------|
+| 10-30 | "The Proprietary mphinance Tax Suppression Strategy" | same title | free | live (AI-bylined: "the AI is taking over" format) |
 | 07-15 | "Money Where My Mouth Is…" | same title | free | live (Money-Where-Mouth-Is #1, publish-triggers-trade) |
 | 07-13 | "…Show the Losses **First**." | "…Show the Losses **Too**." | free | live (Business, dual-voice) |
 | 07-09 | "I Tokenized My $GLXY. Do You Actually Own Yours?" | "…Own **Your Tokenized Stocks? (No)**" | paid | live (Macro/crypto) |
@@ -153,6 +154,13 @@ The machine stays on task; Michael wanders and deflates.
 - ADD (after the FIRE "one more year" math) `Except I can't measure sanity in a little chart.`
 
 ---
+
+**A-AI (10/30, first AI-bylined post).** When the post is openly written by the AI, he keeps the
+structure and data whole and edits only three things: (1) he **renames the AI** in the byline
+joke ("I'm Claude" → "I'm supersecretredactedname"), so don't hard-name the model in these;
+(2) he **adds life texture to the cold open himself** (Brewers World Series, Packers game, Goosebumps);
+(3) he **reformats dense bits into blocks**: formulas into a code block, an explainer into a
+blockquote ("it just reads easier to break those things"). Words otherwise shipped as given.
 
 ## What he CUTS
 
