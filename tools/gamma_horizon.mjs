@@ -845,6 +845,8 @@ await browser.close();
 writeFileSync(`${base}.json`, JSON.stringify({
   symbol: sym, asOf: new Date().toISOString(), spot, flip: flipNow, netGEX: gex.totalGEX,
   regime: negGamma ? 'negative gamma' : 'positive gamma', largest: largest.expiry,
+  wedge: wedge && { lid: r2(wedge.hiNow), floor: r2(wedge.loNow), apexPx: r2(wedge.apexPx), sessions: Math.round(wedge.apexK),
+    apexDate: new Date(Date.now() + ((wedge.apexK * 7) / 5) * 864e5).toISOString().slice(5, 10).replace('-', '/') },
   atr14: atrNow, ema21: emaNow, keltner: { u1: kcU1.at(-1), l1: kcL1.at(-1), u2: kcU2.at(-1), l2: kcL2.at(-1) }, plan,
   expiries: exps.map(({ expiry, dte, emPoints, callWall, putWall, cushion, magnet, magGex, settle, oiSharePct, major }) =>
     ({ expiry, dte, emPoints, callWall, putWall, cushion, magnet, magGex, settle, oiSharePct, major })),

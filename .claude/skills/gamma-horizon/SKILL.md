@@ -17,7 +17,13 @@ Flags: `--days N` (forward window, 60), `--bars N` (daily candles, 65), `--minsh
 trendlines (lid through swing highs, floor through swing lows, no close beyond either),
 circles the touches, and projects both lines into the right panel to the apex (or the
 panel edge if the apex is further out). Pair with `--bars 130` so the lid's anchor high
-is on the chart. Chart-only overlay: it does not change the plan. Writes PNG + HTML + JSON
+is on the chart. Chart-only overlay: it does not change the plan.
+
+Ticker Search rail beside it: `node tools/ticker_rail.mjs SYM --chart <horizon png> --ivrank N`
+adds the 10/25 Ticker Search right column (technicals + entry chips, top flows, apex
+ladder, dealer gamma, plain IV read, plus a wedge card when the sidecar has one).
+`--ivrank` comes from the TDPro MCP `get_iv_rank`; the dev API has no route for it. The
+oscillator gauge is our own 7-signal vote count, not TraderMatrix's gauge, and is labelled so. Writes PNG + HTML + JSON
 sidecar. Keys: `.env_td_api`. Daily bars come from Yahoo.
 
 **Arya runs the same model** as `/tm apexweek` (`~/TraderDiscord-v2/bot/horizon_map.py`,
