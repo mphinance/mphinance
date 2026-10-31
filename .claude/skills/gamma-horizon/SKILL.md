@@ -13,7 +13,11 @@ node tools/gamma_horizon.mjs --grade                       # re-grade every logg
 ```
 
 Flags: `--days N` (forward window, 60), `--bars N` (daily candles, 65), `--minshare PCT`
-(OI share an expiry needs to count as major, 5), `--no-log`. Writes PNG + HTML + JSON
+(OI share an expiry needs to count as major, 5), `--no-log`. `--wedge` auto-fits the converging
+trendlines (lid through swing highs, floor through swing lows, no close beyond either),
+circles the touches, and projects both lines into the right panel to the apex (or the
+panel edge if the apex is further out). Pair with `--bars 130` so the lid's anchor high
+is on the chart. Chart-only overlay: it does not change the plan. Writes PNG + HTML + JSON
 sidecar. Keys: `.env_td_api`. Daily bars come from Yahoo.
 
 **Arya runs the same model** as `/tm apexweek` (`~/TraderDiscord-v2/bot/horizon_map.py`,

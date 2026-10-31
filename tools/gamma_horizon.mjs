@@ -215,6 +215,39 @@ const sma = closes.map((_, i) => (i >= 49 ? closes.slice(i - 49, i + 1).reduce((
 const off = Math.max(0, allBars.length - BARS);
 const bars = allBars.slice(off);
 
+// --wedge: fit the converging trendlines price is coiling inside. Resistance
+// joins two swing highs, support two swing lows; a line only counts if no
+// close since its first anchor sits beyond it (wicks may poke through). Among
+// valid lines, most touches wins, then the longer span. Needs a falling lid
+// over a floor that is rising or falling slower, or there is no wedge.
+const wedge = (() => {
+  if (!argv.includes('--wedge')) return null;
+  const n = bars.length, P = 5;
+  const piv = (key, cmp) => bars.map((b, i) => i).filter((i) => i >= P && i < n - 2
+    && bars.slice(i - P, i + P + 1).every((x) => cmp(bars[i][key], x[key])));
+  const fit = (key, idx, side) => {
+    let best = null;
+    for (const a of idx) for (const b of idx) {
+      if (b - a < 15 || b < n - 45) continue;
+      const m = (bars[b][key] - bars[a][key]) / (b - a), at = (i) => bars[a][key] + m * (i - a);
+      if (bars.slice(a).some((x, k) => side * (x.c - at(a + k)) > 0)) continue;
+      if (bars.slice(a).some((x, k) => side * (x[key] - at(a + k)) > at(a + k) * 0.012)) continue;
+      const touches = idx.filter((i) => i >= a && Math.abs(bars[i][key] - at(i)) <= at(i) * 0.015).length;
+      const score = touches * 1000 + (b - a);
+      if (!best || score > best.score) best = { a, b, m, at, touches, score };
+    }
+    return best;
+  };
+  const hiIdx = piv('h', (v, x) => v >= x), loIdx = piv('l', (v, x) => v <= x);
+  const up = fit('h', hiIdx, 1), dn = fit('l', loIdx, -1);
+  if (!up || !dn || up.m >= 0 || up.m >= dn.m) return null;
+  const last = n - 1, gap = up.at(last) - dn.at(last);
+  const apexK = gap / (dn.m - up.m);                     // trading days from the last bar
+  return { up, dn, last, apexK, apexPx: up.at(last + apexK), hiNow: up.at(last), loNow: dn.at(last),
+    hiIdx: hiIdx.filter((i) => i >= up.a && Math.abs(bars[i].h - up.at(i)) <= up.at(i) * 0.015),
+    loIdx: loIdx.filter((i) => i >= dn.a && Math.abs(bars[i].l - dn.at(i)) <= dn.at(i) * 0.015) };
+})();
+
 // Keltner: the 21 EMA ± 1 and 2 ATR(14), Wilder-smoothed. Same 21 EMA as the
 // midline already on the chart, so the bands hang off a line he reads anyway.
 const tr = allBars.map((b, i) => (i ? Math.max(b.h - b.l, Math.abs(b.h - allBars[i - 1].c), Math.abs(b.l - allBars[i - 1].c)) : b.h - b.l));
@@ -366,6 +399,7 @@ const fwdLv = [...exps.flatMap((e) => [e.callWall, e.putWall, e.magnet, e.settle
 const recent = bars.slice(-30);
 let yMin = Math.min(...recent.map((b) => b.l), coneLo, ...fwdLv);
 let yMax = Math.max(...recent.map((b) => b.h), coneHi, ...fwdLv);
+if (wedge) { yMin = Math.min(yMin, bars[wedge.dn.a].l); yMax = Math.max(yMax, bars[wedge.up.a].h); }
 const padY = (yMax - yMin) * 0.06; yMin -= padY; yMax += padY;
 const Y = (v) => PAD_T + PLOT_H - ((v - yMin) / (yMax - yMin)) * PLOT_H;
 const clampY = (v) => Math.min(yMax, Math.max(yMin, v));
@@ -490,9 +524,55 @@ bars.forEach((b, i) => {
 push(`<text x="${PAD_L + 10}" y="${PAD_T + 20}" ${mono} font-size="11" fill="${C.dim}" letter-spacing="2">THE LAST ${bars.length} SESSIONS</text>`);
 push(`<text x="${PAD_L + 10}" y="${PAD_T + 36}" ${mono} font-size="9.5" fill="${C.dim}">daily candles · <tspan fill="${C.ema}">21 EMA</tspan> · <tspan fill="${C.sma}">50 SMA</tspan> · <tspan fill="${C.kc}">Keltner 1 / 2 ATR (${atrNow.toFixed(2)})</tspan></text>`);
 const hi = recent.reduce((a, b) => (b.h > a.h ? b : a)), lo = recent.reduce((a, b) => (b.l < a.l ? b : a));
-for (const [b, v, dy] of [[hi, hi.h, -8], [lo, lo.l, 16]].filter(([, v]) => v <= yMax && v >= yMin)) {
+for (const [b, v, dy] of (wedge ? [] : [[hi, hi.h, -8], [lo, lo.l, 16]]).filter(([, v]) => v <= yMax && v >= yMin)) {
   const i = bars.indexOf(b);
   push(`<text x="${XB(i)}" y="${Y(v) + dy}" text-anchor="middle" ${mono} font-size="10" fill="${C.text}">${v.toFixed(2)}</text>`);
+}
+
+// ── wedge overlay ───────────────────────────────────────────────────────────
+if (wedge) {
+  const { up, dn, last, apexK, apexPx } = wedge;
+  const WC = '#ff9f1c';
+  // Forward bars → calendar days for the right panel (5 sessions ≈ 7 days).
+  const xAt = (i) => (i <= last ? XB(i) : XF(((i - last) * 7) / 5));
+  // Stop at the panel edge when the apex lands past the last expiry.
+  const edgeI = last + (maxDte * 5) / 7, inPanel = last + apexK <= edgeI;
+  const endI = Math.min(last + apexK, edgeI);
+  const pts = (ln, i0) => { const r = []; for (let i = i0; i < endI; i += 0.5) r.push([xAt(i), Y(ln.at(i))]); r.push([xAt(endI), Y(inPanel ? apexPx : ln.at(endI))]); return r; };
+  const pu = pts(up, up.a), pd = pts(dn, dn.a);
+  const s0 = Math.max(up.a, dn.a);
+  const fillTop = pu.filter((_, k) => up.a + k * 0.5 >= s0), fillBot = pd.filter((_, k) => dn.a + k * 0.5 >= s0);
+  push(`<polygon points="${[...fillTop, ...fillBot.reverse()].map((p) => p.map((v) => v.toFixed(1)).join(',')).join(' ')}" fill="${WC}" fill-opacity="0.07"/>`);
+  for (const [p, lbl] of [[pu, 'up'], [pd, 'dn']]) {
+    const hist = p.filter(([x]) => x <= XB(last)), fwd = p.filter(([x]) => x >= XB(last));
+    const pl = (q) => q.map((v) => v.map((n) => n.toFixed(1)).join(',')).join(' ');
+    push(`<polyline points="${pl(hist)}" fill="none" stroke="${WC}" stroke-width="7" stroke-opacity="0.18" filter="url(#glowS)"/>`);
+    push(`<polyline points="${pl(hist)}" fill="none" stroke="${WC}" stroke-width="2.4"/>`);
+    push(`<polyline points="${pl([[XB(last), Y((lbl === 'up' ? up : dn).at(last))], ...fwd])}" fill="none" stroke="${WC}" stroke-width="2" stroke-dasharray="7 5" stroke-opacity="0.85"/>`);
+  }
+  for (const i of wedge.hiIdx) push(`<circle cx="${XB(i)}" cy="${Y(bars[i].h)}" r="5" fill="none" stroke="${WC}" stroke-width="2"/>`);
+  for (const i of wedge.loIdx) push(`<circle cx="${XB(i)}" cy="${Y(bars[i].l)}" r="5" fill="none" stroke="${WC}" stroke-width="2"/>`);
+  for (const i of wedge.hiIdx) push(`<text x="${XB(i)}" y="${Y(bars[i].h) - 10}" text-anchor="middle" ${mono} font-size="10" fill="${WC}">${bars[i].h.toFixed(2)}</text>`);
+  for (const i of wedge.loIdx) push(`<text x="${XB(i)}" y="${Y(bars[i].l) + 19}" text-anchor="middle" ${mono} font-size="10" fill="${WC}">${bars[i].l.toFixed(2)}</text>`);
+  // Apex, or where the two lines stand at the panel edge when it is further out.
+  const apexDate = new Date(Date.now() + ((apexK * 7) / 5) * 864e5).toISOString().slice(5, 10).replace('-', '/');
+  if (inPanel) {
+    const ax = xAt(endI), ay = Y(apexPx);
+    push(`<circle cx="${ax}" cy="${ay}" r="7" fill="${WC}" filter="url(#glowS)"/><circle cx="${ax}" cy="${ay}" r="4" fill="${WC}"/>`);
+    push(`<text x="${ax}" y="${ay - 14}" text-anchor="middle" ${mono} font-size="11" font-weight="700" fill="${WC}">APEX ~${apexDate} · ${apexPx.toFixed(2)}</text>`);
+  } else {
+    const ex = xAt(endI), eu = up.at(endI), ed = dn.at(endI);
+    push(`<line x1="${ex}" x2="${ex}" y1="${Y(eu)}" y2="${Y(ed)}" stroke="${WC}" stroke-width="1.5" stroke-dasharray="2 3"/>`);
+    const lbl = `${segs[segs.length - 1].end.slice(5).replace('-', '/')} edge: lid ${eu.toFixed(2)} · floor ${ed.toFixed(2)}`;
+    push(`<rect x="${ex - 8 - lbl.length * 6.8 - 8}" y="${Y(eu) - 46}" width="${lbl.length * 6.8 + 16}" height="22" rx="4" fill="${C.panel}" fill-opacity="0.92" stroke="${WC}" stroke-opacity="0.5"/>`);
+    push(`<text x="${ex - 16}" y="${Y(eu) - 31}" text-anchor="end" ${mono} font-size="11" font-weight="700" fill="${WC}">${lbl}</text>`);
+  }
+  // Tag box on the left panel: the two lines, where they sit today, how fast they close.
+  const tx = PAD_L + 430, ty = PAD_T + 8;
+  push(`<rect x="${tx}" y="${ty}" width="460" height="58" rx="6" fill="${C.panel}" fill-opacity="0.92" stroke="${WC}" stroke-opacity="0.6"/>`);
+  push(`<text x="${tx + 12}" y="${ty + 20}" ${mono} font-size="12" font-weight="700" fill="${WC}" letter-spacing="1">WEDGE · ${wedge.hiIdx.length} highs / ${wedge.loIdx.length} lows on the lines</text>`);
+  push(`<text x="${tx + 12}" y="${ty + 38}" ${mono} font-size="10.5" fill="${C.text}">lid ${wedge.hiNow.toFixed(2)} today (${(up.m * 5).toFixed(2)}/wk) · floor ${wedge.loNow.toFixed(2)} (${dn.m >= 0 ? '+' : ''}${(dn.m * 5).toFixed(2)}/wk)</text>`);
+  push(`<text x="${tx + 12}" y="${ty + 52}" ${mono} font-size="10.5" fill="${C.dim}">${(wedge.hiNow - wedge.loNow).toFixed(2)} wide now · apex ~${new Date(Date.now() + ((apexK * 7) / 5) * 864e5).toISOString().slice(5, 10).replace('-', '/')} @ ${apexPx.toFixed(2)} (${Math.round(apexK)} sessions)</text>`);
 }
 
 // ── right: expected-move cone ───────────────────────────────────────────────
