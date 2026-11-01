@@ -42,3 +42,29 @@ straight from Pedersen's NYU page.
 
 The list beat the dumb rule on 46% of days. Inside the list, 12m-trend-up and
 trend-down picks both hit 51%.
+
+## Parked ideas (Michael said "later", 2026-11-01)
+
+**TraderMatrix builds**
+1. Wheel Desk trend check: add the 12m trend sign to each CSP grade, then test
+   whether trend-up names grade/perform better. If they do, make "sell puts only
+   above a positive 12m trend" a desk rule.
+2. "Trend just broke" flag: take the CPD severity score from Wood 2021 and leave
+   the LSTM out. Feed it to the downtrend-breakout detector, and to Arya as a
+   "don't sell puts here this week" warning.
+3. Skip HMM regime papers: `get_market_health` / `get_macro_regime` already cover it.
+
+**Discord "Research Corner" (weekly, plain English → what it means for a wheel
+trader → which TM tool does it; file into the Trading Bible).** Paper numbers are
+from the CTA-Quant-Papers repo:
+- #17 Demystifying Managed Futures (Hurst/AQR 2013): easiest first read
+- #23 Time Series Momentum (use the PDF in this folder, not the repo's mislabeled one)
+- #24 Carry (Koijen/Moskowitz/Pedersen 2018): premium selling as carry
+- #42 Hedging Pressure (De Roon 2000)
+- #25 Value and Momentum Everywhere (Asness 2013)
+- #47 Risk Parity intro (Roncalli 2014): position-sizing primer
+- #14 151 Trading Strategies (Kakushadze 2019): options chapter as a glossary
+- Also worth a look: #21 Wood 2021 (in this folder), #50 HMM bull/bear (Oelschläger 2020)
+
+The "list lost to a dumb rule" result is internal. It only goes public if
+Michael wants a "we graded ourselves" post.
