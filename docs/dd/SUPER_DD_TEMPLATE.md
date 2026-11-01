@@ -6,6 +6,10 @@ Dive generator (`WATCHLIST_DEEP_DIVE_README.md`), then adds the pieces neither o
 
 First worked example: TXN, 2026-11-01 (TraderMatrix blog, slug `txn-super-dd-texas-instruments`).
 
+**Repeatable path:** fill `report_schema` in `super_dd_template.json` as
+`data/dd/<TICKER>/<YYYY-MM-DD>.json`, then `python3 tools/dd_render.py <that.json> --blog <out.md>`.
+The renderer fixes the section order and headings, so every DD reads the same.
+
 ---
 
 ## Ground rules (apply to every section)
@@ -22,7 +26,10 @@ First worked example: TXN, 2026-11-01 (TraderMatrix blog, slug `txn-super-dd-tex
 4. **Re-pull, don't inherit.** Numbers from a prior debate, dossier, or memory get re-pulled
    on the day of writing. When the re-pull disagrees, say which one you used and why.
 5. **Opinion is labeled.** Sections 1 to 11 are evidence. Sections 12 to 15 are the call.
-6. **Voice:** VOICE.md applies. No em/en dashes, no markdown tables in Substack (images
+6. **No process narration.** Never write about how the DD was made: no "the part I almost
+   missed", no mention of AI, agents, debates, templates, or what an earlier pass got wrong.
+   State the fact and its source.
+7. **Voice:** VOICE.md applies. No em/en dashes, no markdown tables in Substack (images
    instead; the TraderMatrix blog renders GFM tables but images still read better on a phone).
 
 ---
@@ -69,8 +76,8 @@ or fetch (name the outlet).
 - From the 10-Q: Item 1A changes (or "incorporated by reference"), subsequent events,
   acquisitions, credit facilities, legal proceedings, segment shifts
 - Capital allocation outlook (capex range, CHIPS or other subsidies)
-- Write down anything the bull/bear debate or the screen did not know. This section exists
-  because it catches things (TXN: a pending $7.5B acquisition and $2B of new notes).
+- Anything material the headlines don't carry (TXN: a pending $7.5B acquisition and $2B of
+  new notes).
 
 ### 4. News, last 6 months
 **Question:** what happened, in order, and did price lead or follow?
