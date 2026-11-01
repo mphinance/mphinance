@@ -3,6 +3,7 @@
 
     python3 tools/dd_render.py data/dd/TXN/2026-11-01.json              # prints markdown
     python3 tools/dd_render.py data/dd/TXN/2026-11-01.json --blog OUT.md   # TraderMatrix blog file
+    python3 tools/dd_render.py data/dd/TXN/2026-11-01.json --substack data/dd/TXN/substack.md  # Substack Data section
 
 Section order and headings come from the template, not the JSON, so every DD reads the same.
 Fails loudly on em/en dashes and on process-narration phrases (template ground rule 6).
@@ -95,11 +96,47 @@ def render(r, blog=False):
     return md
 
 
+COLORS = {"gold": "gold", "red": "red", "green": "green", "blue": "blue", "muted": "muted"}
+CALL_COLOR = {"bull": "green", "bear": "red", "warn": "red", "verdict": "gold", "plan": "gold", "note": "blue", "muted": "muted"}
+
+
+def to_substack(md, r):
+    """Blog markdown -> push_substack.py markdown (callouts as !>, colors as spans, local images)."""
+    m = r["meta"]
+    body = re.sub(r"^---\n.*?\n---\n", "", md, flags=re.S)
+    body = re.sub(r"\[([^\]]+)\]\(#(\w+)\)", lambda x: f'<span style="color: {COLORS.get(x[2], x[2])}">{x[1]}</span>', body)
+    body = re.sub(r"\(/blog/[^/)]+/([^)]+\.png)\)", r"(img/\1)", body)
+    out, kind = [], None
+    for line in body.split("\n"):
+        mm = re.match(r"^> \[!(\w+)\] (.*)$", line)
+        if mm:
+            kind = mm[1]
+            label = re.sub(r"^\*\*(.*)\*\*$", r"\1", mm[2])
+            out.append(f'!> **{label}**' if "<span" in label else f'!> <span style="color: {CALL_COLOR.get(kind, "gold")}">**{label}**</span>')
+        elif kind and line.startswith(">"):
+            t = line[1:].strip()
+            if t:
+                out.append("!> " + ("▸ " + t[2:] if t.startswith("- ") else t))
+        else:
+            kind = None
+            out.append(line)
+    body = "\n".join(out)
+    sign = "~ Michael"
+    body = body.replace(sign + "\n", "", 1).rstrip() + "\n\n<!--share-->\n<!--subscribe-->\n\n" + sign + "\n"
+    head = [f'# {m["title"]}', "", f'*{m.get("subtitle", "Research 60% | Trading 40%")}*', "",
+            f'<!--seo-title: {m["title"][:60]}-->', f'<!--seo-desc: {m["description"][:155]}-->', ""]
+    return "\n".join(head) + body
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         sys.exit(__doc__)
     r = json.load(open(sys.argv[1]))
-    if "--blog" in sys.argv:
+    if "--substack" in sys.argv:
+        dest = sys.argv[sys.argv.index("--substack") + 1]
+        Path(dest).write_text(to_substack(render(r, blog=True), r))
+        print(f"wrote {dest}")
+    elif "--blog" in sys.argv:
         dest = sys.argv[sys.argv.index("--blog") + 1]
         Path(dest).write_text(render(r, blog=True))
         print(f"wrote {dest}")
