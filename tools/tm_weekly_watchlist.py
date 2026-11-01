@@ -5,6 +5,7 @@ A locked, pinned "What this is" post is the channel's only sticky.
 Weekly board content lives in data/watchlists/<month>/board_*.json.
 
     python tools/tm_weekly_watchlist.py setup            # channel + pinned post + 4 week posts
+    python tools/tm_weekly_watchlist.py dev              # mirror to thetadaddies-dev (pinned + this week)
     python tools/tm_weekly_watchlist.py board <thread_id> data/watchlists/2026-11/board_1106.json
 
 IDs land in data/watchlists/discord_ids.json. Token: ~/.config/td/.env (Arya).
@@ -162,9 +163,56 @@ def post_board(thread_id, board_file):
         save(d)
 
 
+DEV_GUILD = "1558965355471183954"      # thetadaddies-dev: mph's sandbox for testing ideas
+DEV_CATEGORY = "1558965356264038452"   # Text Channels
+DEV_NOTE = ("**Why this is here:** this server is the sandbox for testing ideas before they go anywhere "
+            "real. This channel is a copy of the VIP weekly watchlist in Trader Matrix, so you can see "
+            "how the format works. Poke at it, vote, add names. Break it.\n\n")
+
+
+def mirror_dev(board_file):
+    """Copy the forum to the dev server: open to everyone, pinned post + this week's thread only."""
+    d = ids()
+    dev = d.setdefault("dev", {})
+    if "forum" not in dev:
+        ch = api("POST", f"/guilds/{DEV_GUILD}/channels", {
+            "name": "📋╏weekly-watchlist", "type": 15, "parent_id": DEV_CATEGORY,
+            "topic": TOPIC, "default_sort_order": 1, "default_forum_layout": 1,
+            "default_auto_archive_duration": 10080,
+            "available_tags": [{"name": "This week", "emoji_name": "🟢"},
+                               {"name": "Upcoming", "emoji_name": "🗓️"},
+                               {"name": "Closed", "emoji_name": "🔒"}],
+            "permission_overwrites": [{"id": DEV_GUILD, "type": 0,
+                                       "allow": str(MEMBER_ALLOW), "deny": str(MEMBER_DENY)}]})
+        dev["forum"] = ch["id"]
+        dev["tags"] = {t["name"]: t["id"] for t in ch["available_tags"]}
+        save(d)
+    board = json.loads(Path(board_file).read_text())
+    dev.setdefault("weeks", {})
+    if board["week"] not in dev["weeks"]:
+        t = api("POST", f"/channels/{dev['forum']}/threads", {
+            "name": board["week"], "auto_archive_duration": 10080,
+            "applied_tags": [dev["tags"]["This week"]], "message": {"content": board["opener"]}})
+        dev["weeks"][board["week"]] = t["id"]
+        save(d)
+    if "pinned" not in dev:
+        t = api("POST", f"/channels/{dev['forum']}/threads", {
+            "name": "📌 What this is", "auto_archive_duration": 10080,
+            "message": {"content": PINNED.replace("**📋 Weekly Watchlist**\n",
+                                                  "**📋 Weekly Watchlist**\n" + DEV_NOTE)}})
+        api("PATCH", f"/channels/{t['id']}", {"flags": 2, "locked": True})
+        dev["pinned"] = t["id"]
+        save(d)
+    post_board(dev["weeks"][board["week"]], board_file)
+    print(json.dumps(ids()["dev"], indent=2))
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else ""
-    if cmd == "setup":
+    if cmd == "dev":
+        mirror_dev(sys.argv[2] if len(sys.argv) > 2 else
+                   str(IDS_FILE.parent / "2026-11/board_1106.json"))
+    elif cmd == "setup":
         setup(sys.argv[2] if len(sys.argv) > 2 else
               str(IDS_FILE.parent / "2026-11/board_1106.json"))
     elif cmd == "board":
