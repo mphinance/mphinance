@@ -237,6 +237,18 @@ cached; pass `--rescore` to redo) and best-effort. Buckets the results by
 > the only bucket beating base) outranks raw agreement. Legs still **gate** the
 > shortlist; they no longer buy position on it. Re-check as the sample grows —
 > if it flips back, raise the cap.
+
+> 📉 **TSMOM baseline (added 2026-11-01).** The card now also grades the list
+> against the dumbest credible rule from Moskowitz/Ooi/Pedersen 2012: long every
+> name that has EVER made a shortlist (363 names) whose trailing 252-day return is
+> positive, equal weight, same 5-day window. Paper notes in
+> `docs/research/tsmom-and-changepoints.md`. First read, 1,049 picks over 74 days:
+> **basket +0.66% per 5 days (+0.24% vs SPY), list +0.40% (-0.02% vs SPY); the list
+> beat the dumb rule on only 46% of days.** The 12m-trend-up/down split inside the
+> list is a coin flip (51% vs 51%). At n=1,049 the leg inversion has also faded
+> (2-leg 50%, 3-leg 52%, 4+-leg 58% hit), but every leg bucket is still flat-to-
+> negative vs SPY. Bottom line: ranking adds nothing over "own what's trending."
+> The baseline fetches every universe chart, so a full run takes ~5 min.
 Worth running weekly (e.g. before the Sunday pull) so the track record stays fresh.
 
 ## Tuning (optional env vars)

@@ -14,6 +14,15 @@
 // /api/agent/ticker/:symbol/chart-data (no new dependency). Best-effort and
 // idempotent: a run with a scored.json is skipped unless --rescore is passed.
 //
+// TSMOM baseline (Moskowitz/Ooi/Pedersen 2012, "Time Series Momentum"): the
+// dumbest credible rule is "long anything whose trailing 12-month return is
+// positive". Two checks against it:
+//   1. per pick, does the 12m trend agree? (tsmomUp vs tsmomDown buckets)
+//   2. a basket: every name EVER shortlisted (the screener-reachable universe),
+//      long the ones with a positive 12m return on each run day, equal weight,
+//      same entry/exit dates. If the list can't beat that, the screeners and the
+//      convergence ranking are adding nothing a one-line rule doesn't.
+//
 // Usage:  node .claude/skills/stock-recap/scripts/score_history.mjs [--rescore] [--horizon 5]
 
 import { writeFile, readFile, readdir, stat } from 'node:fs/promises';
@@ -31,6 +40,9 @@ const TIMEOUT_MS = Number(process.env.RECAP_TIMEOUT_MS || 60000);
 const argv = process.argv.slice(2);
 const RESCORE = argv.includes('--rescore');
 const HORIZON = Number((argv[argv.indexOf('--horizon') + 1] && argv.includes('--horizon')) ? argv[argv.indexOf('--horizon') + 1] : (process.env.RECAP_HORIZON || 5));
+
+const LOOKBACK = 252;   // TSMOM lookback, trading days (12 months)
+const CHART_DAYS = 365; // API max; 252 lookback + forward window must fit inside
 
 const BASE_HEADERS = {
   'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
@@ -131,6 +143,20 @@ function fwdReturnFromChart(chartData, runDate, entryFallback) {
   };
 }
 
+// trailing LOOKBACK-row return at entryDate (YYYY-MM-DD), or null if history is short
+function tsmomPctAt(rows, idxByDate, entryDate) {
+  const i = idxByDate.get(entryDate);
+  if (i == null || i < LOOKBACK) return null;
+  return (rows[i].c - rows[i - LOOKBACK].c) / rows[i - LOOKBACK].c * 100;
+}
+function toRows(chartData) {
+  const rows = (chartData || [])
+    .map((r) => ({ d: String(r.date).slice(0, 10), c: Number(r.close) }))
+    .filter((r) => Number.isFinite(r.c) && r.c > 0)
+    .sort((a, b) => (a.d < b.d ? -1 : 1));
+  return { rows, idx: new Map(rows.map((r, i) => [r.d, i])) };
+}
+
 function legKey(legCount) { return legCount >= 4 ? '4plus' : String(legCount); }
 
 // ---------------------------------------------------------------------------
@@ -146,19 +172,15 @@ async function main() {
   const chartCache = new Map(); // ticker -> chartData[]
   const fetchChart = async (ticker) => {
     if (chartCache.has(ticker)) return chartCache.get(ticker);
-    const r = await getJson(`${TD_BASE}/api/agent/ticker/${encodeURIComponent(ticker)}/chart-data?days=300`, auth);
+    const r = await getJson(`${TD_BASE}/api/agent/ticker/${encodeURIComponent(ticker)}/chart-data?days=${CHART_DAYS}`, auth);
     const data = r.ok && r.data ? (r.data.chartData || []) : null;
     chartCache.set(ticker, data);
     return data;
   };
 
   // SPY benchmark: forward return over the exact same entry/exit dates as each pick.
-  const spyChart = await getJson(`${TD_BASE}/api/agent/ticker/SPY/chart-data?days=300`, auth);
-  const spyRows = (spyChart.ok && spyChart.data ? (spyChart.data.chartData || []) : [])
-    .map((r) => ({ d: String(r.date).slice(0, 10), c: Number(r.close) }))
-    .filter((r) => Number.isFinite(r.c))
-    .sort((a, b) => (a.d < b.d ? -1 : 1));
-  const spyIdx = new Map(spyRows.map((r, i) => [r.d, i]));
+  const spyChart = await getJson(`${TD_BASE}/api/agent/ticker/SPY/chart-data?days=${CHART_DAYS}`, auth);
+  const { rows: spyRows, idx: spyIdx } = toRows(spyChart.ok && spyChart.data ? spyChart.data.chartData : []);
   const spyFwdPct = (entryDate) => {
     const i = spyIdx.get(entryDate);
     if (i == null || i + HORIZON >= spyRows.length) return null;
@@ -200,6 +222,8 @@ async function main() {
       const fr = fwdReturnFromChart(chart, runDate, c.tech?.price);
       if (!fr) continue;
       const spyPct = spyFwdPct(fr.entryDate);
+      const t = toRows(chart);
+      const tsmomPct = tsmomPctAt(t.rows, t.idx, fr.entryDate);
       picks.push({
         run: name, ticker,
         legCount: c.legCount ?? (Array.isArray(c.legs) ? c.legs.length : null),
@@ -209,6 +233,7 @@ async function main() {
         fwdPct: fr.fwdPct,
         spyPct,
         excessPct: Number.isFinite(spyPct) ? fr.fwdPct - spyPct : null,
+        tsmomPct,
       });
     }
     if (!picks.length) { runsSkippedYoung++; continue; }
@@ -238,6 +263,68 @@ async function main() {
   }
   const dedupedPicks = allScoredPicks.filter((p) => p.run === lastRunOfDay[p.run.slice(0, 10)]);
 
+  // ---- TSMOM baseline basket ----------------------------------------------
+  // Universe = union of every ticker that ever made a shortlist. Survivorship-
+  // and selection-flavoured (these are names the screeners already liked), which
+  // only makes it a TOUGHER bar for the list, not an easier one.
+  const universe = new Set();
+  for (const name of runDirs) {
+    try {
+      const sl = JSON.parse(await readFile(join(RUNS_DIR, name, 'raw', 'shortlist.json'), 'utf8'));
+      if (Array.isArray(sl)) for (const c of sl) if (c.ticker) universe.add(c.ticker);
+    } catch { /* skip */ }
+  }
+  const uni = [...universe];
+  const uniRows = new Map();
+  for (let i = 0; i < uni.length; i += 8) { // light concurrency, same API the run uses
+    await Promise.all(uni.slice(i, i + 8).map(async (tk) => {
+      const ch = await fetchChart(tk);
+      if (ch) uniRows.set(tk, toRows(ch));
+    }));
+  }
+  const days = Object.keys(lastRunOfDay).sort();
+  const baselineDays = [];
+  for (const day of days) {
+    // entry date = the date the list's own picks used that day (keeps windows identical)
+    const dayPick = dedupedPicks.find((p) => p.run === lastRunOfDay[day]);
+    if (!dayPick) continue;
+    const ed = dayPick.entryDate;
+    const fwds = [], exs = [];
+    let eligible = 0;
+    for (const { rows, idx } of uniRows.values()) {
+      const tp = tsmomPctAt(rows, idx, ed);
+      if (tp == null) continue;
+      eligible++;
+      if (tp <= 0) continue;
+      const i = idx.get(ed);
+      if (i + HORIZON >= rows.length) continue;
+      const f = (rows[i + HORIZON].c - rows[i].c) / rows[i].c * 100;
+      fwds.push(f);
+      const sp = spyFwdPct(ed);
+      if (Number.isFinite(sp)) exs.push(f - sp);
+    }
+    if (!fwds.length) continue;
+    const listDay = dedupedPicks.filter((p) => p.run === lastRunOfDay[day]);
+    const avg = (xs) => xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : null;
+    baselineDays.push({
+      day, entryDate: ed, eligible, longs: fwds.length,
+      basketAvgFwdPct: avg(fwds), basketAvgExcessPct: avg(exs),
+      listAvgFwdPct: avg(listDay.map((p) => p.fwdPct)),
+      listAvgExcessPct: avg(listDay.map((p) => p.excessPct).filter(Number.isFinite)),
+    });
+  }
+  const bdAvg = (k) => { const xs = baselineDays.map((d) => d[k]).filter(Number.isFinite); return xs.length ? xs.reduce((s, x) => s + x, 0) / xs.length : null; };
+  const listBeatBasketDays = baselineDays.filter((d) => Number.isFinite(d.listAvgFwdPct) && d.listAvgFwdPct > d.basketAvgFwdPct).length;
+  const tsmomBaseline = {
+    rule: `long every universe name with trailing ${LOOKBACK}d return > 0, equal weight, ${HORIZON}d hold`,
+    universeSize: uni.length, universeWithCharts: uniRows.size,
+    days: baselineDays.length,
+    basketAvgFwdPct: bdAvg('basketAvgFwdPct'), basketAvgExcessPct: bdAvg('basketAvgExcessPct'),
+    listAvgFwdPct: bdAvg('listAvgFwdPct'), listAvgExcessPct: bdAvg('listAvgExcessPct'),
+    listBeatBasketRate: baselineDays.length ? listBeatBasketDays / baselineDays.length : null,
+    byDay: baselineDays,
+  };
+
   const byLeg = {};
   for (const k of ['2', '3', '4plus']) byLeg[k] = bucketStats(dedupedPicks.filter((p) => legKey(p.legCount) === k));
   const card = {
@@ -254,7 +341,10 @@ async function main() {
       conflict: bucketStats(dedupedPicks.filter((p) => p.conflict)),
       clean: bucketStats(dedupedPicks.filter((p) => !p.conflict)),
       byLegCount: byLeg,
+      tsmomUp: bucketStats(dedupedPicks.filter((p) => Number.isFinite(p.tsmomPct) && p.tsmomPct > 0)),
+      tsmomDown: bucketStats(dedupedPicks.filter((p) => Number.isFinite(p.tsmomPct) && p.tsmomPct <= 0)),
     },
+    tsmomBaseline,
   };
   // normalize hitRate to 0–1 fractions (what the recap's pctRaw expects)
   await writeFile(join(RUNS_DIR, '_scorecard.json'), JSON.stringify(card, null, 2));
@@ -267,6 +357,14 @@ async function main() {
   const rw = card.buckets.reversalWatch;
   if (rw.n) console.log(`   Reversal Watch  hit ${(rw.hitRate * 100).toFixed(0)}% · median ${rw.medianFwdPct?.toFixed(1)}% (n=${rw.n})${ex(rw)}`);
   for (const k of ['2', '3', '4plus']) { const b = byLeg[k]; if (b.n) console.log(`   ${(k === '4plus' ? '4+' : k).padEnd(2)}-leg  hit ${(b.hitRate * 100).toFixed(0)}% · median ${b.medianFwdPct?.toFixed(1)}% (n=${b.n})${ex(b)}`); }
+  for (const [k, lbl] of [['tsmomUp', '12m trend UP'], ['tsmomDown', '12m trend DOWN']]) { const b = card.buckets[k]; if (b.n) console.log(`   ${lbl}  hit ${(b.hitRate * 100).toFixed(0)}% · median ${b.medianFwdPct?.toFixed(1)}% (n=${b.n})${ex(b)}`); }
+  const tb = card.tsmomBaseline;
+  const f2 = (x) => x == null ? 'n/a' : `${x >= 0 ? '+' : ''}${x.toFixed(2)}%`;
+  if (tb.days) {
+    console.log(`\n   TSMOM baseline (${tb.rule}; ${tb.universeWithCharts}-name universe, ${tb.days} days)`);
+    console.log(`     basket avg ${f2(tb.basketAvgFwdPct)} (vs SPY ${f2(tb.basketAvgExcessPct)})  |  list avg ${f2(tb.listAvgFwdPct)} (vs SPY ${f2(tb.listAvgExcessPct)})`);
+    console.log(`     list beat the dumb rule on ${(tb.listBeatBasketRate * 100).toFixed(0)}% of days`);
+  }
   console.log(`\n   ${runsScored} newly scored, ${runsAlready} cached, ${runsSkippedYoung} too young.`);
   console.log(`   Written: ${join(RUNS_DIR, '_scorecard.json')}`);
 }
