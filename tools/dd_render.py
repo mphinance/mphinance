@@ -28,9 +28,10 @@ def render(r, blog=False):
                 f'description: "{esc(m["description"])}"', f'cover: {m["cover"]}', "---", ""]
     else:
         out += [f'# {m["title"]}', ""]
+    act = {"WAIT": "gold", "SKIP": "red"}.get(v["action"].split()[0], "green")
     out += [f'**{m["company"]} ({m["ticker"]})** · **${m["price"]:.2f}** at the {m["price_asof"]}', "",
-            v["pitch"], "",
-            f'**Score: {v["score"]}/10 · Size: {v["size_R"]}R · Action: {v["action"]}**', ""]
+            f'> [!verdict] **Score: {v["score"]}/10 · Size: {v["size_R"]}R · Action: [{v["action"]}](#{act})**', ">",
+            f'> {v["pitch"]}', ""]
     secs = {s["n"]: s for s in r["sections"]}
     for n in sorted(tmpl):
         if n in (0, 16, 17) or (n == 15 and r.get("catalysts")):
@@ -43,10 +44,18 @@ def render(r, blog=False):
             out += [s["summary"], ""]
         if s.get("figure"):
             out += [f'![{s.get("caption", "")}]({s["figure"]})', ""]
-        for b in s.get("bullets", []):
-            src = f' *({b["source"]})*' if b.get("source") else ""
-            out.append(f'- {b["text"]}{src}')
-        out.append("")
+        bl = [f'- {b["text"]}' + (f' *({b["source"]})*' if b.get("source") else "") for b in s.get("bullets", [])]
+        if n == 13:
+            for kind, label, pre in (("bull", "Bull case", "**Bull:**"), ("bear", "Bear case", "**Bear:**")):
+                side = [x.replace(pre + " ", "", 1) for x in bl if x.startswith("- " + pre)]
+                if side:
+                    out += [f"> [!{kind}] **{label}**", ">"] + [f"> {x}" for x in side] + [""]
+            rest = [x for x in bl if not x.startswith(("- **Bull:**", "- **Bear:**"))]
+            out += rest + [""] if rest else []
+        elif n == 14:
+            out += ["> [!warn] **Where this is wrong**", ">"] + [f"> {x}" for x in bl] + [""]
+        else:
+            out += bl + [""]
     if r.get("catalysts"):
         out += ["## 15. Catalyst calendar", ""]
         for c in r["catalysts"]:
@@ -57,11 +66,13 @@ def render(r, blog=False):
     out += ["## 16. Trade plan", ""]
     if t.get("figure"):
         out += [f'![{t.get("caption", "")}]({t["figure"]})', ""]
+    plan = []
     for tr in t["triggers"]:
-        out.append(f'- **{tr["label"]}:** {tr["condition"]}. Stop: {tr["stop"]}.')
+        plan.append(f'- **{tr["label"]}:** {tr["condition"]}. **[Stop:](#red)** {tr["stop"]}.')
     if t.get("no_trade_zone"):
-        out.append(f'- **No-trade zone:** {t["no_trade_zone"]}')
-    out.append(f'- **Targets:** {" / ".join(t["targets"])}')
+        plan.append(f'- **No-trade zone:** {t["no_trade_zone"]}')
+    plan.append(f'- **[Targets:](#green)** {" / ".join(t["targets"])}')
+    out += ["> [!plan] **The plan**", ">"] + [f"> {x}" for x in plan] + [""]
     o = t.get("options") or {}
     if o.get("structure"):
         out.append(f'- **Options:** {o["structure"]}, {o["expiry"]}. Debit {o["debit"]}, max value {o["max_value"]}, breakeven {o["breakeven"]}.')
@@ -73,7 +84,7 @@ def render(r, blog=False):
         out.append(f'- **Exit if:** {x}')
     out.append("")
     if r.get("unverified"):
-        out += ["## Unverified", ""] + [f"- {u}" for u in r["unverified"]] + [""]
+        out += ["## Unverified", "", "> [!muted] **Couldn't confirm these, so no dates or numbers lean on them**", ">"] + [f"> - {u}" for u in r["unverified"]] + [""]
     out += ["~ Michael", "", "*Not financial advice. Data as of the " + m["price_asof"] + ".*", ""]
     if r.get("sources"):
         out += ["**Sources:** " + " · ".join(f'[{s["label"]}]({s["url"]})' if s.get("url") else s["label"] for s in r["sources"]), ""]
