@@ -66,7 +66,7 @@ const cover = `<section class="page cover" style="--bg:url('${img("hero_bg.png")
   <ul class="read">${p.read.map((r) => `<li>${esc(r)}</li>`).join("")}</ul>
   <div class="cols">
     <div class="box"><b class="gold">KEY DATES</b><br>${dates.map(([d, e]) => `<b>${esc(d)}</b> ${esc(e)}`).join("<br>")}</div>
-    <div class="box"><b class="gold">FOLLOW LIVE</b><br>${p.links.map(([l, u]) => `<a href="${u}">${esc(l)}</a>`).join("<br>")}${free ? `<br><br><b>Full pack:</b> all ${p.stocks.length} names for paid subs at mphinance.substack.com` : ""}</div>
+    <div class="box"><b class="gold">${free ? "FULL PACK" : "FOLLOW LIVE"}</b><br>${free ? `All ${p.stocks.length} names, the live watchlists and every trigger are for paid subs at <a href="https://mphinance.substack.com">mphinance.substack.com</a>` : p.links.map(([l, u]) => `<a href="${u}">${esc(l)}</a>`).join("<br>")}</div>
   </div>
   <div class="roster">${stocks.map((s) => `<span>${s.t}</span>`).join("")}</div>
   <div class="foot"><span>${esc(p.asof)}</span><span>Not financial advice. ~ Michael</span></div>
@@ -97,6 +97,7 @@ const html = `<html><head><meta charset="utf-8"><style>${css}</style></head><bod
 if (free) {
   // the free edition must never name a paid ticker, anywhere
   const paid = p.stocks.filter((s) => !s.free).map((s) => s.t).filter((t) => new RegExp(`\\b${t}\\b`).test(html.replace(/data:image[^"')]+/g, "")));
+  for (const [, u] of p.links) if (html.includes(u)) { console.error(`free edition links a paid list: ${u}`); process.exit(1); }
   if (paid.length) { console.error(`free edition names paid tickers: ${paid.join(", ")}`); process.exit(1); }
 }
 const out = path.join(dir, `opex-${p.opex}${free ? "-free" : ""}.pdf`);
