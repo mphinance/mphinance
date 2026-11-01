@@ -69,33 +69,33 @@ def save(d):
 PINNED = """**📋 Weekly Watchlist**
 One thread per options week, Saturday through Friday expiration. Each thread is named for the Friday it ends on (w/e 11/06).
 
-**What's in it:** Michael's board for the week, posted Sunday night. Every name gets a card: score, trigger, stop, targets, how to play it, and size.
-**Nothing is a buy on sight.** Each card says what has to happen first.
+**This is the community's watchlist.** Michael seeds each week Sunday night with a few names. After that it's everyone's: add the names you're watching, take notes, vote.
+Every name gets a card: the setup, the trigger, where it's wrong. **Nothing is a buy on sight.** Each card says what has to happen first.
 
 **How to join in** (inside the week's thread)
 👍 like it · 👎 pass · 👀 watching, react on each card
 Reply to a card with your notes or charts
-Suggest a name: `$TICKER` + one line on why
+Add a name: `$TICKER` + trigger + where it's wrong (+ a chart if you've got one)
 
 **Tags:** This week · Upcoming · Closed
 Sizes are in R. 1R = what you're willing to lose on one trade.
 
 -# VIP only. Watchlist ideas, not trade signals. Not financial advice."""
 
-TOPIC = ("Michael's weekly watchlist. One thread per options week (Sat to Fri expiry). "
-         "React 👍 👎 👀 on each card, reply with notes, suggest names with $TICKER + why.")
+TOPIC = ("The community watchlist. One thread per options week (Sat to Fri expiry). Add names with "
+         "$TICKER + trigger + where it's wrong, react 👍 👎 👀 on every card, reply with notes.")
 
 WEEKS = [  # created newest-first so w/e 11/06 sorts on top (sort = creation date)
-    ("w/e 11/27", "Upcoming", "**Week ending Fri 11/27** · board opens Sun 11/22\n\n"
+    ("w/e 11/27", "Upcoming", "**Week ending Fri 11/27** · Michael seeds it Sun 11/22\n\n"
      "Heads up: market closed Thu 11/26 (Thanksgiving), early close Fri 11/27. AWS re:Invent starts Mon 11/30.\n\n"
-     "Suggest names any time: `$TICKER` + one line on why."),
-    ("w/e 11/20", "Upcoming", "**Week ending Fri 11/20** · board opens Sun 11/15\n\n"
+     "Add names any time: `$TICKER` + trigger + where it's wrong."),
+    ("w/e 11/20", "Upcoming", "**Week ending Fri 11/20** · Michael seeds it Sun 11/15\n\n"
      "Heads up: monthly options expiration Fri 11/20. NVDA reports Tue 11/17 after the close. "
      "The NFLX and PYPL triggers expire this week.\n\n"
-     "Suggest names any time: `$TICKER` + one line on why."),
-    ("w/e 11/13", "Upcoming", "**Week ending Fri 11/13** · board opens Sun 11/08\n\n"
+     "Add names any time: `$TICKER` + trigger + where it's wrong."),
+    ("w/e 11/13", "Upcoming", "**Week ending Fri 11/13** · Michael seeds it Sun 11/08\n\n"
      "Carryover: anything still live from w/e 11/06 rolls in here.\n\n"
-     "Suggest names any time: `$TICKER` + one line on why."),
+     "Add names any time: `$TICKER` + trigger + where it's wrong."),
     ("w/e 11/06", "This week", None),  # opener comes from the board file
 ]
 
