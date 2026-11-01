@@ -47,7 +47,7 @@ def render(r, blog=False):
         bl = [f'- {b["text"]}' + (f' *({b["source"]})*' if b.get("source") else "") for b in s.get("bullets", [])]
         if n == 13:
             for kind, label, pre in (("bull", "Bull case", "**Bull:**"), ("bear", "Bear case", "**Bear:**")):
-                side = [x.replace(pre + " ", "", 1) for x in bl if x.startswith("- " + pre)]
+                side = [(lambda y: "- " + y[2:3].upper() + y[3:])(x.replace(pre + " ", "", 1)) for x in bl if x.startswith("- " + pre)]
                 if side:
                     out += [f"> [!{kind}] **{label}**", ">"] + [f"> {x}" for x in side] + [""]
             rest = [x for x in bl if not x.startswith(("- **Bull:**", "- **Bear:**"))]
