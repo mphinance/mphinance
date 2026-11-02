@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-10-30
+# Ghost Alpha Dossier — 2026-11-02
 
-> 🔴 **Elevated** · SPY ▼ 1.5% · VIX 20.1
+> 🔴 **Elevated** · SPY ▼ 0.1% · VIX 21.2
 
 ---
 
-Market's still choppy with the VIX elevated at 20.
+**Regime check:** VIX at 21.
 
 
-## 🥇 Gold Pick: ADP
+## 🥇 Gold Pick: OXY
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 43/100 (A) |
+| **Score** | 46/100 (A) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -20,25 +20,25 @@ Market's still choppy with the VIX elevated at 20.
 
 
 ### Runners Up
-- 🥈 **A** — Score: 43/100
-- 🥉 **ROKU** — Score: 43/100
+- 🥈 **EW** — Score: 43/100
+- 🥉 **DVN** — Score: 38/100
 
 
 ## 📊 Today's Numbers
 
-- **194 scanner signals** across 6 strategies
+- **191 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 1.5% | **VIX:** 20.1
+- **SPY:** ▼ 0.1% | **VIX:** 21.2
 
 ---
 
 ## 👻 Sam Says
 
-> *"You miss 100% of the trades you don't take. You also miss 100% of the losses."*
+> *"Life is short. Your options expiry is shorter."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-10-30_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-10-30)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-02_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-02)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
