@@ -1055,17 +1055,22 @@ for (const r of roads) {
     // the range road oscillates instead of going anywhere
     const wp = [[FWD_X, ys]];
     const cycles = 3.5, steps = 48;
-    // The wave is centred on the pin, which is rarely centred in the band, so the
-    // amplitude is also capped by the pin's distance to the nearer edge. Without
-    // that cap it drew outside its own box: on 2026-10-14 the band ran 775-780 with
-    // the pin at 779 and the "quiet drift" road swung a full typical day and poked
-    // through the ceiling it was supposed to be held under.
+    // The wave is centred on the pin, which is rarely centred in the band. It must
+    // also stay inside its own box: on 2026-10-14 the band ran 775-780 with the pin
+    // at 779 and the "quiet drift" road swung a full typical day and poked through
+    // the ceiling it was supposed to be held under. That used to be done by capping
+    // the amplitude at the pin's distance to the nearer edge, which collapsed to
+    // zero whenever the pin WAS an edge: on 2026-10-28 and again on 2026-11-02 the
+    // pin sat exactly on the band's low edge and "it chops hard" was drawn as a dead
+    // straight line. The swing height is fixed now and the CENTRE is clamped into
+    // the band instead, so the wave always oscillates and still never leaves the
+    // box. The clamp is always possible because the swing is half the band's height.
     const halfBand = (rangeHi - rangeLo) / 2;
-    const toEdge = Math.min(rangeHi - pin, pin - rangeLo);
-    const amp = Math.max(0, Math.min(halfBand * 0.5, toEdge * 0.7));
+    const amp = halfBand * 0.5;
+    const waveMid = Math.min(Math.max(pin, rangeLo + amp), rangeHi - amp);
     for (let i = 1; i <= steps; i++) {
       const f = i / steps;
-      const px = pin + Math.sin(f * Math.PI * 2 * cycles) * amp;
+      const px = waveMid + Math.sin(f * Math.PI * 2 * cycles) * amp;
       wp.push([ROAD_X0 + ROAD_W * f, Y(px)]);
     }
     path = smooth(wp);
