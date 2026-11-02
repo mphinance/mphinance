@@ -439,7 +439,9 @@ const glowLine = (x1, x2, v, col, { w = 2, dash = '', op = 0.95, glow = 0.55 } =
 };
 
 // ── header ──────────────────────────────────────────────────────────────────
-push(`<text x="${PAD_L}" y="46" font-family="'Share Tech Mono',monospace" font-size="30" fill="${C.text}" letter-spacing="1">THE NEXT ${Math.round(maxDte / 7)} WEEKS <tspan fill="${C.green}">${esc(sym)}</tspan></text>`);
+// The timestamp rides in the title so a shared or saved copy says how old it is.
+const asOfEt = new Date().toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+push(`<text x="${PAD_L}" y="46" font-family="'Share Tech Mono',monospace" font-size="30" fill="${C.text}" letter-spacing="1">THE NEXT ${Math.round(maxDte / 7)} WEEKS <tspan fill="${C.green}">${esc(sym)}</tspan><tspan font-size="17" fill="${C.text}" fill-opacity="0.8" dx="18">as of ${asOfEt} ET</tspan></text>`);
 push(`<text x="${PAD_L}" y="72" ${mono} font-size="13" fill="${C.dim}">spot ${spot.toFixed(2)} · ${flipNow != null ? `flip ${fmt(flipNow)}` : 'no flip in range'} · net GEX ${fmtM(gex.totalGEX)} · options price a ±${largest.emPoints.toFixed(2)} move into ${md(largest.expiry)}, the heaviest expiry (${largest.oiSharePct.toFixed(0)}% of OI)</text>`);
 const pillC = negGamma ? C.put : C.call;
 push(`<rect x="${W - PAD_R - 330}" y="26" width="330" height="34" rx="17" fill="${negGamma ? '#1a0e11' : '#0c1a13'}" stroke="${pillC}" stroke-opacity="0.45"/>`);
@@ -449,11 +451,10 @@ if (Math.abs(gex.totalGEX) < 1e6) push(`<text x="${PAD_L}" y="92" ${mono} font-s
 {
   const rec = recordSummary();
   const recTxt = rec.publishable
-    ? `plan record: T1 ${rec.t1}/${rec.resolved} (${(rec.t1 / rec.resolved * 100).toFixed(0)}%) · ${rec.open} open`
-    : `plan record: ${rec.resolved} resolved from ${rec.days} day${rec.days === 1 ? '' : 's'}, ${rec.open} open · no hit rate until ${MIN_GRADED} across ${MIN_DAYS} days`;
-  push(`<text x="${W - PAD_R}" y="94" text-anchor="end" ${mono} font-size="11" fill="${C.entry}" fill-opacity="0.85">${recTxt}</text>`);
+    ? `past plans: ${rec.t1} of ${rec.resolved} graded reached T1 (${(rec.t1 / rec.resolved * 100).toFixed(0)}%) · ${rec.open} still open`
+    : `past plans: ${rec.resolved} graded, ${rec.open} still open, all drawn on ${rec.days} day${rec.days === 1 ? '' : 's'}. no win rate shown until ${MIN_GRADED} are graded across ${MIN_DAYS} different days.`;
+  push(`<text x="${W - PAD_R}" y="80" text-anchor="end" ${mono} font-size="11" fill="${C.entry}" fill-opacity="0.85">${recTxt}</text>`);
 }
-push(`<text x="${W - PAD_R}" y="76" text-anchor="end" ${mono} font-size="11" fill="${C.dim}">as of ${new Date().toISOString().slice(0, 16).replace('T', ' ')}Z</text>`);
 
 // ── panels + grid ───────────────────────────────────────────────────────────
 push(`<rect x="${PAD_L}" y="${PAD_T}" width="${LEFT_W}" height="${PLOT_H}" fill="${C.panel}"/>`);
@@ -774,8 +775,8 @@ const rules = [
   },
   {
     kw: 'ELSE', col: C.pin,
-    cond: (below ?? cushion) && above ? `it lives between ${fmt(below ?? cushion)} and ${fmt(above)}` : 'it ranges',
-    rule: `settles ${segs.map((g) => g.settle).filter((v, i, a) => v != null && v !== a[i - 1]).map(fmt).join(' → ') || fmt(now.magnet)}, biggest pile at ${fmt(now.magnet)}, into ${md(segs[segs.length - 1].end)}. ${negGamma ? 'short gamma, so the range gets knifed at both edges.' : 'long gamma, so it gets pinned.'}`,
+    cond: (below ?? cushion) && above ? `it stays between ${fmt(below ?? cushion)} and ${fmt(above)}` : 'it ranges',
+    rule: `settles ${segs.map((g) => g.settle).filter((v, i, a) => v != null && v !== a[i - 1]).map(fmt).join(' → ') || fmt(now.magnet)}, biggest pile at ${fmt(now.magnet)}, into ${md(segs[segs.length - 1].end)}. ${negGamma ? 'negative gamma: dealer hedging adds to moves, so expect fast swings that poke past both edges.' : 'positive gamma: dealer hedging leans against moves, so it tends to stick near the pile.'}`,
   },
 ];
 rules.push({
@@ -795,23 +796,31 @@ rules.forEach((r, i) => {
 // Legend for the left side of the strip area.
 const LY = SY;
 const legend = [
-  [C.call, 'bar', 'call wall (green tick)'],
-  [C.put, 'bar', 'put wall (red tick)'],
-  [C.pin, 'dot', 'magnet (heaviest strike), size = its gamma'],
-  [C.flip, 'bar', 'gamma flip (today)'],
-  [C.kc, 'bar', 'Keltner 1 / 2 ATR'],
+  [C.call, 'bar', 'UP road / call wall tick'],
+  [C.put, 'bar', 'DOWN road / put wall tick'],
+  [C.pin, 'bar', 'RANGE road: where it settles', '7 5'],
+  [C.pin, 'dot', 'magnet (size = its gamma)'],
+  [C.flip, 'bar', 'gamma flip (today)', '8 6'],
   [C.tp, 'bar', 'T1 / T2 take profit'],
-  [C.stop, 'bar', 'stop'],
+  [C.stop, 'bar', 'stop', '8 5'],
+  [C.entry, 'area', 'entry zone'],
+  [C.kc, 'area', 'Keltner 1 / 2 ATR band', '6 4'],
+  [C.dim, 'cone', 'options-implied move (±1σ)'],
+  ...(wedge ? [['#ff9f1c', 'bar', 'wedge: fitted / projected', 'fit']] : []),
   [C.dim, 'txt', '* = beyond the priced move'],
 ];
-legend.forEach(([col, kind, label], i) => {
-  const x = PAD_L + 10 + (i % 3) * 230, y = LY + Math.floor(i / 3) * 22;
-  if (kind === 'bar') push(`<line x1="${x}" x2="${x + 16}" y1="${y - 4}" y2="${y - 4}" stroke="${col}" stroke-width="3"/>`);
-  if (kind === 'dot') push(`<circle cx="${x + 8}" cy="${y - 4}" r="6" fill="none" stroke="${col}" stroke-width="1.6"/>`);
-  if (kind === 'dia') push(`<rect x="${x + 4}" y="${y - 8}" width="8" height="8" transform="rotate(45 ${x + 8} ${y - 4})" fill="${col}"/>`);
-  push(`<text x="${x + (kind === 'txt' ? 0 : 24)}" y="${y}" ${mono} font-size="10.5" fill="${C.dim}">${esc(label)}</text>`);
+legend.forEach(([col, kind, label, dash], i) => {
+  const x = PAD_L + 10 + (i % 3) * 250, y = LY + Math.floor(i / 3) * 18;
+  if (kind === 'bar' && dash === 'fit') {
+    push(`<line x1="${x}" x2="${x + 8}" y1="${y - 4}" y2="${y - 4}" stroke="${col}" stroke-width="3"/>`);
+    push(`<line x1="${x + 10}" x2="${x + 20}" y1="${y - 4}" y2="${y - 4}" stroke="${col}" stroke-width="2" stroke-dasharray="4 2"/>`);
+  } else if (kind === 'bar') push(`<line x1="${x}" x2="${x + 20}" y1="${y - 4}" y2="${y - 4}" stroke="${col}" stroke-width="3" ${dash ? `stroke-dasharray="${dash === '8 5' || dash === '8 6' ? '5 3' : '4 3'}"` : ''}/>`);
+  if (kind === 'area') push(`<rect x="${x}" y="${y - 10}" width="20" height="12" fill="${col}" fill-opacity="0.22" ${dash ? `stroke="${col}" stroke-opacity="0.7" stroke-dasharray="3 2"` : `stroke="${col}" stroke-opacity="0.6"`}/>`);
+  if (kind === 'cone') push(`<path d="M ${x} ${y - 4} L ${x + 20} ${y - 11} L ${x + 20} ${y + 3} Z" fill="${C.call}" fill-opacity="0.15" stroke="${col}" stroke-opacity="0.6" stroke-dasharray="2 2"/>`);
+  if (kind === 'dot') push(`<circle cx="${x + 10}" cy="${y - 4}" r="6" fill="none" stroke="${col}" stroke-width="1.6"/>`);
+  push(`<text x="${x + (kind === 'txt' ? 0 : 28)}" y="${y}" ${mono} font-size="10.5" fill="${C.dim}">${esc(label)}</text>`);
 });
-push(`<text x="${PAD_L + 10}" y="${LY + 76}" ${mono} font-size="10.5" fill="${C.dim}" data-y="x">faded expiries carry under ${MIN_SHARE}% of open interest and do not steer the roads.</text>`);
+push(`<text x="${PAD_L + 10}" y="${LY + 78}" ${mono} font-size="10.5" fill="${C.dim}" data-y="x">roads are steps: a level holds until a big expiry rolls off, then jumps to the next board. faded expiries (&lt;${MIN_SHARE}% of OI) don't steer them.</text>`);
 
 push(`<text x="${PAD_L}" y="${H - 16}" ${mono} font-size="10.5" fill="${C.dim}">Levels are net gamma exposure by strike and expiry. Long gamma brakes, short gamma chases, the cone is what options are pricing. Not advice.</text>`);
 
