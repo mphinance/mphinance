@@ -646,6 +646,10 @@ const PLOT_H = 600;
 const PLOT_W = W - PAD_L - PAD_R;
 const PAST_W = Math.round(PLOT_W * 0.42);          // the drive so far
 const FWD_X = PAD_L + PAST_W;                       // tomorrow starts here
+// rough width of a mono string, used wherever one piece of text has to be kept
+// clear of another. Defined here because both the history markers and the
+// right-hand gutter measure with it.
+const textW = (s_, px) => String(s_).length * px * 0.62;
 const FWD_W = PLOT_W - PAST_W;
 
 const yRaw = [lo, hi, ...pts.map((p) => p.px)];
@@ -959,9 +963,22 @@ if (report) {
   // where it actually turned
   const loI = idxs.reduce((b, i) => (pts[i].px < pts[b].px ? i : b), idxs[0]);
   const hiI = idxs.reduce((b, i) => (pts[i].px > pts[b].px ? i : b), idxs[0]);
+  // The turn markers are centred under their dot, and the session's high or low
+  // very often prints in the last hour, which puts the dot against FWD_X and the
+  // centred label halfway into the forward panel. The spot label "752.15 now"
+  // starts at FWD_X + 10 and sits within a few pixels of the same row whenever
+  // the close is near the extreme, so the two numbers get written through each
+  // other: on 2026-11-02 the low was 751.77 and the close 752.15, and the chart
+  // read "751.752.15 now". The marker belongs to the history panel, so it is
+  // right-aligned to stop short of the divider rather than crossing it.
   for (const [i, px] of [[loI, report.low], [hiI, report.high]]) {
-    push(`<circle cx="${X(i)}" cy="${Y(px)}" r="4" fill="${C.bg}" stroke="${C.text}" stroke-width="1.6"/>`);
-    push(`<text x="${X(i)}" y="${Y(px) + (px === report.low ? 16 : -8)}" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.text}">${px.toFixed(2)}</text>`);
+    const txt = px.toFixed(2);
+    const cx = X(i);
+    const half = textW(txt, 10) / 2;
+    const anchor = cx + half > FWD_X - 6 ? 'end' : 'middle';
+    const tx = anchor === 'end' ? FWD_X - 6 : cx;
+    push(`<circle cx="${cx}" cy="${Y(px)}" r="4" fill="${C.bg}" stroke="${C.text}" stroke-width="1.6"/>`);
+    push(`<text x="${tx}" y="${Y(px) + (px === report.low ? 16 : -8)}" text-anchor="${anchor}" font-family="'JetBrains Mono',monospace" font-size="10" fill="${C.text}">${txt}</text>`);
   }
 }
 
@@ -1007,7 +1024,6 @@ const ROAD_X0 = FWD_X + 14;
 // canvas. 36 characters of 11px mono is ~245px, so the gutter is now measured
 // from the text that is actually going to be drawn in it, capped so the roads
 // cannot be squeezed to nothing on a night with very wordy notes.
-const textW = (s_, px) => String(s_).length * px * 0.62;
 for (const r of roads) if (r.up !== undefined) r.pts = sideFilter(r.pts, r.up);
 
 // The RANGE pin and the first level on a directional road keep landing on the
