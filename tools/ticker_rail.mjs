@@ -173,6 +173,39 @@ const slider = (label, pos, val, sub) => `<div class="sl"><div class="slh"><span
 const em = o.expectedMove;
 const emEarn = tk.earnings && tk.earnings.date <= tk.expiration;
 
+// ── wheel strip: where to sell puts / cover calls, priced off the chart's own levels.
+// Quotes are this expiry's real mids and deltas (nearAtm + topStrikes); a level with no
+// quoted strike near it is skipped, never modelled.
+const quotes = new Map();
+for (const q of o.nearAtm?.puts || []) quotes.set(q.strike, { ...quotes.get(q.strike), strike: q.strike, putMid: q.mid, putDelta: q.delta, putBid: q.bid });
+for (const q of o.nearAtm?.calls || []) quotes.set(q.strike, { ...quotes.get(q.strike), strike: q.strike, callMid: q.mid, callDelta: q.delta, callBid: q.bid });
+for (const q of o.topStrikes || []) quotes.set(q.strike, { ...q, ...quotes.get(q.strike) });
+const strikes = [...quotes.values()].sort((a, b) => a.strike - b.strike);
+const kc = side?.keltner ?? { l1: t.ema21 - t.atr, l2: t.ema21 - 2 * t.atr, u1: t.ema21 + t.atr, u2: t.ema21 + 2 * t.atr };
+const dte = Math.max(1, Math.round((new Date(`${tk.expiration}T21:00:00Z`) - Date.now()) / 864e5));
+const putAt = (lvl) => strikes.filter((q) => q.strike <= lvl + 0.15 && q.strike < spot && q.putMid > 0 && q.putBid > 0).at(-1);
+const callAt = (lvl) => strikes.find((q) => q.strike >= lvl - 0.15 && q.strike > spot && q.callMid > 0 && q.callBid > 0);
+const rungs = (defs, pick) => {
+  const seen = new Set(), out = [];
+  for (const [name, lvl] of defs) {
+    if (lvl == null) continue;
+    const q = pick(lvl); if (!q) continue;
+    if (seen.has(q.strike)) { const o2 = out.find((r) => r.q.strike === q.strike); o2.name += ` + ${name}`; continue; }
+    seen.add(q.strike); out.push({ name, lvl, q });
+  }
+  return out;
+};
+const putRungs = rungs([['Keltner −1 ATR', kc.l1], ['put wall', o.putWall], ['Keltner −2 ATR', kc.l2]].sort((a, b) => b[1] - a[1]), putAt)
+  .map((r) => ({ ...r, mid: r.q.putMid, delta: Math.abs(r.q.putDelta), ret: r.q.putMid / r.q.strike, be: r.q.strike - r.q.putMid }));
+const callRungs = rungs([['wedge lid', wedge?.lid], ['call wall', o.callWall], ['Keltner +1 ATR', kc.u1], ['Keltner +2 ATR', kc.u2]].sort((a, b) => a[1] - b[1]), callAt)
+  .map((r) => ({ ...r, mid: r.q.callMid, delta: r.q.callDelta, ret: r.q.callMid / spot, called: (r.q.strike - spot + r.q.callMid) / spot }));
+// The pick: the farthest rung that still sits in the usual wheel band (puts Δ .15-.30, calls Δ .15-.35).
+const putPick = [...putRungs].reverse().find((r) => r.delta >= 0.15 && r.delta <= 0.3);
+const callPick = [...callRungs].reverse().find((r) => r.delta >= 0.15 && r.delta <= 0.35);
+const earnIn = tk.earnings?.date && tk.earnings.date <= tk.expiration;
+const pct = (v, d = 1) => `${(v * 100).toFixed(d)}%`;
+const ann = (v) => `${Math.round(v * 365 / dte * 100)}%/yr`;
+
 const neg = gex.totalGEX < 0;
 const card = (title, body, accent = C.line) => `<section style="border-color:${accent}"><h3>${title}</h3>${body}</section>`;
 
@@ -202,14 +235,28 @@ ${card('IMPLIED VOLATILITY', `
   ${emEarn ? `<div class="note">That move includes the ${md(tk.earnings.date)} print, so some of the IV is earnings premium that drains after it.</div>` : ''}`)}
 `;
 
-const W = 2560, H = 1188, CW = 2000;
+const wallPut = putRungs.find((r) => r.name === 'put wall');
+const putRow = (r) => {
+  const vsWall = wallPut && r !== wallPut && r.q.strike < wallPut.q.strike
+    ? `keeps ${Math.round(r.mid / wallPut.mid * 100)}% of the wall's premium, ${$(wallPut.be - r.be)} more cushion` : '';
+  return `<tr class="${r === putPick ? 'pick' : ''}"><td class="lv">${r.name} <em>${r.lvl.toFixed(2)}</em></td><td class="k">${r.q.strike}P</td><td>${r.delta.toFixed(2)}</td><td>${$(r.mid)}</td><td>${pct(r.ret)} <em>${ann(r.ret)}</em></td><td>${$(r.be)} <em>${pct(r.be / spot - 1)}</em></td><td class="why">${r === putPick ? '★ ' : ''}${vsWall}</td></tr>`;
+};
+const callRow = (r) => `<tr class="${r === callPick ? 'pick' : ''}"><td class="lv">${r.name} <em>${r.lvl.toFixed(2)}</em></td><td class="k">${r.q.strike}C</td><td>${r.delta.toFixed(2)}</td><td>${$(r.mid)}</td><td>${pct(r.ret)} <em>${ann(r.ret)}</em></td><td>${pct(r.called)}</td><td class="why">${r === callPick ? '★' : ''}</td></tr>`;
+const wheel = (putRungs.length || callRungs.length) ? `<div class="wheel">
+  <div class="wh"><b>WHEEL DESK</b> · ${md(tk.expiration)} expiry · ${dte} days · mids and deltas are live quotes${earnIn ? ` · <span style="color:${C.put}">spans the ${md(tk.earnings.date)} earnings: the fat premium IS the earnings risk</span>` : ''} · ★ = farthest strike still in the usual wheel band (puts Δ .15-.30, calls Δ .15-.35)</div>
+  <div class="wcols">
+    <table><tr><th class="lv" style="color:${C.call}">SELL PUTS · at the chart's floors</th><th>strike</th><th>Δ</th><th>mid</th><th>return</th><th>breakeven</th><th></th></tr>${putRungs.map(putRow).join('')}</table>
+    <table><tr><th class="lv" style="color:${C.put}">COVERED CALLS · at the chart's lids</th><th>strike</th><th>Δ</th><th>mid</th><th>return</th><th>if called</th><th></th></tr>${callRungs.map(callRow).join('')}</table>
+  </div></div>` : '';
+
+const W = 2560, CW = 2000, WH = wheel ? 140 : 0, H = 1188 + WH;
 const img = chart ? `data:image/png;base64,${readFileSync(chart).toString('base64')}` : '';
 const html = `<!doctype html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box}html,body{margin:0;background:${C.bg};color:${C.text};font-family:'JetBrains Mono',monospace}
-.wrap{display:flex;width:${W}px;height:${H}px}
-.chart{width:${CW}px;height:${H}px;flex:none}.chart img{width:100%;height:100%;display:block}
+.wrap{display:flex;width:${W}px;height:1188px}
+.chart{width:${CW}px;height:1188px;flex:none}.chart img{width:100%;height:100%;display:block}
 .rail{width:${W - CW}px;padding:22px 30px 12px 6px;display:flex;flex-direction:column;gap:6px;overflow:hidden}
 .hero{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;padding:0 4px 4px}
 .sym{font-family:'Share Tech Mono';font-size:30px;color:#00ff88}.px{font-size:20px;font-weight:700}.sub2{width:100%;font-size:11px;color:${C.dim}}
@@ -232,8 +279,15 @@ h3{margin:0 0 7px;font-size:11px;letter-spacing:2px;color:${C.dim};font-weight:7
 .trk{position:relative;height:6px;border-radius:3px;margin:4px 0 2px;background:linear-gradient(90deg,${C.call},#555 50%,${C.put})}
 .trk i{position:absolute;top:-4px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:${C.text};box-shadow:0 0 6px #fff8}
 .slsub{display:flex;justify-content:space-between;font-size:9px;color:${C.dim}}
+.wheel{height:${WH}px;margin:0 30px 0 80px;padding:10px 16px;border:1px solid ${C.line};border-radius:8px;background:${C.panel}}
+.wh{font-size:11px;color:${C.dim};margin-bottom:6px}.wh b{color:${C.text};letter-spacing:2px}
+.wcols{display:grid;grid-template-columns:1.25fr 1fr;gap:28px}
+.wheel table{border-collapse:collapse;width:100%;font-size:12px}.wheel th{font-size:10px;color:${C.dim};font-weight:400;text-align:right;padding:2px 6px;border-bottom:1px solid ${C.line}}
+.wheel th.lv{text-align:left;font-weight:700;letter-spacing:1px}.wheel td{text-align:right;padding:4px 6px;white-space:nowrap}.wheel td em{color:${C.dim};font-style:normal;font-size:10.5px}
+.wheel td.lv{text-align:left;color:${C.dim}}.wheel td.k{font-weight:700}.wheel td.why{text-align:left;color:${C.dim};font-size:10.5px}
+.wheel tr.pick td{background:#ffb00014}.wheel tr.pick td.k,.wheel tr.pick td.why{color:${C.pin}}
 .note,.dimline{font-size:10.5px;color:${C.dim};margin-top:4px;line-height:1.35}.iv{font-size:15px}
-</style></head><body><div class="wrap"><div class="chart">${img ? `<img src="${img}">` : ''}</div><div class="rail">${rail}</div></div></body></html>`;
+</style></head><body><div class="wrap"><div class="chart">${img ? `<img src="${img}">` : ''}</div><div class="rail">${rail}</div></div>${wheel}</body></html>`;
 
 const base = join(OUT, `${sym.toLowerCase()}_rail_${new Date().toISOString().slice(0, 10)}`);
 writeFileSync(`${base}.html`, html);
