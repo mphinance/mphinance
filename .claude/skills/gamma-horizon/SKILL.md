@@ -22,7 +22,10 @@ is on the chart. Chart-only overlay: it does not change the plan.
 Ticker Search rail beside it: `node tools/ticker_rail.mjs SYM --chart <horizon png> --ivrank N`
 adds the 10/25 Ticker Search right column (technicals + entry chips, top flows, apex
 ladder, dealer gamma, plain IV read, plus a wedge card when the sidecar has one).
-`--ivrank` comes from the TDPro MCP `get_iv_rank`; the dev API has no route for it. The
+IV rank is fetched from the agent route `/api/agent/ticker/SYM/iv-rank` (the dev API has
+none); `--ivrank N` only overrides it. The IV card is two sliders: rank vs its own year, and
+ATM IV vs 20-day realized vol (log scale, 1× centred). Technicals carry a Weekly / Daily /
+1-hour row of the same 7 votes (Yahoo bars; the Daily row is the gauge's own vote). The
 oscillator gauge is our own 7-signal vote count, not TraderMatrix's gauge, and is labelled so. Writes PNG + HTML + JSON
 sidecar. Keys: `.env_td_api`. Daily bars come from Yahoo.
 

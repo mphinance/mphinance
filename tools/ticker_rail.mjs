@@ -19,7 +19,7 @@ const argv = process.argv.slice(2);
 const arg = (k, d) => { const i = argv.indexOf(`--${k}`); return i >= 0 ? argv[i + 1] : d; };
 const sym = (argv[0] && !argv[0].startsWith('--') ? argv[0] : '').toUpperCase();
 if (!sym) { console.error('usage: ticker_rail.mjs SYM --chart PNG [--ivrank N] [--out DIR]'); process.exit(1); }
-const chart = arg('chart'), OUT = arg('out', '/tmp/gh'), ivRank = arg('ivrank') != null ? Number(arg('ivrank')) : null;
+const chart = arg('chart'), OUT = arg('out', '/tmp/gh'), ivRankArg = arg('ivrank') != null ? Number(arg('ivrank')) : null;
 
 const ROOT = (() => { let d = resolve(process.cwd()); for (let i = 0; i < 8; i++) { if (existsSync(join(d, '.env_td_api'))) return d; d = dirname(d); } return process.cwd(); })();
 const KEY = readFileSync(join(ROOT, '.env_td_api'), 'utf8').trim();
@@ -35,6 +35,17 @@ const [tk, flow, gexR, apexR] = await Promise.all([
   dev(`/gex/${sym}/apex`),
 ]);
 const t = tk.technicals, o = tk.options, gex = gexR.data, apex = apexR.data;
+// IV rank has an agent route (the dev API doesn't); --ivrank still overrides it.
+const ivR = await agent(`/api/agent/ticker/${sym}/iv-rank`).catch(() => null);
+const ivRankLive = ivR?.ivRank ?? ivR?.data?.ivRank ?? null;
+// Weekly / daily / hourly bars from Yahoo for the timeframe stack and realized vol.
+const yBars = async (interval, range) => {
+  const r = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=${interval}&range=${range}`, { headers: { 'User-Agent': UA } }).then((r) => r.json()).catch(() => null);
+  const res = r?.chart?.result?.[0]; if (!res) return [];
+  const q = res.indicators.quote[0];
+  return res.timestamp.map((ts, i) => ({ h: q.high[i], l: q.low[i], c: q.close[i] })).filter((b) => b.c != null && b.h != null);
+};
+const [barsW, barsD, barsH] = await Promise.all([yBars('1wk', '10y'), yBars('1d', '2y'), yBars('1h', '180d')]);
 const side = chart && existsSync(chart.replace(/\.png$/, '.json')) ? JSON.parse(readFileSync(chart.replace(/\.png$/, '.json'), 'utf8')) : null;
 const wedge = side?.wedge ?? null;
 
@@ -43,6 +54,39 @@ const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const $ = (v, d = 2) => (v == null ? '-' : `$${Number(v).toFixed(d)}`);
 const money = (v) => (Math.abs(v) >= 1e6 ? `$${(v / 1e6).toFixed(2)}M` : `$${Math.round(v / 1e3)}K`);
 const md = (iso) => iso.slice(5, 10).replace('-', '/');
+
+// ── the 7-signal vote on any bar series (same rules as the daily gauge)
+const emaA = (a, n) => { const k = 2 / (n + 1); let e; return a.map((v, i) => (e = i ? v * k + e * (1 - k) : v)); };
+const smaL = (a, n) => (a.length < n ? null : a.slice(-n).reduce((x, v) => x + v, 0) / n);
+const sdev = (a) => { const m = a.reduce((x, v) => x + v, 0) / a.length; return Math.sqrt(a.reduce((x, v) => x + (v - m) ** 2, 0) / a.length); };
+function voteOf(b) {
+  if (b.length < 60) return null;
+  const c = b.map((x) => x.c), last = c.at(-1);
+  let g = 0, l = 0; for (let i = 1; i <= 14; i++) { const d = c[i] - c[i - 1]; d > 0 ? (g += d) : (l -= d); } g /= 14; l /= 14;
+  for (let i = 15; i < c.length; i++) { const d = c[i] - c[i - 1]; g = (g * 13 + Math.max(d, 0)) / 14; l = (l * 13 + Math.max(-d, 0)) / 14; }
+  const rsi = 100 - 100 / (1 + g / l);
+  const e12 = emaA(c, 12), e26 = emaA(c, 26), macd = e12.at(-1) - e26.at(-1);
+  const w = b.slice(-14), hh = Math.max(...w.map((x) => x.h)), ll = Math.min(...w.map((x) => x.l)), st = ((last - ll) / (hh - ll)) * 100;
+  const tp = b.slice(-20).map((x) => (x.h + x.l + x.c) / 3), mtp = tp.reduce((x, v) => x + v, 0) / 20;
+  const cci = (tp.at(-1) - mtp) / (0.015 * (tp.reduce((x, v) => x + Math.abs(v - mtp), 0) / 20));
+  const e21 = emaA(c, 21).at(-1), s50 = smaL(c, 50), s200 = smaL(c, 200);
+  return {
+    RSI: rsi > 55 ? 1 : rsi < 45 ? -1 : 0, MACD: macd > 0 ? 1 : -1,
+    Stoch: st > 80 ? -1 : st < 20 ? 1 : st > 50 ? 1 : -1, CCI: cci > 100 ? 1 : cci < -100 ? -1 : 0,
+    '21': last > e21 ? 1 : -1, '50': last > s50 ? 1 : -1, '200': s200 == null ? 0 : last > s200 ? 1 : -1,
+  };
+}
+const tfs = [['Weekly', voteOf(barsW)], ['Daily', 'gauge'], ['1 hour', voteOf(barsH)]].filter(([, v]) => v);
+const sig = ['RSI', 'MACD', 'Stoch', 'CCI', '21', '50', '200'];
+const dotC = (x) => (x > 0 ? C.call : x < 0 ? C.put : '#555');
+const mtfHtml = () => tfs.length ? `<div class="mtf"><span></span>${sig.map((k) => `<span class="h">${k}</span>`).join('')}<span class="h">tally</span>
+  ${tfs.map(([tf, v]) => { const up = Object.values(v).filter((x) => x > 0).length, dn = Object.values(v).filter((x) => x < 0).length;
+    return `<span class="tf">${tf}</span>${sig.map((k) => `<i style="background:${dotC(v[k])}"></i>`).join('')}<b style="color:${up > dn ? C.call : dn > up ? C.put : C.dim}">${up}↑ ${dn}↓</b>`; }).join('')}</div>` : '';
+
+// realized vol (20 sessions, annualised) to set IV against
+const lr = barsD.slice(-21).map((x, i, a) => (i ? Math.log(x.c / a[i - 1].c) : null)).slice(1);
+const hv20 = lr.length >= 20 ? sdev(lr) * Math.sqrt(252) * 100 : null;
+const ivRank = ivRankArg ?? ivRankLive;
 
 // ── technicals: the same kind of entry chips Ticker Search puts above the gauge
 const spot = tk.price;
@@ -68,6 +112,7 @@ const votes = Object.values(vote);
 const vCol = (k) => (vote[k] == null ? C.text : vote[k] > 0 ? C.call : vote[k] < 0 ? C.put : C.dim);
 const g = votes.reduce((a, v) => a + v, 0) / votes.length;
 // Our own vote count, not TraderMatrix's gauge, so it says what it counted.
+for (const r of tfs) if (r[1] === 'gauge') r[1] = { RSI: vote.RSI, MACD: vote.MACD, Stoch: vote.Stoch, CCI: vote.CCI, '21': vote['21 EMA'], '50': vote['50 SMA'], '200': vote['200 SMA'] };
 const nBull = votes.filter((v) => v > 0).length, nBear = votes.filter((v) => v < 0).length;
 const gLabel = g > 0.15 ? `${nBull} of ${votes.length} lean bullish` : g < -0.15 ? `${nBear} of ${votes.length} lean bearish` : 'Mixed';
 const gCol = g > 0.15 ? C.call : g < -0.15 ? C.put : C.dim;
@@ -102,7 +147,17 @@ const ladder = lv.map((l) => {
 }).join('');
 
 // ── IV: plain read first, numbers under it
-const ivVerdict = ivRank == null ? null : ivRank >= 60 ? ['expensive', C.put, 'favors selling premium'] : ivRank <= 30 ? ['cheap', C.call, 'favors buying premium'] : ['fairly priced', C.text, 'no vol edge either way'];
+const ivNow = ivR?.atmIvPercent ?? o.atmIV;
+const ivHv = hv20 ? ivNow / hv20 : null;
+const ivVerdict = ivRank == null ? null
+  : ivRank >= 50 && (ivHv == null || ivHv >= 1.1) ? ['rich', C.put, 'favors selling premium']
+  : ivRank <= 25 && (ivHv == null || ivHv <= 0.95) ? ['cheap', C.call, 'favors buying premium']
+  : ivRank >= 50 ? ['rich-ish', C.pin, 'high for its year, but in line with how it moves']
+  : ivRank <= 25 ? ['cheap-ish', C.pin, 'low for its year, but in line with how it moves']
+  : ['fairly priced', C.text, 'no vol edge either way'];
+// pos 0..1 on the track, gradient green (cheap) → red (rich)
+const slider = (label, pos, val, sub) => `<div class="sl"><div class="slh"><span>${label}</span><b>${val}</b></div>
+  <div class="trk"><i style="left:${(Math.max(0, Math.min(1, pos)) * 100).toFixed(1)}%"></i></div><div class="slsub">${sub}</div></div>`;
 const em = o.expectedMove;
 const emEarn = tk.earnings && tk.earnings.date <= tk.expiration;
 
@@ -122,21 +177,17 @@ ${wedgeCard}
 ${card('TECHNICALS', `<div class="chips">${chipHtml}</div>
   <div class="gauge">${gauge}<div class="glabel" style="color:${gCol}">${gLabel}<div style="font-size:10px;color:${C.dim};font-weight:400">7 signals · <span style="color:${C.put}">red</span> = bearish, <span style="color:${C.call}">green</span> = bullish</div></div></div>
   <div class="grid">${stats.map(([k, v]) => `<div><span>${k}</span><b style="color:${vCol(k)}">${v}</b></div>`).join('')}</div>
-  ${t.squeezeRatio != null && t.squeezeRatio < 1 ? `<div class="note">Squeeze = Bollinger width ÷ Keltner width. Under 1 means the range is coiled tight, which usually comes before a bigger move.</div>` : ''}`)}
+  ${mtfHtml()}
+  ${t.squeezeRatio != null && t.squeezeRatio < 1 ? `<div class="note">Squeeze = ATR 14 ÷ ATR 50. Under 1 = daily ranges shrinking.</div>` : ''}`)}
 ${card('TOP FLOWS · THIS WEEK', `${flowRows}<div class="split"><span style="color:${C.call}">bull ${money(bullP)}</span><span style="color:${C.put}">bear ${money(bearP)}</span></div>`)}
-${card(`APEX LEVELS <em>${apex.expirationsUsed.length} expiries · ${md(apex.expirationsUsed[0])}–${md(apex.expirationsUsed.at(-1))}</em>`, ladder + '<div class="note">Bar = magnet score (55% OI, 45% gamma). Thick 80+ strong · medium 50-79 · thin under 50, context. Green long gamma, red short.</div>')}
-${card('DEALER GAMMA', `
-  <div class="kv"><span>Regime</span><b style="color:${neg ? C.put : C.call}">${neg ? 'Negative · moves amplified' : 'Positive · moves dampened'}</b></div>
-  <div class="kv"><span>Gamma flip</span><b style="color:${C.flip}">${$(gex.gammaFlipLevel)}</b></div>
-  <div class="kv"><span>Call wall / put wall</span><b><span style="color:${C.call}">${o.callWall}</span> / <span style="color:${C.put}">${o.putWall}</span></b></div>
-  <div class="kv"><span>Max pain ${md(tk.expiration)}</span><b>${o.maxPain}</b></div>
-  <div class="kv"><span>Net GEX</span><b>${gex.totalGEX < 0 ? '-' : ''}${money(Math.abs(gex.totalGEX))}</b></div>`)}
+${card(`APEX LEVELS <em>${apex.expirationsUsed.length} expiries · ${md(apex.expirationsUsed[0])}–${md(apex.expirationsUsed.at(-1))}</em>`, ladder + '<div class="note">Bar = magnet score (55% OI, 45% gamma). Score: thick 80+ · medium 50-79 · thin &lt;50. Green long γ, red short.</div>')}
 ${card('IMPLIED VOLATILITY', `
-  ${ivVerdict ? `<div class="iv">Options look <b style="color:${ivVerdict[1]}">${ivVerdict[0]}</b></div><div class="dimline">IV rank ${ivRank.toFixed(0)}/100 vs its own year · ${ivVerdict[2]}</div>` : ''}
-  <div class="kv"><span>ATM IV</span><b>${o.atmIV.toFixed(0)}%</b></div>
+  ${ivVerdict ? `<div class="iv">Options look <b style="color:${ivVerdict[1]}">${ivVerdict[0]}</b> <span class="dimline">· ${ivVerdict[2]}</span></div>` : '<div class="dimline">IV rank unavailable</div>'}
+  ${ivRank != null ? slider('IV rank vs its own year', ivRank / 100, `${ivRank.toFixed(0)} / 100`, '<span>cheap</span><span>rich</span>') : ''}
+  ${ivHv != null ? slider('IV vs what it actually moves (20d)', (Math.log2(ivHv) + 1) / 2, `${ivNow.toFixed(0)}% vs ${hv20.toFixed(0)}% · ${ivHv.toFixed(2)}×`, '<span>0.5×</span><span>1×</span><span>2×</span>') : ''}
   <div class="kv"><span>Priced move into ${md(tk.expiration)}</span><b>±${$(em.dollars)} (${em.percent.toFixed(0)}%)</b></div>
   <div class="kv"><span>Range</span><b>${$(em.lower)} – ${$(em.upper)}</b></div>
-  ${emEarn ? `<div class="note">That move includes the ${md(tk.earnings.date)} print.</div>` : ''}`)}
+  ${emEarn ? `<div class="note">That move includes the ${md(tk.earnings.date)} print, so some of the IV is earnings premium that drains after it.</div>` : ''}`)}
 `;
 
 const W = 2560, H = 1188, CW = 2000;
@@ -163,6 +214,12 @@ h3{margin:0 0 7px;font-size:11px;letter-spacing:2px;color:${C.dim};font-weight:7
 .bar{height:8px;align-self:center;background:#1a1a26;border-radius:3px;overflow:hidden}.bar i{display:block;height:100%;opacity:.85}.bar.t1{height:3px}.bar.t1 i{opacity:.5}.bar.t2{height:7px}.bar.t3{height:12px}.bar.t3 i{opacity:1;box-shadow:0 0 6px currentColor}.lad .oi,.lad .s{color:${C.dim};font-size:10px}
 .spotline{border-top:1px dashed #e6e6ee88;margin:3px 0 2px 38px;position:relative;height:0}.spotline span{position:absolute;left:40%;top:-8px;background:${C.panel};font-size:10px;padding:0 4px}
 .kv{display:flex;justify-content:space-between;font-size:12px;padding:2px 0}.kv span{color:${C.dim}}
+.mtf{display:grid;grid-template-columns:52px repeat(7,1fr) 52px;gap:3px 4px;align-items:center;font-size:10px;margin-top:6px;padding-top:5px;border-top:1px solid ${C.line}}
+.mtf .h{color:${C.dim};text-align:center;font-size:9px}.mtf .tf{color:${C.dim}}.mtf i{display:block;width:10px;height:10px;border-radius:50%;margin:0 auto}.mtf b{text-align:right;font-size:10.5px}
+.sl{margin:5px 0 2px}.slh{display:flex;justify-content:space-between;font-size:11px}.slh span{color:${C.dim}}
+.trk{position:relative;height:6px;border-radius:3px;margin:4px 0 2px;background:linear-gradient(90deg,${C.call},#555 50%,${C.put})}
+.trk i{position:absolute;top:-4px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:${C.text};box-shadow:0 0 6px #fff8}
+.slsub{display:flex;justify-content:space-between;font-size:9px;color:${C.dim}}
 .note,.dimline{font-size:10.5px;color:${C.dim};margin-top:4px;line-height:1.35}.iv{font-size:15px}
 </style></head><body><div class="wrap"><div class="chart">${img ? `<img src="${img}">` : ''}</div><div class="rail">${rail}</div></div></body></html>`;
 
