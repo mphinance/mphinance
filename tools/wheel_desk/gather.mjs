@@ -18,6 +18,9 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const TD_BASE = process.env.TD_API_URL || 'https://traderdaddy-pro-whop-production.up.railway.app';
+// Screeners: the old Railway /api/screeners/{id}/run went premium-gated (403) on 2026-10-27,
+// so runs go through the dev API (X-API-Key from .env_td_api); same response shape.
+const DEV_BASE = process.env.TD_DEV_API_URL || 'https://api.traderdaddy.pro/api/v1';
 const TT_BASE = process.env.TICKERTRACE_API_URL || 'https://api.tickertrace.pro/api/v1';
 const TIMEOUT_MS = Number(process.env.DESK_TIMEOUT_MS || 90000);
 
@@ -54,6 +57,15 @@ const OUT = join(ROOT, 'data', 'wheel-desk', DATE);
 async function loadAgentKey() {
   if (process.env.AGENT_API_KEY) return process.env.AGENT_API_KEY.trim();
   const f = join(ROOT, '.env_agent_api');
+  if (!existsSync(f)) return null;
+  const raw = (await readFile(f, 'utf8')).trim();
+  const m = raw.match(/^[A-Z_]+=(.*)$/);
+  return (m ? m[1] : raw).trim();
+}
+
+async function loadDevKey() {
+  if (process.env.TD_DEV_API_KEY) return process.env.TD_DEV_API_KEY.trim();
+  const f = join(ROOT, '.env_td_api');
   if (!existsSync(f)) return null;
   const raw = (await readFile(f, 'utf8')).trim();
   const m = raw.match(/^[A-Z_]+=(.*)$/);
@@ -225,14 +237,17 @@ async function main() {
   const health = {};
 
   // 1. Every screener at defaults.
-  const list = await getJson(`${TD_BASE}/api/screeners`);
+  const devKey = await loadDevKey();
+  const SCREEN_BASE = devKey ? DEV_BASE : `${TD_BASE}/api`;
+  const devAuth = devKey ? { 'X-API-Key': devKey } : {};
+  const list = await getJson(`${SCREEN_BASE}/screeners`, devAuth);
   const ids = list.ok ? list.data.screeners.map((s) => s.id) : [
     'bullish-pullback', 'momentum', 'volatility-squeeze', 'small-cap', 'volatility-surge',
     'gamma-scan', 'csp-wheel', 'cc-wheel', 'leaps', 'leveraged', 'daily-cuts', 'accumulation-watch',
   ];
   const screens = {};
   await pool(ids, 4, async (id) => {
-    const r = await getJson(`${TD_BASE}/api/screeners/${id}/run`);
+    const r = await getJson(`${SCREEN_BASE}/screeners/${id}/run`, devAuth);
     const rows = r.ok ? (r.data?.results || []) : [];
     screens[id] = { ok: r.ok, error: r.ok ? undefined : r.error, count: rows.length, rows };
     await writeFile(join(OUT, 'raw', `screen_${id}.json`), JSON.stringify(r.ok ? r.data : r, null, 1));
