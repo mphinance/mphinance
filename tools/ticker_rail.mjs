@@ -36,6 +36,8 @@ const [tk, flow, gexR, apexR] = await Promise.all([
 ]);
 const t = tk.technicals, o = tk.options, gex = gexR.data, apex = apexR.data;
 // IV rank has an agent route (the dev API doesn't); --ivrank still overrides it.
+// The dev feed redacts strike/expiry; the agent flow route carries them for this week's prints.
+const flowA = await agent(`/api/agent/flow/ticker/${sym}?days=7`).catch(() => null);
 const ivR = await agent(`/api/agent/ticker/${sym}/iv-rank`).catch(() => null);
 const ivRankLive = ivR?.ivRank ?? ivR?.data?.ivRank ?? null;
 // Weekly / daily / hourly bars from Yahoo for the timeframe stack and realized vol.
@@ -125,12 +127,22 @@ const gauge = `<svg width="200" height="112" viewBox="0 0 200 112">
 const stats = [['RSI', t.rsi.toFixed(1)], ['ADX', t.adx.toFixed(1)], ['Stoch', t.stochK.toFixed(0)], ['MACD', t.macd.toFixed(2)], ['CCI', t.cci.toFixed(0)], ['ATR', t.atr.toFixed(2)], ['21 EMA', $(t.ema21)], ['50 SMA', $(t.sma50)], ['200 SMA', $(t.sma200)]];
 
 // ── top flows: the week's biggest prints, premium-ranked
-const prints = (flow.data || []).filter((r) => r.ticker === sym).sort((a, b) => b.premium - a.premium).slice(0, 5);
+// Merge both feeds by id; an agent row (has strike/expiry) wins over the redacted copy.
+const byId = new Map();
+for (const r of (flow.data || []).filter((x) => x.ticker === sym)) byId.set(r.id, r);
+for (const r of flowA?.flows || []) byId.set(r.id, { ...byId.get(r.id), ...r, tradeTime: r.detectedAtISO ?? byId.get(r.id)?.tradeTime, isRedacted: r.strike == null });
+// Expired contracts can't steer anything ahead; keep them out of the list, but say so.
+const today = new Date().toISOString().slice(0, 10);
+const ranked = [...byId.values()].sort((a, b) => b.premium - a.premium);
+const prints = ranked.filter((r) => !(r.expiryISO && r.expiryISO < today)).slice(0, 4);
+const expiredBig = ranked.filter((r) => r.expiryISO && r.expiryISO < today && r.premium >= (prints.at(-1)?.premium ?? 0));
 const et = (iso) => new Date(iso).toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'short', hour: 'numeric', minute: '2-digit' });
 const flowRows = prints.map((r) => {
   const bull = /bull/i.test(r.sentiment), col = bull ? C.call : C.put;
   const act = /open/i.test(r.sentimentAction || '') ? 'Opened' : /clos/i.test(r.sentimentAction || '') ? 'Closed' : 'Traded';
-  const contract = r.isRedacted || r.strike == null ? r.type : `${r.strike}${r.type[0]} ${r.expiry ? md(r.expiry) : ''}`;
+  const contract = r.strike != null && r.expiryISO
+    ? `$${r.strike} ${r.type} · ${md(r.expiryISO)}`
+    : `${r.type} · ${r.moneynessBucket ?? ''} ${r.dteBucket ?? ''}`.trim();
   return `<div class="row"><span class="tag" style="background:${col}22;color:${col}">${bull ? 'BULL' : 'BEAR'}</span><span class="w">${esc(contract)} · ${act}</span><span class="r">${money(r.premium)}</span><span class="sub">${et(r.tradeTime)} ET · score ${r.score}</span></div>`;
 }).join('') || '<div class="dimline">No unusual prints this week.</div>';
 const bullP = prints.filter((r) => /bull/i.test(r.sentiment)).reduce((a, r) => a + r.premium, 0);
@@ -179,7 +191,7 @@ ${card('TECHNICALS', `<div class="chips">${chipHtml}</div>
   <div class="grid">${stats.map(([k, v]) => `<div><span>${k}</span><b style="color:${vCol(k)}">${v}</b></div>`).join('')}</div>
   ${mtfHtml()}
   ${t.squeezeRatio != null && t.squeezeRatio < 1 ? `<div class="note">Squeeze = ATR 14 ÷ ATR 50. Under 1 = daily ranges shrinking.</div>` : ''}`)}
-${card('TOP FLOWS · THIS WEEK', `${flowRows}<div class="split"><span style="color:${C.call}">bull ${money(bullP)}</span><span style="color:${C.put}">bear ${money(bearP)}</span></div>`)}
+${card('TOP FLOWS · LAST 7 DAYS', `${flowRows}<div class="split"><span style="color:${C.call}">bull ${money(bullP)}</span><span style="color:${C.put}">bear ${money(bearP)}</span></div>${expiredBig.length ? `<div class="note">Expired, not shown: ${expiredBig.slice(0, 3).map((r) => `$${r.strike}${r.type[0].toLowerCase()} ${md(r.expiryISO)} ${money(r.premium)}`).join(' · ')}</div>` : ''}`)}
 ${card(`APEX LEVELS <em>${apex.expirationsUsed.length} expiries · ${md(apex.expirationsUsed[0])}–${md(apex.expirationsUsed.at(-1))}</em>`, ladder + '<div class="note">Bar = magnet score (55% OI, 45% gamma). Score: thick 80+ · medium 50-79 · thin &lt;50. Green long γ, red short.</div>')}
 ${card('IMPLIED VOLATILITY', `
   ${ivVerdict ? `<div class="iv">Options look <b style="color:${ivVerdict[1]}">${ivVerdict[0]}</b> <span class="dimline">· ${ivVerdict[2]}</span></div>` : '<div class="dimline">IV rank unavailable</div>'}
