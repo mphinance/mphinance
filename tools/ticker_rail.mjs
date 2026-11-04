@@ -8,7 +8,8 @@
 // gauge), top flows, apex levels, dealer gamma, then the plain IV read. If the
 // chart's JSON sidecar carries a wedge, a wedge card goes on top.
 // --ivrank comes from the TDPro MCP (get_iv_rank); the dev API has no route for it.
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, rmSync, copyFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { join, resolve, dirname } from 'node:path';
 import { homedir } from 'node:os';
 
@@ -72,7 +73,7 @@ const md = (iso) => iso.slice(5, 10).replace('-', '/');
 const emaA = (a, n) => { const k = 2 / (n + 1); let e; return a.map((v, i) => (e = i ? v * k + e * (1 - k) : v)); };
 const smaL = (a, n) => (a.length < n ? null : a.slice(-n).reduce((x, v) => x + v, 0) / n);
 const sdev = (a) => { const m = a.reduce((x, v) => x + v, 0) / a.length; return Math.sqrt(a.reduce((x, v) => x + (v - m) ** 2, 0) / a.length); };
-function voteOf(b) {
+function valsOf(b) {
   if (b.length < 60) return null;
   const c = b.map((x) => x.c), last = c.at(-1);
   let g = 0, l = 0; for (let i = 1; i <= 14; i++) { const d = c[i] - c[i - 1]; d > 0 ? (g += d) : (l -= d); } g /= 14; l /= 14;
@@ -83,12 +84,16 @@ function voteOf(b) {
   const tp = b.slice(-20).map((x) => (x.h + x.l + x.c) / 3), mtp = tp.reduce((x, v) => x + v, 0) / 20;
   const cci = (tp.at(-1) - mtp) / (0.015 * (tp.reduce((x, v) => x + Math.abs(v - mtp), 0) / 20));
   const e21 = emaA(c, 21).at(-1), s50 = smaL(c, 50), s200 = smaL(c, 200);
-  return {
-    RSI: rsi > 55 ? 1 : rsi < 45 ? -1 : 0, MACD: macd > 0 ? 1 : -1,
-    Stoch: st > 80 ? -1 : st < 20 ? 1 : st > 50 ? 1 : -1, CCI: cci > 100 ? 1 : cci < -100 ? -1 : 0,
-    '21': last > e21 ? 1 : -1, '50': last > s50 ? 1 : -1, '200': s200 == null ? 0 : last > s200 ? 1 : -1,
-  };
+  const trs = b.map((x, i) => (i ? Math.max(x.h - x.l, Math.abs(x.h - b[i - 1].c), Math.abs(x.l - b[i - 1].c)) : x.h - x.l));
+  let atr = trs.slice(0, 14).reduce((x, v) => x + v, 0) / 14; for (let i = 14; i < trs.length; i++) atr = (atr * 13 + trs[i]) / 14;
+  return { last, rsi, macd, st, cci, e21, s50, s200, atr };
 }
+const voteFrom = ({ last, rsi, macd, st, cci, e21, s50, s200 }) => ({
+  RSI: rsi > 55 ? 1 : rsi < 45 ? -1 : 0, MACD: macd > 0 ? 1 : -1,
+  Stoch: st > 80 ? -1 : st < 20 ? 1 : st > 50 ? 1 : -1, CCI: cci > 100 ? 1 : cci < -100 ? -1 : 0,
+  '21': last > e21 ? 1 : -1, '50': last > s50 ? 1 : -1, '200': s200 == null ? 0 : last > s200 ? 1 : -1,
+});
+const voteOf = (b) => { const v = valsOf(b); return v && voteFrom(v); };
 const tfs = [['Weekly', voteOf(barsW)], ['Daily', 'gauge'], ['1 hour', voteOf(barsH)]].filter(([, v]) => v);
 const sig = ['RSI', 'MACD', 'Stoch', 'CCI', '21', '50', '200'];
 const dotC = (x) => (x > 0 ? C.call : x < 0 ? C.put : '#555');
@@ -227,7 +232,8 @@ const wedgeCard = wedge ? card('WEDGE', `
   <div class="kv"><span>Apex</span><b>~${wedge.apexDate} @ ${$(wedge.apexPx)}</b></div>
   <div class="note">Lid ≈ the ${o.callWall} call wall, floor sits just over the ${o.putWall} put wall.${tk.earnings ? ` Earnings ${md(tk.earnings.date)} land inside the coil.` : ''}</div>`, C.wedge) : '';
 
-const rail = `
+function staticRail() {
+return `
 <div class="hero"><div class="sym">${sym}</div><div class="px">${$(spot)} <span style="color:${t.changePercent >= 0 ? C.call : C.put}">${t.changePercent >= 0 ? '+' : ''}${t.changePercent.toFixed(2)}%</span></div>
 <div class="sub2">rel vol ${t.relVol.toFixed(2)} · 90d ${$(t.low90d)}–${$(t.high90d)}</div></div>
 ${wedgeCard}
@@ -236,16 +242,21 @@ ${card('TECHNICALS', `<div class="chips">${chipHtml}</div>
   <div class="grid">${stats.map(([k, v]) => `<div><span>${k}</span><b style="color:${vCol(k)}">${v}</b></div>`).join('')}</div>
   ${mtfHtml()}
   ${t.squeezeRatio != null && t.squeezeRatio < 1 ? `<div class="note">Squeeze = ATR 14 ÷ ATR 50. Under 1 = daily ranges shrinking.</div>` : ''}`)}
-${card('TOP FLOWS · LAST 7 DAYS', `${flowRows}<div class="split"><span style="color:${C.call}">bull ${money(bullP)}</span><span style="color:${C.put}">bear ${money(bearP)}</span></div>${expiredBig.length ? `<div class="note">Expired, not shown: ${expiredBig.slice(0, 3).map((r) => `$${r.strike}${r.type[0].toLowerCase()} ${md(r.expiryISO)} ${money(r.premium)}`).join(' · ')}</div>` : ''}`)}
-${card(`APEX LEVELS <em>${apex.expirationsUsed.length} expiries · ${md(apex.expirationsUsed[0])}–${md(apex.expirationsUsed.at(-1))}</em>`, ladder + '<div class="note">Bar = magnet score (55% OI, 45% gamma). Score: thick 80+ · medium 50-79 · thin &lt;50. Green long γ, red short.</div>')}
-${card('IMPLIED VOLATILITY', `
+${card('TOP FLOWS · LAST 7 DAYS', flowBody)}
+${card(`APEX LEVELS <em>${apexSub}</em>`, apexBody)}
+${card('IMPLIED VOLATILITY', ivBody)}
+`;
+}
+const flowBody = `${flowRows}<div class="split"><span style="color:${C.call}">bull ${money(bullP)}</span><span style="color:${C.put}">bear ${money(bearP)}</span></div>${expiredBig.length ? `<div class="note">Expired, not shown: ${expiredBig.slice(0, 3).map((r) => `$${r.strike}${r.type[0].toLowerCase()} ${md(r.expiryISO)} ${money(r.premium)}`).join(' · ')}</div>` : ''}`;
+const apexSub = `${apex.expirationsUsed.length} expiries · ${md(apex.expirationsUsed[0])}–${md(apex.expirationsUsed.at(-1))}`;
+const apexBody = ladder + '<div class="note">Bar = magnet score (55% OI, 45% gamma). Score: thick 80+ · medium 50-79 · thin &lt;50. Green long γ, red short.</div>';
+const ivBody = `
   ${ivVerdict ? `<div class="iv">Options look <b style="color:${ivVerdict[1]}">${ivVerdict[0]}</b> <span class="dimline">· ${ivVerdict[2]}</span></div>` : '<div class="dimline">IV rank unavailable</div>'}
   ${ivRank != null ? slider('IV rank vs its own year', ivRank / 100, `${ivRank.toFixed(0)} / 100`, '<span>cheap</span><span>rich</span>') : ''}
   ${ivHv != null ? slider('IV vs what it actually moves (20d)', (Math.log2(ivHv) + 1) / 2, `${ivNow.toFixed(0)}% vs ${hv20.toFixed(0)}% · ${ivHv.toFixed(2)}×`, '<span>0.5×</span><span>1×</span><span>2×</span>') : ''}
   <div class="kv"><span>Priced move into ${md(tk.expiration)}</span><b>±${$(em.dollars)} (${em.percent.toFixed(0)}%)</b></div>
   <div class="kv"><span>Range</span><b>${$(em.lower)} – ${$(em.upper)}</b></div>
-  ${emEarn ? `<div class="note">That move includes the ${md(tk.earnings.date)} print, so some of the IV is earnings premium that drains after it.</div>` : ''}`)}
-`;
+  ${emEarn ? `<div class="note">That move includes the ${md(tk.earnings.date)} print, so some of the IV is earnings premium that drains after it.</div>` : ''}`;
 
 const wallPut = putRungs.find((r) => r.name === 'put wall');
 const putRow = (r) => {
@@ -299,9 +310,102 @@ h3{margin:0 0 7px;font-size:11px;letter-spacing:2px;color:${C.dim};font-weight:7
 .wheel td.lv{text-align:left;color:${C.dim}}.wheel td.k{font-weight:700}.wheel td.why{text-align:left;color:${C.dim};font-size:10.5px}
 .wheel tr.pick td{background:#ffb00014}.wheel tr.pick td.k,.wheel tr.pick td.why{color:${C.pin}}
 .note,.dimline{font-size:10.5px;color:${C.dim};margin-top:4px;line-height:1.35}.iv{font-size:15px}
-</style></head><body><div class="wrap"><div class="chart">${img ? `<img src="${img}">` : ''}</div><div class="rail">${rail}</div></div>${wheel}</body></html>`;
+</style></head><body><div class="wrap"><div class="chart">${img ? `<img src="${img}">` : ''}</div><div class="rail">${staticRail()}</div></div>${wheel}</body></html>`;
 
 const base = join(OUT, `${sym.toLowerCase()}_rail_${new Date().toISOString().slice(0, 10)}`);
+if (argv.includes('--animate')) { await renderAnimated(); process.exit(0); }
+
+// ── --animate: same data, fewer things on screen at once. Three slots rotate in step
+// (technicals by timeframe; flows / apex / IV; plan / puts / calls), each pane carrying
+// its own tab strip so a still frame still says there is more. Pair the chart with
+// gamma_horizon --no-rules so the plan rows live in the bottom band instead.
+async function renderAnimated() {
+  const tfVals = [['Weekly', valsOf(barsW)],
+    ['Daily', { last: spot, rsi: t.rsi, macd: t.macd, st: t.stochK, cci: t.cci, e21: t.ema21, s50: t.sma50, s200: t.sma200, atr: t.atr }],
+    ['1 hour', valsOf(barsH)]].filter(([, v]) => v);
+  const tabs = (names, k) => `<div class="tabs">${names.map((n, i) => `<span class="${i === k ? 'on' : ''}">${n}</span>`).join('')}</div>`;
+  const gaugeAt = (gv) => { const a = Math.PI * (1 - (gv + 1) / 2); return gauge.replace(/x2="[^"]+" y2="[^"]+"/, `x2="${100 + 66 * Math.cos(a)}" y2="${100 - 66 * Math.sin(a)}"`); };
+  const techPanes = tfVals.map(([tf, v], k) => {
+    const vt = voteFrom(v), vs = Object.values(vt), up = vs.filter((x) => x > 0).length, dn = vs.filter((x) => x < 0).length, gv = (up - dn) / 7;
+    const col = (x) => (x > 0 ? C.call : x < 0 ? C.put : C.text);
+    const lab = gv > 0.15 ? `${up}/7 bullish` : gv < -0.15 ? `${dn}/7 bearish` : 'mixed';
+    const st = [['RSI', v.rsi.toFixed(1), vt.RSI], ['MACD', v.macd.toFixed(2), vt.MACD], ['Stoch', v.st.toFixed(0), vt.Stoch], ['CCI', v.cci.toFixed(0), vt.CCI],
+      ['21 EMA', $(v.e21), vt['21']], ['50 SMA', $(v.s50), vt['50']], ['200 SMA', v.s200 == null ? '-' : $(v.s200), vt['200']], ['ATR', v.atr.toFixed(2), null]];
+    return `${tabs(tfVals.map(([n]) => n), k)}<div class="gauge">${gaugeAt(gv)}<div class="glabel" style="color:${gv > 0.15 ? C.call : gv < -0.15 ? C.put : C.dim}">${tf.toUpperCase()} · ${lab}<div style="font-size:10px;color:${C.dim};font-weight:400"><span style="color:${C.put}">red</span> bearish · <span style="color:${C.call}">green</span> bullish</div></div></div>
+      <div class="grid g4">${st.map(([n, val, x]) => `<div><span>${n}</span><b style="color:${x == null ? C.text : col(x)}">${val}</b></div>`).join('')}</div>`;
+  });
+  const infoNames = ['Top flows · 7d', 'Apex levels', 'Volatility'];
+  const infoPanes = [flowBody, `<div class="dimline" style="margin:0 0 4px">${apexSub}</div>${apexBody}`, ivBody].map((b, k) => tabs(infoNames, k) + b);
+  const rules = side?.rules ?? [];
+  const head = `<b>WHEEL DESK</b> · ${md(wExp)} monthly · ${dte} days · live mids and deltas${earnIn ? ` · <span style="color:${C.put}">spans the ${md(tk.earnings.date)} earnings: the fat premium IS the earnings risk</span>` : ''}`;
+  const bandNames = [...(rules.length ? ['The plan'] : []), 'Sell puts', 'Covered calls'];
+  const bandPanes = [
+    ...(rules.length ? [`<div class="rules">${rules.map((r) => `<div class="rr" style="background:${r.col}0d"><b style="color:${r.col}">${r.kw}</b><span class="c">${esc(r.cond)}</span><span class="d">${esc(r.rule)}</span></div>`).join('')}</div>`] : []),
+    `<div class="wh">${head} · ★ = farthest strike still at Δ .15-.30</div><table><tr><th class="lv" style="color:${C.call}">SELL PUTS · at the chart's floors</th><th>strike</th><th>Δ</th><th>mid</th><th>return</th><th>breakeven</th><th></th></tr>${putRungs.map(putRow).join('')}</table>`,
+    `<div class="wh">${head} · ★ = farthest strike still at Δ .15-.35</div><table><tr><th class="lv" style="color:${C.put}">COVERED CALLS · at the chart's lids</th><th>strike</th><th>Δ</th><th>mid</th><th>return</th><th>if called</th><th></th></tr>${callRungs.map(callRow).join('')}</table>`,
+  ].map((b, k) => tabs(bandNames, k) + b);
+  const slot = (id, panes) => `<div class="slot" id="${id}">${panes.map((p, i) => `<div class="pane" data-i="${i}">${p}</div>`).join('')}</div>`;
+  const ch = side?.canvas?.H ?? 1188, BAND = 200, AW = 2560, AH = ch + BAND;
+  const rail = `<div class="hero"><div class="sym">${sym}</div><div class="px">${$(spot)} <span style="color:${t.changePercent >= 0 ? C.call : C.put}">${t.changePercent >= 0 ? '+' : ''}${t.changePercent.toFixed(2)}%</span></div>
+    <div class="sub2">rel vol ${t.relVol.toFixed(2)} · 90d ${$(t.low90d)}–${$(t.high90d)}</div></div>
+    ${wedgeCard}
+    <section><h3>TECHNICALS</h3><div class="chips">${chipHtml}</div>${slot('tech', techPanes)}</section>
+    <section>${slot('info', infoPanes)}</section>`;
+  const page2 = html
+    .replace(/<body>[\s\S]*<\/body>/, `<body><div class="wrap" style="height:${ch}px"><div class="chart" style="height:${ch}px">${img ? `<img src="${img}">` : ''}</div><div class="rail" style="height:${ch}px">${rail}</div></div><div class="band">${slot('band', bandPanes)}</div></body>`)
+    .replace('</style>', `.slot{position:relative}.pane{position:absolute;inset:0 0 auto 0}
+.tabs{display:flex;gap:6px;margin:2px 0 8px}.tabs span{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:${C.dim};border:1px solid ${C.line};border-radius:10px;padding:2px 9px}
+.tabs span.on{color:#000;background:${C.pin};border-color:${C.pin};font-weight:700}
+.g4{grid-template-columns:repeat(4,auto);justify-content:space-between}.g4 div{white-space:nowrap}
+.band{height:${BAND - 14}px;margin:0 30px 14px 80px;padding:10px 16px;border:1px solid ${C.line};border-radius:8px;background:${C.panel}}
+.band table{border-collapse:collapse;width:auto;min-width:1100px;font-size:13px}.band th{font-size:10.5px;color:${C.dim};font-weight:400;text-align:right;padding:2px 8px;border-bottom:1px solid ${C.line}}
+.band th.lv{text-align:left;font-weight:700;letter-spacing:1px}.band td{text-align:right;padding:5px 8px;white-space:nowrap}.band td em{color:${C.dim};font-style:normal;font-size:11px}
+.band td.lv{text-align:left;color:${C.dim}}.band td.k{font-weight:700}.band td.why{text-align:left;color:${C.dim};font-size:11px}
+.band tr.pick td{background:#ffb00014}.band tr.pick td.k,.band tr.pick td.why{color:${C.pin}}
+.band .wh{font-size:11px;color:${C.dim};margin-bottom:6px}.band .wh b{color:${C.text};letter-spacing:2px}
+.rr{display:grid;grid-template-columns:70px 360px 1fr;align-items:center;padding:6px 14px;border-radius:6px;margin-bottom:5px;font-size:13px}.rr .d{color:${C.dim};font-size:12.5px}
+</style>`);
+  writeFileSync(`${base}_anim.html`, page2);
+  const browser = await chromium.launch();
+  const pg = await browser.newPage({ viewport: { width: AW, height: AH }, deviceScaleFactor: 1 });
+  await pg.setContent(page2, { waitUntil: 'networkidle' }).catch(() => {});
+  // Fewer cards than the static rail: scale them up to fill the column instead of leaving a
+  // hole. Each slot is as tall as its tallest pane, re-measured at every zoom (text reflows).
+  const over = await pg.evaluate((cw) => {
+    const r = document.querySelector('.rail'), H = r.clientHeight;
+    const fit = () => { for (const sl of document.querySelectorAll('.slot')) { sl.style.height = 'auto'; sl.style.height = `${Math.max(...[...sl.children].map((p) => p.scrollHeight))}px`; } };
+    for (let z = 1.4; z >= 1; z -= 0.02) {
+      r.style.zoom = z; r.style.width = `${cw / z}px`; r.style.height = `${H / z}px`; fit();
+      if (r.scrollHeight <= r.clientHeight + 1) return 0;
+    }
+    return r.scrollHeight - r.clientHeight;
+  }, AW - 2000);
+  if (over > 0) console.error(`animated rail overflows by ${over}px`);
+  await pg.evaluate(() => { for (const sl of document.querySelectorAll('#band')) { sl.style.height = `${Math.max(...[...sl.children].map((p) => p.scrollHeight))}px`; } });
+  // a: pane index (fractional during a crossfade), per slot modulo its pane count
+  const setPhase = (a) => pg.evaluate((a) => {
+    for (const sl of document.querySelectorAll('.slot')) {
+      const n = sl.children.length, k = Math.floor(a) % n, k2 = (k + 1) % n, f = a - Math.floor(a);
+      [...sl.children].forEach((p, i) => { p.style.opacity = i === k ? 1 - f : i === k2 ? f : 0; });
+    }
+  }, a);
+  const dir = `${base}_frames`; rmSync(dir, { recursive: true, force: true }); mkdirSync(dir, { recursive: true });
+  const list = []; let n = 0;
+  const shot = async (dur) => { const f = `${dir}/f${String(n++).padStart(4, '0')}.png`; await pg.screenshot({ path: f }); list.push(`file '${f}'\nduration ${dur.toFixed(4)}`); return f; };
+  const PH = 3, HOLD = 4, FADE = 6;
+  for (let k = 0; k < PH; k++) {
+    await setPhase(k); const still = await shot(HOLD);
+    if (k === 0) copyFileSync(still, `${base}_anim_still.png`);
+    for (let s = 1; s < FADE; s++) { await setPhase(k + s / FADE); await shot(1 / 12); }
+  }
+  await browser.close();
+  list.push(list.at(-1).split('\n')[0]);
+  writeFileSync(`${dir}/list.txt`, list.join('\n') + '\n');
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'concat', '-safe', '0', '-i', `${dir}/list.txt`,
+    '-vf', 'fps=12,split[a][b];[a]palettegen=stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle', '-loop', '0', `${base}.gif`]);
+  rmSync(dir, { recursive: true, force: true });
+  console.log(`${base}.gif`);
+}
 writeFileSync(`${base}.html`, html);
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1.6 });

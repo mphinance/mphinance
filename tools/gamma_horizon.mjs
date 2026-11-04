@@ -374,7 +374,10 @@ plan.rr = (plan.t1 - plan.mid) / (plan.mid - plan.stop);
 plan.rr2 = (plan.t2 - plan.mid) / (plan.mid - plan.stop);
 
 // ── geometry ────────────────────────────────────────────────────────────────
-const W = 2000, H = 1188;
+// --no-rules: drop the IF / IF / ELSE / PLAN rows (the animated card shows them in its own
+// band) and end the canvas under the expiry strip. The rows still go to the JSON sidecar.
+const NO_RULES = argv.includes('--no-rules');
+const W = 2000, H = NO_RULES ? 972 : 1188;
 const PAD_L = 80, PAD_R = 50, PAD_T = 110, PLOT_H = 700;
 const PLOT_W = W - PAD_L - PAD_R;
 const LEFT_W = Math.round(PLOT_W * 0.5);
@@ -785,7 +788,7 @@ rules.push({
   rule: `${plan.basis} entry, only on a daily close that holds ${fmt(plan.entryLo)}. T1 ${fmt(plan.t1)} (${plan.t1Basis}), T2 ${fmt(plan.t2)} (${k2 > plan.t1 + atrNow * 0.5 ? 'upper 2-ATR Keltner' : 'T1 + 1 ATR'}). R:R ${plan.rr.toFixed(1)} / ${plan.rr2.toFixed(1)}.`,
 });
 const IY = SY + rowsDef.length * 17 + 14;
-rules.forEach((r, i) => {
+if (!NO_RULES) rules.forEach((r, i) => {
   const y = IY + i * 38;
   push(`<rect x="${PAD_L}" y="${y - 20}" width="${PLOT_W}" height="34" rx="6" fill="${r.col}" fill-opacity="0.05"/>`);
   push(`<text x="${PAD_L + 16}" y="${y + 2}" ${mono} font-size="13" fill="${r.col}" font-weight="700">${r.kw}</text>`);
@@ -859,7 +862,7 @@ writeFileSync(`${base}.json`, JSON.stringify({
   atr14: atrNow, ema21: emaNow, keltner: { u1: kcU1.at(-1), l1: kcL1.at(-1), u2: kcU2.at(-1), l2: kcL2.at(-1) }, plan,
   expiries: exps.map(({ expiry, dte, emPoints, callWall, putWall, cushion, magnet, magGex, settle, oiSharePct, major }) =>
     ({ expiry, dte, emPoints, callWall, putWall, cushion, magnet, magGex, settle, oiSharePct, major })),
-  segments: segs,
+  segments: segs, canvas: { W, H }, rules: rules.map(({ kw, col, cond, rule }) => ({ kw, col, cond, rule })),
 }, null, 2) + '\n');
 console.log(`${base}.png`);
 for (const g of segs) console.log(`seg ${g.from}-${g.to}d to ${g.end}: call ${g.callWall} put ${g.putWall ?? `(${g.cushion})`} settle ${g.settle} magnet ${g.magnet}`);

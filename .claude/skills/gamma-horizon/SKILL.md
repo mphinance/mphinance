@@ -25,7 +25,12 @@ ladder, dealer gamma, plain IV read, plus a wedge card when the sidecar has one)
 IV rank is fetched from the agent route `/api/agent/ticker/SYM/iv-rank` (the dev API has
 none); `--ivrank N` only overrides it. The IV card is two sliders: rank vs its own year, and
 ATM IV vs 20-day realized vol (log scale, 1× centred). Technicals carry a Weekly / Daily /
-1-hour row of the same 7 votes (Yahoo bars; the Daily row is the gauge's own vote). The
+1-hour row of the same 7 votes (Yahoo bars; the Daily row is the gauge's own vote).
+
+Animated card (GIF, less busy): render the chart with `--no-rules`, then
+`node tools/ticker_rail.mjs SYM --chart <png> --animate`. Three slots rotate in step every 4s:
+technicals Weekly/Daily/1H (each with its own numbers), flows/apex/IV, and a bottom band
+plan/sell puts/covered calls. Writes `<sym>_rail_<date>.gif` plus `_anim_still.png` (frame 1). The
 oscillator gauge is our own 7-signal vote count, not TraderMatrix's gauge, and is labelled so. Writes PNG + HTML + JSON
 sidecar. Keys: `.env_td_api`. Daily bars come from Yahoo.
 
