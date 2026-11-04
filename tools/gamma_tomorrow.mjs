@@ -650,6 +650,36 @@ const FWD_X = PAD_L + PAST_W;                       // tomorrow starts here
 // clear of another. Defined here because both the history markers and the
 // right-hand gutter measure with it.
 const textW = (s_, px) => String(s_).length * px * 0.62;
+// A waypoint note is a sentence, and the gutter it is drawn into is capped so the
+// roads cannot be squeezed to nothing on a wordy night. The note was measured for
+// the gutter but then drawn at whatever length it happened to be, so when the cap
+// bit, the sentence ran off the right edge of the canvas: on 2026-11-03 the UP
+// road ended "short gamma, so it c" with the rest outside the image. The note is
+// now wrapped to the width that actually exists.
+const wrapNote = (s_, px, maxW, maxLines = 2) => {
+  const str = String(s_);
+  if (!str || textW(str, px) <= maxW) return [str];
+  const lines = [];
+  let cur = '';
+  for (const word of str.split(' ')) {
+    const next = cur ? `${cur} ${word}` : word;
+    if (cur && textW(next, px) > maxW) { lines.push(cur); cur = word; } else cur = next;
+  }
+  if (cur) lines.push(cur);
+  // a line ending on the separator reads as a dropped word; carry it down
+  for (let i = 0; i < lines.length - 1; i++) {
+    if (lines[i].endsWith(' \u00b7')) {
+      lines[i] = lines[i].slice(0, -2);
+      lines[i + 1] = `\u00b7 ${lines[i + 1]}`;
+    }
+  }
+  if (lines.length <= maxLines) return lines;
+  const keep = lines.slice(0, maxLines);
+  let tail = keep[maxLines - 1];
+  while (tail && textW(`${tail}\u2026`, px) > maxW) tail = tail.slice(0, -1);
+  keep[maxLines - 1] = `${tail.trimEnd()}\u2026`;
+  return keep;
+};
 const FWD_W = PLOT_W - PAST_W;
 
 const yRaw = [lo, hi, ...pts.map((p) => p.px)];
@@ -1016,6 +1046,7 @@ const labels = [];
 // waypoint label, so the caption passes below could not see it. Its row is
 // recorded here for them to test against.
 let waveNameRow = null;
+let waveName = null;
 const ROAD_X0 = FWD_X + 14;
 // The gutter on the right holds the last waypoint's label on each road: the road
 // name plus its note. It used to be a flat 210px, and the note is a sentence, so
@@ -1111,12 +1142,17 @@ for (const r of roads) {
     // only reliably empty quadrant is back over the shoulder. Last stop is the
     // exception: nothing follows it, so its label can sit out front.
     const last = i === n - 1;
+    const tx = last ? x + 12 : x - 12;
+    // Only the last waypoint's note runs toward the canvas edge, which is the
+    // one that gets cut off. The others are end-anchored into the panel, where
+    // the halo already handles whatever they cross, so they are left alone.
+    const availW = last ? (W - PAD_R) - tx : Infinity;
     labels.push({
-      x, y,
-      tx: last ? x + 12 : x - 12,
+      x, y, tx,
       anchor: last ? 'start' : 'end',
       ty: y + (r.labelBelow ? 30 : r.side < 0 ? -28 : 24),
       tag: last && !r.wave ? `${r.key} · ${w.tag}` : w.tag, note: w.note, col: r.col,
+      noteLines: wrapNote(w.note, 11, availW),
       faint: !inReach(w.at),
     });
   });
@@ -1124,11 +1160,7 @@ for (const r of roads) {
   // Road name: folded into the final waypoint's tag for the directional roads
   // (see the label loop), drawn on its own only for the wave, which has no
   // waypoint at the far end to carry it.
-  if (r.wave) {
-    const ny = Y(pin) + 4;
-    waveNameRow = [ny - 12, ny + 4];
-    push(`<text x="${ROAD_X0 + ROAD_W + 12}" y="${ny}" font-family="'Share Tech Mono',monospace" font-size="15" fill="${r.col}" letter-spacing="1">${r.key}</text>`);
-  }
+  if (r.wave) waveName = { x: ROAD_X0 + ROAD_W + 12, y: Y(pin) + 4, col: r.col, key: r.key };
 }
 
 // Waypoint labels are placed last, as one pass, so labels from different roads
@@ -1136,11 +1168,15 @@ for (const r of roads) {
 // leader line keeps the two connected.
 labels.sort((a, b) => a.ty - b.ty);
 const LBL_H = 34;
-let lastTy = -Infinity;
+// extra rows a wrapped note adds below the tag
+const extraH = (L) => 14 * (L.noteLines.length - 1);
+let prevL = null;
 for (const L of labels) {
-  if (L.ty - lastTy < LBL_H) L.ty = lastTy + LBL_H;
-  L.ty = Math.min(Math.max(L.ty, PAD_T + 16), PAD_T + PLOT_H - 40); // -40 leaves room for the note line that hangs 15px below the tag
-  lastTy = L.ty;
+  if (prevL && L.ty - prevL.ty < LBL_H + extraH(prevL)) L.ty = prevL.ty + LBL_H + extraH(prevL);
+  // -40 leaves room for the note line that hangs 15px below the tag, plus a row
+  // for each line a wrapped note added under it
+  L.ty = Math.min(Math.max(L.ty, PAD_T + 16), PAD_T + PLOT_H - 40 - extraH(L));
+  prevL = L;
 }
 for (const L of labels) {
   if (Math.abs(L.ty - (L.y + 24)) > 26 || Math.abs(L.ty - L.y) > 40) {
@@ -1159,7 +1195,25 @@ for (const L of labels) {
   // halo is invisible.
   const HALO = `stroke="${C.bg}" stroke-width="3" stroke-linejoin="round" paint-order="stroke" stroke-opacity="0.92"`;
   push(`<text x="${L.tx}" y="${L.ty.toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${L.col}" fill-opacity="${op}" font-weight="700" ${HALO}>${esc(L.tag)}${L.faint ? ' *' : ''}</text>`);
-  push(`<text x="${L.tx}" y="${(L.ty + 15).toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" fill-opacity="${op}" ${HALO}>${esc(L.note)}</text>`);
+  L.noteLines.forEach((ln, li) => {
+    push(`<text x="${L.tx}" y="${(L.ty + 15 + li * 14).toFixed(1)}" text-anchor="${L.anchor}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" fill-opacity="${op}" ${HALO}>${esc(ln)}</text>`);
+  });
+}
+
+// The RANGE road's name, now that the labels have claimed their rows. It used to
+// be drawn during road construction, so it could not see them: it sits at the
+// pin, and since 2026-10-26 the pin is folded into a directional waypoint's
+// label, which puts that label at the same price by construction. One line of
+// note cleared it; a wrapped note's second line does not, and on 2026-11-03 "it
+// chops hard" was painted straight through "RANGE". The name keeps its row when
+// it is free and steps to the nearest clear one when it is not, so it is never
+// dropped: it is the only thing naming the quiet road.
+if (waveName) {
+  const clash = (ny) => labels.some((L) =>
+    ny + 4 > L.ty - 11 && ny - 12 < L.ty + 19 + 14 * (L.noteLines.length - 1));
+  const ny = [0, 18, -18, 36, -36, 54].map((d) => waveName.y + d).find((c) => !clash(c)) ?? waveName.y;
+  waveNameRow = [ny - 12, ny + 4];
+  push(`<text x="${waveName.x}" y="${ny}" font-family="'Share Tech Mono',monospace" font-size="15" fill="${waveName.col}" letter-spacing="1">${waveName.key}</text>`);
 }
 
 // The flip band captions, now that the waypoint labels have claimed their rows.
@@ -1174,7 +1228,7 @@ for (const L of labels) {
 // thing naming that road, while what the flip does is already in the header and
 // the IF rows.
 const rowTaken = (yt) =>
-  labels.some((L) => yt + 2 > L.ty - 11 && yt - 9 < L.ty + 19) ||
+  labels.some((L) => yt + 2 > L.ty - 11 && yt - 9 < L.ty + 19 + 14 * (L.noteLines.length - 1)) ||
   (waveNameRow != null && yt + 2 > waveNameRow[0] && yt - 9 < waveNameRow[1]);
 for (const [yt, col, txt] of [
   [flipBandY - 10, C.call, 'ABOVE THE FLIP / dealers brake'],
