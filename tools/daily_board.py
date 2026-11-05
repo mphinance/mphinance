@@ -113,10 +113,11 @@ def main(spec_path, theme=None):
                     + cells(x, x["t"]))
     orows = []
     for o in s["options"]:
-        orows.append(f'<div class="olab"><b>{e(o["label"])}</b><br>{e(o["side"])} {o["qty"]}, paid ${o["paid"] * 100 * o["qty"]:.0f}'
-                     f'<br>marks ${o["mark"] * 100 * o["qty"]:.0f}' + "".join(f"<br>{e(n)}" for n in o.get("notes", []))
+        cnt, verb = abs(o["qty"]), "paid" if o["qty"] > 0 else "sold for"
+        orows.append(f'<div class="olab"><b>{e(o["label"])}</b><br>{e(o["side"])} {cnt}, {verb} ${o["paid"] * 100 * cnt:.0f}'
+                     f'<br>marks ${o["mark"] * 100 * cnt:.2f}' + "".join(f"<br>{e(n)}" for n in o.get("notes", []))
                      + "</div>" + cells(o, o["under"]))
-    paid = sum(o["paid"] * 100 * o["qty"] for o in s["options"])
+    paid = sum(o["paid"] * 100 * o["qty"] for o in s["options"] if o["qty"] > 0)  # shorts collected, nothing at risk
     steps = "".join(f'<div class="step"><span class="num">{i + 1}</span><div><b>{e(t)}</b><br>{e(b)}</div></div>'
                     + ('<span class="arrow">&rarr;</span>' if i < len(s["steps"]) - 1 else "")
                     for i, (t, b) in enumerate(s["steps"]))
@@ -182,7 +183,7 @@ h1 {{ font-family: var(--head); font-size: 58px; letter-spacing: {"1px" if parch
 <div class="panel steps">{steps}</div>
 <div class="panel"><div class="ph"><b>{sec("I", "The Plays")}</b><span>Range is the price zone. Action sits below it.</span></div>
 <div class="grid"><div></div>{head}{"".join(rows)}</div></div>
-<div class="panel"><div class="ph"><b>{sec("II", "The Option Legs")}</b><span>Keyed to the underlying's bucket. Net option premium at risk: ${paid:.0f}.</span></div>
+<div class="panel"><div class="ph"><b>{sec("II", "The Option Legs")}</b><span>Keyed to the underlying's bucket. Long premium at risk: ${paid:.0f}.</span></div>
 <div class="grid"><div></div>{head}{"".join(orows)}</div></div>
 <div class="bottom"><div>{'<div class="rh">' + sec("III", "House Rules") + "</div>" if parch else ""}{rules}</div><div class="ctx"><h4>{sec("IV", "The Tape") if parch else "CONTEXT"}</h4>{ctx}</div></div>
 <div class="foot">Levels measured off the {e(s["levels_from"])} close ({asof.pop()} bars). Recompute daily. Not financial advice.</div>
