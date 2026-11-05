@@ -376,7 +376,19 @@ function gradeEntry(e, day, bars) {
   // Reported, never scored: the map lays out all three roads and does not pick.
   // (It used to award a point per session for "not a whipsaw", and defined UP
   // as "high over the flip", which is every day once price is above it.)
-  const ups = [e.flip, e.brake ?? e.battle, e.gate].filter((v) => v != null && v > spot);
+  // `accel` belongs in this pool: it is a drawn waypoint on the UP road and the
+  // fourth link in the IF row's own trigger chain (brake -> ceiling -> accel ->
+  // flip). Leaving it out meant that on a book with no long-gamma strike above
+  // spot the pool was empty, upTrig was null and wentUp was false no matter how
+  // far price ran. On 2026-11-04 the IF row read "it goes up into 755", price
+  // closed 766.82 (+12.47, 1.55 typical days) and the grade said "took the RANGE
+  // road". That is not just a wrong label: RANGE is what gates the pin check, so
+  // a trend day got the pin scored outside the rule's own stated precondition
+  // ("on a day neither road fires, price settles near the pin"). Classification
+  // only, and forward only -- the three historical entries this would reclassify
+  // (10-19 hit, 10-27 and 11-04 misses) keep the grades they were written with,
+  // because regrading them nets +1 on the record and a grade is permanent.
+  const ups = [e.flip, e.brake ?? e.battle, e.gate, e.accel].filter((v) => v != null && v > spot);
   const dns = [e.shelf, e.cushion, e.flip, e.wall].filter((v) => v != null && v < spot);
   const upTrig = ups.length ? Math.min(...ups) : null;
   const dnTrig = dns.length ? Math.max(...dns) : null;

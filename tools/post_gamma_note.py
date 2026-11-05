@@ -89,12 +89,25 @@ def last_call_line(d):
             f"{total} level{'' if total == 1 else 's'} price actually reached closed on "
             f"the right side."
         )
-    else:
+    elif lc.get("untested"):
         # A level price never approached is not a hit or a miss, and scoring it
         # either way is how a quiet session flatters a map.
         head = (
             f"The last map, graded on the {_day(lc['day'])} close: price came nowhere "
             f"near the levels it named, so there was nothing to score."
+        )
+    else:
+        # The other way to score nothing, and it is not the same thing at all:
+        # every level the map named was one it reports but never scores. A put
+        # wall is a crowd rather than a floor, an accelerant is a level price
+        # speeds through, and the pin is only graded on a day price goes nowhere.
+        # Saying "came nowhere near" here would be false -- on 2026-11-04 price
+        # ran straight through the 755 the map named and closed 11.82 above it.
+        head = (
+            f"The last map, graded on the {_day(lc['day'])} close: every level it "
+            f"named was one the map reports but does not score, so there was nothing "
+            f"to score. That is not price missing the map, it is the map naming "
+            f"nothing it was willing to be graded on."
         )
     detail = "; ".join(p.strip() for p in lc["summary"].split("·") if p.strip())
     if not detail:
