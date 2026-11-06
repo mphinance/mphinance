@@ -23,7 +23,7 @@ Before drafting, read `VOICE.md` and `SUBSTACK.md` in this repo. They are the so
 - If he says skip, skip. If he says off the record, mark it and do not use it.
 - Plain speech. No therapy voice, no hype, no cheerleading.
 
-## The arc (about 12 questions; reorder freely)
+## The arc (about 13 questions; reorder freely)
 
 1. Why this, why now? What happened that made you want to build it?
 2. Picture the person typing "rehab near me" at 2am. Who are they, and what happens next?
@@ -37,6 +37,7 @@ Before drafting, read `VOICE.md` and `SUBSTACK.md` in this repo. They are the so
 10. Who should be in this with you? Who have you not talked to yet?
 11. What would make you quit, and what would make you double down?
 12. What do you want readers to do after they finish?
+13. The money side: what did it cost you, what did insurance actually cover, and what blindsides families?
 
 ## Public facts he can use (verify before publishing)
 
@@ -47,6 +48,7 @@ Before drafting, read `VOICE.md` and `SUBSTACK.md` in this repo. They are the so
 ## Boundaries (do not cross these)
 
 - **No fellowship branding.** Never say or imply that AA, NA or any fellowship endorses, runs or is affiliated with this. Michael speaks as an individual. Do not name other members or describe their stories; if he tells one, strip identifying details and ask before using it.
+- **Money stories are his experience, not facts about a place.** If he describes what insurance did or did not cover at a program, ask the year and the level of care, write it as "in my experience, in [year]", and do not name the program unless he says to. Never state it as how the program bills today.
 - **No claims about a specific facility** unless Michael saw it first-hand or it comes from a cited public source. No accusations. Do not describe any facility review as published, planned for a date, or ready.
 - **No promises about the product.** It is early. Say what exists today and what is only an idea. Opinion is fine when it is labelled as his and he discloses any connection (for example, if he is asked by a facility to review it).
 - **No medical advice,** no "this will work for you," and no outcomes promises. Include 988 for anyone in crisis.
