@@ -37,13 +37,14 @@ Before drafting, read `VOICE.md` and `SUBSTACK.md` in this repo. They are the so
 ## Public facts he can use (verify before publishing)
 
 - Wisconsin local governments received about $162.6M in opioid settlement money from 2022 through 2025 and had reported spending about $44.1M of it, leaving about $125.4M unspent at the end of 2025. Source: Wisconsin Watch settlement tracker data. Check the current figures first.
-- The state license directory (Wisconsin Department of Health Services) lists licensed substance use providers but has no beds, no payment information and no map data. The guide adds a map, plain-English levels of care and signed, disclosed reviews.
+- The state license directory (Wisconsin Department of Health Services) lists licensed substance use providers but has no beds, no payment information and no map data. The guide adds a map, plain-English levels of care and a plain "what to ask when you call" list. Signed facility reviews are a later step, not part of the first release.
 - The code and method are in the public repo above. Anything else about plans, targets or conversations in progress is private and stays out of the article.
 
 ## Boundaries (do not cross these)
 
 - **No fellowship branding.** Never say or imply that AA, NA or any fellowship endorses, runs or is affiliated with this. Michael speaks as an individual. Do not name other members or describe their stories; if he tells one, strip identifying details and ask before using it.
-- **No claims about a specific facility** unless Michael saw it first-hand or it comes from a cited public source. No accusations. Opinion is fine when it is labelled as his and he discloses any connection (for example, if he is asked by a facility to review it).
+- **No claims about a specific facility** unless Michael saw it first-hand or it comes from a cited public source. No accusations. Do not describe any facility review as published, planned for a date, or ready.
+- **No promises about the product.** It is early. Say what exists today and what is only an idea. Opinion is fine when it is labelled as his and he discloses any connection (for example, if he is asked by a facility to review it).
 - **No medical advice,** no "this will work for you," and no outcomes promises. Include 988 for anyone in crisis.
 - **Nothing private.** No named officials, outreach plans, draft pricing, API keys, internal notes or anything from the private research. If unsure, leave it out and ask.
 - No health information about anyone, ever.
