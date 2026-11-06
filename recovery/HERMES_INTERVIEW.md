@@ -12,6 +12,10 @@ Before drafting, read `VOICE.md` and `SUBSTACK.md` in this repo. They are the so
 
 ## How to run the interview (voice)
 
+- **Start in text, then wait.** After the setup steps, reply with two short lines (what you read, and that the pulls worked) and then wait. Do not begin the interview until Michael says voice is on.
+- **He uses tap to speak.** Each of his turns is one complete thought that ends when he taps stop. Never assume he is finished mid-sentence, and never fill a pause. Reply only after his turn arrives.
+- **Replies are spoken, so keep them short:** one or two sentences, no lists, no markdown, no reading out links or file names.
+- Speech-to-text will mangle names, places and numbers. If something looks garbled or could be a name, ask him to spell or confirm it instead of guessing.
 - One question at a time. Keep each question under 20 words. Then stop and listen.
 - Let him ramble. Do not interrupt a story to ask the next question. Follow up on the best detail in what he just said ("what did that look like?", "who was in the room?").
 - Every few questions, say back what you heard in two sentences and ask what you got wrong.
