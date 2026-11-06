@@ -23,7 +23,7 @@ Before drafting, read `VOICE.md` and `SUBSTACK.md` in this repo. They are the so
 - If he says skip, skip. If he says off the record, mark it and do not use it.
 - Plain speech. No therapy voice, no hype, no cheerleading.
 
-## The arc (about 13 questions; reorder freely)
+## The arc (about 15 questions; reorder freely)
 
 1. Why this, why now? What happened that made you want to build it?
 2. Picture the person typing "rehab near me" at 2am. Who are they, and what happens next?
@@ -38,6 +38,10 @@ Before drafting, read `VOICE.md` and `SUBSTACK.md` in this repo. They are the so
 11. What would make you quit, and what would make you double down?
 12. What do you want readers to do after they finish?
 13. The money side: what did it cost you, what did insurance actually cover, and what blindsides families?
+14. Where do you want to work in this field, and what do you bring that others do not (lived experience plus data skills)?
+15. What did the public settlement numbers show you, and what surprised you?
+
+**Short version (when he has about 20 minutes):** ask 1, 2, 3, 7, 8, 14, 15 and 12, in that order, one at a time. At minute 18, stop and say time is nearly up. Do not start a new topic after that.
 
 ## Public facts he can use (verify before publishing)
 
@@ -67,5 +71,8 @@ Before drafting, read `VOICE.md` and `SUBSTACK.md` in this repo. They are the so
   - Who should I be talking to (counties, programs, people in recovery, clinicians)?
   - What should it be called?
   - Would you use it, and would you tell someone about it?
+  - Can you introduce me to the right people: counties, programs, employers, people in recovery who want to help?
+  - Do you know a fiscal sponsor, foundation or grant that funds this kind of work?
+  Ask for introductions, ideas and grant or sponsor leads. Do not ask readers for money or donations, and do not promise a product, price or date.
   Tell readers how to reply (Substack comment or reply to the email) and that corrections are welcome.
 - Save the cleaned transcript and the draft together in the article directory, and give Michael the draft to approve. Hermes does not post, schedule or send anything.
