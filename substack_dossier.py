@@ -93,6 +93,8 @@ class SubstackClient:
                             headers=self.headers, timeout=15)
         if r.status_code == 200:
             drafts = r.json()
+            if isinstance(drafts, dict):  # Substack now wraps lists as {"posts": [...]}
+                drafts = drafts.get("posts", [])
             if isinstance(drafts, list) and drafts:
                 bylines = (drafts[0].get("publishedBylines") or
                           drafts[0].get("draft_bylines") or [])
@@ -103,6 +105,8 @@ class SubstackClient:
                              headers=self.headers, timeout=15)
         if r2.status_code == 200:
             posts = r2.json()
+            if isinstance(posts, dict):
+                posts = posts.get("posts", [])
             if posts:
                 bylines = posts[0].get("publishedBylines", [])
                 if bylines:
