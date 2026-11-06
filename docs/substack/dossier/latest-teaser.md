@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-11-05
+# Ghost Alpha Dossier — 2026-11-06
 
-> 🔴 **Elevated** · SPY ▼ 3.7% · VIX 25.4
+> 🔴 **Elevated** · SPY ▲ 0.8% · VIX 23.6
 
 ---
 
-**Regime check:** VIX at 25.
+**Regime check:** VIX at 23.
 
 
-## 🥇 Gold Pick: NSC
+## 🥇 Gold Pick: UNP
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 49/100 (A) |
+| **Score** | 46/100 (A) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -20,25 +20,25 @@
 
 
 ### Runners Up
-- 🥈 **CSX** — Score: 48/100
-- 🥉 **RY** — Score: 46/100
+- 🥈 **PFE** — Score: 46/100
+- 🥉 **MFC** — Score: 40/100
 
 
 ## 📊 Today's Numbers
 
-- **201 scanner signals** across 6 strategies
+- **189 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 3.7% | **VIX:** 25.4
+- **SPY:** ▲ 0.8% | **VIX:** 23.6
 
 ---
 
 ## 👻 Sam Says
 
-> *"Be the person your dog thinks you are. Trade like the person your backtests think you are."*
+> *"Cut your losers fast. Let your winners run. And for the love of god, stop averaging down on garbage."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-05_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-05)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-06_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-06)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
