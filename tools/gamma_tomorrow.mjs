@@ -1281,7 +1281,24 @@ if (report) {
   // Same fixed-column trap as the IF rows: a two-digit score ("12/16 tested on
   // 10-23") already reaches the old 290 summary column.
   const sumX = PAD_L + Math.max(290, 130 + textW(lcStr, 13) + 18);
-  push(`<text x="${sumX}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="13" fill="${C.dim}">${esc(report.summary)}</text>`);
+  // The summary grows with the number of levels checked (one clause each, plus
+  // the branch and the untested count) and had no right-edge guard, the same
+  // defect the road notes had before 2026-11-03. 2026-11-05 was the first to
+  // overflow: every named level missed on a -4.4% day, which is the longest
+  // summary the grader has ever written (163 chars against the 148 this row
+  // has room for), and the chart printed "... · 1 level" with "untested" past
+  // the edge of the canvas. Shrink to fit first, because every clause is a
+  // graded level and dropping one hides a result; only once the type is as
+  // small as it can still be read at do whole clauses go, never mid-word.
+  const sumRoom = PAD_L + PLOT_W - 12 - sumX;
+  let sumStr = report.summary, sumPx = 13;
+  while (sumPx > 10.5 && textW(sumStr, sumPx) > sumRoom) sumPx -= 0.5;
+  if (textW(sumStr, sumPx) > sumRoom) {
+    const parts = sumStr.split(' · ');
+    while (parts.length > 1 && textW(`${parts.join(' · ')} …`, sumPx) > sumRoom) parts.pop();
+    sumStr = `${parts.join(' · ')} …`;
+  }
+  push(`<text x="${sumX}" y="${y + 3}" font-family="'JetBrains Mono',monospace" font-size="${sumPx}" fill="${C.dim}">${esc(sumStr)}</text>`);
 }
 
 // ── the if / else ───────────────────────────────────────────────────────────
