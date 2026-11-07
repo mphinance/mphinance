@@ -1,0 +1,1 @@
+Institutional scan, asOf 2026-11-06 close. Sources: TDPro get_institutional_activity (flow count/premium), Trading etf_signals + etf_institutional_flow (TickerTrace), get_insider_trades buys, get_dark_pool 10d, stock-recap run 2026-11-06_2310 tickertrace_briefing (tickertrace_institutional.json = fetch failed).

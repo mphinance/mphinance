@@ -296,7 +296,11 @@ async function main() {
   };
 
   // === 1. SCREENERS ========================================================
-  const list = await getJson(`${TD_BASE}/api/screeners`);
+  // The old Railway /api/screeners/{id}/run went premium-gated on 2026-10-27, so
+  // screeners run through the dev API with X-API-Key; same response shape.
+  const DEV_KEY = await loadDevKey();
+  const devHeaders = DEV_KEY ? { 'X-API-Key': DEV_KEY } : {};
+  const list = await getJson(`${DEV_BASE}/screeners`, { headers: devHeaders });
   let screenerIds = [];
   if (list.ok && list.data && Array.isArray(list.data.screeners)) {
     screenerIds = list.data.screeners.map((s) => ({ id: s.id, name: s.name }));
@@ -307,7 +311,7 @@ async function main() {
 
   const screenerResults = {};
   await pool(screenerIds, SCREENER_CONCURRENCY, async ({ id, name }) => {
-    const r = await getJson(`${TD_BASE}/api/screeners/${id}/run`);
+    const r = await getJson(`${DEV_BASE}/screeners/${id}/run`, { headers: devHeaders });
     const rows = r.ok && r.data ? (r.data.results || r.data.data || []) : [];
     screenerResults[id] = { name, ok: r.ok, count: rows.length, error: r.error, rows };
     await saveRaw(`screener_${id}`, r.data ?? { error: r.error });
@@ -573,8 +577,6 @@ async function main() {
   // Thursday CPI or a Wednesday earnings print decides whether a coiled name is
   // a buy or a landmine. These legs come from the NEW dev plane (X-API-Key), are
   // all best-effort, and degrade gracefully (a bad key only dims these sections).
-  const DEV_KEY = await loadDevKey();
-  const devHeaders = DEV_KEY ? { 'X-API-Key': DEV_KEY } : {};
   const devGet = (path, label) => getJson(`${DEV_BASE}/${path}`, { headers: devHeaders, label: label || path });
 
   let earnings = [], econEvents = [], sectors = [], regime = null;

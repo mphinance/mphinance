@@ -45,6 +45,9 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 
 TD_BASE = "https://traderdaddy-pro-whop-production.up.railway.app"
+# The old Railway /api/screeners/{id}/run went premium-gated on 2026-10-27, so
+# screeners run through the dev API with X-API-Key; same response shape.
+DEV_BASE = os.environ.get("TD_DEV_API_URL", "https://api.traderdaddy.pro/api/v1")
 TH      = -80
 BARS_DAYS            = 365
 MIN_BARS             = 115
@@ -100,6 +103,19 @@ def load_agent_key() -> str:
             return raw.split("=", 1)[1].strip()
         return raw
     raise RuntimeError(f".env_agent_api not found under {REPO_ROOT}")
+
+
+def load_dev_key() -> str:
+    env = os.environ.get("TD_DEV_API_KEY", "").strip()
+    if env:
+        return env
+    key_file = REPO_ROOT / ".env_td_api"
+    if key_file.exists():
+        raw = key_file.read_text().strip()
+        if "=" in raw and raw.split("=", 1)[0].isupper():
+            return raw.split("=", 1)[1].strip()
+        return raw
+    raise RuntimeError(f".env_td_api not found under {REPO_ROOT}")
 
 
 # ---------------------------------------------------------------------------
@@ -233,12 +249,14 @@ def analyze_ticker(symbol, bars, tech):
 # HTTP helpers
 # ---------------------------------------------------------------------------
 
-def get_json(url, token, retries=1):
+def get_json(url, token, retries=1, dev_key=None):
     headers = {
         "Authorization": f"Bearer {token}",
         "User-Agent":    UA,
         "Accept":        "application/json",
     }
+    if dev_key:
+        headers = {"X-API-Key": dev_key, "User-Agent": UA, "Accept": "application/json"}
     for attempt in range(retries + 1):
         try:
             req = urllib.request.Request(url, headers=headers)
@@ -326,14 +344,15 @@ def fetch_technicals(symbol, token, cached_latest=None):
 
 def fetch_screener_universe(token):
     tickers   = set()
-    list_data = get_json(f"{TD_BASE}/api/screeners", token)
+    dev_key   = load_dev_key()
+    list_data = get_json(f"{DEV_BASE}/screeners", token, dev_key=dev_key)
     if list_data and list_data.get("screeners"):
         ids = [s["id"] for s in list_data["screeners"]]
     else:
         ids = SCREENER_IDS
 
     def run_screener(sid):
-        data = get_json(f"{TD_BASE}/api/screeners/{urllib.parse.quote(sid)}/run", token)
+        data = get_json(f"{DEV_BASE}/screeners/{urllib.parse.quote(sid)}/run", token, dev_key=dev_key)
         if not data:
             return []
         rows = data if isinstance(data, list) else (
