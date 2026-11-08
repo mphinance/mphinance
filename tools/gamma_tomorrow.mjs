@@ -430,6 +430,9 @@ function gradeEntry(e, day, bars) {
     if (c.ok && !c.wickHeld) return `wicked ${c.thru.toFixed(2)} through ${c.label}, closed ${c.side === 'high' ? 'under' : 'over'}`;
     return `${c.ok ? 'held' : 'MISS closed through'} ${c.label}${c.ok ? ` by ${c.dist.toFixed(2)}` : ''}`;
   };
+  // Reported, never scored, but "tagged" has to stay true: on 2026-11-05 it was the
+  // word for a 760 put wall that price closed 26.86 under.
+  const reported = (lvl, name) => (close < lvl ? `closed ${(lvl - close).toFixed(2)} under the ${lvl} ${name}` : `tagged the ${lvl} ${name}`);
   return {
     day, open, high, low, close, branch, branchOk, checks, tested, untested,
     hits: tested.filter((c) => c.ok).length,
@@ -439,8 +442,8 @@ function gradeEntry(e, day, bars) {
     summary: [
       branch === 'WHIPSAW' ? 'whipsawed both roads' : `took the ${branch} road`,
       ...tested.map(verb),
-      trapHit ? `tagged the ${e.shelf} trapdoor` : '',
-      wallHit ? `tagged the ${e.wall} put wall` : '',
+      trapHit ? reported(e.shelf, 'trapdoor') : '',
+      wallHit ? reported(e.wall, 'put wall') : '',
       untested.length ? `${untested.length} level${untested.length > 1 ? 's' : ''} untested` : '',
     ].filter(Boolean).join(' · '),
   };
