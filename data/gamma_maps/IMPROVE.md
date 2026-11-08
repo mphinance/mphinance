@@ -1,8 +1,9 @@
 # Tomorrow's Map: nightly improvement backlog
 
 The 21:00 cron (`37c6eec1`) ships ONE improvement per night from this list (or one it
-found in that night's run), announces it in the note's "What changed", and moves it
-to Done with the date. Add new ideas to the bottom of Candidates as they come up.
+found in that night's run), and moves it to Done with the date. Only changes to levels,
+grading or how the record is reported get announced in the note's "What changed". Chart
+labels, overflow, collisions and caption fixes are logged here and never announced. Add new ideas to the bottom of Candidates as they come up.
 
 Rules: never lower MIN_GRADED, never change the grader to make the record look better,
 never undo a SKILL.md rule. If a change touches grading, say so in the changelog

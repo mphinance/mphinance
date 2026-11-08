@@ -16,8 +16,9 @@ Guards, because this runs unattended:
 
 Changelog: any entry in data/gamma_maps/CHANGELOG.json with "posted": null is
 appended to the next note under "What changed", then stamped with the date it
-went out, so each change is announced exactly once. Whenever the map or its
-grading changes, add an entry there: one or two plain sentences a reader who
+went out, so each change is announced exactly once. Whenever the levels, the
+grading or the reported record change, add an entry there (cosmetic chart fixes
+stay out): one or two plain sentences a reader who
 has never seen the code would follow, saying what changed and why. Entries over
 MAX_CHANGE_CHARS or using relative days are held back and printed as HELD.
 

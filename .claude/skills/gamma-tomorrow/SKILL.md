@@ -155,7 +155,9 @@ clock restarted 2026-10-08. The ledger `data/gamma_maps/SPY.json` must be
 force-added (`git add -f`): `*.json` is gitignored and the nightly commit had been
 picking up only `SPY.json.bak`, one night stale.
 
-**Every change to the map or its grading gets a changelog entry.** Add it to
+**Every change to the levels, the grading or how the record is reported gets a
+changelog entry. Cosmetic chart fixes (labels, overflow, collisions, captions) do not;
+they go in `IMPROVE.md` only (Michael, 2026-11-08).** Add it to
 `data/gamma_maps/CHANGELOG.json` as `{"date", "text", "posted": null}` in the same
 commit as the change. `post_gamma_note.py` appends every unposted entry to the next
 note under "What changed in the map" and stamps it posted, so each change is
