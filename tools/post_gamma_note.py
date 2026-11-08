@@ -18,13 +18,15 @@ Changelog: any entry in data/gamma_maps/CHANGELOG.json with "posted": null is
 appended to the next note under "What changed", then stamped with the date it
 went out, so each change is announced exactly once. Whenever the map or its
 grading changes, add an entry there: one or two plain sentences a reader who
-has never seen the code would follow, saying what changed and why.
+has never seen the code would follow, saying what changed and why. Entries over
+MAX_CHANGE_CHARS or using relative days are held back and printed as HELD.
 
 Auth: SUBSTACK_SID in secrets.env, same cookie the rest of the pipeline uses.
 """
 import argparse
 import base64
 import json
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -38,6 +40,11 @@ CHANGELOG = REPO / "data/gamma_maps/CHANGELOG.json"
 # Was a fixed UTC-4, which is EDT only: every winter the once-a-day guard would
 # roll over at 8pm ET instead of midnight.
 ET = ZoneInfo("America/New_York")
+# The longest entries were engineering write-ups (1476 chars, half the note); the
+# ones that read right on 10/08 ran 155 to 224.
+MAX_CHANGE_CHARS = 280
+# The nightly job writes "yesterday" about a session that closed that same day.
+RELATIVE_DAY = re.compile(r"\b(tonight|yesterday|last night)\b", re.I)
 
 
 def secrets():
@@ -58,10 +65,27 @@ def session():
     return s, sec.get("SUBSTACK_PUB_URL", "mphinance.substack.com")
 
 
+def change_problem(c):
+    if len(c["text"]) > MAX_CHANGE_CHARS:
+        return f"{len(c['text'])} chars, cap is {MAX_CHANGE_CHARS}"
+    m = RELATIVE_DAY.search(c["text"])
+    return f'says "{m.group()}", use the date' if m else None
+
+
 def pending_changes():
+    """Unposted entries fit to publish. The rest stay unposted until rewritten."""
     if not CHANGELOG.exists():
         return []
-    return [c for c in json.loads(CHANGELOG.read_text()) if not c.get("posted")]
+    ready = []
+    for c in json.loads(CHANGELOG.read_text()):
+        if c.get("posted"):
+            continue
+        problem = change_problem(c)
+        if problem:
+            print(f"changelog HELD, rewrite it ({problem}): {c['text'][:70]}")
+        else:
+            ready.append(c)
+    return ready
 
 
 def _day(iso):
@@ -324,8 +348,9 @@ def main():
 
     if changes:
         log = json.loads(CHANGELOG.read_text())
+        announced = {c["text"] for c in changes}
         for c in log:
-            if not c.get("posted"):
+            if not c.get("posted") and c["text"] in announced:
                 c["posted"] = today
                 c["noteId"] = nid
         CHANGELOG.write_text(json.dumps(log, indent=2) + "\n")

@@ -160,7 +160,9 @@ picking up only `SPY.json.bak`, one night stale.
 commit as the change. `post_gamma_note.py` appends every unposted entry to the next
 note under "What changed in the map" and stamps it posted, so each change is
 announced once. Write `text` for a reader who has never seen the code: what changed
-and why, one or two sentences, no jargon beyond what the chart already uses. Michael
+and why, at most two sentences and 280 characters, no jargon beyond what the chart
+already uses, dates instead of "tonight" or "yesterday". The poster holds back entries
+that break the length or date rule; the how-it-broke detail goes in `IMPROVE.md`. Michael
 asked for this on 2026-10-08.
 
 **The RANGE road is graded now.** The ledger used to store the API's

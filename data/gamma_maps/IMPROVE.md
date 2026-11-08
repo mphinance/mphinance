@@ -9,6 +9,13 @@ never undo a SKILL.md rule. If a change touches grading, say so in the changelog
 plainly. Small and correct beats big and clever. Skipping a night is fine if nothing
 on the list is safe to ship in ~20 minutes; say so in the thread.
 
+The changelog `text` is published under Michael's name; this file is the engineering
+log. Keep them separate. Changelog: at most two sentences and 280 characters, what the
+reader will see differently and why. No mechanism, no replay counts, no story of how the
+bug was found, no "tonight" or "yesterday", and nothing stronger than the note's own
+scoreline. The poster prints `changelog HELD` and skips any entry that breaks the length
+or date rule: rewrite it so it goes out on the next note.
+
 ## Candidates
 - Report the non-round-level split (`record.nonRound`) in the thread every night, so we can see if gamma beats round numbers on non-round strikes before it is publishable.
 - Road weighting: track which road price took vs. which the map leaned toward, once there are 10+ live sessions.
