@@ -148,6 +148,13 @@ plain $5 round numbers, same days, same rule. On SPY the brakes are often round
 strikes (770/775/780/785), and in-sample the map scored 12/16 against round
 numbers' 11/16: no demonstrated edge yet. The note prints both numbers or neither.
 
+**The map-vs-baseline comparison is counted by session.** Levels on the same day
+share one market move, so the level-by-level Fisher odds overstated the sample (a
+reader caught this on 2026-11-08). The note prints better/worse/tied by session and
+links the public table at `docs/gamma-record/index.html`, which the tool rebuilds
+from the ledger every run. The nightly commit must add that file. A blank session is
+either "out of reach" or "nothing scoreable"; do not merge the two in published text.
+
 **Only live v2 grades count.** The first 10 sessions were regraded after the fact
 (`--regrade`, daily OHLC, old grade kept as `graded_v1`) under rules chosen while
 looking at them, so they are in-sample and stay out of the public record. The

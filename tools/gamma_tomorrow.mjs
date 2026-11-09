@@ -583,6 +583,11 @@ const record = {
   // a selection problem the rate is structurally blind to. Counted every night
   // so it sits next to the rate instead of being found by hand.
   blank: gradedAll.filter((e) => e.graded.total === 0).length,
+  // Two different things produce a blank, and the note called all six "named
+  // nothing" when only 2 of them were. A level price never got near is a level
+  // the map was willing to be graded on; a reported-only book is not.
+  blankOutOfReach: gradedAll.filter((e) => e.graded.total === 0 && e.graded.untested > 0).length,
+  blankNothing: gradedAll.filter((e) => e.graded.total === 0 && !e.graded.untested).length,
   sessions: gradedAll.length,
   hits: gradedAll.reduce((a, e) => a + e.graded.hits, 0),
   total: gradedAll.reduce((a, e) => a + e.graded.total, 0),
@@ -598,14 +603,41 @@ const record = {
   restartedOn: RECORD_RESTART,
 };
 // How often chance alone produces a gap this big between the map and its $5
-// round-number baseline. Attached whenever both sides have a sample; the note
-// only prints it once the record is publishable.
+// round-number baseline, level by level. Kept in the sidecar as a diagnostic; the
+// note prints the session count in record.paired instead.
 record.edge = (() => {
   const a = record.hits, b = record.total - record.hits;
   const c = record.nullHits, d = record.nullTotal - record.nullHits;
   if (record.total < 1 || record.nullTotal < 1) return null;
   const p = fisherTwoTailed(a, b, c, d);
   return { p: +p.toFixed(4), inNoise: p >= 0.05, mapRate: +(a / record.total).toFixed(3), nullRate: +(c / record.nullTotal).toFixed(3) };
+})();
+
+// The same comparison counted by session. Fisher above treats every level as its
+// own test, but levels on the same day share one market move: 11/05 was 3 misses
+// on each side from a single 4.4% drop. A reader asked for this on 2026-11-08 and
+// it turned 29 levels into 4 sessions that actually separate the two. Each row is
+// one session; the sign test ignores ties and asks only who did better. This is
+// the number the note prints, and the table behind it is public.
+record.paired = (() => {
+  const rows = gradedAll.map((e) => {
+    const g = e.graded, mh = g.hits, mt = g.total, rh = g.nullHits ?? 0, rt = g.nullTotal ?? 0;
+    const cmp = mt && rt ? mh * rt - rh * mt : null;
+    return { day: g.day, branch: g.branch, mapHits: mh, mapTotal: mt, roundHits: rh, roundTotal: rt,
+             better: cmp == null ? null : cmp > 0 ? 'map' : cmp < 0 ? 'round' : 'tie',
+             mapBlank: mt ? null : g.untested > 0 ? 'out of reach' : 'nothing scoreable' };
+  });
+  const scored = rows.filter((r) => r.better);
+  const mapBetter = scored.filter((r) => r.better === 'map').length;
+  const roundBetter = scored.filter((r) => r.better === 'round').length;
+  const n = mapBetter + roundBetter;
+  let tail = 0, ways = 1;
+  for (let i = 0; i <= Math.min(mapBetter, roundBetter); i++) { tail += ways; ways = (ways * (n - i)) / (i + 1); }
+  const p = n ? Math.min(1, (2 * tail) / 2 ** n) : 1;
+  return { rows, both: scored.length, mapBetter, roundBetter, tied: scored.length - n,
+           roundOnly: rows.filter((r) => !r.mapTotal && r.roundTotal).length,
+           neither: rows.filter((r) => !r.mapTotal && !r.roundTotal).length,
+           p: +p.toFixed(4), inNoise: p >= 0.05 };
 })();
 
 // The flip's own live record: tested flip checks only, same rows the headline
@@ -1398,9 +1430,49 @@ if (ledgerBroken) {
   console.log('session still open: not writing to the ledger, and the score below is provisional');
 }
 
+// The public session-by-session table the note links to. Rebuilt from the ledger
+// every run so it can never drift from the published record.
+if (sym === 'SPY' && !ledgerBroken) {
+  const P = record.paired;
+  const frac = (h, t) => (t ? `${h}/${t}` : '<span class="dim">none</span>');
+  const label = (r) => r.better === 'map' ? 'Map' : r.better === 'round' ? '$5' : r.better === 'tie' ? 'Tie' : '<span class="dim">n/a</span>';
+  const note = (r) => r.mapBlank ? `Map blank: ${r.mapBlank}` : '';
+  const trs = [...P.rows].reverse().map((r) => `<tr class="${r.better || 'blank'}"><td>${r.day}</td><td>${frac(r.mapHits, r.mapTotal)}</td><td>${frac(r.roundHits, r.roundTotal)}</td><td>${label(r)}</td><td class="road">${r.branch}</td><td class="note">${note(r)}</td></tr>`).join('\n');
+  const stat = (v, k) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`;
+  const page = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SPY Tomorrow's Map: the record by session</title>
+<meta name="description" content="Every graded session of the SPY Tomorrow's Map next to plain $5 round numbers, scored by the same rule.">
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b0d12;color:#d8dce6;font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:860px;margin:0 auto;padding:32px 16px 56px}h1{font-size:26px;line-height:1.25;margin:0 0 6px;color:#f4f6fb}p{margin:12px 0}.sub,.dim{color:#8791a5}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:22px 0}.stat{background:#141823;border:1px solid #232938;border-radius:8px;padding:12px}.stat b{display:block;font-size:24px;color:#f0c566}.stat span{font-size:13px;color:#8791a5}
+.wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:15px}th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #1e2431;white-space:nowrap}th{color:#8791a5;font-weight:600;font-size:13px}
+tr.map td:nth-child(4){color:#5fd38d;font-weight:600}tr.round td:nth-child(4){color:#f0876a;font-weight:600}tr.blank{background:#10131b}.road,.note{color:#8791a5;font-size:13px}
+h2{font-size:17px;margin:30px 0 6px;color:#f4f6fb}footer{margin-top:30px;font-size:13px;color:#8791a5}
+</style></head><body><main>
+<h1>SPY Tomorrow's Map: the record by session</h1>
+<p class="sub">Graded through ${P.rows.length ? P.rows[P.rows.length - 1].day : 'n/a'}, on the close. Live since the grading rules were fixed on ${RECORD_RESTART}. Rebuilt nightly from the ledger.</p>
+<div class="stats">${stat(`${record.hits}/${record.total}`, 'map levels on the right side')}${stat(`${record.nullHits}/${record.nullTotal}`, '$5 round numbers, same rule')}${stat(P.both, 'sessions both sides scored')}${stat(P.mapBetter, 'map did better')}${stat(P.roundBetter, '$5 did better')}${stat(P.tied, 'tied')}</div>
+<p>Levels on the same day share one market move, so the fair comparison is by session. Only the ${P.mapBetter + P.roundBetter} sessions where the two differ say anything about which is better${P.inNoise ? ', and that is too few to call an edge' : ''}.</p>
+<div class="wrap"><table><thead><tr><th>Session</th><th>Map</th><th>$5</th><th>Better</th><th>Road</th><th></th></tr></thead><tbody>
+${trs}
+</tbody></table></div>
+<h2>How to read it</h2>
+<p>A fraction is levels that closed on the right side, out of levels price actually reached. The $5 column scores the same number of plain round numbers on each side of spot, by the same rule. Better compares the two hit rates for that session.</p>
+<p>${record.blank} sessions scored nothing for the map. On ${record.blankOutOfReach} it named levels price never reached. On ${record.blankNothing} every level it named was a kind it reports but does not score, such as a put wall. The round numbers still scored on ${P.roundOnly} of those ${record.blank}. The overall rate cannot see these sessions, which is why they stay in the table.</p>
+<footer>Where dealers are long gamma they brake, where they are short they chase. Not advice.</footer>
+</main></body></html>
+`;
+  const pageDir = join(ROOT, 'docs/gamma-record');
+  mkdirSync(pageDir, { recursive: true });
+  writeFileSync(join(pageDir, 'index.html'), page);
+}
+
 console.log(`record so far: ${record.sessions} session(s) graded${record.publishable ? '' : ` -- not publishable until ${MIN_GRADED}`}`
   + (record.blank ? ` | ${record.blank} scored nothing (rate covers ${record.sessions - record.blank})` : ''));
 if (report) console.log(`${report.partial ? 'in flight' : 'last call'}: ${report.hits}/${report.total} tested on ${report.day} | ${report.summary}`);
+console.log(`by session: ${record.paired.both} scored by both | map better ${record.paired.mapBetter}, $5 better ${record.paired.roundBetter}, tied ${record.paired.tied} | sign test p ${record.paired.p}`);
 console.log(`by level: ${Object.entries(record.byLevel).map(([k, v]) => `${k} ${v.hits}/${v.total}`).join(' | ') || 'nothing scored yet'}`);
 console.log(`spot ${spot} | flip ${flip} | magnet ${magnet} | netGEX ${fmtM(gex.totalGEX)}`);
 console.log(`flips | api ${flip} | survivors ${flipSurvivors} | full book ${flipFullBook} | tv ${flipTV} | record ${flipRecord.hits}/${flipRecord.total} | leads IF row: ${flipLeadOK}`);

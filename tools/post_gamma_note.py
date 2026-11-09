@@ -44,6 +44,8 @@ ET = ZoneInfo("America/New_York")
 # The longest entries were engineering write-ups (1476 chars, half the note); the
 # ones that read right on 10/08 ran 155 to 224.
 MAX_CHANGE_CHARS = 280
+# Rebuilt nightly by gamma_tomorrow.mjs from the ledger.
+RECORD_URL = "https://mphinance.github.io/mphinance/gamma-record/"
 # The nightly job writes "yesterday" about a session that closed that same day.
 RELATIVE_DAY = re.compile(r"\b(tonight|yesterday|last night)\b", re.I)
 
@@ -180,26 +182,41 @@ def compose(d, changes=()):
         blank = rec.get("blank") or 0
         if blank:
             covered = rec["sessions"] - blank
+            # "Named nothing" was true of only 2 of the first 6. A level price
+            # never reached is a level the map was willing to be graded on.
+            why = []
+            if rec.get("blankNothing"):
+                why.append(f"on {rec['blankNothing']} the map named no level it scores")
+            if rec.get("blankOutOfReach"):
+                why.append(f"on {rec['blankOutOfReach']} it named levels price never reached")
             lines.append(
-                f"{blank} of those {rec['sessions']} sessions named nothing the map scores, "
-                f"so that rate covers {covered} sessions, not {rec['sessions']}."
+                f"{blank} of those {rec['sessions']} sessions scored nothing: {', '.join(why)}. "
+                f"So that rate covers {covered} sessions, not {rec['sessions']}."
             )
-        # Two fractions side by side read as a gap, and a gap reads as an edge.
-        # At this sample size it usually is not one, so the note says how often
-        # chance produces a gap that size rather than leaving it to be subtracted.
-        edge = rec.get("edge") or {}
-        if edge.get("p") is not None:
-            odds = max(1, round(edge["p"] * 100))
-            if edge.get("inNoise"):
+        # Two fractions side by side read as a gap, and a gap reads as an edge. The
+        # level-by-level odds this used to print assumed 29 independent tests, and
+        # levels on the same day share one market move. Count sessions instead.
+        paired = rec.get("paired") or {}
+        if paired.get("both"):
+            decided = paired["mapBetter"] + paired["roundBetter"]
+            lines.append(
+                f"Levels on the same day share one market move, so the fair count is by "
+                f"session. Both sides scored on {paired['both']} sessions: the map did better "
+                f"on {paired['mapBetter']}, round numbers on {paired['roundBetter']}, and "
+                f"{paired['tied']} tied."
+            )
+            if paired.get("inNoise"):
                 lines.append(
-                    f"That gap is not an edge yet. With this few graded levels, chance alone "
-                    f"produces a gap at least that big about {odds} times in 100, so treat the "
-                    f"two numbers as the same until the sample grows."
+                    f"That is {decided} session{'' if decided == 1 else 's'} of evidence, not an "
+                    f"edge, so treat the two as the same until the sample grows."
                 )
             else:
+                odds = max(1, round(paired["p"] * 100))
                 lines.append(
-                    f"Chance alone produces a gap at least that big about {odds} times in 100."
+                    f"Chance alone produces a split at least that lopsided about {odds} times in 100."
                 )
+            lines.append("Every session, both grades:")
+            lines.append(RECORD_URL)
     elif rec.get("sessions"):
         need = rec.get("minSessions", 10)
         lines.append(
@@ -243,12 +260,21 @@ def compose(d, changes=()):
     return "\n\n".join(lines)
 
 
+def text_node(para):
+    """A paragraph that is only a URL goes out as a link; a Note will not autolink it."""
+    node = {"type": "text", "text": para}
+    if para.startswith("https://") and " " not in para:
+        node["marks"] = [{"type": "link", "attrs": {
+            "href": para, "target": "_blank", "rel": "noopener noreferrer nofollow", "class": None}}]
+    return node
+
+
 def body_json(text):
     return {
         "type": "doc",
         "attrs": {"schemaVersion": "v1"},
         "content": [
-            {"type": "paragraph", "content": [{"type": "text", "text": para}]}
+            {"type": "paragraph", "content": [text_node(para)]}
             for para in text.split("\n\n")
         ],
     }
