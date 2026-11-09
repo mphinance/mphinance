@@ -573,6 +573,16 @@ const record = {
     }
     return Object.fromEntries(Object.entries(by).sort((a, b) => b[1].total - a[1].total));
   })(),
+  // Sessions the map graded but where it named NOTHING it was willing to score:
+  // every level was null, out of reach, or a kind that is reported and never
+  // scored (put wall, accelerant, trapdoor). The hit rate cannot see these
+  // nights. It is an average over the sessions that produced a scoreable level,
+  // not over the sessions the map ran, so "14/29 across 22 sessions" reads as 22
+  // sessions of evidence when it is 16. Through 2026-11-06, 6 of 22 live
+  // sessions scored nothing and five of those six walked the DOWN road, which is
+  // a selection problem the rate is structurally blind to. Counted every night
+  // so it sits next to the rate instead of being found by hand.
+  blank: gradedAll.filter((e) => e.graded.total === 0).length,
   sessions: gradedAll.length,
   hits: gradedAll.reduce((a, e) => a + e.graded.hits, 0),
   total: gradedAll.reduce((a, e) => a + e.graded.total, 0),
@@ -1388,7 +1398,8 @@ if (ledgerBroken) {
   console.log('session still open: not writing to the ledger, and the score below is provisional');
 }
 
-console.log(`record so far: ${record.sessions} session(s) graded${record.publishable ? '' : ` -- not publishable until ${MIN_GRADED}`}`);
+console.log(`record so far: ${record.sessions} session(s) graded${record.publishable ? '' : ` -- not publishable until ${MIN_GRADED}`}`
+  + (record.blank ? ` | ${record.blank} scored nothing (rate covers ${record.sessions - record.blank})` : ''));
 if (report) console.log(`${report.partial ? 'in flight' : 'last call'}: ${report.hits}/${report.total} tested on ${report.day} | ${report.summary}`);
 console.log(`by level: ${Object.entries(record.byLevel).map(([k, v]) => `${k} ${v.hits}/${v.total}`).join(' | ') || 'nothing scored yet'}`);
 console.log(`spot ${spot} | flip ${flip} | magnet ${magnet} | netGEX ${fmtM(gex.totalGEX)}`);

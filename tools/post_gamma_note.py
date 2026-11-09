@@ -170,6 +170,20 @@ def compose(d, changes=()):
             f"right side across {rec['sessions']} sessions. Plain $5 round numbers, "
             f"same days, same rule: {rec.get('nullHits', 0)}/{rec.get('nullTotal', 0)}."
         )
+        # A rate quoted "across N sessions" reads as N sessions of evidence. It
+        # is not: a session where every level was out of reach, or was a kind the
+        # map reports but never scores, contributes nothing to the fraction while
+        # still being counted in the session total. Six of the first 22 live
+        # sessions were blank that way, so the denominator a reader infers is 22
+        # and the real one is 16. Say it next to the rate rather than letting the
+        # session count do work it cannot do.
+        blank = rec.get("blank") or 0
+        if blank:
+            covered = rec["sessions"] - blank
+            lines.append(
+                f"{blank} of those {rec['sessions']} sessions named nothing the map scores, "
+                f"so that rate covers {covered} sessions, not {rec['sessions']}."
+            )
         # Two fractions side by side read as a gap, and a gap reads as an edge.
         # At this sample size it usually is not one, so the note says how often
         # chance produces a gap that size rather than leaving it to be subtracted.
