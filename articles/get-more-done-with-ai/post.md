@@ -3,7 +3,7 @@
 *AI 70% | Business 30%*
 
 <!--seo-title: Your AI Skills Are Weak. I Talk to One Dispatcher Instead.-->
-<!--seo-desc: I stopped juggling five coding windows by hand. One orchestrator writes the briefs, hands them to headless Claude Code workers in their own git worktrees, and reports back. Two smoke tests so far, $0.37 and $0.53.-->
+<!--seo-desc: One orchestrator writes the briefs, hands them to headless Claude Code workers in their own git worktrees, and reports back. The rails that keep it safe, and the prompt.-->
 
 ![One front door](hero.png)
 
