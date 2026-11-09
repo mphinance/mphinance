@@ -7,7 +7,7 @@
 
 ![One front door](hero.png)
 
-I was a router for a bunch of expensive interns and I called it productivity.
+For these past few months in the beginning of building TraderMatrix.pro I was a glorified router for a bunch of expensive interns and I called it “productivity”.
 
 I had five coding windows open. I typed prompts into the wrong one, forgot which project a session was even on, and watched commits step on each other.
 
@@ -15,7 +15,7 @@ I had five coding windows open. I typed prompts into the wrong one, forgot which
 
 ## One front door
 
-The fix was fewer places to talk.
+<span style="color: #ff4fa3">**The fix was fewer places to talk.**</span>
 
 I talk to one thing, out loud. It turns my rambling into a tight brief, hands the brief to a headless Claude Code worker, reads the diff when the worker finishes, and tells me what happened. It never writes the code.
 
@@ -35,7 +35,7 @@ The whole thing is about 30 lines. A few of them carry the weight:
 
 *Never invent a result. If you have not read the diff, you do not know what changed.*
 
-An orchestrator that reports without reading is a hype machine with a voice.
+<span style="color: #ff4fa3">**An orchestrator that reports without reading is a hype machine with a voice.**</span>
 
 I put the scrubbed prompt in a gist so you can steal it: https://gist.github.com/mphinance/5e52ee671b2267e50f081969a3200f1d
 
@@ -53,19 +53,19 @@ One front door. I cannot type into the wrong window because there is only one wi
 
 The rest is damage control. A deny list so a worker cannot push, deploy, touch the payments CLI, run a database client, or sudo anything. A dollar cap per worker. Three running at once, because the box has been killed for memory before, and the rest wait in line.
 
-And the one I care about most: a yes to ship is not a yes to merge. Ship pushes a work branch and opens a do-not-merge pull request, and only after I say yes out loud. Merging deploys to production, so that call stays with me.
+And the one I care about most: <span style="color: #ff4fa3">**a yes to ship is not a yes to merge.**</span> Ship pushes a work branch and opens a do-not-merge pull request, and only after I say yes out loud. Merging deploys to production, so that call stays with me.
 
 ## The honest numbers
 
 I have not run a ten issue batch yet. I have run two smoke tests, and they cost $0.37 and $0.53.
 
-Two runs is not a track record. When I run a real batch, you get the arithmetic, misses included.
+<span style="color: #ff4fa3">**Two runs is not a track record.**</span> When I run a real batch, you get the arithmetic, misses included.
 
 ## Why your skills are weak
 
 Skill libraries are all over my feed. Most of them are a paragraph of advice in a folder. The model nods, then improvises.
 
-A strong skill has four things: a procedure, a real tool or data source behind it, a fixed output, and a rail that says what it must not do.
+<span style="color: #ff4fa3">**A strong skill has four things: a procedure, a real tool or data source behind it, a fixed output, and a rail that says what it must not do.**</span>
 
 ![Weak skill versus strong skill](skills.png)
 
@@ -77,7 +77,7 @@ There are 136 of these in the open at github.com/mphinance/alpha-skills. Some ar
 
 ## The part that is not about AI
 
-Five windows felt like speed. It was noise with a progress bar.
+<span style="color: #ff4fa3">**Five windows felt like speed. It was noise with a progress bar.**</span>
 
 I try to run the rest of my life the same way: one thing in front of me, and a rule I follow even when I do not feel like it. Here the honest voice waiting when the work is done tells me what I actually did, and it shows me a diff.
 
