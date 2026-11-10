@@ -1,19 +1,17 @@
-# Ghost Alpha Dossier — 2026-11-09
+# Ghost Alpha Dossier — 2026-11-10
 
-> 🟡 **Transition** · SPY ▲ 2.7% · VIX 19.8
+> 🔴 **Elevated** · SPY ▼ 0.8% · VIX 20.6
 
 ---
 
-**Market Intel: Institutional Shift & Scanner Hits**
-
-VIX chilling at 19.
+VIX at 20.
 
 
-## 🥇 Gold Pick: RY
+## 🥇 Gold Pick: V
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 48/100 (A) |
+| **Score** | 46/100 (A) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -22,25 +20,25 @@ VIX chilling at 19.
 
 
 ### Runners Up
-- 🥈 **CM** — Score: 48/100
-- 🥉 **UNP** — Score: 48/100
+- 🥈 **ADSK** — Score: 46/100
+- 🥉 **FDS** — Score: 46/100
 
 
 ## 📊 Today's Numbers
 
-- **182 scanner signals** across 6 strategies
+- **160 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▲ 2.7% | **VIX:** 19.8
+- **SPY:** ▼ 0.8% | **VIX:** 20.6
 
 ---
 
 ## 👻 Sam Says
 
-> *"The market doesn't care about your feelings, your rent, or your divorce. Trade accordingly."*
+> *"Made a searching and fearless inventory of our portfolio. And then wished we hadn't."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-09_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-09)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-10_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-10)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
