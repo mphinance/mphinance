@@ -193,6 +193,32 @@ def compose(d, changes=()):
                 f"{blank} of those {rec['sessions']} sessions scored nothing: {', '.join(why)}. "
                 f"So that rate covers {covered} sessions, not {rec['sessions']}."
             )
+        # One rate over every level type reads as one thing being 47% right. It is
+        # six different things averaged, and they do not behave alike: through
+        # 2026-11-09 the ceiling is 2/2 and the gamma flip is 4/12, and the flip is
+        # 12 of the 30 tries, so it drags the headline more than any other level
+        # while a reader has no way to see it. Print the whole table, sorted by
+        # tries, and name the level carrying the most misses. Never phrase it as
+        # "the map is X% once you drop the flip": the split was read off the record
+        # after the fact, so it is a thing to watch, not a result, and the note says
+        # so in the same breath.
+        by_level = rec.get("byLevel") or {}
+        rows = sorted(
+            ((k, v) for k, v in by_level.items() if v.get("total")),
+            key=lambda kv: (-kv[1]["total"], kv[0]),
+        )
+        misses = rec["total"] - rec["hits"]
+        if len(rows) > 1 and misses:
+            parts = ", ".join(f"{k} {v['hits']}/{v['total']}" for k, v in rows)
+            name, worst = max(rows, key=lambda kv: kv[1]["total"] - kv[1]["hits"])
+            worst_misses = worst["total"] - worst["hits"]
+            lines.append(
+                f"That rate averages level types that do not behave alike. By type: "
+                f"{parts}. The {name} alone is {worst_misses} of the {misses} misses. "
+                f"This split was read off the record after the fact, so it is something "
+                f"to watch, not a finding."
+            )
+
         # Two fractions side by side read as a gap, and a gap reads as an edge. The
         # level-by-level odds this used to print assumed 29 independent tests, and
         # levels on the same day share one market move. Count sessions instead.
