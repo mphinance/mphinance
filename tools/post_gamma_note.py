@@ -219,6 +219,30 @@ def compose(d, changes=()):
                 f"to watch, not a finding."
             )
 
+        # The map already acts on the flip's record: once it has more misses than
+        # hits it stops leading the IF row, and it also steps aside when it sits on
+        # top of spot and says nothing. A reader could see the flip's 4/13 in the
+        # table but had no way to tell the map had changed what it points at first,
+        # which made the split look like a problem nobody was acting on. Say the
+        # demotion out loud, and say that it changes what is quoted, not what is
+        # scored: the flip is still drawn and still graded either way.
+        flip_row = by_level.get("flip") or {}
+        if d.get("flipLeadOK") is False and flip_row.get("total"):
+            if d.get("flipOnPrice"):
+                why_flip = (
+                    f"The flip sits on top of the price tonight, so the IF row leads "
+                    f"with another level instead"
+                )
+            else:
+                why_flip = (
+                    f"Because the flip is behind at {flip_row['hits']}/{flip_row['total']}, "
+                    f"the IF row above does not lead with it"
+                )
+            lines.append(
+                f"{why_flip}. It is still drawn on the chart and still graded the same "
+                f"way; what changes is which number the map quotes first."
+            )
+
         # Two fractions side by side read as a gap, and a gap reads as an edge. The
         # level-by-level odds this used to print assumed 29 independent tests, and
         # levels on the same day share one market move. Count sessions instead.
