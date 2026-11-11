@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-11-10
+# Ghost Alpha Dossier — 2026-11-11
 
-> 🔴 **Elevated** · SPY ▼ 0.8% · VIX 20.6
+> 🟡 **Transition** · SPY ▲ 1.5% · VIX 17.7
 
 ---
 
-VIX at 20.
+Alright, listen up, folks.
 
 
-## 🥇 Gold Pick: V
+## 🥇 Gold Pick: UNP
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 46/100 (A) |
+| **Score** | 48/100 (A) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -20,25 +20,25 @@ VIX at 20.
 
 
 ### Runners Up
-- 🥈 **ADSK** — Score: 46/100
-- 🥉 **FDS** — Score: 46/100
+- 🥈 **V** — Score: 46/100
+- 🥉 **NSC** — Score: 46/100
 
 
 ## 📊 Today's Numbers
 
-- **160 scanner signals** across 6 strategies
+- **139 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 0.8% | **VIX:** 20.6
+- **SPY:** ▲ 1.5% | **VIX:** 17.7
 
 ---
 
 ## 👻 Sam Says
 
-> *"Made a searching and fearless inventory of our portfolio. And then wished we hadn't."*
+> *"IV is high for a reason. Selling premium into earnings is not a strategy — it's a prayer."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-10_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-10)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-11_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-11)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
