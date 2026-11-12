@@ -588,6 +588,26 @@ const record = {
   // the map was willing to be graded on; a reported-only book is not.
   blankOutOfReach: gradedAll.filter((e) => e.graded.total === 0 && e.graded.untested > 0).length,
   blankNothing: gradedAll.filter((e) => e.graded.total === 0 && !e.graded.untested).length,
+  // Which road the blank sessions walked. The count above says how much of the
+  // record is missing; this says whether what is missing is random. It has been
+  // re-derived by hand every time the selection problem comes up (five of six
+  // DOWN through 11-06), which is exactly the kind of number that should be
+  // computed every night instead. Reported, never scored.
+  blankByBranch: (() => {
+    const by = {};
+    for (const e of gradedAll) if (e.graded.total === 0) by[e.graded.branch || 'unknown'] = (by[e.graded.branch || 'unknown'] || 0) + 1;
+    return Object.fromEntries(Object.entries(by).sort((a, b) => b[1] - a[1]));
+  })(),
+  // The other half of the same question: blanks have all come off books that were
+  // deeply negative overall. `netGEX` was never stored on a ledger entry, so this
+  // can only count nights from 2026-11-11 forward and is null until there are any.
+  // Not back-filled: the book is not recoverable from a past entry.
+  blankByGamma: (() => {
+    const seen = gradedAll.filter((e) => typeof e.netGEX === 'number');
+    if (!seen.length) return null;
+    const blank = seen.filter((e) => e.graded.total === 0);
+    return { known: seen.length, blank: blank.length, blankNegative: blank.filter((e) => e.netGEX < 0).length };
+  })(),
   sessions: gradedAll.length,
   hits: gradedAll.reduce((a, e) => a + e.graded.hits, 0),
   total: gradedAll.reduce((a, e) => a + e.graded.total, 0),
@@ -1416,6 +1436,10 @@ const entry = {
   // The flip three ways (see cumulativeFlip), so the TradingView/TDPro gap and the
   // 0DTE effect are measured. Diagnostic only: the grader reads `flip` above.
   flips: { api: flip, survivors: flipSurvivors, fullBook: flipFullBook, tv: flipTV },
+  // The whole book's net gamma, stored so the blank-session selection question can
+  // be answered off the ledger later instead of by remembering what the book looked
+  // like. Diagnostic: nothing on the map or in the grade reads it.
+  netGEX: gex.totalGEX,
 };
 if (ledgerBroken) {
   console.log('not writing the ledger: it is unreadable and overwriting it would lose the history');
@@ -1461,6 +1485,7 @@ ${trs}
 <h2>How to read it</h2>
 <p>A fraction is levels that closed on the right side, out of levels price actually reached. The $5 column scores the same number of plain round numbers on each side of spot, by the same rule. Better compares the two hit rates for that session.</p>
 <p>${record.blank} sessions scored nothing for the map. On ${record.blankOutOfReach} it named levels price never reached. On ${record.blankNothing} every level it named was a kind it reports but does not score, such as a put wall. The round numbers still scored on ${P.roundOnly} of those ${record.blank}. The overall rate cannot see these sessions, which is why they stay in the table.</p>
+<p>By road, the blank sessions split ${Object.entries(record.blankByBranch).map(([k, v]) => `${v} ${k}`).join(', ') || 'n/a'}. If one road holds most of them, the rate is an average over the days the map had a level to be graded on rather than over every day it ran.</p>
 <footer>Where dealers are long gamma they brake, where they are short they chase. Not advice.</footer>
 </main></body></html>
 `;
@@ -1470,7 +1495,8 @@ ${trs}
 }
 
 console.log(`record so far: ${record.sessions} session(s) graded${record.publishable ? '' : ` -- not publishable until ${MIN_GRADED}`}`
-  + (record.blank ? ` | ${record.blank} scored nothing (rate covers ${record.sessions - record.blank})` : ''));
+  + (record.blank ? ` | ${record.blank} scored nothing (rate covers ${record.sessions - record.blank})` : '')
+  + (record.blank ? ` | blanks by road ${Object.entries(record.blankByBranch).map(([k, v]) => `${k} ${v}`).join(', ')}` : ''));
 if (report) console.log(`${report.partial ? 'in flight' : 'last call'}: ${report.hits}/${report.total} tested on ${report.day} | ${report.summary}`);
 console.log(`by session: ${record.paired.both} scored by both | map better ${record.paired.mapBetter}, $5 better ${record.paired.roundBetter}, tied ${record.paired.tied} | sign test p ${record.paired.p}`);
 console.log(`by level: ${Object.entries(record.byLevel).map(([k, v]) => `${k} ${v.hits}/${v.total}`).join(' | ') || 'nothing scored yet'}`);

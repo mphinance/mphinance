@@ -189,9 +189,23 @@ def compose(d, changes=()):
                 why.append(f"on {rec['blankNothing']} the map named no level it scores")
             if rec.get("blankOutOfReach"):
                 why.append(f"on {rec['blankOutOfReach']} it named levels price never reached")
+            # And whether the missing sessions are random. They are not: the
+            # blanks pile onto one road, which means the rate is an average over
+            # the days the map had something to say, not over all days. Printed
+            # only when one road holds most of them, so a scattered split does
+            # not get written up as a pattern.
+            lean = ""
+            by = rec.get("blankByBranch") or {}
+            if by:
+                road, n = max(by.items(), key=lambda kv: kv[1])
+                if n > blank / 2 and road != "unknown":
+                    lean = (
+                        f" {n} of the {blank} walked the {road} road, so the rate leans on "
+                        f"the sessions where the map had a level to be graded on."
+                    )
             lines.append(
                 f"{blank} of those {rec['sessions']} sessions scored nothing: {', '.join(why)}. "
-                f"So that rate covers {covered} sessions, not {rec['sessions']}."
+                f"So that rate covers {covered} sessions, not {rec['sessions']}." + lean
             )
         # One rate over every level type reads as one thing being 47% right. It is
         # six different things averaged, and they do not behave alike: through
