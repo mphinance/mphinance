@@ -433,8 +433,14 @@ function gradeEntry(e, day, bars) {
   // Reported, never scored, but "tagged" has to stay true: on 2026-11-05 it was the
   // word for a 760 put wall that price closed 26.86 under.
   const reported = (lvl, name) => (close < lvl ? `closed ${(lvl - close).toFixed(2)} under the ${lvl} ${name}` : `tagged the ${lvl} ${name}`);
+  // How big the session was, against the typical day the map itself carried
+  // into it (e.expected is fixed the night before, so nothing here looks ahead).
+  // Reported, never scored. Through 11-11 every level on a >= 1x day closed
+  // through, map and $5 alike (0/8 vs 0/8), while the rest ran 14/24 vs 13/25:
+  // the headline rate is an average over two different kinds of day.
+  const moveX = e.spot != null ? +(Math.abs(close - e.spot) / (e.expected || expected)).toFixed(2) : null;
   return {
-    day, open, high, low, close, branch, branchOk, checks, tested, untested,
+    day, open, high, low, close, moveX, branch, branchOk, checks, tested, untested,
     hits: tested.filter((c) => c.ok).length,
     total: tested.length,
     nullHits: nullHits.filter(Boolean).length,
@@ -469,7 +475,7 @@ if (argv.includes('--regrade') && !ledgerBroken) {
     const g = gradeEntry(e, b.d, [b.o, b.h, b.l, b.c]);
     if (e.graded.v !== 2) e.graded_v1 = e.graded;
     e.graded = { v: 2, day: g.day, branch: g.branch, hits: g.hits, total: g.total,
-                 nullHits: g.nullHits, nullTotal: g.nullTotal,
+                 nullHits: g.nullHits, nullTotal: g.nullTotal, close: g.close, moveX: g.moveX,
                  untested: g.untested.length, summary: g.summary,
                  checks: g.tested.map((c) => ({ lvl: c.lvl, side: c.side, kind: c.kind, ok: c.ok })), source: 'daily OHLC regrade' };
     console.log(`regraded ${e.madeAfter} -> ${g.day}: ${g.hits}/${g.total} (null ${g.nullHits}/${g.nullTotal}) | ${g.summary}`);
@@ -489,7 +495,7 @@ if (!ledgerBroken) {
     if (!bars.length) continue;
     const g = gradeEntry(e, day, bars);
     e.graded = { v: 2, day: g.day, branch: g.branch, hits: g.hits, total: g.total,
-                 nullHits: g.nullHits, nullTotal: g.nullTotal,
+                 nullHits: g.nullHits, nullTotal: g.nullTotal, close: g.close, moveX: g.moveX,
                  untested: g.untested.length, summary: g.summary,
                  checks: g.tested.map((c) => ({ lvl: c.lvl, side: c.side, kind: c.kind, ok: c.ok })) };
     ledgerDirty = true;
@@ -607,6 +613,38 @@ const record = {
     if (!seen.length) return null;
     const blank = seen.filter((e) => e.graded.total === 0);
     return { known: seen.length, blank: blank.length, blankNegative: blank.filter((e) => e.netGEX < 0).length };
+  })(),
+  // The record split by the size of the day (graded.moveX, see gradeEntry).
+  // A level map is a claim about normal days; this says how it does on them
+  // and on the days that move a typical day or more. Reported, never published.
+  bySize: (() => {
+    const tally = (es) => ({ sessions: es.length,
+      hits: es.reduce((a, e) => a + e.graded.hits, 0), total: es.reduce((a, e) => a + e.graded.total, 0),
+      nullHits: es.reduce((a, e) => a + (e.graded.nullHits ?? 0), 0), nullTotal: es.reduce((a, e) => a + (e.graded.nullTotal ?? 0), 0),
+      blank: es.filter((e) => e.graded.total === 0).length });
+    const sized = gradedAll.filter((e) => e.graded.moveX != null);
+    return { big: tally(sized.filter((e) => e.graded.moveX >= 1)), normal: tally(sized.filter((e) => e.graded.moveX < 1)),
+             unsized: gradedAll.length - sized.length };
+  })(),
+  // Tested checks split by which side of the flip the book closed on the night
+  // before (spot over the flip = dealers long gamma) and by side. The theory
+  // says ceilings hold in a long-gamma book and the floor that matters there is
+  // the flip itself; through 11-11 long-gamma ceilings were 2/2 and its floors
+  // 3/12, and all three long-gamma trend days went DOWN through the flip.
+  byRegime: (() => {
+    const by = {};
+    for (const e of gradedAll) {
+      if (e.flip == null) continue;
+      const reg = e.spot > e.flip ? 'long' : 'short';
+      for (const c of e.graded.checks || []) {
+        if (c.side === 'pin') continue;
+        const k = `${reg} ${c.side === 'high' ? 'ceiling' : 'floor'}`;
+        (by[k] ??= { hits: 0, total: 0 });
+        by[k].total++;
+        if (c.ok) by[k].hits++;
+      }
+    }
+    return by;
   })(),
   sessions: gradedAll.length,
   hits: gradedAll.reduce((a, e) => a + e.graded.hits, 0),
@@ -1499,6 +1537,8 @@ console.log(`record so far: ${record.sessions} session(s) graded${record.publish
   + (record.blank ? ` | blanks by road ${Object.entries(record.blankByBranch).map(([k, v]) => `${k} ${v}`).join(', ')}` : ''));
 if (report) console.log(`${report.partial ? 'in flight' : 'last call'}: ${report.hits}/${report.total} tested on ${report.day} | ${report.summary}`);
 console.log(`by session: ${record.paired.both} scored by both | map better ${record.paired.mapBetter}, $5 better ${record.paired.roundBetter}, tied ${record.paired.tied} | sign test p ${record.paired.p}`);
+console.log(`by size: big days (>= 1 typical) ${record.bySize.big.hits}/${record.bySize.big.total} vs $5 ${record.bySize.big.nullHits}/${record.bySize.big.nullTotal} over ${record.bySize.big.sessions} | normal ${record.bySize.normal.hits}/${record.bySize.normal.total} vs $5 ${record.bySize.normal.nullHits}/${record.bySize.normal.nullTotal} over ${record.bySize.normal.sessions}${record.bySize.unsized ? ` | ${record.bySize.unsized} unsized` : ''}`);
+console.log(`by regime: ${Object.entries(record.byRegime).map(([k, v]) => `${k} ${v.hits}/${v.total}`).join(' | ') || 'n/a'}`);
 console.log(`by level: ${Object.entries(record.byLevel).map(([k, v]) => `${k} ${v.hits}/${v.total}`).join(' | ') || 'nothing scored yet'}`);
 console.log(`spot ${spot} | flip ${flip} | magnet ${magnet} | netGEX ${fmtM(gex.totalGEX)}`);
 console.log(`flips | api ${flip} | survivors ${flipSurvivors} | full book ${flipFullBook} | tv ${flipTV} | record ${flipRecord.hits}/${flipRecord.total} | leads IF row: ${flipLeadOK}`);
