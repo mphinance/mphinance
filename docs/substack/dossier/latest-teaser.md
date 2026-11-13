@@ -1,13 +1,13 @@
-# Ghost Alpha Dossier — 2026-11-12
+# Ghost Alpha Dossier — 2026-11-13
 
-> 🟡 **Transition** · SPY ▲ 0.2% · VIX 17.6
+> 🟡 **Transition** · SPY ▼ 0.7% · VIX 19.8
 
 ---
 
-**Regime check:** VIX at 17.
+**Regime check:** VIX at 19.
 
 
-## 🥇 Gold Pick: V
+## 🥇 Gold Pick: WFC
 
 | Metric | Value |
 |--------|-------|
@@ -20,25 +20,25 @@
 
 
 ### Runners Up
-- 🥈 **CNI** — Score: 46/100
-- 🥉 **MMM** — Score: 43/100
+- 🥈 **AVY** — Score: 46/100
+- 🥉 **SHW** — Score: 44/100
 
 
 ## 📊 Today's Numbers
 
-- **161 scanner signals** across 6 strategies
+- **112 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▲ 0.2% | **VIX:** 17.6
+- **SPY:** ▼ 0.7% | **VIX:** 19.8
 
 ---
 
 ## 👻 Sam Says
 
-> *"Insanity is making the same revenge trade over and over and expecting a different result."*
+> *"Never fall in love with a stock. It can't love you back and it will absolutely leave you."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-12_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-12)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-13_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-13)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
