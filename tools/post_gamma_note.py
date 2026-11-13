@@ -304,6 +304,29 @@ def compose(d, changes=()):
     if d.get("triggerNote"):
         lines.append(f"Read the roads with this: {d['triggerNote']}")
 
+    # The DOWN road quotes whatever level sits first below spot, and on most
+    # nights that is a trapdoor or a put wall: short-gamma strikes the map
+    # reports and the grader never scores, because SKILL.md is explicit they are
+    # crowds rather than floors. The IF row prints them in the same voice as a
+    # shelf, so the down number has been reading as a claim on nights the record
+    # cannot test it. Say which kind it is. Reported only, nothing is graded
+    # differently; and this can only ever make the map look less certain.
+    trig = d.get("triggers") or {}
+    if trig.get("downScored") is False and trig.get("downKind"):
+        marker = (d.get("record") or {}).get("downMarker") or {}
+        how_often = (
+            f" That has been the case on {marker['marker']} of the {marker['known']} "
+            f"sessions where the kind is on record."
+            if marker.get("known") and marker.get("marker")
+            else ""
+        )
+        lines.append(
+            f"One caveat on the down road: {trig['down']} is a {trig['downKind']}, a "
+            f"short-gamma strike. Dealers sell into it rather than defend it, so the map "
+            f"draws it as a marker and the record never scores it as a floor."
+            + how_often
+        )
+
     lines.append(
         f"Flip {d['flip']:.2f}. Pin {d['pin']}. "
         f"A typical day from here is about {d['expected']:.2f} points."

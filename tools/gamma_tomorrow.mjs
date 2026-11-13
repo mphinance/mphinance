@@ -604,6 +604,18 @@ const record = {
     for (const e of gradedAll) if (e.graded.total === 0) by[e.graded.branch || 'unknown'] = (by[e.graded.branch || 'unknown'] || 0) + 1;
     return Object.fromEntries(Object.entries(by).sort((a, b) => b[1] - a[1]));
   })(),
+  // How often the number the DOWN road quotes is one the grader never checks.
+  // The down trigger falls shelf -> cushion -> put wall; a trapdoor and a put
+  // wall are reported, never scored, so the IF row quotes them without the
+  // record ever testing them. Only entries whose kind is determinable count:
+  // `shelfKind` was added 2026-10-22 and before that a non-null shelf carries no
+  // kind, so those nights are skipped rather than guessed at. Reported only.
+  downMarker: (() => {
+    const known = gradedAll.filter((e) => e.shelf == null || e.shelfKind != null);
+    if (!known.length) return null;
+    const scored = known.filter((e) => e.shelfKind === 'shelf' || (e.shelf == null && e.cushion != null));
+    return { known: known.length, marker: known.length - scored.length };
+  })(),
   // The other half of the same question: blanks have all come off books that were
   // deeply negative overall. `netGEX` was never stored on a ledger entry, so this
   // can only count nights from 2026-11-11 forward and is null until there are any.
@@ -889,6 +901,21 @@ const triggerNote = (() => {
 // construction near price.
 const REACH = 1.5;
 const inReach = (v) => v != null && Math.abs(v - spot) <= REACH * expected;
+
+// Whether the number the DOWN road quotes is a level the grader will ever check.
+// The down trigger falls shelf -> cushion -> put wall, and only the first two are
+// claims: a trapdoor and a put wall are short-gamma strikes that SKILL.md is
+// explicit are crowds, not floors, so the grader reports them and never scores
+// them. The IF row prints them the same way either way, so a reader has been
+// reading "IF it goes below 757" as a claim on nights the record cannot test.
+// Replay over the ledger (see record.downMarker): of the 20 live sessions whose
+// down kind is on record, 15 quoted the unscoreable kind. Reported only --
+// grading reads e.shelf / e.cushion directly and is not touched by this.
+const downKind = downLead == null ? null
+  : downLead === shelfLvl ? (shelfLvl.netGex >= 0 ? 'shelf' : 'trapdoor')
+  : downLead === cushion ? 'cushion'
+  : downLead === floor ? 'put wall' : null;
+const downScored = (downKind === 'shelf' || downKind === 'cushion') && inReach(downTrigger);
 
 const sideFilter = (pts_, up) => pts_.filter((w) => w && (up ? w.at > spot : w.at < spot));
 
@@ -1575,7 +1602,7 @@ writeFileSync(sidecar, JSON.stringify({
     cond: r.isElse ? `it holds ${r.cond}` : `it goes ${r.cond}`,
     rule: r.rule,
   })),
-  triggers: { up: upTrigger, down: downTrigger, gapUp, gapDown,
+  triggers: { up: upTrigger, down: downTrigger, gapUp, gapDown, downKind, downScored,
               band: { lo: rangeLo, hi: rangeHi, width: bandWidth } },
   triggerNote,
   record,
