@@ -189,11 +189,24 @@ const mergeMatrices = (ms) => {
     strikeLo: strikes[0], strikeHi: strikes[strikes.length - 1],
   };
 };
-const matrix = mergeMatrices([
+const merged = mergeMatrices([
   await api(`/gex/${sym}/matrix`),
   await api(`/gex/${sym}/matrix?expirations=weekly`).catch(() => null),
   await api(`/gex/${sym}/matrix?expirations=monthly`).catch(() => null),
 ]);
+// --monthly: keep only the standard monthly expiries (third Friday, or the
+// Thursday before when Friday is a holiday) so the board on each date is the
+// monthly book alone. Pair with --days 130+ to reach past the 6-week window.
+const MONTHLY = argv.includes('--monthly');
+const isMonthly = (e) => { const d = new Date(`${e}T12:00:00Z`); const dom = d.getUTCDate(), wd = d.getUTCDay();
+  return (wd === 5 && dom >= 15 && dom <= 21) || (wd === 4 && dom >= 14 && dom <= 20); };
+const keepMonthly = (m) => {
+  const keep = m.expirations.map((e, i) => [e, i]).filter(([e]) => isMonthly(e));
+  return { ...m, expirations: keep.map(([e]) => e),
+    rows: m.rows.map((r) => ({ ...r, gex: keep.map(([, i]) => r.gex[i]) })),
+    expiryStats: m.expiryStats.filter((st) => isMonthly(st.expiry)) };
+};
+const matrix = MONTHLY ? keepMonthly(merged) : merged;
 const yr = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${sym}?interval=1d&range=1y`, {
   headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(30000),
 }).then((r) => r.json());
@@ -444,7 +457,7 @@ const glowLine = (x1, x2, v, col, { w = 2, dash = '', op = 0.95, glow = 0.55 } =
 // ── header ──────────────────────────────────────────────────────────────────
 // The timestamp rides in the title so a shared or saved copy says how old it is.
 const asOfEt = new Date().toLocaleString('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
-push(`<text x="${PAD_L}" y="46" font-family="'Share Tech Mono',monospace" font-size="30" fill="${C.text}" letter-spacing="1">THE NEXT ${Math.round(maxDte / 7)} WEEKS <tspan fill="${C.green}">${esc(sym)}</tspan><tspan font-size="17" fill="${C.text}" fill-opacity="0.8" dx="18">as of ${asOfEt} ET</tspan></text>`);
+push(`<text x="${PAD_L}" y="46" font-family="'Share Tech Mono',monospace" font-size="30" fill="${C.text}" letter-spacing="1">${MONTHLY ? 'MONTHLIES TO ' + md(exps[exps.length - 1].expiry) : `THE NEXT ${Math.round(maxDte / 7)} WEEKS`} <tspan fill="${C.green}">${esc(sym)}</tspan><tspan font-size="17" fill="${C.text}" fill-opacity="0.8" dx="18">as of ${asOfEt} ET</tspan></text>`);
 push(`<text x="${PAD_L}" y="72" ${mono} font-size="13" fill="${C.dim}">spot ${spot.toFixed(2)} · ${flipNow != null ? `flip ${fmt(flipNow)}` : 'no flip in range'} · net GEX ${fmtM(gex.totalGEX)} · options price a ±${largest.emPoints.toFixed(2)} move into ${md(largest.expiry)}, the heaviest expiry (${largest.oiSharePct.toFixed(0)}% of OI)</text>`);
 const pillC = negGamma ? C.put : C.call;
 push(`<rect x="${W - PAD_R - 330}" y="26" width="330" height="34" rx="17" fill="${negGamma ? '#1a0e11' : '#0c1a13'}" stroke="${pillC}" stroke-opacity="0.45"/>`);
@@ -580,7 +593,7 @@ if (wedge) {
 }
 
 // ── right: expected-move cone ───────────────────────────────────────────────
-push(`<text x="${FWD_X + 12}" y="${PAD_T + 20}" ${mono} font-size="11" fill="${C.dim}" letter-spacing="2">THE NEXT ${maxDte} DAYS · BY EXPIRY</text>`);
+push(`<text x="${FWD_X + 12}" y="${PAD_T + 20}" ${mono} font-size="11" fill="${C.dim}" letter-spacing="2">THE NEXT ${maxDte} DAYS · ${MONTHLY ? 'MONTHLY EXPIRIES ONLY' : 'BY EXPIRY'}</text>`);
 const cone = [[XF(0), spot], ...exps.map((e) => [XF(e.dte), spot + e.emPoints])];
 const coneB = [[XF(0), spot], ...exps.map((e) => [XF(e.dte), spot - e.emPoints])];
 const pts = [...cone, ...coneB.slice().reverse()].map(([x, v]) => `${x.toFixed(1)},${Y(clampY(v)).toFixed(1)}`);
@@ -847,7 +860,7 @@ const stamp = new Date().toISOString().slice(0, 10);
   rows.sort((a, b) => a.madeOn.localeCompare(b.madeOn));
   if (!argv.includes('--no-log')) writeLedger(sym, rows);
 }
-const base = join(OUT, `${sym.toLowerCase()}_horizon_${stamp}`);
+const base = join(OUT, `${sym.toLowerCase()}_horizon${MONTHLY ? '_monthly' : ''}_${stamp}`);
 writeFileSync(`${base}.html`, html);
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1.6 });
