@@ -69,6 +69,11 @@ const OUT = arg('out', '/tmp/gamma');
 const HORIZON = parseInt(arg('days', '60'), 10);
 const BARS = parseInt(arg('bars', '65'), 10);
 const MIN_SHARE = parseFloat(arg('minshare', '5'));
+// --oi FILE: open interest per expiry, {"YYYY-MM-DD": {"c": {strike: n}, "p": {...}}}
+// (e.g. dumped from yfinance option chains). Draws OI bubbles at each expiry
+// column under the roads and drops the cone/entry gradients so the roads read.
+const OI_FILE = arg('oi', null);
+const OI = OI_FILE ? JSON.parse(readFileSync(OI_FILE, 'utf8')) : null;
 
 // ── plan ledger ─────────────────────────────────────────────────────────────
 // Every plan this tool draws is written down and graded against the daily
@@ -415,6 +420,8 @@ const fwdLv = [...exps.flatMap((e) => [e.callWall, e.putWall, e.magnet, e.settle
 const recent = bars.slice(-30);
 let yMin = Math.min(...recent.map((b) => b.l), coneLo, ...fwdLv);
 let yMax = Math.max(...recent.map((b) => b.h), coneHi, ...fwdLv);
+if (OI) for (const e of exps) for (const side of ['c', 'p']) for (const [k, n] of Object.entries(OI[e.expiry]?.[side] || {}))
+  if (n >= 1000 && Math.abs(+k / spot - 1) <= 0.25) { yMin = Math.min(yMin, +k); yMax = Math.max(yMax, +k); }
 if (wedge) { yMin = Math.min(yMin, bars[wedge.dn.a].l); yMax = Math.max(yMax, bars[wedge.up.a].h); }
 const padY = (yMax - yMin) * 0.06; yMin -= padY; yMax += padY;
 const Y = (v) => PAD_T + PLOT_H - ((v - yMin) / (yMax - yMin)) * PLOT_H;
@@ -597,7 +604,7 @@ push(`<text x="${FWD_X + 12}" y="${PAD_T + 20}" ${mono} font-size="11" fill="${C
 const cone = [[XF(0), spot], ...exps.map((e) => [XF(e.dte), spot + e.emPoints])];
 const coneB = [[XF(0), spot], ...exps.map((e) => [XF(e.dte), spot - e.emPoints])];
 const pts = [...cone, ...coneB.slice().reverse()].map(([x, v]) => `${x.toFixed(1)},${Y(clampY(v)).toFixed(1)}`);
-push(`<polygon points="${pts.join(' ')}" fill="url(#coneG)" stroke="${C.dim}" stroke-opacity="0.35" stroke-dasharray="4 4"/>`);
+push(`<polygon points="${pts.join(' ')}" fill="${OI ? 'none' : 'url(#coneG)'}" stroke="${C.dim}" stroke-opacity="0.35" stroke-dasharray="4 4"/>`);
 const lastConeY = Y(clampY(spot + last.emPoints));
 push(`<text x="${XF(last.dte) - 6}" y="${lastConeY - 8}" text-anchor="end" ${mono} font-size="10" fill="${C.dim}">options-implied move (±1σ)</text>`);
 
@@ -618,8 +625,8 @@ for (const e of exps.filter((x) => showSet.has(x.expiry))) {
 
 // ── plan levels across the forward panel ────────────────────────────────────
 const PX1 = FWD_X + 2, PX2 = XF(maxDte) + 6;
-push(`<rect x="${PX1}" y="${Y(plan.entryHi)}" width="${PX2 - PX1}" height="${Y(plan.entryLo) - Y(plan.entryHi)}" fill="url(#entryG)"/>`);
-push(`<rect x="${PX1}" y="${Y(plan.entryHi)}" width="${PX2 - PX1}" height="${Y(plan.entryLo) - Y(plan.entryHi)}" fill="${C.entry}" fill-opacity="0.12" filter="url(#glow)"/>`);
+if (!OI) push(`<rect x="${PX1}" y="${Y(plan.entryHi)}" width="${PX2 - PX1}" height="${Y(plan.entryLo) - Y(plan.entryHi)}" fill="url(#entryG)"/>`);
+if (!OI) push(`<rect x="${PX1}" y="${Y(plan.entryHi)}" width="${PX2 - PX1}" height="${Y(plan.entryLo) - Y(plan.entryHi)}" fill="${C.entry}" fill-opacity="0.12" filter="url(#glow)"/>`);
 glowLine(PX1, PX2, plan.entryHi, C.entry, { w: 1.2, dash: '2 3', glow: 0.25 });
 glowLine(PX1, PX2, plan.entryLo, C.entry, { w: 1.2, dash: '2 3', glow: 0.25 });
 glowLine(PX1, PX2, plan.t1, C.tp, { w: 2 });
@@ -629,6 +636,35 @@ if (flipNow != null && reach(flipNow)) glowLine(PX1, PX2, flipNow, C.flip, { w: 
 // Triangles at the left edge: ▲ target, ▼ stop.
 const tri = (v, col, up) => { const x = FWD_X + 14, y = Y(v); push(`<path d="M ${x - 7} ${up ? y + 5 : y - 5} L ${x + 7} ${up ? y + 5 : y - 5} L ${x} ${up ? y - 7 : y + 7} Z" fill="${col}"/>`); };
 tri(plan.t1, C.tp, true); tri(plan.t2, C.tp, true); tri(plan.stop, C.stop, false);
+
+// ── open interest bubbles (--oi) ─────────────────────────────────────────────
+// Calls to the right of the expiry column, puts to the left, area = contracts.
+// Drawn under the roads: the bubbles are where the money sits, the roads are
+// what the dealer gamma does with it.
+const oiLabels = [];
+if (OI) {
+  const kfmt = (n) => (n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n));
+  const allN = exps.flatMap((e) => ['c', 'p'].flatMap((sd) => Object.values(OI[e.expiry]?.[sd] || {})));
+  const maxN = Math.max(...allN, 1);
+  for (const e of exps) {
+    const x = XF(e.dte);
+    for (const [sd, col, dx] of [['c', C.call, 11], ['p', C.put, -11]]) {
+      const items = Object.entries(OI[e.expiry]?.[sd] || {}).map(([k, n]) => [+k, n]).filter(([k, n]) => n >= 100 && k >= yMin && k <= yMax);
+      for (const [k, n] of items) {
+        const r = 3 + 22 * Math.sqrt(n / maxN);
+        push(`<circle cx="${(x + dx).toFixed(1)}" cy="${Y(k).toFixed(1)}" r="${r.toFixed(1)}" fill="${col}" fill-opacity="0.16" stroke="${col}" stroke-opacity="0.55" stroke-width="1.2"/>`);
+      }
+      const pillLv = [plan.t1, plan.t2, plan.entryHi, plan.entryLo, plan.stop, spot, flipNow].filter((v) => v != null);
+      const lastCol = e === exps[exps.length - 1] && dx > 0;
+      for (const [k, n] of items.sort((a, b) => b[1] - a[1]).filter(([k]) => !lastCol || pillLv.every((v) => Math.abs(Y(v) - Y(k)) > 16)).slice(0, 3)) {
+        const r = 3 + 22 * Math.sqrt(n / maxN);
+        oiLabels.push(`<text x="${(x + dx + (dx > 0 ? r + 5 : -r - 5)).toFixed(1)}" y="${(Y(k) + 4).toFixed(1)}" text-anchor="${dx > 0 ? 'start' : 'end'}" ${mono} font-size="11" font-weight="700" fill="${col}" stroke="${C.bg ?? '#0b0d12'}" stroke-width="3" paint-order="stroke">${kfmt(n)} @ ${fmt(k)}</text>`);
+      }
+    }
+    const tot = ['c', 'p'].reduce((a, sd) => a + Object.values(OI[e.expiry]?.[sd] || {}).reduce((x, y) => x + y, 0), 0);
+    push(`<text x="${x}" y="${PAD_T + 44}" text-anchor="middle" ${mono} font-size="10.5" fill="${C.text}" fill-opacity="0.85">${kfmt(tot)} OI</text>`);
+  }
+}
 
 // ── roads ───────────────────────────────────────────────────────────────────
 // Each road is a staircase, not a curve: the board holds still until a major
@@ -655,7 +691,7 @@ for (const r of roads) {
     if (prev == null) { prev = k ? v : spot; sx = k ? x0 : XF(0); }
     const yp = Y(clampY(prev)).toFixed(1), y = Y(clampY(v)).toFixed(1);
     const d = `M ${sx.toFixed(1)} ${yp} C ${(x0 + ramp / 2).toFixed(1)} ${yp}, ${(x0 + ramp / 2).toFixed(1)} ${y}, ${(x0 + ramp).toFixed(1)} ${y} L ${x1.toFixed(1)} ${y}`;
-    const w = (r.key === 'settle' ? 1.4 : 1.6) + 4.4 * Math.sqrt(r.size(g) / big);
+    const w = ((r.key === 'settle' ? 1.4 : 1.6) + 4.4 * Math.sqrt(r.size(g) / big)) * (OI ? 1.6 : 1);
     push(`<path d="${d}" fill="none" stroke="${r.col}" stroke-width="${(w * 3).toFixed(1)}" stroke-opacity="0.25" filter="url(#glowS)"/>`);
     push(`<path d="${d}" fill="none" stroke="${r.col}" stroke-width="${w.toFixed(1)}" stroke-opacity="0.9" stroke-linecap="round" ${r.key === 'settle' ? 'stroke-dasharray="7 5"' : ''}/>`);
     prev = v;
@@ -672,11 +708,12 @@ for (const r of roads) {
     push(`<text x="${x + 32}" y="${Y(clampY(b)) + (r.key === 'down' ? 16 : -8)}" ${mono} font-size="9.5" fill="${r.col}" fill-opacity="0.8">${fmt(b)} once ${md(segs[k - 1].end)} rolls off</text>`);
   }
 }
+for (const t of oiLabels) push(t);
 // The matrix covers about ±15% of spot: a wall past this line is invisible.
 for (const [edge, lab] of [[matrix.strikeHi, 'strike data ends above'], [matrix.strikeLo, 'strike data ends below']]) {
   if (edge == null || edge <= yMin || edge >= yMax) continue;
   push(`<line x1="${FWD_X}" x2="${XF(maxDte) + 6}" y1="${Y(edge).toFixed(1)}" y2="${Y(edge).toFixed(1)}" stroke="${C.tp}" stroke-opacity="0.4" stroke-dasharray="1 5" stroke-width="2"/>`);
-  push(`<text x="${FWD_X + 330}" y="${(Y(edge) + (lab.endsWith('above') ? -6 : 14)).toFixed(1)}" ${mono} font-size="9.5" fill="${C.tp}" fill-opacity="0.75">${lab} ${fmt(edge)}</text>`);
+  push(`<text x="${OI && exps.length > 1 ? ((XF(exps[0].dte) + XF(exps[1].dte)) / 2).toFixed(1) : FWD_X + 330}" ${OI ? 'text-anchor="middle"' : ''} y="${(Y(edge) + (lab.endsWith('above') ? -6 : 14)).toFixed(1)}" ${mono} font-size="9.5" fill="${C.tp}" fill-opacity="0.75">${lab} ${fmt(edge)}</text>`);
 }
 
 // Per-expiry markers: the walls of the book still alive on that date. Minor
@@ -860,7 +897,7 @@ const stamp = new Date().toISOString().slice(0, 10);
   rows.sort((a, b) => a.madeOn.localeCompare(b.madeOn));
   if (!argv.includes('--no-log')) writeLedger(sym, rows);
 }
-const base = join(OUT, `${sym.toLowerCase()}_horizon${MONTHLY ? '_monthly' : ''}_${stamp}`);
+const base = join(OUT, `${sym.toLowerCase()}_horizon${MONTHLY ? '_monthly' : ''}${OI ? '_oi' : ''}_${stamp}`);
 writeFileSync(`${base}.html`, html);
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1.6 });
