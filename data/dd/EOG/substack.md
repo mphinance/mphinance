@@ -106,7 +106,7 @@ Dealers are long gamma here, so price tends to pin rather than run. The ceiling 
 - Expected move: **2.2%** for one day ($154 to $162), **4.6%** for one week ($151 to $166), **8.4%** for one month ($145 to $173), **10%** for six weeks ($143 to $176). Hold rates run **68% to 76%**. *(TDPro get_expected_move)*
 - IV rank **41/100**, mid-range. IV fell from **38%** to **32%** in the five sessions after earnings. *(TDPro (CBOE))*
 - Unusual options activity on 11/13: **none** flagged. Dark pool blocks over 30 days: **none** in the feed, which on a $82B name is a coverage gap and should not be read as a signal. *(TDPro)*
-- Jan 15 2027 **$165 calls** carry **3,024** OI, the largest single line in the chain at quote time. *(yfinance option chain)*
+- Jan 15 2027 is the heaviest expiry by far, **32.2k** contracts against about **12.5k** each for Nov and Dec. Its biggest lines are the **$190 calls (3,467)** and **$165 calls (3,024)**. *(yfinance option chain)*
 
 ## 10. Chart and technicals
 
