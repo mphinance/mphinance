@@ -13,7 +13,9 @@ node tools/gamma_horizon.mjs --grade                       # re-grade every logg
 ```
 
 Flags: `--days N` (forward window, 60), `--bars N` (daily candles, 65), `--minshare PCT`
-(OI share an expiry needs to count as major, 5), `--no-log`. `--wedge` auto-fits the converging
+(OI share an expiry needs to count as major, 5), `--no-log`. `--monthly` keeps only the standard
+monthly expiries (third Friday) so you can see the longer-dated book; pair it with `--days 130`
+to reach March. File gets a `_monthly` suffix. Run it with `--no-log`, because the plan comes from the same rules. `--wedge` auto-fits the converging
 trendlines (lid through swing highs, floor through swing lows, no close beyond either),
 circles the touches, and projects both lines into the right panel to the apex (or the
 panel edge if the apex is further out). Pair with `--bars 130` so the lid's anchor high
