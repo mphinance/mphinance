@@ -327,6 +327,41 @@ def compose(d, changes=()):
             + how_often
         )
 
+    # How much of tomorrow's map the record will be able to score, said before
+    # the session instead of reported as a blank after it. The note has counted
+    # blank sessions since 11-08, but only in hindsight; the number of levels a
+    # map commits to the record is known the night it is drawn. Reported only:
+    # nothing is graded differently, and this can only ever make the map read as
+    # a narrower claim.
+    sc = d.get("scoreable") or {}
+    hard, soft = sc.get("hard") or [], sc.get("soft") or []
+    if sc:
+        named = ", ".join(f"{h['lvl']} {h['kind']}" for h in hard)
+        if len(hard) == 1:
+            head = f"Of the levels above, only one is a claim the record can score: the {named}."
+        elif hard:
+            head = f"Of the levels above, {len(hard)} are claims the record can score: the {named}."
+        else:
+            head = (
+                "None of the levels above is a claim the record can score: they are all "
+                "short-gamma markers the map reports and never grades."
+            )
+        if soft:
+            head += f" The {soft[0]['lvl']} pin is added to that only if the day grades RANGE."
+        hist = sc.get("history") or {}
+        thin, rest = hist.get("thin") or {}, hist.get("rest") or {}
+        if len(hard) <= 1 and thin.get("sessions") and thin.get("blank"):
+            head += (
+                f" Of the {thin['sessions']} sessions that went in this thin, "
+                f"{thin['blank']} ended up scoring nothing at all."
+            )
+        elif len(hard) > 1 and rest.get("sessions"):
+            head += (
+                f" {rest['sessions']} sessions have gone in with two or more, and "
+                f"{rest['blank']} of those still scored nothing."
+            )
+        lines.append(head)
+
     lines.append(
         f"Flip {d['flip']:.2f}. Pin {d['pin']}. "
         f"A typical day from here is about {d['expected']:.2f} points."

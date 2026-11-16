@@ -547,6 +547,24 @@ const checkKind = (e, c) => {
   if (e.cushion === c.lvl) return 'cushion';
   return c.side === 'low' ? 'other floor' : 'other ceiling';
 };
+// Which of a map's levels the grader will actually check, read off the entry
+// the same way `gradeEntry` reads it: flip, cushion, a long-gamma SHELF, brake
+// and ceiling are claims; the accelerant, the put wall and a trapdoor are
+// reported and never scored, and anything beyond REACH is already null here.
+// `chartPin` is conditional: it is only scored if the session grades RANGE, so
+// it is kept separate rather than counted as a level the map is committing to.
+// Verified against the whole ledger: hard.length equals graded.total +
+// graded.untested minus the pin check on all 37 entries. Reporting only.
+const scoreableOf = (e) => ({
+  hard: [
+    e.flip != null ? { lvl: e.flip, kind: 'flip' } : null,
+    e.cushion != null ? { lvl: e.cushion, kind: 'cushion' } : null,
+    e.shelfKind === 'shelf' && e.shelf != null ? { lvl: e.shelf, kind: 'shelf' } : null,
+    (e.brake ?? e.battle) != null ? { lvl: e.brake ?? e.battle, kind: 'brake' } : null,
+    e.gate != null ? { lvl: e.gate, kind: 'ceiling' } : null,
+  ].filter(Boolean),
+  soft: e.chartPin != null ? [{ lvl: e.chartPin, kind: 'pin' }] : [],
+});
 const gradedAll = ledger.filter((e) => e.graded && e.graded.v === 2 && !e.graded.source);
 const inSample = ledger.filter((e) => e.graded && e.graded.source);
 const record = {
@@ -625,6 +643,20 @@ const record = {
     if (!seen.length) return null;
     const blank = seen.filter((e) => e.graded.total === 0);
     return { known: seen.length, blank: blank.length, blankNegative: blank.filter((e) => e.netGEX < 0).length };
+  })(),
+  // The blank question asked BEFORE the session instead of after it. Every
+  // blank so far has been read off the grade, which is hindsight; how many
+  // levels a map is putting on the record is knowable the night it is drawn
+  // (`scoreableOf`). Through 2026-11-13: 11 of the 27 live sessions went in
+  // with one scoreable level or none and 4 of them scored nothing, against 2
+  // of the 16 that went in with two or more. Reported, never scored, and
+  // fully derivable from entries already written, so nothing is back-filled.
+  goingIn: (() => {
+    const n = (e) => scoreableOf(e).hard.length;
+    const tally = (es) => ({ sessions: es.length, blank: es.filter((e) => e.graded.total === 0).length });
+    return { none: tally(gradedAll.filter((e) => n(e) === 0)),
+             thin: tally(gradedAll.filter((e) => n(e) <= 1)),
+             rest: tally(gradedAll.filter((e) => n(e) > 1)) };
   })(),
   // The record split by the size of the day (graded.moveX, see gradeEntry).
   // A level map is a claim about normal days; this says how it does on them
@@ -1567,6 +1599,12 @@ console.log(`by session: ${record.paired.both} scored by both | map better ${rec
 console.log(`by size: big days (>= 1 typical) ${record.bySize.big.hits}/${record.bySize.big.total} vs $5 ${record.bySize.big.nullHits}/${record.bySize.big.nullTotal} over ${record.bySize.big.sessions} | normal ${record.bySize.normal.hits}/${record.bySize.normal.total} vs $5 ${record.bySize.normal.nullHits}/${record.bySize.normal.nullTotal} over ${record.bySize.normal.sessions}${record.bySize.unsized ? ` | ${record.bySize.unsized} unsized` : ''}`);
 console.log(`by regime: ${Object.entries(record.byRegime).map(([k, v]) => `${k} ${v.hits}/${v.total}`).join(' | ') || 'n/a'}`);
 console.log(`by level: ${Object.entries(record.byLevel).map(([k, v]) => `${k} ${v.hits}/${v.total}`).join(' | ') || 'nothing scored yet'}`);
+{
+  const s = scoreableOf(entry), gi = record.goingIn;
+  console.log(`scoreable tomorrow: ${s.hard.length} level(s)${s.hard.length ? ` (${s.hard.map((h) => `${h.lvl} ${h.kind}`).join(', ')})` : ''}`
+    + `${s.soft.length ? ` + ${s.soft[0].lvl} pin on a RANGE day` : ''}`
+    + ` | went in thin (<=1) ${gi.thin.sessions}, of which ${gi.thin.blank} scored nothing; two or more ${gi.rest.sessions}, of which ${gi.rest.blank}`);
+}
 console.log(`spot ${spot} | flip ${flip} | magnet ${magnet} | netGEX ${fmtM(gex.totalGEX)}`);
 console.log(`flips | api ${flip} | survivors ${flipSurvivors} | full book ${flipFullBook} | tv ${flipTV} | record ${flipRecord.hits}/${flipRecord.total} | leads IF row: ${flipLeadOK}`);
 console.log(`gate ${gate?.strike} | brake ${brake?.strike} | accel ${accel?.strike} | floor ${floor?.strike} | pocket ${pocket ? `${pocket.lo}-${pocket.hi}` : 'none'}`);
@@ -1605,6 +1643,10 @@ writeFileSync(sidecar, JSON.stringify({
   triggers: { up: upTrigger, down: downTrigger, gapUp, gapDown, downKind, downScored,
               band: { lo: rangeLo, hi: rangeHi, width: bandWidth } },
   triggerNote,
+  // What the grader will be able to check tomorrow, said before the session
+  // rather than discovered after it. `hard` is the map's committed levels;
+  // `soft` is the pin, which only gets scored on a RANGE day.
+  scoreable: { ...scoreableOf(entry), history: record.goingIn },
   record,
   lastCall: report && !report.partial
     ? { day: report.day, hits: report.hits, total: report.total, branch: report.branch,
