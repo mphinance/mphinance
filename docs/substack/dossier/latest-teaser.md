@@ -1,13 +1,13 @@
-# Ghost Alpha Dossier — 2026-11-16
+# Ghost Alpha Dossier — 2026-11-17
 
-> 🔴 **Elevated** · SPY ▼ 1.8% · VIX 24.3
+> 🔴 **Elevated** · SPY ▼ 1.2% · VIX 25.7
 
 ---
 
-**Regime check:** VIX at 24.
+Alright, degens, listen up.
 
 
-## 🥇 Gold Pick: MMM
+## 🥇 Gold Pick: V
 
 | Metric | Value |
 |--------|-------|
@@ -20,25 +20,25 @@
 
 
 ### Runners Up
-- 🥈 **DAL** — Score: 48/100
-- 🥉 **FITB** — Score: 48/100
+- 🥈 **HD** — Score: 48/100
+- 🥉 **DAL** — Score: 48/100
 
 
 ## 📊 Today's Numbers
 
-- **195 scanner signals** across 6 strategies
+- **185 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 1.8% | **VIX:** 24.3
+- **SPY:** ▼ 1.2% | **VIX:** 25.7
 
 ---
 
 ## 👻 Sam Says
 
-> *"One day at a time. One trade at a time. One lesson at a time. The market doesn't care about yesterday."*
+> *"The only requirement for membership is a desire to stop losing money."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-16_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-16)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-17_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-17)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
