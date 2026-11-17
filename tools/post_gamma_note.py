@@ -222,8 +222,10 @@ def compose(d, changes=()):
             key=lambda kv: (-kv[1]["total"], kv[0]),
         )
         misses = rec["total"] - rec["hits"]
+        flip_in_table = False
         if len(rows) > 1 and misses:
             parts = ", ".join(f"{k} {v['hits']}/{v['total']}" for k, v in rows)
+            flip_in_table = any(k == "flip" for k, _ in rows)
             name, worst = max(rows, key=lambda kv: kv[1]["total"] - kv[1]["hits"])
             worst_misses = worst["total"] - worst["hits"]
             lines.append(
@@ -246,6 +248,14 @@ def compose(d, changes=()):
                 why_flip = (
                     f"The flip sits on top of the price tonight, so the IF row leads "
                     f"with another level instead"
+                )
+            elif flip_in_table:
+                # The by-type table two paragraphs up already prints the flip's
+                # fraction, and the "worst carrier" sentence leans on it again, so
+                # restating it here made the same number appear three times in
+                # three consecutive paragraphs. Refer back instead of repeating.
+                why_flip = (
+                    "Because of that record, the IF row above does not lead with the flip"
                 )
             else:
                 why_flip = (
