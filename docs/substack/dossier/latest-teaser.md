@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-11-17
+# Ghost Alpha Dossier — 2026-11-18
 
-> 🔴 **Elevated** · SPY ▼ 1.2% · VIX 25.7
+> 🔴 **Elevated** · SPY ▲ 0.0% · VIX 24.2
 
 ---
 
-Alright, degens, listen up.
+Alright, strap in, retail, because the market's showing its true colors.
 
 
-## 🥇 Gold Pick: V
+## 🥇 Gold Pick: HD
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 48/100 (A) |
+| **Score** | 48/100 (C) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -20,25 +20,25 @@ Alright, degens, listen up.
 
 
 ### Runners Up
-- 🥈 **HD** — Score: 48/100
-- 🥉 **DAL** — Score: 48/100
+- 🥈 **ICE** — Score: 48/100
+- 🥉 **MSCI** — Score: 48/100
 
 
 ## 📊 Today's Numbers
 
-- **185 scanner signals** across 6 strategies
+- **171 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 1.2% | **VIX:** 25.7
+- **SPY:** ▲ 0.0% | **VIX:** 24.2
 
 ---
 
 ## 👻 Sam Says
 
-> *"The only requirement for membership is a desire to stop losing money."*
+> *"Some days you're the bug. Some days you're the windshield. Set your position size for bug days."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-17_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-17)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-18_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-18)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
