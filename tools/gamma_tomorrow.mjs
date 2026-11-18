@@ -904,20 +904,37 @@ const NARROW_BAND = 0.5; //  of a typical day
 const gapUp = upTrigger != null ? +(upTrigger - spot).toFixed(2) : null;
 const gapDown = downTrigger != null ? +(spot - downTrigger).toFixed(2) : null;
 const bandWidth = +(rangeHi - rangeLo).toFixed(2);
+// Both conditions can be true at once and only the first was ever printed,
+// because this returned on the near-trigger branch before it reached the band
+// test. Seen on 2026-10-28, 11-03 and 11-11: on the 11-11 map the up trigger 750
+// sat 0.08 over a 749.92 close AND the 745-750 band was 5.00 wide against a
+// typical day of 19.99, a quarter of a normal session, and the note said only the
+// first. Two true facts, one of them silently dropped. They are now joined.
+// The line has exactly one row (H-34, with the footer 18px under it), so a
+// combined sentence that will not fit falls back to the near-trigger sentence,
+// which is what used to print. The single-condition wordings are unchanged, so
+// nothing moves on a night where only one of the two fires.
 const triggerNote = (() => {
   if (!(expected > 0)) return null;
   const near = [];
   if (gapUp != null && gapUp <= expected * NEAR_TRIGGER) near.push(`the up trigger ${upTrigger} is ${gapUp.toFixed(2)} over spot`);
   if (gapDown != null && gapDown <= expected * NEAR_TRIGGER) near.push(`the down trigger ${downTrigger} is ${gapDown.toFixed(2)} under spot`);
-  if (near.length) {
-    return `${near.join(' and ')}, against a typical day of ${expected.toFixed(2)}: `
-      + `${near.length > 1 ? 'those roads fire' : 'that road fires'} on the open, so ${rangeLo}-${rangeHi} is the narrow branch, not the default.`;
+  const narrow = bandWidth < expected * NARROW_BAND;
+  const nearNote = near.length
+    ? `${near.join(' and ')}, against a typical day of ${expected.toFixed(2)}: `
+      + `${near.length > 1 ? 'those roads fire' : 'that road fires'} on the open, so ${rangeLo}-${rangeHi} is the narrow branch, not the default.`
+    : null;
+  const bandNote = narrow
+    ? `the quiet range ${rangeLo}-${rangeHi} is ${bandWidth.toFixed(2)} wide against a typical day of `
+      + `${expected.toFixed(2)}, so holding it is the unlikely branch tonight.`
+    : null;
+  if (nearNote && bandNote) {
+    const both = `${near.join(' and ')}, and the quiet range ${rangeLo}-${rangeHi} is only `
+      + `${bandWidth.toFixed(2)} wide, against a typical day of ${expected.toFixed(2)}: `
+      + `${near.length > 1 ? 'those roads fire' : 'that road fires'} on the open and holding that range is the unlikely branch.`;
+    return textW(both, 10.5) <= W - PAD_L - PAD_R ? both : nearNote;
   }
-  if (bandWidth < expected * NARROW_BAND) {
-    return `the quiet range ${rangeLo}-${rangeHi} is ${bandWidth.toFixed(2)} wide against a typical day of `
-      + `${expected.toFixed(2)}, so holding it is the unlikely branch tonight.`;
-  }
-  return null;
+  return nearNote || bandNote;
 })();
 
 // PLAN LEVELS: only levels within a typical day's reach are named (scored).
