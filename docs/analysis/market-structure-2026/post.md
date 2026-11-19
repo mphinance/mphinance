@@ -4,7 +4,7 @@
 
 ![hero](fig/cover.png)
 
-US markets changed more in 2026 than in the 10 years before. <span style="color: gold">**Six things matter. Two are still coming.**</span>
+US markets changed more in 2026 than in the 10 years before. <span style="color: gold">**Six have happened already, two more are still coming.**</span>
 
 Stock futures, pre-market options on the names you actually trade, perps on Kalshi, and on <span style="color: blue">**Sunday, Dec 6**</span>, stocks trading 23 hours a day on lit exchanges. <span style="color: red">**The "market is closed" excuse is dead.**</span> Overnight gaps now trade somewhere. Your setups need to watch futures, perps and extended-session options, not only the 9:30 open.
 
@@ -12,7 +12,7 @@ Stock futures, pre-market options on the names you actually trade, perps on Kals
 
 ![](fig/clock.png)
 
-That red hole in the chart is the whole post in one picture. <span style="color: gold">**From Dec 6 you can move the stock at 2 a.m. but you can't hedge it with a single-stock option until 7:30.**</span>
+<span style="color: gold">**From Dec 6 you can move the stock at 2 a.m. but you can't hedge it with a single-stock option until 7:30.**</span>
 
 ---
 
