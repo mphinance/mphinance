@@ -4,7 +4,7 @@
 
 ![hero](fig/cover.png)
 
-US markets changed more in 2026 than in the 10 years before. <span style="color: gold">**Six have happened already, two more are still coming.**</span>
+US markets changed more in 2026 than in the 10 years before. <span style="color: gold">**Four have happened already, two more are still coming.**</span>
 
 Stock futures, pre-market options on the names you actually trade, perps on Kalshi, and on <span style="color: blue">**Sunday, Dec 6**</span>, stocks trading 23 hours a day on lit exchanges. <span style="color: red">**The "market is closed" excuse is dead.**</span> Your setups need to watch futures, perps and extended-session options, not only the 9:30 open.
 
@@ -22,7 +22,7 @@ CME has 55 single-stock futures and 22 micros. They are cash-settled and trade a
 
 !> **Specs, all contracts.** Standard = 100 shares, micro = 10 shares. A 0.01 tick is $1.00 on the standard, $0.10 on the micro. Cash-settled against the official close at expiry, no delivery. Quarterly (Mar/Jun/Sep/Dec), two quarters listed. Last trade 4:00 p.m. ET on the 3rd Friday. Hours Sun-Fri, 5:00 p.m.-4:00 p.m. CT with a daily maintenance break. Codes start with **S** (standard) or **X** (micro).
 
-CME also lists **Total Return** versions with a **T** prefix (TABBV, TAMZN, TCSCO). The Trading Technologies spec sheet shows them. One reseller list does not. Check your platform before you route to them. Some codes pad with zeros to 5 characters (SMU00, SBA00, SV000). Do not "fix" them.
+The **T** codes (TABBV, TAMZN, TCSCO) are **BTIC** versions: you trade at a spread to that day's official close. The Trading Technologies spec sheet calls them "Total Return"; CME calls them BTIC. Some codes pad with zeros to 5 characters (SMU00, SBA00, SV000). Do not "fix" them.
 
 Roster as of the August 2026 list. I found no additions since launch, but CME can add names. Confirm at [cmegroup.com/ssf](https://www.cmegroup.com/ssf).
 
@@ -46,7 +46,7 @@ One report said NYSE options would go to 23 hours on Dec 6. I could not confirm 
 
 ## Index options that already trade nearly 24x5
 
-RUT joined on Feb 12-13.
+RUT joined on Feb 9.
 
 - **SPX/SPXW, XSP, VIX:** in Global Trading Hours since before 2026
 - **RUT/RUTW:** joined Feb 2026
@@ -82,9 +82,7 @@ Kalshi is the only US venue live today.
 - **Kalshi:** live Nov 5. 58 contracts filed, 50+ live. Leverage varies by stock, up to ~4.9x. Sun 6 p.m.-Fri 5 p.m. ET. Stock funding once a day. <span style="color: blue">**$1.75B traded through Nov 13, average trade about $200, and 39% of it outside regular hours.**</span>
 - **Coinbase Derivatives:** filed Sep 18, deemed approved Nov 2. Starts with AAPL and NVDA. No US launch date. Non-US Coinbase has had stock perps since Mar 20.
 - **Bitnomial:** filed Sep 18. 10 stocks including GOOGL and MSFT. No launch date.
-- **Robinhood:** crypto perps announced Sep 29 (10x BTC/ETH, 3x others). No stock perps announced. Mizuho says single-stock perps are likely next; Robinhood has not said so.
-
-Kalshi also lists "SK Hynix", which is not a US listing. Check the contract terms before you trade it.
+- **Robinhood:** crypto perps announced Sep 29 (10x BTC/ETH, 3x others). No stock perps announced. A Mizuho survey found 94% of Robinhood users would trade them; Robinhood says it has no plans.
 
 **How it got here:** Kalshi, Coinbase Derivatives and Bitnomial filed under CFTC Reg 40.3 on Sep 18. The CFTC did not act, so the filings were deemed approved. CFTC Chair Michael Selig confirmed it in a statement on Nov 3. They are security futures under joint CFTC and SEC oversight.
 
@@ -97,7 +95,7 @@ Kalshi also lists "SK Hynix", which is not a US listing. Check the contract term
 - **Weekend (24/7) stock trading:** Robinhood via Bruce ATS. Curated list of stocks and ETFs, Saturdays and Sundays included. "Coming months"; one report says early 2027; needs regulatory review.
 - **Earnings contracts:** Robinhood, company-specific earnings event contracts. Announced at HOOD Summit, Sep 29.
 - **US crypto perps:** Robinhood, 10x BTC/ETH, 3x others, 0.01% fee through end of 2026. "Coming months."
-- **Tokenized US stocks:** Robinhood EU has a few hundred stock tokens. Not for US retail.
+- **Tokenized US stocks:** Robinhood EU lists 2,000+ tokenized US stocks. Not for US retail.
 - **SSF list changes:** no adds found since launch. Watch cmegroup.com/ssf.
 - **Options list refresh:** next one likely early 2027 (Jul-Dec data).
 
@@ -105,7 +103,7 @@ Kalshi also lists "SK Hynix", which is not a US listing. Check the contract term
 
 - <span style="color: gold">**The PDT rule is dead.**</span> SEC approved FINRA's Rule 4210 rewrite Apr 14; effective **Jun 4, 2026**. No more $25k / four-trades-in-five-days test. It's an intraday margin standard now. Brokers are phasing it in, so check yours.
 - **Monday and Wednesday expiries on single stocks.** Live since **Jan 26, 2026** at Cboe and Nasdaq. Only for stocks over $700B market cap (and big ETFs), and no Mon/Wed expiry on an earnings day.
-- **Texas has two exchanges.** The Texas Stock Exchange started trading in July. NYSE Texas opened in August.
+- **Texas got its own exchange.** The Texas Stock Exchange started trading Jul 6. NYSE Texas has been live since March 2025.
 - **Tokenized stocks got a door.** SEC approved Nasdaq's tokenized-equities pilot Mar 18 (same order book, same CUSIP), then issued an "innovation exemption" for onchain trading Sep 17.
 
 ## Trader gotchas
