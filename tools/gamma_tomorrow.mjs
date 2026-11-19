@@ -1554,6 +1554,14 @@ const entry = {
   // be answered off the ledger later instead of by remembering what the book looked
   // like. Diagnostic: nothing on the map or in the grade reads it.
   netGEX: gex.totalGEX,
+  // The surviving strike ladder the levels were read off, in $M, keyed by strike.
+  // WALL is set off `maxAbs` over the WHOLE band, so on a put-heavy book one large
+  // put raises the bar the call side has to clear and the map names nothing above
+  // spot. Testing a per-side threshold needs the past books, and the ledger only
+  // ever stored the levels, not the ladder they came from -- so that replay was
+  // blocked. Stored from 2026-11-18 forward. Diagnostic: nothing on the map, in
+  // the caption or in the grade reads it.
+  ladder: Object.fromEntries(ladder.map((s) => [s.strike, +(s.netGex / 1e6).toFixed(2)])),
 };
 if (ledgerBroken) {
   console.log('not writing the ledger: it is unreadable and overwriting it would lose the history');
