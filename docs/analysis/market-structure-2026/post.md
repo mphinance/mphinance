@@ -6,7 +6,7 @@
 
 US markets changed more in 2026 than in the 10 years before. <span style="color: gold">**Six have happened already, two more are still coming.**</span>
 
-Stock futures, pre-market options on the names you actually trade, perps on Kalshi, and on <span style="color: blue">**Sunday, Dec 6**</span>, stocks trading 23 hours a day on lit exchanges. <span style="color: red">**The "market is closed" excuse is dead.**</span> Overnight gaps now trade somewhere. Your setups need to watch futures, perps and extended-session options, not only the 9:30 open.
+Stock futures, pre-market options on the names you actually trade, perps on Kalshi, and on <span style="color: blue">**Sunday, Dec 6**</span>, stocks trading 23 hours a day on lit exchanges. <span style="color: red">**The "market is closed" excuse is dead.**</span> Your setups need to watch futures, perps and extended-session options, not only the 9:30 open.
 
 ![](fig/timeline.png)
 
@@ -46,7 +46,7 @@ One report said NYSE options would go to 23 hours on Dec 6. I could not confirm 
 
 ## Index options that already trade nearly 24x5
 
-Cboe-proprietary index options trade almost around the clock. RUT joined on Feb 12-13. This is the only true overnight options market in the US.
+RUT joined on Feb 12-13.
 
 - **SPX/SPXW, XSP, VIX:** in Global Trading Hours since before 2026
 - **RUT/RUTW:** joined Feb 2026
@@ -77,7 +77,7 @@ What to know:
 
 ## Single-stock perpetual futures (live on Kalshi since Nov 5)
 
-Stock perps are now legal on US-regulated exchanges. Kalshi is the only US venue live today. <span style="color: red">**Wall Street is suing to kill them.**</span>
+Kalshi is the only US venue live today.
 
 - **Kalshi:** live Nov 5. 58 contracts filed, 50+ live. Leverage varies by stock, up to ~4.9x. Sun 6 p.m.-Fri 5 p.m. ET. Stock funding once a day. <span style="color: blue">**$1.75B traded through Nov 13, average trade about $200, and 39% of it outside regular hours.**</span>
 - **Coinbase Derivatives:** filed Sep 18, deemed approved Nov 2. Starts with AAPL and NVDA. No US launch date. Non-US Coinbase has had stock perps since Mar 20.
@@ -88,13 +88,11 @@ Kalshi also lists "SK Hynix", which is not a US listing. Check the contract term
 
 **How it got here:** Kalshi, Coinbase Derivatives and Bitnomial filed under CFTC Reg 40.3 on Sep 18. The CFTC did not act, so the filings were deemed approved. CFTC Chair Michael Selig confirmed it in a statement on Nov 3. They are security futures under joint CFTC and SEC oversight.
 
-**The fight:** The Capital Markets Alliance Association (exchanges, brokers, market makers) sued the CFTC on Nov 3. The judge denied a restraining order. A preliminary-injunction fight is open in SDNY. Coinbase, Kalshi, Payward (Kraken), DRW, Jump and Paradigm filed an amicus on Nov 9. <span style="color: red">**Risk: a ruling could halt these contracts. Size positions as if that can happen.**</span>
+**The fight:** The Capital Markets Alliance Association (exchanges, brokers, market makers) sued the CFTC on Nov 3. The judge denied a restraining order. The preliminary-injunction hearing is set for Dec 1. Coinbase, Kalshi, Payward (Kraken), DRW, Jump and Paradigm filed an amicus on Nov 9. <span style="color: red">**Risk: a ruling could halt these contracts. **</span>
 
 ![](fig/threeprices.png)
 
 ## Other stuff you missed (announced, not live yet)
-
-The next wave is weekend stock trading and more perps. None of it has a firm date.
 
 - **Weekend (24/7) stock trading:** Robinhood via Bruce ATS. Curated list of stocks and ETFs, Saturdays and Sundays included. "Coming months"; one report says early 2027; needs regulatory review.
 - **Earnings contracts:** Robinhood, company-specific earnings event contracts. Announced at HOOD Summit, Sep 29.
@@ -105,16 +103,12 @@ The next wave is weekend stock trading and more perps. None of it has a firm dat
 
 ## Stuff earlier in 2026 that also changed the game
 
-Different topic, same year. All of these change how you trade the new clock.
-
 - <span style="color: gold">**The PDT rule is dead.**</span> SEC approved FINRA's Rule 4210 rewrite Apr 14; effective **Jun 4, 2026**. No more $25k / four-trades-in-five-days test. It's an intraday margin standard now. Brokers are phasing it in, so check yours.
 - **Monday and Wednesday expiries on single stocks.** Live since **Jan 26, 2026** at Cboe and Nasdaq. Only for stocks over $700B market cap (and big ETFs), and no Mon/Wed expiry on an earnings day.
 - **Texas has two exchanges.** The Texas Stock Exchange started trading in July. NYSE Texas opened in August.
 - **Tokenized stocks got a door.** SEC approved Nasdaq's tokenized-equities pilot Mar 18 (same order book, same CUSIP), then issued an "innovation exemption" for onchain trading Sep 17.
 
 ## Trader gotchas
-
-More hours means more places to get run over. Check these before you size a trade.
 
 1. **Thin books.** Pre-market options, overnight stock and stock perps all have wide spreads. Use limit orders. <span style="color: red">**Do not market-order a 7:45 a.m. NVDA call.**</span>
 2. **Your stops may not fire.** Many brokers only work stops in the regular session. Check what your broker does at 9 p.m. and 7:30 a.m.
@@ -134,8 +128,6 @@ For TraderMatrix: the 29 extended-hours option names and the 55 SSF names are go
 <!--subscribe-->
 
 ## Sources
-
-Primary sources first.
 
 - [CME: Single Stock Futures press release (Feb 10, 2026)](https://www.cmegroup.com/media-room/press-releases/2026/2/10/cme_group_to_launchsinglestockfutures.html)
 - [Trading Technologies: CME SSF spec and symbols (Jul 24, 2026)](https://library.tradingtechnologies.com/wp-content/uploads/2026/07/CME_Single_Stock_Futures.pdf)
