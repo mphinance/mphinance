@@ -6,7 +6,7 @@ posts whatever is due.
 Michael writes the words; this only holds them until the time he picked.
 
   python3 tools/note_queue.py add "2026-10-01 09:30" "note text"      # ET if no offset
-  python3 tools/note_queue.py add "tue 09:30" path/to/note.md --image chart.png
+  python3 tools/note_queue.py add "tue 09:30" path/to/note.md --image chart.png [--image two.png]
   python3 tools/note_queue.py add "2026-10-01 09:30" "text" --link https://...
   python3 tools/note_queue.py list
   python3 tools/note_queue.py cancel <id>
@@ -23,13 +23,14 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 sys.path.insert(0, str(REPO / "tools"))
 QUEUE = REPO / "data/notes_queue"
 SENT = QUEUE / "sent"
-ET = timezone(timedelta(hours=-4))
+ET = ZoneInfo("America/New_York")
 DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 
 
@@ -78,13 +79,14 @@ def post(item, dry=False):
     from substack_gateway import Gateway
     g = Gateway()
     att = []
-    if item.get("image"):
-        mime = "image/jpeg" if item["image"].lower().endswith((".jpg", ".jpeg")) else "image/png"
-        b64 = f"data:{mime};base64," + base64.b64encode(Path(item["image"]).read_bytes()).decode()
+    imgs = item.get("images") or ([item["image"]] if item.get("image") else [])
+    for img in imgs:
+        mime = "image/jpeg" if img.lower().endswith((".jpg", ".jpeg")) else "image/png"
+        b64 = f"data:{mime};base64," + base64.b64encode(Path(img).read_bytes()).decode()
         if not dry:
             url = g._sub("POST", "image", json={"image": b64})["url"]
             att.append(g._sub("POST", "comment/attachment/", json={"url": url, "type": "image"})["id"])
-    elif item.get("link") and not dry:
+    if not imgs and item.get("link") and not dry:
         att.append(g._sub("POST", "comment/attachment/", json={"url": item["link"], "type": "link"})["id"])
     payload = {"bodyJson": body_json(item["text"]), "tabId": "for-you", "surface": "feed",
                "replyMinimumRole": "everyone"}
@@ -110,15 +112,14 @@ def main():
         when = parse_when(pos[1])
         src = Path(pos[2])
         text = src.read_text() if src.suffix in (".md", ".txt") and src.exists() else pos[2]
-        img = flag("--image")
-        if img:
-            img = str(Path(img).resolve())
+        imgs = [str(Path(a[i + 1]).resolve()) for i, x in enumerate(a) if x == "--image" and i + 1 < len(a)]
+        for img in imgs:
             if not Path(img).exists():
                 sys.exit(f"no such image: {img}")
         nid = when.strftime("%Y%m%d-%H%M") + f"-{int(time.time()) % 10000:04d}"
         same_day = [i for i in load() if i["at"][:10] == when.isoformat()[:10]]
         (QUEUE / f"{nid}.json").write_text(json.dumps({
-            "id": nid, "at": when.isoformat(), "text": text.strip(), "image": img,
+            "id": nid, "at": when.isoformat(), "text": text.strip(), "images": imgs,
             "link": flag("--link"), "queued": datetime.now(ET).isoformat()}, indent=1))
         print(f"QUEUED {nid} for {when.strftime('%a %b %d %I:%M %p ET')}")
         if same_day:
@@ -127,7 +128,7 @@ def main():
     elif cmd == "list":
         for i in load():
             at = datetime.fromisoformat(i["at"]).astimezone(ET)
-            extra = " [img]" if i.get("image") else " [link]" if i.get("link") else ""
+            extra = " [img]" if i.get("images") or i.get("image") else " [link]" if i.get("link") else ""
             print(f"{i['id']}  {at.strftime('%a %b %d %I:%M %p')}{extra}  {i['text'][:70].replace(chr(10), ' ')}")
     elif cmd == "cancel" and len(pos) >= 2:
         p = QUEUE / f"{pos[1]}.json"

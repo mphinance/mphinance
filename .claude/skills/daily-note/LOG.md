@@ -86,3 +86,7 @@ The rooms are full of him too. A few years in and an opinion on everybody's prog
 
 ~ Michael
 ```
+
+## 2026-11-20 (extra, posted 08:20 ET, c-392388671) — VIX floor + ATR, two charts
+Not a Jefferson Cut note: a one-off market note Michael asked for. Charts: data/notes/2026-11-20/{vix_3mo,atr_then_now}.png.
+Text: data/notes/2026-11-20/note.md
