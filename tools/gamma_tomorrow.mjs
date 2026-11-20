@@ -1335,15 +1335,22 @@ for (const r of roads) {
     const last = i === n - 1;
     const tx = last ? x + 12 : x - 12;
     // Only the last waypoint's note runs toward the canvas edge, which is the
-    // one that gets cut off. The others are end-anchored into the panel, where
-    // the halo already handles whatever they cross, so they are left alone.
-    const availW = last ? (W - PAD_R) - tx : Infinity;
+    // one that gets cut off. The others are end-anchored and run back LEFT from
+    // their dot, and nothing stopped them at the forward/history divider: on
+    // 2026-11-19 the merged "66k puts, and dealers sell into it . short gamma, so
+    // it chops hard" note was drawn clean across it and ended under the 727.50
+    // turn label, on top of real candles. The halo excuses a note crossing a
+    // road; it does not excuse one crossing the price panel, because what is
+    // behind it there is the chart's own history. Those notes are now wrapped to
+    // the room between the dot and the divider, and get a third line, because
+    // that column is roughly a third the width the gutter gives the last stop.
+    const availW = last ? (W - PAD_R) - tx : Math.max(80, tx - (FWD_X + 6));
     labels.push({
       x, y, tx,
       anchor: last ? 'start' : 'end',
       ty: y + (r.labelBelow ? 30 : r.side < 0 ? -28 : 24),
       tag: last && !r.wave ? `${r.key} · ${w.tag}` : w.tag, note: w.note, col: r.col,
-      noteLines: wrapNote(w.note, 11, availW),
+      noteLines: wrapNote(w.note, 11, availW, last ? 2 : 3),
       faint: !inReach(w.at),
     });
   });
