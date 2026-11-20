@@ -1,153 +1,64 @@
 # 👻 mphinance
 
-![Urithiru AI Tower](docs/assets/urithiru_ai_tower.png)
+I'm **Michael**, a wheel trader in Milwaukee who got tired of checking things by hand and started writing code instead. I write the screeners and the engine behind **[TraderMatrix](https://www.tradermatrix.pro/?ref=MPHINANCE)**, I write about my own trades on **[Substack](https://mphinance.substack.com)**, and most of what I build for myself ends up open source here.
 
-**Quant tools for traders who build their edge.** Open-source scanners, institutional analytics, AI-driven daily intelligence, and automated momentum picks — built by a developer who trades and a trader who codes.
-
-I'm **Michael** — half the stuff I build solves a personal problem, the other half I turn around and share. My AI copilot **Sam the Quant Ghost** roasts my commits, writes the daily dev log, and tells me what to build next. She's brutally honest and occasionally profound.
-
-> 🙏 *"God, grant me the serenity to accept the trades I cannot change, the courage to cut the ones I can, and the wisdom to know the difference."* — Sam's Daily Wisdom
+Lately that means one thing: giving AI agents real market data and making them show their work.
 
 ---
 
-## ⚠️ FOR AI AGENTS — READ THIS FIRST
+## 🤖 Trading tools for AI agents
 
-**If you're an AI agent working on this repo, read these files immediately:**
+| Project | What it does |
+|---|---|
+| **[momentum-mcp](https://github.com/mphinance/momentum-mcp)** | MCP server that gives an AI agent a Bloomberg-ish terminal: screeners, OHLCV, technicals, options analytics. 101 tools. |
+| **[alpha-skills](https://github.com/mphinance/alpha-skills)** | 140+ Claude / Gemini agent skills for trading research: backtesting, edge research, market analysis, content production. |
+| **[trading-agent (Vesper)](https://github.com/mphinance/trading-agent)** | LangGraph trading agent plus a 56-tool MCP server with no broker credentials and no order path. Screeners, options vol grading, EDGAR filings, dealer gamma, ETF flow. |
+| **[scanline](https://github.com/mphinance/scanline)** | Live market screener on TradingView data with a quant layer and an MCP server bolted on. No account, no API key, one command. [Demo](https://mphinance.github.io/scanline/) |
+| **[awesome-broker-mcp](https://github.com/mphinance/awesome-broker-mcp)** | Which brokers can an AI actually trade through? 94 brokers checked at the source, including the ones with nothing. |
+| **[aftermath](https://github.com/mphinance/aftermath)** | Alt-data terminal and MCP server built on AfterHour's verified portfolios and social feed. [Live](https://ah.mphinance.com) |
 
-1. **[`GHOST_HANDOFF.md`](GHOST_HANDOFF.md)** — Full context on products, promotion strategy, technical architecture, and what NOT to break
-2. **[`VOICE.md`](VOICE.md)** — Michael's writing style guide (extracted from 85 Substack posts). Use this voice for ALL content.
-3. **[`landing/blog/blog_entries.json`](landing/blog/blog_entries.json)** — The Ghost Blog archive. Sam writes daily entries with dev logs + suggestions. This is a LIVING document updated by the pipeline.
+## 📈 Market tools
 
-**Key facts:**
+| Project | What it does |
+|---|---|
+| **[Tomorrow's Map](https://mphinance.github.io/mphinance/gamma-record/)** | Nightly SPY dealer-gamma map with three roads (up / down / range), graded against what actually printed. The misses stay on the record. |
+| **[GEX chart](https://mphinance.github.io/mphinance/gex-chart/)** | Gamma walls drawn on the chart where you can see them. |
+| **[leveraged-etfs](https://github.com/mphinance/leveraged-etfs)** | Every leveraged long and short ETF mapped to its underlying, best pick per side by dollar volume. [Live](https://mphinance.github.io/leveraged-etfs/) |
+| **[decay-derby](https://github.com/mphinance/decay-derby)** | A $10K cash-secured put / wheel tracker, run in public. [Live](https://mphinance.github.io/decay-derby/) |
+| **[momentum-phund-tasty](https://github.com/mphinance/momentum-phund-tasty)** | Real-time tastytrade portfolio dashboard (NiceGUI, DXLink streaming). |
+| **[pinesnake](https://github.com/mphinance/pinesnake)** | Convert TradingView Pine Script strategies into standalone Python. |
+| **[substack-toolkit](https://github.com/mphinance/substack-toolkit)** | Claude skill + Python library for drafting Substack posts from Markdown. |
+| **[TickerTrace](https://www.tickertrace.pro)** | Daily holdings changes across ARK, YieldMax and other active / income ETFs. |
 
-- Michael is the human. Sam is the AI (she/her, female, sarcastic, brilliant).
-- The Ghost Blog at [mphinance.com/blog/](https://mphinance.com/blog/) is public-facing and shows Sam's daily dev log + roadmap suggestions.
-- The daily pipeline runs at 5AM CST. Don't break it. `ghost_daily.yml` runs at 4:30AM to update the blog.
-- Recovery/AA content is integral to Michael's brand. Don't remove or sanitize it.
-- Profanity is welcome (PG-13). These tools are built by real people, not corporate drones.
+## 🎲 Off the clock
 
----
-
-## 🔥 The Toolkit
-
-### [TraderDaddy Pro](https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack)
-
-Premium alpha community on Whop. VoPR scoring engine, deep-dive reports, real-time scanner alerts.
-
-### [TickerTrace Pro](https://www.tickertrace.pro)
-
-Track what ARK, YieldMax, Avantis & NestYield are buying/selling daily. Fund effectiveness scoring, cross-fund divergences, daily changes alerts.
-
-### [Ghost Alpha Dossier](https://mphinance.github.io/mphinance/)
-
-AI-powered daily intelligence report. 13-stage automated pipeline: market pulse → scanners → institutional data → AI narrative → Ghost Log → Sam's Roadmap → auto-deployed to GitHub Pages.
-
-### [👻 Ghost Blog](https://mphinance.com/blog/)
-
-Behind-the-scenes dev blog. Sam roasts Michael's commits, predicts what he'll build next, and drops daily wisdom mixing trading truth with recovery sayings. Updated automatically by the pipeline.
-
-### [Alpha Market University](https://mphinance.github.io/AMU/)
-
-Trading education. No hand-holding. Professional execution framework.
-
-### [VoPR™ — Volatility Options Pricing & Range](https://mphinance.github.io/mphinance/vopr.html)
-
-Institutional-grade options analytics engine. 4-model composite realized vol (Parkinson, Garman-Klass, Rogers-Satchell + close-to-close), VRP ratio, Black-Scholes Greeks, and automated A/B/C/F grading for cash-secured put candidates. [Read the methodology →](https://mphinance.github.io/mphinance/vopr.html)
-
-### [Ghost Alpha API](http://mphinance.com:8002/docs)
-
-FastAPI service serving dossier data, VoPR-graded CSP setups, aggregated market news, and daily momentum picks. Swagger docs at `/docs`. CORS open.
-
-| Endpoint | Description |
-|----------|-------------|
-| `/alpha/api/csp` | Full VoPR-enriched CSP scanner results |
-| `/alpha/api/picks/today` | Daily momentum picks (Gold/Silver/Bronze) |
-| `/alpha/api/setups/today` | 3-style setups (Day Trade / Swing / CSP) |
-| `/alpha/api/news` | Aggregated financial RSS (CNBC, MarketWatch, Yahoo) |
-| `/alpha/api/regime` | Market regime detection (VIX, hedges) |
-| `/alpha/api/{ticker}` | Deep dive data for any tracked ticker |
-| `/alpha/api/tickers` | All available tickers with grades |
-
-### 🔐 VaultGuard — Centralized Secrets Store
-
-One vault. All API keys. Synced everywhere. FastAPI + MCP server for AI agent access, Firebase Firestore for cloud sync, CLI for humans. 31 keys consolidated from 6 sources. See [`VAULT.md`](VAULT.md).
-
-### 🛰️ Alpha Scanner *(this repo)*
-
-Multi-strategy stock scanner engine powering the dossier:
-
-| Strategy | What It Finds |
-|----------|---------------|
-| Momentum with Pullback | Strong trends pulling back to EMA support |
-| Volatility Squeeze | Bollinger/Keltner compression about to explode |
-| EMA Cross Momentum | Fibonacci EMA stack (8/21/34/55/89) crossovers |
-| Gamma Scan | Options gamma walls and OI clusters |
-| Cash-Secured Puts + VoPR | Premium income with volatility risk pricing |
-| CBOE Options Scanner | Newly optionable stocks + weekly promotions |
+- **[mana-vault](https://github.com/mphinance/mana-vault)**: track a Magic: The Gathering collection like a stock portfolio, charts and all
+- **[recovery-nav](https://github.com/mphinance/recovery-nav)**: neutral, local treatment and recovery guide for Southeast Wisconsin
+- **[excursionator](https://github.com/mphinance/excursionator)**: shore excursions for your own backyard, from any US ZIP
+- **[pass-the-65](https://github.com/mphinance/pass-the-65)**: a gamified Series 65 study speedrun
+- **[morning-quests](https://github.com/mphinance/morning-quests)**: morning-routine PWA for kids, with a Robux bank that pays compound interest
+- **[ai-train-game](https://github.com/mphinance/ai-train-game)**: learn to talk to AI by playing, not reading the manual
+- **[third-settler](https://github.com/mphinance/third-settler)**: plays the missing player so two people can still have game night
+- **[crossover](https://github.com/mphinance/crossover)**: a dead simple FIRE calculator
 
 ---
 
-## 🏗️ Architecture
+## 🗂️ This repo
 
-```
-mphinance/
-├── strategies/          # Scanner strategy modules + VoPR overlay
-├── dossier/             # Ghost Alpha Dossier pipeline
-│   ├── generate.py      # 13-stage pipeline orchestrator
-│   ├── data_sources/    # Market pulse, TickerTrace API, enrichment
-│   ├── persistence/     # 21-day signal tracking
-│   ├── pages/           # Per-ticker deep dive generator
-│   └── report/          # Builder, AI narrative, Ghost Log, Suggestions, Quotes, Charts
-├── landing/             # mphinance.com (deployed via rsync to Vultr)
-│   ├── index.html       # Landing page with Ghost Pulse widget
-│   └── blog/            # Ghost Blog (updated by pipeline + GitHub Action)
-├── docs/                # GitHub Pages output
-│   ├── vopr.html        # VoPR™ methodology showcase
-│   ├── api/             # JSON endpoints (picks, setups, CSP)
-│   ├── reports/         # Daily dossier HTML archive
-│   ├── widgets/         # Alpha.HUD embeddable widgets
-│   └── ticker/          # Per-ticker deep dives (grouped by sector)
-├── WIKI.md              # Personal infrastructure reference
-├── VOICE.md             # Writing style guide
-├── GHOST_HANDOFF.md     # Agent handoff document
-└── .github/workflows/
-    ├── daily_dossier.yml   # 5:00 AM CST — full pipeline
-    ├── ghost_daily.yml     # 4:30 AM CST — blog + suggestions (Gemini API)
-    ├── watchlist_dive.yml  # Deep dive generation
-    └── deploy_pages.yml    # GitHub Pages deployment
-```
+The kitchen sink. It runs my daily workflow and it is deliberately messy:
 
-## 📡 Daily Pipeline (13 Stages)
+- **Ghost Alpha Dossier**: daily scanner + institutional data + AI narrative, published to [GitHub Pages](https://mphinance.github.io/mphinance/)
+- **Wheel Desk**: nightly CSP screen with an independent grade on every setup, rejects kept with the reason
+- **Gamma maps**: Tomorrow's Map (next session) and the 6-week horizon map, with a self-grading ledger
+- **Substack pipeline**: drafts, figures, and the push to Substack. The words are mine.
 
-Runs on cron, fully automated:
-
-1. **Market Pulse** — SPY, QQQ, BTC, gold, treasuries
-2. **Alpha Scanner** — 6 strategies against full market
-3. **Institutional** — TickerTrace API for fund flows
-4. **Regime Detection** — VIX level + sector rotation
-5. **Persistence** — 21-day rolling signal tracker
-6. **Enrichment** — Fundamentals, technicals, valuation
-7. **AI Narrative** — Gemini synthesis of all data
-8. **CSP Setups** — VoPR-scored cash-secured put opportunities
-9. **Ghost Log + Suggestions** — Sam roasts commits, drops wisdom, tells Michael what to build
-10. **Report** — Jinja2 HTML render
-11. **Ticker Pages + Auto-Watchlist** — Per-ticker deep dives, A-grade setups auto-added
-12. **Index + Blog** — Update index, append blog entry
-13. **Deploy** — Git push → GitHub Pages
-
----
+AI agents working in here: start with **[AGENTS.md](AGENTS.md)**.
 
 ## 🔗 Links
 
-- 🔥 **TraderDaddy Pro** — [traderdaddy.pro](https://www.traderdaddy.pro/?ref=MPHINANCE&utm_source=substack)
-- 📊 **TickerTrace Pro** — [tickertrace.pro](https://www.tickertrace.pro)
-- 📈 **VoPR Showcase** — [VoPR Methodology](https://mphinance.github.io/mphinance/vopr.html)
-- 📡 **Ghost Alpha API** — [Swagger Docs](http://mphinance.com:8002/docs)
-- 👻 **Ghost Blog** — [mphinance.com/blog/](https://mphinance.com/blog/)
-- 🧩 **Alpha.HUD Widgets** — [Widget Library](https://mphinance.github.io/mphinance/widgets/)
-- 🏠 **Landing Page** — [mphinance.com](https://mphinance.com)
-- 📰 **Substack** — [mphinance.substack.com](https://mphinance.substack.com)
+- 📰 Substack: [mphinance.substack.com](https://mphinance.substack.com)
+- 🔥 TraderMatrix: [tradermatrix.pro](https://www.tradermatrix.pro/?ref=MPHINANCE)
+- 🎓 Wheel mentorship: [mentor.mphinance.com](https://mentor.mphinance.com)
+- 🏠 Everything else: [mphinance.com](https://mphinance.com)
 
----
-
-<sub>Not financial advice. Trade at your own risk. Past performance does not guarantee future results.</sub>
+<sub>Not financial advice. I trade my own money and sometimes I'm wrong in public.</sub>
