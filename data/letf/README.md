@@ -5,3 +5,6 @@
 
 Universe: Nasdaq ETF screener (all US-listed ETFs), name-filtered for short/inverse/bear, bond-duration noise removed, then hand-mapped. Volume from Yahoo daily bars. Funds whose names don't say short/inverse/bear would be missed.
 TraderMatrix only had flat ticker lists (sectorMatching.ts, megaBlocks.ts), no underlying map.
+
+- `long_map_all.csv` — 575 leveraged long funds (names verified via Yahoo; Nasdaq names were garbled for many Corgi/Leverage Shares tickers).
+- `leveraged_etfs_best.csv` + md/html/png — combined long+short, one pick per side per underlying (315 underlyings). Public repo: github.com/mphinance/leveraged-etfs
