@@ -27,6 +27,20 @@ selling premium, a thing that says "no, not that one" beats another screener.
 
 Eight repos I marked as things you already have, mostly Tradier wrappers and your own repos.
 
+## And I did the other half too
+The broker repos were only half the story. I also graded **306 repos built by the people in that
+ecosystem** (only ones with 5+ stars; the long tail was not worth it). Result: 3 gaps out of 306. Almost
+everything these builders make is noise for you. But the three are good:
+
+- **joncovington/MEICAgent** - this one is uncanny. A Claude Code agent that runs **0DTE iron condors on
+  tastytrade**, with a stack of risk gates, dry-run by default, and a paper system shadow-trading four
+  risk profiles against live quotes. That is your XSP style, already built.
+- **qrak/LLM_trader** (141 stars) - an LLM trading agent that keeps a memory of its own closed trades and
+  posts **every loss on a public ledger**. Same insight as tradememory-protocol: the value is in the
+  losing history.
+- **zd87pl/rlaif-trader** - an autonomous loop that writes a strategy, sandbox-backtests it, keeps or
+  discards it, and hot-swaps the survivors. alpha-skills does backtesting but has no closed loop like that.
+
 ## The bonus I did with the leftover time
 I also audited **your own 74 repos against each other**, since you like a lean stack. Two things worth your
 eye:
