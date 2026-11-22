@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+import pandas as pd
 import yfinance as yf
 
 from dossier.config import SECTOR_ETFS
