@@ -360,11 +360,21 @@ def compose(d, changes=()):
             head += f" The {soft[0]['lvl']} pin is added to that only if the day grades RANGE."
         hist = sc.get("history") or {}
         thin, rest = hist.get("thin") or {}, hist.get("rest") or {}
+        none = hist.get("none") or {}
         if len(hard) <= 1 and thin.get("sessions") and thin.get("blank"):
             head += (
                 f" Of the {thin['sessions']} sessions that went in this thin, "
                 f"{thin['blank']} ended up scoring nothing at all."
             )
+            # A night that commits NOTHING is thinner than the bucket above,
+            # which lumps it in with nights that committed exactly one level
+            # and so quotes the friendlier number. Print the exact bucket too,
+            # with its own count, once it is past noise. Reported only.
+            if not hard and none.get("sessions", 0) >= 5:
+                head += (
+                    f" {none['sessions']} of those went in naming nothing at all, "
+                    f"as this one does, and {none['blank']} of them scored nothing."
+                )
         elif len(hard) > 1 and rest.get("sessions"):
             head += (
                 f" {rest['sessions']} sessions have gone in with two or more, and "
