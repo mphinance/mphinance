@@ -1,6 +1,6 @@
 # Algo builders
 
-Source: GitHub, mined 2026-11-23. 70 people, 231 repos.
+Source: GitHub, mined 2026-11-23. 88 people, 217 repos. Builders show repos with 20+ stars (plus each person's best repo), drop tools under 100 stars and unrelated repos. Infrastructure repos are as given.
 
 Each repo carries one type from: backtesting, live-trading, market-data, research-ml, framework, portfolio-risk, indicators, learning, tools.
 
@@ -10,6 +10,7 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Name: zhulinsen
 - Bio: LLM | AIGC | Robotics
 - Followers: 2002
+- Group: builders
 - Total stars: 74818
 - Best repo: ZhuLinsen/daily_stock_analysis
 
@@ -27,6 +28,7 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Blog: https://aroussi.com/subscribe
 - Bio: I build software for people who build software • CTO as a Service @automazeio • Resident AI @varops 
 - Followers: 3996
+- Group: builders
 - Total stars: 33898
 - Best repo: ranaroussi/yfinance
 
@@ -41,18 +43,14 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Name: DRo
 - Location: Munich, Germany
 - Followers: 844
-- Total stars: 24314
+- Group: builders
+- Total stars: 24296
 - Best repo: mementum/backtrader
 
 - [mementum/backtrader](https://github.com/mementum/backtrader) | backtesting | 23792 stars | Python | https://github.com/mementum/backtrader
   Python Backtesting library for trading strategies
 - [mementum/bta-lib](https://github.com/mementum/bta-lib) | indicators | 504 stars | Python | https://github.com/mementum/bta-lib
   Technical Analysis library in pandas for backtesting algotrading and quantitative analysis
-- [mementum/backtrader.contrib](https://github.com/mementum/backtrader.contrib) | tools | 14 stars | Python | https://github.com/mementum/backtrader.contrib
-- [mementum/backtrader.con](https://github.com/mementum/backtrader.con) | tools | 4 stars | Python | https://github.com/mementum/backtrader.con
-  BacktraderCon contents
-- [mementum/coronacharts](https://github.com/mementum/coronacharts) | tools | 0 stars | Jupyter Notebook | https://github.com/mementum/coronacharts
-  Some coronacharts
 
 ## stefan-jansen
 
@@ -62,6 +60,7 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Location: Brooklyn
 - Blog: https://www.ml4trading.io/
 - Followers: 2914
+- Group: builders
 - Total stars: 22014
 - Best repo: stefan-jansen/machine-learning-for-trading
 
@@ -77,7 +76,8 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Blog: jeroenbouma.com
 - Bio: I turn financial theory into code. Quant and AI models in asset management, and open-source tools like the Finance Toolkit used by thousands.
 - Followers: 1586
-- Total stars: 17467
+- Group: builders
+- Total stars: 17339
 - Best repo: JerBouma/FinanceDatabase
 
 - [JerBouma/FinanceDatabase](https://github.com/JerBouma/FinanceDatabase) | market-data | 9659 stars | Python | https://github.com/JerBouma/FinanceDatabase
@@ -90,8 +90,6 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
   Passive Investing for the Average Joe
 - [JerBouma/FundamentalsQuantifier](https://github.com/JerBouma/FundamentalsQuantifier) | research-ml | 343 stars | Python | https://github.com/JerBouma/FundamentalsQuantifier
   A tool that allows you to visually compare the fundamentals of over 6,000 companies.
-- [JerBouma/PersonalFinance](https://github.com/JerBouma/PersonalFinance) | tools | 128 stars | Python | https://github.com/JerBouma/PersonalFinance
-  Tracking your Income and Expenses Automatically.
 - [JerBouma/FinancePortfolio](https://github.com/JerBouma/FinancePortfolio) | portfolio-risk | 36 stars | Python | https://github.com/JerBouma/FinancePortfolio
   Portfolio Management for Everyone
 - [JerBouma/Finance101](https://github.com/JerBouma/Finance101) | learning | 20 stars | Python | https://github.com/JerBouma/Finance101
@@ -102,6 +100,7 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Profile: https://github.com/myhhub
 - Blog: https://www.ljjyy.com/
 - Followers: 400
+- Group: builders
 - Total stars: 15328
 - Best repo: myhhub/stock
 
@@ -115,17 +114,14 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Blog: jakeschincariol.co
 - Bio: Always vibes, never slop
 - Followers: 5074
-- Total stars: 13231
+- Group: builders
+- Total stars: 11395
 - Best repo: Jakeschincariol/day-trader-skill
 
 - [Jakeschincariol/day-trader-skill](https://github.com/Jakeschincariol/day-trader-skill) | tools | 9345 stars | Python | https://github.com/Jakeschincariol/day-trader-skill
   11 Claude skills for day trading: scan thousands of charts, track breaking news, time every entry and exit, and replay every outcome before you risk a dollar.
 - [Jakeschincariol/trader-skill](https://github.com/Jakeschincariol/trader-skill) | tools | 2050 stars | Python | https://github.com/Jakeschincariol/trader-skill
   11 Claude skills that copy the investors you trust, watch the news and Congress, size every trade to your budget, and never place an order without your yes.
-- [Jakeschincariol/arena-skill](https://github.com/Jakeschincariol/arena-skill) | tools | 1599 stars | Python | https://github.com/Jakeschincariol/arena-skill
-  When Claude keeps giving you bad answers, make 100 versions of it fight to the death. Same task, 100 different strategies, a bracket, one answer left. Free Claude Code skill.
-- [Jakeschincariol/seed-skill](https://github.com/Jakeschincariol/seed-skill) | tools | 237 stars | Python | https://github.com/Jakeschincariol/seed-skill
-  11 Claude skills that take your startup from idea to funded: competitor research, investor matching, a business plan, a pitch deck and a closer that books your investor calls.
 
 ## je-suis-tm
 
@@ -134,17 +130,12 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Blog: https://je-suis-tm.github.io
 - Bio: Bonjour à tous 🇫🇷        Ciao a tutti 🇮🇹          Hola a todos 🇪🇸        
 - Followers: 1171
-- Total stars: 11858
+- Group: builders
+- Total stars: 11340
 - Best repo: je-suis-tm/quant-trading
 
 - [je-suis-tm/quant-trading](https://github.com/je-suis-tm/quant-trading) | research-ml | 11340 stars | Python | https://github.com/je-suis-tm/quant-trading
   Python quantitative trading strategies including VIX Calculator, Pattern Recognition, Commodity Trading Advisor, Monte Carlo, Options Straddle, Shooting Star, London Breakout, Heikin-Ashi, Pair Trading, RSI, Bollinger Bands, Parabolic SAR, Dual Thrust, Awesome, MACD
-- [je-suis-tm/graph-theory](https://github.com/je-suis-tm/graph-theory) | tools | 439 stars | Jupyter Notebook | https://github.com/je-suis-tm/graph-theory
-  Julia and Python complex system applications in ecology, epidemiology, sociology, economics & finance; network science models including Bianconi-Barabási, Barabási-Albert, Watts-Strogatz, Waxman Model & Erdős-Rényi; graph theory algorithms involving Gillespie, Bron Kerbosch, Ramsey, Bellman Ford, A*, Kruskal, Borůvka, Prim, Dijkstra, DSatur, Randomized Distributed, Vizing, Topological Sort, DFS, BFS
-- [je-suis-tm/recursion-and-dynamic-programming](https://github.com/je-suis-tm/recursion-and-dynamic-programming) | tools | 67 stars | Julia | https://github.com/je-suis-tm/recursion-and-dynamic-programming
-  Julia and Python recursion algorithm, fractal geometry and dynamic programming applications including Edit Distance, Knapsack (Multiple Choice), Stock Trading, Pythagorean Tree, Koch Snowflake, Jerusalem Cross, Sierpiński Carpet, Hilbert Curve, Pascal Triangle, Prime Factorization, Palindrome, Egg Drop, Coin Change, Hanoi Tower, Cantor Set, Fibonacci
-- [je-suis-tm/cryptography](https://github.com/je-suis-tm/cryptography) | tools | 12 stars | Jupyter Notebook | https://github.com/je-suis-tm/cryptography
-  Python substitute and transposition ciphers including Vigenère Cipher, Rail Fence Cipher, Caesar Cipher
 
 ## polakowo
 
@@ -152,18 +143,18 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Name: Oleg Polakow
 - Bio: @python, @datascience, @MachineLearning, @Trading
 - Followers: 1115
-- Total stars: 9928
+- Group: builders
+- Total stars: 9925
 - Best repo: polakowo/vectorbt
 
 - [polakowo/vectorbt](https://github.com/polakowo/vectorbt) | framework | 9925 stars | Python | https://github.com/polakowo/vectorbt
   The research engine that gives you an unfair advantage. Run thousands of trading ideas before others finish one.
-- [polakowo/plnx-grabber](https://github.com/polakowo/plnx-grabber) | market-data | 3 stars | Python | https://github.com/polakowo/plnx-grabber
-  Grabber of trade history from Poloniex exchange
 
 ## kernc
 
 - Profile: https://github.com/kernc
 - Followers: 557
+- Group: builders
 - Total stars: 9283
 - Best repo: kernc/backtesting.py
 
@@ -177,14 +168,12 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Company: NYU | Sov.ai 
 - Blog: https://vedex.ai/
 - Followers: 2534
-- Total stars: 8850
+- Group: builders
+- Total stars: 8842
 - Best repo: firmai/financial-machine-learning
 
 - [firmai/financial-machine-learning](https://github.com/firmai/financial-machine-learning) | learning | 8842 stars | Python | https://github.com/firmai/financial-machine-learning
   A curated list of practical financial machine learning tools and applications.
-- [firmai/quant-finance-seminars](https://github.com/firmai/quant-finance-seminars) | learning | 6 stars | n/a | https://github.com/firmai/quant-finance-seminars
-  Weekly Quant Finance Seminars
-- [firmai/demo-ml-ai-invest](https://github.com/firmai/demo-ml-ai-invest) | research-ml | 2 stars | n/a | https://github.com/firmai/demo-ml-ai-invest
 
 ## CyberPunkMetalHead
 
@@ -193,6 +182,7 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Blog: https://aesircrypto.com
 - Bio: Co-founder of AESIR. I build and test crypto trading bots. Meme Savvy 69/10.
 - Followers: 1555
+- Group: builders
 - Total stars: 8587
 - Best repo: CyberPunkMetalHead/Binance-volatility-trading-bot
 
@@ -213,35 +203,30 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - [CyberPunkMetalHead/cryptocurrency-machine-learning-prediction-algo-trading](https://github.com/CyberPunkMetalHead/cryptocurrency-machine-learning-prediction-algo-trading) | research-ml | 61 stars | C# | https://github.com/CyberPunkMetalHead/cryptocurrency-machine-learning-prediction-algo-trading
   This is a functional trading bot that works by predicting the price of Bitcoin using Machine Learning, and placing trades based on its prediction. It's pretty experimental and largely untested, so please don't yolo.
 
+## shy3130
+
+- Profile: https://github.com/shy3130
+- Name: wshy
+- Followers: 139
+- Group: builders
+- Total stars: 8220
+- Best repo: shy3130/tick-stock-panel
+
+- [shy3130/tick-stock-panel](https://github.com/shy3130/tick-stock-panel) | tools | 8220 stars | Python | https://github.com/shy3130/tick-stock-panel
+  TSP自托管、零运维的 A 股「自建策略 + 监控 + 回测」量化工作台  | LLM能力驱使策略定制+个股分析+复盘 | 自由接入第三方数据源与个性化扩展数据
+
 ## tradermonty
 
 - Profile: https://github.com/tradermonty
 - Followers: 287
-- Total stars: 8285
+- Group: builders
+- Total stars: 8154
 - Best repo: tradermonty/claude-trading-skills
 
 - [tradermonty/claude-trading-skills](https://github.com/tradermonty/claude-trading-skills) | tools | 8087 stars | Python | https://github.com/tradermonty/claude-trading-skills
   Claude Code skills for equity investors and traders, market analysis, technical charting, economic calendars, screeners, and trading strategy development.
 - [tradermonty/finviz-mcp-server](https://github.com/tradermonty/finviz-mcp-server) | market-data | 67 stars | Python | https://github.com/tradermonty/finviz-mcp-server
   MCP server providing stock screening, fundamental analysis, news, and SEC filing tools powered by Finviz.
-- [tradermonty/hermes-trading-research-agent-work-package](https://github.com/tradermonty/hermes-trading-research-agent-work-package) | tools | 57 stars | Python | https://github.com/tradermonty/hermes-trading-research-agent-work-package
-  Hermes profile distribution turning claude-trading-skills into an always-on US-equity research, journaling, and risk-review assistant for human traders. No order placement.
-- [tradermonty/claude-weekly-trade-strategy](https://github.com/tradermonty/claude-weekly-trade-strategy) | tools | 43 stars | Python | https://github.com/tradermonty/claude-weekly-trade-strategy
-- [tradermonty/uptrend-dashboard](https://github.com/tradermonty/uptrend-dashboard) | tools | 10 stars | Python | https://github.com/tradermonty/uptrend-dashboard
-- [tradermonty/tradingview-scripts](https://github.com/tradermonty/tradingview-scripts) | indicators | 9 stars | n/a | https://github.com/tradermonty/tradingview-scripts
-- [tradermonty/earnings-trade-backtest](https://github.com/tradermonty/earnings-trade-backtest) | backtesting | 6 stars | Python | https://github.com/tradermonty/earnings-trade-backtest
-- [tradermonty/market-breadth-analysis](https://github.com/tradermonty/market-breadth-analysis) | indicators | 6 stars | Python | https://github.com/tradermonty/market-breadth-analysis
-
-## shy3130
-
-- Profile: https://github.com/shy3130
-- Name: wshy
-- Followers: 139
-- Total stars: 8220
-- Best repo: shy3130/tick-stock-panel
-
-- [shy3130/tick-stock-panel](https://github.com/shy3130/tick-stock-panel) | tools | 8220 stars | Python | https://github.com/shy3130/tick-stock-panel
-  TSP自托管、零运维的 A 股「自建策略 + 监控 + 回测」量化工作台  | LLM能力驱使策略定制+个股分析+复盘 | 自由接入第三方数据源与个性化扩展数据
 
 ## simonlin1212
 
@@ -250,7 +235,8 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Blog: https://phoenixtree.ai/
 - Bio: AI agents for investment research · 22K+ GitHub stars · Founder, Phoenix Tree AI · Open to paid research & consulting: simonlin0423@gmail.com
 - Followers: 1776
-- Total stars: 7404
+- Group: builders
+- Total stars: 7403
 - Best repo: simonlin1212/Vibe-Research
 
 - [simonlin1212/Vibe-Research](https://github.com/simonlin1212/Vibe-Research) | research-ml | 3861 stars | TypeScript | https://github.com/simonlin1212/Vibe-Research
@@ -261,8 +247,18 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
   Vibe AStock：A 股短线复盘与跟踪工作台 · 盯盘异动、情绪复盘（连板天梯、题材轮动、明日验证）、AI 复盘与周报、交易日志、盘前提醒，182 个数据端点。支持 Claude Code、Codex、WorkBuddy 订阅或任意模型 API。 | A short-term trading review and tracking workbench for China A-shares.
 - [simonlin1212/investment-news](https://github.com/simonlin1212/investment-news) | tools | 505 stars | JavaScript | https://github.com/simonlin1212/investment-news
   为 A股投资者打造的全球产业链资讯看板 · 12 大赛道一一对应 A股板块(半导体/AI/机器人/新能源车…)，覆盖 100+ 权威源，用你自己的大模型每日提炼中文「今日要点」+ 翻译 · 本地运行、零 API key · Local AI news dashboard tracking the global industry signals behind China A-share sectors
-- [simonlin1212/finwisp-home](https://github.com/simonlin1212/finwisp-home) | learning | 1 stars | TypeScript | https://github.com/simonlin1212/finwisp-home
-  Alexa+-style family finance learning hub: self-hosted MCP server (Streamable HTTP, 2025-11-25) on real SEC EDGAR data. Educational only.
+
+## charliedream1
+
+- Profile: https://github.com/charliedream1
+- Name: Optimus Prime
+- Followers: 210
+- Group: builders
+- Total stars: 6788
+- Best repo: charliedream1/ai_quant_trade
+
+- [charliedream1/ai_quant_trade](https://github.com/charliedream1/ai_quant_trade) | framework | 6788 stars | Python | https://github.com/charliedream1/ai_quant_trade
+  Stock AI Trader: 1-stop platform for learning, sim & live trading. Covers: stock basics, strategies, LLMs, factor mining, ML/DL/RL, graph nets, HFT, C++ deploy & JoinQuant code. 股票AI操盘手：一站式学习、模拟、实盘平台。涵盖：股票基础、策略、大模型、因子挖掘、机器学习/深度学习/强化学习、图网络、高频交易、C++部署及聚宽代码。
 
 ## fmzquant
 
@@ -273,7 +269,8 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Blog: https://www.fmz.com/
 - Bio: Financial Management Zen
 - Followers: 1984
-- Total stars: 6792
+- Group: builders
+- Total stars: 6766
 - Best repo: fmzquant/strategies
 
 - [fmzquant/strategies](https://github.com/fmzquant/strategies) | live-trading | 6060 stars | n/a | https://github.com/fmzquant/strategies
@@ -284,25 +281,6 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
   FMZ backtest engine python package
 - [fmzquant/backtest_javascript](https://github.com/fmzquant/backtest_javascript) | backtesting | 24 stars | n/a | https://github.com/fmzquant/backtest_javascript
   FMZ backtest engine javascript package
-- [fmzquant/SublimeFMZ](https://github.com/fmzquant/SublimeFMZ) | tools | 15 stars | Python | https://github.com/fmzquant/SublimeFMZ
-  fmz plugin for sublime
-- [fmzquant/AtomFMZ](https://github.com/fmzquant/AtomFMZ) | tools | 8 stars | JavaScript | https://github.com/fmzquant/AtomFMZ
-  Atom plugin for FMZ
-- [fmzquant/docker](https://github.com/fmzquant/docker) | tools | 2 stars | Dockerfile | https://github.com/fmzquant/docker
-  fmz docker
-- [fmzquant/VimFMZ](https://github.com/fmzquant/VimFMZ) | tools | 1 stars | Vim Script | https://github.com/fmzquant/VimFMZ
-  FMZ rsync plugin for VIM
-
-## charliedream1
-
-- Profile: https://github.com/charliedream1
-- Name: Optimus Prime
-- Followers: 210
-- Total stars: 6788
-- Best repo: charliedream1/ai_quant_trade
-
-- [charliedream1/ai_quant_trade](https://github.com/charliedream1/ai_quant_trade) | framework | 6788 stars | Python | https://github.com/charliedream1/ai_quant_trade
-  Stock AI Trader: 1-stop platform for learning, sim & live trading. Covers: stock basics, strategies, LLMs, factor mining, ML/DL/RL, graph nets, HFT, C++ deploy & JoinQuant code. 股票AI操盘手：一站式学习、模拟、实盘平台。涵盖：股票基础、策略、大模型、因子挖掘、机器学习/深度学习/强化学习、图网络、高频交易、C++部署及聚宽代码。
 
 ## Mathieu2301
 
@@ -312,19 +290,19 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Blog: https://mathieu.colmon.fr/
 - Bio: TS developer
 - Followers: 248
-- Total stars: 5945
+- Group: builders
+- Total stars: 5933
 - Best repo: Mathieu2301/TradingView-API
 
 - [Mathieu2301/TradingView-API](https://github.com/Mathieu2301/TradingView-API) | market-data | 5933 stars | TypeScript | https://github.com/Mathieu2301/TradingView-API
   📈 Get real-time stocks from TradingView
-- [Mathieu2301/CandleVault](https://github.com/Mathieu2301/CandleVault) | tools | 12 stars | Vue | https://github.com/Mathieu2301/CandleVault
-  Bank and trading app
 
 ## nkaz001
 
 - Profile: https://github.com/nkaz001
 - Bio: serious hobbyist
 - Followers: 526
+- Group: builders
 - Total stars: 5755
 - Best repo: nkaz001/hftbacktest
 
@@ -349,6 +327,7 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Name: Philippe Morissette
 - Location: Montreal, QC, Canada
 - Followers: 337
+- Group: builders
 - Total stars: 5746
 - Best repo: pmorissette/bt
 
@@ -365,21 +344,19 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Location: Melbourne, Australia
 - Blog: https://chrislee.kr
 - Followers: 415
+- Group: builders
 - Total stars: 5620
 - Best repo: chrisleekr/binance-trading-bot
 
 - [chrisleekr/binance-trading-bot](https://github.com/chrisleekr/binance-trading-bot) | live-trading | 5620 stars | TypeScript | https://github.com/chrisleekr/binance-trading-bot
   Automated Binance trading bot with pluggable strategies, historical backtesting, a live dashboard, and connect an AI agent over MCP
-- [chrisleekr/sre-platform](https://github.com/chrisleekr/sre-platform) | tools | 0 stars | TypeScript | https://github.com/chrisleekr/sre-platform
-  Multi-tenant SaaS for unified observability, incident triage, and reliability metrics. A pluggable AI triage engine investigates incidents conversationally across Slack and a React dashboard.
-- [chrisleekr/helm-charts](https://github.com/chrisleekr/helm-charts) | tools | 0 stars | Shell | https://github.com/chrisleekr/helm-charts
-  Chris' Helm Charts
 
 ## gbeced
 
 - Profile: https://github.com/gbeced
 - Name: Gabriel Becedillas
 - Followers: 258
+- Group: builders
 - Total stars: 5556
 - Best repo: gbeced/pyalgotrade
 
@@ -387,8 +364,6 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
   Python Algorithmic Trading Library
 - [gbeced/basana](https://github.com/gbeced/basana) | framework | 878 stars | Python | https://github.com/gbeced/basana
   A Python async and event driven framework for algorithmic trading, with a focus on crypto currencies.
-- [gbeced/kraken-order-book-mirror](https://github.com/gbeced/kraken-order-book-mirror) | market-data | 0 stars | Rust | https://github.com/gbeced/kraken-order-book-mirror
-  A Rust (Tokio) client that keeps a local, order-by-order copy of a Level 3 Kraken spot order book.
 
 ## atilaahmettaner
 
@@ -400,15 +375,14 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Bio: Software Engineer
 
 - Followers: 233
-- Total stars: 5413
+- Group: builders
+- Total stars: 5412
 - Best repo: atilaahmettaner/tradingview-mcp
 
 - [atilaahmettaner/tradingview-mcp](https://github.com/atilaahmettaner/tradingview-mcp) | market-data | 5331 stars | Python | https://github.com/atilaahmettaner/tradingview-mcp
   MCP server for market analysis in AI assistants: screeners, multi-timeframe technical analysis, backtests and sentiment for crypto, stocks, forex and futures. 39 tools. Self-host free, or use the hosted version, TradingMCP.
 - [atilaahmettaner/bollinger-band-screener](https://github.com/atilaahmettaner/bollinger-band-screener) | indicators | 81 stars | Python | https://github.com/atilaahmettaner/bollinger-band-screener
   Scan cryptocurrencies and stock market  by Bollinger bandwidth in one click. Browse coins integrated with TradingView. Just the tool you need in bull season. find the coins and stocks that will rise in advance.
-- [atilaahmettaner/tradingmcp-plugin](https://github.com/atilaahmettaner/tradingmcp-plugin) | market-data | 1 stars | n/a | https://github.com/atilaahmettaner/tradingmcp-plugin
-  TradingMCP plugin for Cursor and Grok Bot: market data, screeners, technical analysis, backtests and charts through TradingMCP's hosted MCP server.
 
 ## jaungiers
 
@@ -418,7 +392,8 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Blog: https://www.jakob-aungiers.com
 - Bio: Quant // AI & ML Dev
 - Followers: 684
-- Total stars: 5277
+- Group: builders
+- Total stars: 5276
 - Best repo: jaungiers/LSTM-Neural-Network-for-Time-Series-Prediction
 
 - [jaungiers/LSTM-Neural-Network-for-Time-Series-Prediction](https://github.com/jaungiers/LSTM-Neural-Network-for-Time-Series-Prediction) | market-data | 5232 stars | Python | https://github.com/jaungiers/LSTM-Neural-Network-for-Time-Series-Prediction
@@ -427,8 +402,6 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
   Python Monte Carlo Simulation to model returns from randomly generated portfolios against a benchmark index.
 - [jaungiers/Yahoo-Finance-Stocklist-Scraper](https://github.com/jaungiers/Yahoo-Finance-Stocklist-Scraper) | market-data | 21 stars | Python | https://github.com/jaungiers/Yahoo-Finance-Stocklist-Scraper
   Converts the full Yahoo Finance stocks list into a .csv file with ticker symbol, company name, exchange and country mapped.
-- [jaungiers/Websocket-Market-Data-Collector](https://github.com/jaungiers/Websocket-Market-Data-Collector) | market-data | 1 stars | Java | https://github.com/jaungiers/Websocket-Market-Data-Collector
-  Java based websocket data collector for crypto L2 market data saving to HDF5 files
 
 ## dcajasn
 
@@ -438,13 +411,12 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Blog: https://financioneroncios.wordpress.com/
 - Bio: Finance and Python lover, looking for job opportunities in quantitative finance, investments and risk management.
 - Followers: 559
-- Total stars: 4632
+- Group: builders
+- Total stars: 4621
 - Best repo: dcajasn/Riskfolio-Lib
 
 - [dcajasn/Riskfolio-Lib](https://github.com/dcajasn/Riskfolio-Lib) | portfolio-risk | 4621 stars | C++ | https://github.com/dcajasn/Riskfolio-Lib
   Portfolio Optimization in Python
-- [dcajasn/Riskfolio-FDP-Webinar](https://github.com/dcajasn/Riskfolio-FDP-Webinar) | learning | 11 stars | Jupyter Notebook | https://github.com/dcajasn/Riskfolio-FDP-Webinar
-  Materials from the Webinar "How to build better portfolios with Python using Riskfolio-Lib"
 
 ## shashankvemuri
 
@@ -454,22 +426,14 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 - Blog: https://shashankvemuri.com/
 - Bio: @Aaru-AI
 - Followers: 548
-- Total stars: 4483
+- Group: builders
+- Total stars: 4445
 - Best repo: shashankvemuri/Finance
 
 - [shashankvemuri/Finance](https://github.com/shashankvemuri/Finance) | framework | 4401 stars | Python | https://github.com/shashankvemuri/Finance
   Python toolkit for quantitative finance: stock analysis, technical indicators, strategy backtesting, portfolio optimization, and financial modeling.
 - [shashankvemuri/economic-dashboard](https://github.com/shashankvemuri/economic-dashboard) | market-data | 44 stars | Python | https://github.com/shashankvemuri/economic-dashboard
   A dashboard for macroeconomic and stock market data built with Python and Dash.
-- [shashankvemuri/InvestmentsTracker](https://github.com/shashankvemuri/InvestmentsTracker) | tools | 17 stars | JavaScript | https://github.com/shashankvemuri/InvestmentsTracker
-  Track all of your investments in the market using this web application!
-- [shashankvemuri/TradingView-Recommendations](https://github.com/shashankvemuri/TradingView-Recommendations) | tools | 15 stars | Python | https://github.com/shashankvemuri/TradingView-Recommendations
-- [shashankvemuri/Finance_Streamlit_Dashboard](https://github.com/shashankvemuri/Finance_Streamlit_Dashboard) | indicators | 6 stars | Python | https://github.com/shashankvemuri/Finance_Streamlit_Dashboard
-  A technical analysis dashboard on Streamlit!
-- [shashankvemuri/QuizletsFlashcardsScraper](https://github.com/shashankvemuri/QuizletsFlashcardsScraper) | tools | 0 stars | Python | https://github.com/shashankvemuri/QuizletsFlashcardsScraper
-  Scrape terms and definitions from Quizlet using Python
-- [shashankvemuri/gitfolio](https://github.com/shashankvemuri/gitfolio) | tools | 0 stars | HTML | https://github.com/shashankvemuri/gitfolio
-  My personal github portfolio
 
 ## mhallsmoore
 
@@ -479,15 +443,14 @@ Each repo carries one type from: backtesting, live-trading, market-data, researc
 
 Founder/MD of QuantStart.com.
 - Followers: 913
-- Total stars: 4361
+- Group: builders
+- Total stars: 4354
 - Best repo: mhallsmoore/qstrader
 
 - [mhallsmoore/qstrader](https://github.com/mhallsmoore/qstrader) | backtesting | 3492 stars | Python | https://github.com/mhallsmoore/qstrader
   QuantStart.com - QSTrader backtesting simulation engine.
 - [mhallsmoore/qsforex](https://github.com/mhallsmoore/qsforex) | backtesting | 862 stars | Python | https://github.com/mhallsmoore/qsforex
   QuantStart Forex Backtesting and Live Trading
-- [mhallsmoore/synthfin](https://github.com/mhallsmoore/synthfin) | market-data | 7 stars | Python | https://github.com/mhallsmoore/synthfin
-  Synthetic financial time series generation and visualisation library
 
 ## EliteQuant
 
@@ -496,11 +459,25 @@ Founder/MD of QuantStart.com.
 - Bio: Online resources for quantitative trading and portfolio management
 
 - Followers: 950
+- Group: builders
 - Total stars: 4283
 - Best repo: EliteQuant/EliteQuant
 
 - [EliteQuant/EliteQuant](https://github.com/EliteQuant/EliteQuant) | learning | 4283 stars | n/a | https://github.com/EliteQuant/EliteQuant
   A list of online resources for quantitative modeling, trading, portfolio management
+
+## Micro-sheep
+
+- Profile: https://github.com/Micro-sheep
+- Name: sheep
+- Blog: https://github.com/Micro-sheep
+- Followers: 195
+- Group: builders
+- Total stars: 4187
+- Best repo: Micro-sheep/efinance
+
+- [Micro-sheep/efinance](https://github.com/Micro-sheep/efinance) | market-data | 4187 stars | Python | https://github.com/Micro-sheep/efinance
+  efinance 是一个可以快速获取基金、股票、债券、期货数据的 Python 库，回测以及量化交易的好帮手！🚀🚀🚀
 
 ## cybergeekgyan
 
@@ -511,31 +488,12 @@ Founder/MD of QuantStart.com.
 - Blog: https://linktr.ee/cybergeekgyan
 - Bio: @flipkart | Ex-@zomato | AI & Data Science | Quant Finance | NSIT
 - Followers: 684
-- Total stars: 4193
+- Group: builders
+- Total stars: 4184
 - Best repo: cybergeekgyan/Quant-Developers-Resources
 
 - [cybergeekgyan/Quant-Developers-Resources](https://github.com/cybergeekgyan/Quant-Developers-Resources) | learning | 4184 stars | Python | https://github.com/cybergeekgyan/Quant-Developers-Resources
   Resources to Prepare for Quant Developers/ Quantitative Researcher/ Quantitative Trader/ Quant Analyst/ Software Engineers in Quant Trading Firms, HFTs and Hedge Funds
-- [cybergeekgyan/Financial-Engineering-Guide](https://github.com/cybergeekgyan/Financial-Engineering-Guide) | learning | 4 stars | n/a | https://github.com/cybergeekgyan/Financial-Engineering-Guide
-- [cybergeekgyan/Stock-Market-Dashboard](https://github.com/cybergeekgyan/Stock-Market-Dashboard) | tools | 2 stars | Python | https://github.com/cybergeekgyan/Stock-Market-Dashboard
-  Indian Stock Market Dashboard for real time stock price data along with valuation metrics such as P/E, P/B ratio
-- [cybergeekgyan/fsn_matching_webApp_v1](https://github.com/cybergeekgyan/fsn_matching_webApp_v1) | tools | 1 stars | Python | https://github.com/cybergeekgyan/fsn_matching_webApp_v1
-  This web app allows users to match product titles against search keywords using multiple strategies (Partial, Exact, Fuzzy Match), and returns the matched FSNs
-- [cybergeekgyan/EquiValue](https://github.com/cybergeekgyan/EquiValue) | tools | 1 stars | Python | https://github.com/cybergeekgyan/EquiValue
-  Equivalue is a streamlit app that allows users to calculate the Intrinsic Value of the Indian Stocks using different valuation methods and techniques.
-- [cybergeekgyan/Real-time-Stock-Market-Monitoring-System](https://github.com/cybergeekgyan/Real-time-Stock-Market-Monitoring-System) | tools | 1 stars | n/a | https://github.com/cybergeekgyan/Real-time-Stock-Market-Monitoring-System
-
-## Micro-sheep
-
-- Profile: https://github.com/Micro-sheep
-- Name: sheep
-- Blog: https://github.com/Micro-sheep
-- Followers: 195
-- Total stars: 4187
-- Best repo: Micro-sheep/efinance
-
-- [Micro-sheep/efinance](https://github.com/Micro-sheep/efinance) | market-data | 4187 stars | Python | https://github.com/Micro-sheep/efinance
-  efinance 是一个可以快速获取基金、股票、债券、期货数据的 Python 库，回测以及量化交易的好帮手！🚀🚀🚀
 
 ## letianzj
 
@@ -544,7 +502,8 @@ Founder/MD of QuantStart.com.
 - Location: NYC
 - Blog: https://letianzj.github.io/
 - Followers: 432
-- Total stars: 4052
+- Group: builders
+- Total stars: 4036
 - Best repo: letianzj/QuantResearch
 
 - [letianzj/QuantResearch](https://github.com/letianzj/QuantResearch) | backtesting | 3076 stars | Jupyter Notebook | https://github.com/letianzj/QuantResearch
@@ -553,8 +512,6 @@ Founder/MD of QuantStart.com.
   Backtest and live trading in Python
 - [letianzj/QuantTrading](https://github.com/letianzj/QuantTrading) | backtesting | 172 stars | C# | https://github.com/letianzj/QuantTrading
   A real-time quantitative trading/backtesting platform in C#, supporting IB (full brokerage) and Google Finance (quote only). It adds R support through R.NET.
-- [letianzj/letianzj.github.io](https://github.com/letianzj/letianzj.github.io) | learning | 16 stars | HTML | https://github.com/letianzj/letianzj.github.io
-  Quantitative investing blog
 
 ## Jon-Becker
 
@@ -567,35 +524,26 @@ Founder/MD of QuantStart.com.
 
 senior software engineer @ coinbase
 - Followers: 700
-- Total stars: 3972
+- Group: builders
+- Total stars: 3958
 - Best repo: Jon-Becker/prediction-market-analysis
 
 - [Jon-Becker/prediction-market-analysis](https://github.com/Jon-Becker/prediction-market-analysis) | market-data | 3958 stars | Python | https://github.com/Jon-Becker/prediction-market-analysis
   A framework for collecting and analyzing prediction market data, including the largest publicly available dataset of Polymarket and Kalshi market and trade data.
-- [Jon-Becker/revoke-finance](https://github.com/Jon-Becker/revoke-finance) | tools | 14 stars | JavaScript | https://github.com/Jon-Becker/revoke-finance
-  A simple tool which allows users to view and manage token approvals on their Ethereum account.
 
 ## warproxxx
 
 - Profile: https://github.com/warproxxx
 - Bio: https://x.com/danielsapkota
 - Followers: 242
-- Total stars: 3894
+- Group: builders
+- Total stars: 3890
 - Best repo: warproxxx/poly_data
 
 - [warproxxx/poly_data](https://github.com/warproxxx/poly_data) | market-data | 2355 stars | Python | https://github.com/warproxxx/poly_data
   Polymarket Data Retriever that fetches, processes, and structures Polymarket data including markets, order events and trades.
 - [warproxxx/poly-maker](https://github.com/warproxxx/poly-maker) | live-trading | 1535 stars | Python | https://github.com/warproxxx/poly-maker
   An automated market making bot for the Polymarket Prediction Market that provides liquidity by maintaining orders on both sides of the order book with customizable parameters
-- [warproxxx/liveTrader](https://github.com/warproxxx/liveTrader) | live-trading | 1 stars | Python | https://github.com/warproxxx/liveTrader
-- [warproxxx/Bitcoin-Trend-Trading](https://github.com/warproxxx/Bitcoin-Trend-Trading) | research-ml | 1 stars | Jupyter Notebook | https://github.com/warproxxx/Bitcoin-Trend-Trading
-- [warproxxx/Huobi-Historic-Data-Scraper](https://github.com/warproxxx/Huobi-Historic-Data-Scraper) | market-data | 1 stars | Python | https://github.com/warproxxx/Huobi-Historic-Data-Scraper
-  Gets historic OHLCV data from Huobi using their wss api. First exchange I saw that shares historic data through wss API
-- [warproxxx/warproxxx.github.io](https://github.com/warproxxx/warproxxx.github.io) | learning | 1 stars | HTML | https://github.com/warproxxx/warproxxx.github.io
-  A blog where i wrote about my experience in trading algorithms @ https://warproxxx.github.io/
-- [warproxxx/omnia-backtest](https://github.com/warproxxx/omnia-backtest) | backtesting | 0 stars | HTML | https://github.com/warproxxx/omnia-backtest
-  Backtesting the logic for omnia vaults
-- [warproxxx/grid-trading](https://github.com/warproxxx/grid-trading) | live-trading | 0 stars | Python | https://github.com/warproxxx/grid-trading
 
 ## fasiondog
 
@@ -603,27 +551,12 @@ senior software engineer @ coinbase
 - Name: fasiondog
 - Location: Quanzhou, Fujian, China
 - Followers: 169
-- Total stars: 3750
+- Group: builders
+- Total stars: 3736
 - Best repo: fasiondog/hikyuu
 
 - [fasiondog/hikyuu](https://github.com/fasiondog/hikyuu) | framework | 3736 stars | C++ | https://github.com/fasiondog/hikyuu
   An open-source, high-performance quantitative trading framework in C++/Python focused on strategy analysis and backtesting Trading model R&D · Ultra-fast engine · Efficient backtesting
-- [fasiondog/hikyuu_hub](https://github.com/fasiondog/hikyuu_hub) | tools | 14 stars | Python | https://github.com/fasiondog/hikyuu_hub
-  Trading strategy part warehouse of
-
-## edtechre
-
-- Profile: https://github.com/edtechre
-- Name: Ed West
-- Blog: https://www.pybroker.com
-- Followers: 144
-- Total stars: 3748
-- Best repo: edtechre/pybroker
-
-- [edtechre/pybroker](https://github.com/edtechre/pybroker) | framework | 3728 stars | Python | https://github.com/edtechre/pybroker
-  Algorithmic Trading in Python with Machine Learning
-- [edtechre/Yahoo-Finance-and-Google-Finance-NMF](https://github.com/edtechre/Yahoo-Finance-and-Google-Finance-NMF) | tools | 20 stars | Python | https://github.com/edtechre/Yahoo-Finance-and-Google-Finance-NMF
-  Groups a company's news articles from Yahoo Finance and Google Finance using non-negative matrix factorization (NMF)
 
 ## ctubio
 
@@ -635,15 +568,25 @@ senior software engineer @ coinbase
 - Bio:          solidarity with the solidary    
               freedom for the revolutionary
 - Followers: 285
-- Total stars: 3737
+- Group: builders
+- Total stars: 3736
 - Best repo: ctubio/Krypto-trading-bot
 
 - [ctubio/Krypto-trading-bot](https://github.com/ctubio/Krypto-trading-bot) | live-trading | 3736 stars | C++ | https://github.com/ctubio/Krypto-trading-bot
   Self-hosted crypto trading bot (automated high frequency market making) written in C++
-- [ctubio/ibkr-gateway-trading-floor](https://github.com/ctubio/ibkr-gateway-trading-floor) | live-trading | 1 stars | C++ | https://github.com/ctubio/ibkr-gateway-trading-floor
-  A Windows tray application for trades using Interactive Brokers Gateway.
-- [ctubio/ibkr-portfolio-groups-and-colors](https://github.com/ctubio/ibkr-portfolio-groups-and-colors) | tools | 0 stars | JavaScript | https://github.com/ctubio/ibkr-portfolio-groups-and-colors
-  Chrome extension for IBKR Client Portal. Click the name of a Portfolio Position to change the color, or double-click it to change the group.
+
+## edtechre
+
+- Profile: https://github.com/edtechre
+- Name: Ed West
+- Blog: https://www.pybroker.com
+- Followers: 144
+- Group: builders
+- Total stars: 3728
+- Best repo: edtechre/pybroker
+
+- [edtechre/pybroker](https://github.com/edtechre/pybroker) | framework | 3728 stars | Python | https://github.com/edtechre/pybroker
+  Algorithmic Trading in Python with Machine Learning
 
 ## imbue-bit
 
@@ -653,7 +596,8 @@ senior software engineer @ coinbase
 - Blog: chunjiang.dev
 - Bio: 15yo Developer | she/her | Full-stack & CP  | 「¡Apártense, vacas, que la vida es corta!」
 - Followers: 868
-- Total stars: 3617
+- Group: builders
+- Total stars: 3610
 - Best repo: imbue-bit/AlphaGPT
 
 - [imbue-bit/AlphaGPT](https://github.com/imbue-bit/AlphaGPT) | research-ml | 3282 stars | Python | https://github.com/imbue-bit/AlphaGPT
@@ -664,8 +608,6 @@ senior software engineer @ coinbase
   Official implementation for the paper: Deep Learning under Continuous Distribution Shift: The Non-Stationary NTK and Spectral Tracking SDE for Quantitative Finance
 - [imbue-bit/cjquant](https://github.com/imbue-bit/cjquant) | framework | 34 stars | Python | https://github.com/imbue-bit/cjquant
   CJQuant | 为场外基金设计的量化交易 SDK。
-- [imbue-bit/capacity_estimator](https://github.com/imbue-bit/capacity_estimator) | research-ml | 7 stars | C++ | https://github.com/imbue-bit/capacity_estimator
-  Quantitative AUM capacity estimator featuring a Q-learning Oracle.
 
 ## chrisconlan
 
@@ -676,6 +618,7 @@ senior software engineer @ coinbase
 - Blog: https://conlanscientific.com
 - Bio: CEO @ Conlan Scientific. Author of The Factor Investing Chartbook, Algorithmic Trading with Python, and Fast Python
 - Followers: 607
+- Group: builders
 - Total stars: 3584
 - Best repo: chrisconlan/algorithmic-trading-with-python
 
@@ -691,36 +634,24 @@ senior software engineer @ coinbase
 - Location: Germany, Reken
 - Blog: espend.de
 - Followers: 578
+- Group: builders
 - Total stars: 3553
 - Best repo: Haehnchen/crypto-trading-bot
 
 - [Haehnchen/crypto-trading-bot](https://github.com/Haehnchen/crypto-trading-bot) | live-trading | 3553 stars | TypeScript | https://github.com/Haehnchen/crypto-trading-bot
   Cryptocurrency trading bot in javascript for Bitfinex, Bitmex, Binance, Bybit ... (public edition)
-- [Haehnchen/playground-twitch-player](https://github.com/Haehnchen/playground-twitch-player) | tools | 0 stars | Rust | https://github.com/Haehnchen/playground-twitch-player
-  A lightweight mpv-based desktop app for watching Twitch streams with Twitch account login, chat, fullscreen controls, and an optional 2x2 stream grid.  Twitch Player icon
 
 ## iterativv
 
 - Profile: https://github.com/iterativv
 - Name: iterativ
 - Followers: 324
+- Group: builders
 - Total stars: 3548
 - Best repo: iterativv/NostalgiaForInfinity
 
 - [iterativv/NostalgiaForInfinity](https://github.com/iterativv/NostalgiaForInfinity) | live-trading | 3548 stars | Python | https://github.com/iterativv/NostalgiaForInfinity
   Trading strategy for the Freqtrade crypto bot
-
-## hello245m
-
-- Profile: https://github.com/hello245m
-- Followers: 51
-- Total stars: 3213
-- Best repo: hello245m/free-stockdb
-
-- [hello245m/free-stockdb](https://github.com/hello245m/free-stockdb) | market-data | 3196 stars | HTML | https://github.com/hello245m/free-stockdb
-  面向 A 股日K、分钟K与ETF分钟数据的本地量化引擎，集成增量同步、本地缓存、复权、批量查询、回测与指标计算。
-- [hello245m/free-stockhq](https://github.com/hello245m/free-stockhq) | market-data | 17 stars | n/a | https://github.com/hello245m/free-stockhq
-  股票实时行情+交易api，本地版，单文件，打开即用，本地数据不限订阅数，免费下载，开箱即用，零延迟请求。
 
 ## AlphaGBM
 
@@ -730,6 +661,7 @@ senior software engineer @ coinbase
 - Blog: www.alphagbm.com
 - Bio: Real-data options and stocks intelligence for traders and AI agents. --not LLM guesswork.  
 - Followers: 356
+- Group: builders
 - Total stars: 3207
 - Best repo: AlphaGBM/skills
 
@@ -738,6 +670,17 @@ senior software engineer @ coinbase
 - [AlphaGBM/alphagbm-trading-skills](https://github.com/AlphaGBM/alphagbm-trading-skills) | research-ml | 69 stars | Python | https://github.com/AlphaGBM/alphagbm-trading-skills
   AlphaGBM research workflows: earnings, event attribution, evidence review and trade journaling. Early release; read-only by default.
 
+## hello245m
+
+- Profile: https://github.com/hello245m
+- Followers: 51
+- Group: builders
+- Total stars: 3196
+- Best repo: hello245m/free-stockdb
+
+- [hello245m/free-stockdb](https://github.com/hello245m/free-stockdb) | market-data | 3196 stars | HTML | https://github.com/hello245m/free-stockdb
+  面向 A 股日K、分钟K与ETF分钟数据的本地量化引擎，集成增量同步、本地缓存、复权、批量查询、回测与指标计算。
+
 ## alsk1992
 
 - Profile: https://github.com/alsk1992
@@ -745,28 +688,23 @@ senior software engineer @ coinbase
 - Location: England
 - Bio: Agentic Engineer
 - Followers: 97
-- Total stars: 3142
+- Group: builders
+- Total stars: 3126
 - Best repo: alsk1992/CloddsBot
 
 - [alsk1992/CloddsBot](https://github.com/alsk1992/CloddsBot) | live-trading | 3126 stars | TypeScript | https://github.com/alsk1992/CloddsBot
   Open Source AI trading agent that operates autonomously across 1000+ markets - Polymarket, Kalshi, Binance, Hyperliquid, Solana DEXs, 5 EVM chains. Scans    for edge, executes instantly, manages risk while you sleep. Agent commerce protocol for machine-to-machine payments. Self-hosted. Built on Claude.
-- [alsk1992/Flip-God](https://github.com/alsk1992/Flip-God) | tools | 8 stars | TypeScript | https://github.com/alsk1992/Flip-God
-  FlipAgent is an AI-powered e-commerce arbitrage bot. It scans products across Amazon, eBay, Walmart, and AliExpress in real-time, finds price    gaps between platforms, automatically creates listings on the cheaper side, handles order fulfillment when something sells, and tracks shipping
-- [alsk1992/smartsniffer](https://github.com/alsk1992/smartsniffer) | live-trading | 7 stars | Rust | https://github.com/alsk1992/smartsniffer
-  GMGN smart money copy-trader, cluster detection, TP/SL ladders, backtester. Built for GMGN Open-Source Case Collection Season 1.
-- [alsk1992/OREMiner](https://github.com/alsk1992/OREMiner) | tools | 1 stars | Rust | https://github.com/alsk1992/OREMiner
-  Ore Solana Auto Miner Script - Custom Strategies
 
 ## 0xemmkty
 
 - Profile: https://github.com/0xemmkty
 - Followers: 92
+- Group: builders
 - Total stars: 3038
 - Best repo: 0xemmkty/QuantMuse
 
 - [0xemmkty/QuantMuse](https://github.com/0xemmkty/QuantMuse) | framework | 3038 stars | Python | https://github.com/0xemmkty/QuantMuse
   A comprehensive quantitative trading system with AI-powered analysis, real-time data processing, and advanced risk management
-- [0xemmkty/tickets-system](https://github.com/0xemmkty/tickets-system) | tools | 0 stars | TypeScript | https://github.com/0xemmkty/tickets-system
 
 ## notadamking
 
@@ -775,6 +713,7 @@ senior software engineer @ coinbase
 - Company: @inkloom-io @stoneforge-ai 
 - Blog: https://notadamking.com
 - Followers: 625
+- Group: builders
 - Total stars: 2952
 - Best repo: notadamking/RLTrader
 
@@ -793,14 +732,12 @@ senior software engineer @ coinbase
 - Blog: nickmccullum.com
 - Bio: Builder.
 - Followers: 779
-- Total stars: 2949
+- Group: builders
+- Total stars: 2925
 - Best repo: nickmccullum/algorithmic-trading-python
 
 - [nickmccullum/algorithmic-trading-python](https://github.com/nickmccullum/algorithmic-trading-python) | learning | 2925 stars | Jupyter Notebook | https://github.com/nickmccullum/algorithmic-trading-python
   The repository for freeCodeCamp's YouTube course, Algorithmic Trading in Python
-- [nickmccullum/algorithmic-trading](https://github.com/nickmccullum/algorithmic-trading) | tools | 13 stars | Python | https://github.com/nickmccullum/algorithmic-trading
-- [nickmccullum/stockalerts](https://github.com/nickmccullum/stockalerts) | tools | 6 stars | Python | https://github.com/nickmccullum/stockalerts
-- [nickmccullum/algorithmic-trading-recording](https://github.com/nickmccullum/algorithmic-trading-recording) | tools | 5 stars | Python | https://github.com/nickmccullum/algorithmic-trading-recording
 
 ## AminHP
 
@@ -808,6 +745,7 @@ senior software engineer @ coinbase
 - Name: Mohammad Amin Haghpanah
 - Company: @koala-team
 - Followers: 193
+- Group: builders
 - Total stars: 2917
 - Best repo: AminHP/gym-anytrading
 
@@ -824,38 +762,12 @@ senior software engineer @ coinbase
 - Location: Çorlu
 - Blog: yasinkuyu.net
 - Followers: 374
-- Total stars: 2767
+- Group: builders
+- Total stars: 2762
 - Best repo: yasinkuyu/binance-trader
 
 - [yasinkuyu/binance-trader](https://github.com/yasinkuyu/binance-trader) | live-trading | 2762 stars | Python | https://github.com/yasinkuyu/binance-trader
   💰 Cryptocurrency Trading Bot for Binance (Experimental)
-- [yasinkuyu/coinekonomiwp](https://github.com/yasinkuyu/coinekonomiwp) | tools | 4 stars | JavaScript | https://github.com/yasinkuyu/coinekonomiwp
-  CryptoCompare.com real time CryptoCurrency list with vuejs (Wordpress plugin)
-- [yasinkuyu/cryptocurrencies](https://github.com/yasinkuyu/cryptocurrencies) | tools | 1 stars | HTML | https://github.com/yasinkuyu/cryptocurrencies
-  CryptoCompare.com real time CryptoCurrency list with vuejs.
-
-## deepentropy
-
-- Profile: https://github.com/deepentropy
-- Name: DeepEntropy
-- Location: Geneva, Switzerland
-- Bio: Quant
-- Followers: 151
-- Total stars: 2513
-- Best repo: deepentropy/tvscreener
-
-- [deepentropy/tvscreener](https://github.com/deepentropy/tvscreener) | market-data | 1775 stars | JavaScript | https://github.com/deepentropy/tvscreener
-  TradingView Screener API - Stock, Crypto, Forex, Bond, Futures, Coin
-- [deepentropy/lightweight-charts-indicators](https://github.com/deepentropy/lightweight-charts-indicators) | indicators | 346 stars | TypeScript | https://github.com/deepentropy/lightweight-charts-indicators
-  1,713 technical analysis indicators for the lightweight-charts library: 117 standard, 1,551 community ports and 45 candlestick patterns, with a renderer for plots, drawings and tables
-- [deepentropy/ibx](https://github.com/deepentropy/ibx) | live-trading | 196 stars | Rust | https://github.com/deepentropy/ibx
-  Direct connection engine for Interactive Brokers in Rust. No Java Gateway required. Ultra-low-latency orders and market data. Rust + Python (PyO3).
-- [deepentropy/lightweight-charts-drawing](https://github.com/deepentropy/lightweight-charts-drawing) | indicators | 157 stars | TypeScript | https://github.com/deepentropy/lightweight-charts-drawing
-  86 TradingView-style drawing tools for lightweight-charts v5: TradingView defaults, labels, hit tests and placement rules (lines, channels, pitchforks, Fibonacci, Gann, patterns, Elliott waves, forecasting, volume profiles, shapes, text)
-- [deepentropy/opentrader](https://github.com/deepentropy/opentrader) | tools | 32 stars | TypeScript | https://github.com/deepentropy/opentrader
-  Free, open-source desktop charting and trading app for Windows, macOS and Linux.
-- [deepentropy/ibapi](https://github.com/deepentropy/ibapi) | live-trading | 7 stars | Python | https://github.com/deepentropy/ibapi
-  Automated publisher for the Interactive Brokers TWS API Python client on PyPI
 
 ## ErTasselli
 
@@ -866,15 +778,32 @@ senior software engineer @ coinbase
 - Blog: https://ertasselli.github.io/andreatasselli/
 - Bio: Nothing to see here
 - Followers: 47
-- Total stars: 2496
+- Group: builders
+- Total stars: 2482
 - Best repo: ErTasselli/OpenTerminal
 
 - [ErTasselli/OpenTerminal](https://github.com/ErTasselli/OpenTerminal) | market-data | 2482 stars | TypeScript | https://github.com/ErTasselli/OpenTerminal
   A Terminal-style trading dashboard built entirely on free public market data. No API keys, no subscriptions.
-- [ErTasselli/AITrading](https://github.com/ErTasselli/AITrading) | indicators | 14 stars | TypeScript | https://github.com/ErTasselli/AITrading
-  Real-time AI-powered technical analysis for trader with automatic support/resistance, technical indicators and concise trading summaries
-- [ErTasselli/Carcolatore](https://github.com/ErTasselli/Carcolatore) | tools | 0 stars | JavaScript | https://github.com/ErTasselli/Carcolatore
-  🧮  Carcolatore  pagina web semplice e intuitiva per eseguire calcoli finanziari rapidi sugli investimenti in azioni
+
+## deepentropy
+
+- Profile: https://github.com/deepentropy
+- Name: DeepEntropy
+- Location: Geneva, Switzerland
+- Bio: Quant
+- Followers: 151
+- Group: builders
+- Total stars: 2474
+- Best repo: deepentropy/tvscreener
+
+- [deepentropy/tvscreener](https://github.com/deepentropy/tvscreener) | market-data | 1775 stars | JavaScript | https://github.com/deepentropy/tvscreener
+  TradingView Screener API - Stock, Crypto, Forex, Bond, Futures, Coin
+- [deepentropy/lightweight-charts-indicators](https://github.com/deepentropy/lightweight-charts-indicators) | indicators | 346 stars | TypeScript | https://github.com/deepentropy/lightweight-charts-indicators
+  1,713 technical analysis indicators for the lightweight-charts library: 117 standard, 1,551 community ports and 45 candlestick patterns, with a renderer for plots, drawings and tables
+- [deepentropy/ibx](https://github.com/deepentropy/ibx) | live-trading | 196 stars | Rust | https://github.com/deepentropy/ibx
+  Direct connection engine for Interactive Brokers in Rust. No Java Gateway required. Ultra-low-latency orders and market data. Rust + Python (PyO3).
+- [deepentropy/lightweight-charts-drawing](https://github.com/deepentropy/lightweight-charts-drawing) | indicators | 157 stars | TypeScript | https://github.com/deepentropy/lightweight-charts-drawing
+  86 TradingView-style drawing tools for lightweight-charts v5: TradingView defaults, labels, hit tests and placement rules (lines, channels, pitchforks, Fibonacci, Gann, patterns, Elliott waves, forecasting, volume profiles, shapes, text)
 
 ## andredumas
 
@@ -882,13 +811,12 @@ senior software engineer @ coinbase
 - Name: André Dumas
 - Blog: http://andredumas.au/
 - Followers: 127
-- Total stars: 2435
+- Group: builders
+- Total stars: 2434
 - Best repo: andredumas/techan.js
 
 - [andredumas/techan.js](https://github.com/andredumas/techan.js) | indicators | 2434 stars | JavaScript | https://github.com/andredumas/techan.js
   A visual, technical analysis and charting (Candlestick, OHLC, indicators) library built on D3.
-- [andredumas/SpringScala](https://github.com/andredumas/SpringScala) | tools | 1 stars | Scala | https://github.com/andredumas/SpringScala
-  A little project to try out Spring with Scala and different dependency management options.
 
 ## tkfy920
 
@@ -897,6 +825,7 @@ senior software engineer @ coinbase
 - Blog: https://xueqiu.com/u/1444657641
 - Bio: PhD. in Finance, Visiting Scholar of The University of Kansas. 
 - Followers: 146
+- Group: builders
 - Total stars: 2426
 - Best repo: tkfy920/qstock
 
@@ -911,15 +840,14 @@ senior software engineer @ coinbase
 - Name: Onur Cinar
 - Blog: www.zdo.com
 - Followers: 135
-- Total stars: 2405
+- Group: builders
+- Total stars: 2404
 - Best repo: cinar/indicator
 
 - [cinar/indicator](https://github.com/cinar/indicator) | indicators | 1923 stars | Go | https://github.com/cinar/indicator
   High-performance technical analysis indicators and backtesting framework in Go. Zero dependencies. ✨ See how! 👀
 - [cinar/indicatorts](https://github.com/cinar/indicatorts) | indicators | 481 stars | TypeScript | https://github.com/cinar/indicatorts
   High-performance technical analysis indicators and backtesting framework in TypeScript. Zero dependencies. ✨ See how! 👀
-- [cinar/indicatorrs](https://github.com/cinar/indicatorrs) | indicators | 1 stars | Rust | https://github.com/cinar/indicatorrs
-  Indicator is a Rust crate providing various stock technical analysis indicators for trading.
 
 ## austin-starks
 
@@ -928,7 +856,8 @@ senior software engineer @ coinbase
 - Blog: https://nexustrade.io/
 - Bio: Creator of NexusTrade. Running a live $25K AI-managed account in public.
 - Followers: 535
-- Total stars: 2402
+- Group: builders
+- Total stars: 2376
 - Best repo: austin-starks/NextTrade
 
 - [austin-starks/NextTrade](https://github.com/austin-starks/NextTrade) | framework | 1775 stars | TypeScript | https://github.com/austin-starks/NextTrade
@@ -939,14 +868,6 @@ senior software engineer @ coinbase
   A script for creating your very own AI-Powered stock screener
 - [austin-starks/nexustrade-py](https://github.com/austin-starks/nexustrade-py) | backtesting | 21 stars | Python | https://github.com/austin-starks/nexustrade-py
   Typed Python SDK for NexusTrade portfolio authoring, backtesting, and optimization
-- [austin-starks/nexustrade-ts](https://github.com/austin-starks/nexustrade-ts) | backtesting | 11 stars | TypeScript | https://github.com/austin-starks/nexustrade-ts
-  Typed TypeScript SDK for NexusTrade portfolio authoring, backtesting, and optimization
-- [austin-starks/congressional-disclosures](https://github.com/austin-starks/congressional-disclosures) | market-data | 10 stars | TypeScript | https://github.com/austin-starks/congressional-disclosures
-  Congressional trading disclosures: a resumable, sharded extraction pipeline for House and Senate periodic transaction reports, with pluggable storage, model and OCR backends.
-- [austin-starks/MongoDB-vs-Timescale-DB](https://github.com/austin-starks/MongoDB-vs-Timescale-DB) | tools | 4 stars | JavaScript | https://github.com/austin-starks/MongoDB-vs-Timescale-DB
-  A script to benchmark MongoDB vs Timescale DB for Backtesting and Portfolio Charting
-- [austin-starks/Text-To-Trade](https://github.com/austin-starks/Text-To-Trade) | tools | 1 stars | TypeScript | https://github.com/austin-starks/Text-To-Trade
-  Translate Natural Language to Onchain Trades
 
 ## rorysroes
 
@@ -954,31 +875,25 @@ senior software engineer @ coinbase
 - Name: Rory Chung
 - Location: Jersey City
 - Followers: 191
+- Group: builders
 - Total stars: 2375
 - Best repo: rorysroes/SGX-Full-OrderBook-Tick-Data-Trading-Strategy
 
 - [rorysroes/SGX-Full-OrderBook-Tick-Data-Trading-Strategy](https://github.com/rorysroes/SGX-Full-OrderBook-Tick-Data-Trading-Strategy) | research-ml | 2375 stars | Jupyter Notebook | https://github.com/rorysroes/SGX-Full-OrderBook-Tick-Data-Trading-Strategy
   Providing the solutions for high-frequency trading (HFT) strategies using data science approaches (Machine Learning) on Full Orderbook Tick Data.
 
-## BlackArbsCEO
+## enarjord
 
-- Profile: https://github.com/BlackArbsCEO
-- Name: Brian
-- Followers: 550
-- Total stars: 2294
-- Best repo: BlackArbsCEO/Adv_Fin_ML_Exercises
+- Profile: https://github.com/enarjord
+- Followers: 158
+- Group: builders
+- Total stars: 2272
+- Best repo: enarjord/passivbot
 
-- [BlackArbsCEO/Adv_Fin_ML_Exercises](https://github.com/BlackArbsCEO/Adv_Fin_ML_Exercises) | learning | 1988 stars | Jupyter Notebook | https://github.com/BlackArbsCEO/Adv_Fin_ML_Exercises
-  Experimental solutions to selected exercises from the book [Advances in Financial Machine Learning by Marcos Lopez De Prado]
-- [BlackArbsCEO/mixture_model_trading_public](https://github.com/BlackArbsCEO/mixture_model_trading_public) | research-ml | 198 stars | Jupyter Notebook | https://github.com/BlackArbsCEO/mixture_model_trading_public
-- [BlackArbsCEO/iex_intraday_equity_downloader_public](https://github.com/BlackArbsCEO/iex_intraday_equity_downloader_public) | market-data | 39 stars | Python | https://github.com/BlackArbsCEO/iex_intraday_equity_downloader_public
-- [BlackArbsCEO/option_skew_project_public](https://github.com/BlackArbsCEO/option_skew_project_public) | research-ml | 37 stars | Jupyter Notebook | https://github.com/BlackArbsCEO/option_skew_project_public
-- [BlackArbsCEO/hypothesis_driven_strategy_development](https://github.com/BlackArbsCEO/hypothesis_driven_strategy_development) | research-ml | 12 stars | Jupyter Notebook | https://github.com/BlackArbsCEO/hypothesis_driven_strategy_development
-- [BlackArbsCEO/trading-with-python](https://github.com/BlackArbsCEO/trading-with-python) | framework | 10 stars | Python | https://github.com/BlackArbsCEO/trading-with-python
-  Automatically exported from code.google.com/p/trading-with-python
-- [BlackArbsCEO/aws_algo_trading](https://github.com/BlackArbsCEO/aws_algo_trading) | tools | 6 stars | Python | https://github.com/BlackArbsCEO/aws_algo_trading
-- [BlackArbsCEO/options_data_exploration](https://github.com/BlackArbsCEO/options_data_exploration) | market-data | 4 stars | n/a | https://github.com/BlackArbsCEO/options_data_exploration
-  repo to explore and distribute scraped options data for research purposes
+- [enarjord/passivbot](https://github.com/enarjord/passivbot) | live-trading | 2185 stars | Python | https://github.com/enarjord/passivbot
+  Trading bot running on Bybit, Bitget, OKX, GateIO, Binance, Kucoin, WEEX and Hyperliquid
+- [enarjord/passivbot_binance_isolated_margin_legacy](https://github.com/enarjord/passivbot_binance_isolated_margin_legacy) | live-trading | 87 stars | Python | https://github.com/enarjord/passivbot_binance_isolated_margin_legacy
+  trading bot running on binance isolated margin
 
 ## joshyattridge
 
@@ -987,30 +902,27 @@ senior software engineer @ coinbase
 - Company: Energy Solutions
 - Bio: Full-stack Python developer skilled in Linux systems, machine learning, and passionate about stock market analysis and algorithmic trading.
 - Followers: 226
-- Total stars: 2276
+- Group: builders
+- Total stars: 2266
 - Best repo: joshyattridge/smart-money-concepts
 
 - [joshyattridge/smart-money-concepts](https://github.com/joshyattridge/smart-money-concepts) | indicators | 2266 stars | Python | https://github.com/joshyattridge/smart-money-concepts
   Discover our Python package designed for algorithmic trading. It brings ICT's smart money concepts to Python, offering a range of indicators for your algorithmic trading strategies.
-- [joshyattridge/llm-trading-bot](https://github.com/joshyattridge/llm-trading-bot) | live-trading | 4 stars | Python | https://github.com/joshyattridge/llm-trading-bot
-- [joshyattridge/TradeAgent](https://github.com/joshyattridge/TradeAgent) | research-ml | 2 stars | TypeScript | https://github.com/joshyattridge/TradeAgent
-  AI powered trading assistant.
-- [joshyattridge/Sports_Arbitrage](https://github.com/joshyattridge/Sports_Arbitrage) | tools | 2 stars | Python | https://github.com/joshyattridge/Sports_Arbitrage
-  Script for detecting tennis arbitrage opportunities and automatically placing bets.
-- [joshyattridge/forex-image-classification](https://github.com/joshyattridge/forex-image-classification) | research-ml | 2 stars | n/a | https://github.com/joshyattridge/forex-image-classification
-  Classify different fired trades into wins and losses
 
-## enarjord
+## BlackArbsCEO
 
-- Profile: https://github.com/enarjord
-- Followers: 158
-- Total stars: 2272
-- Best repo: enarjord/passivbot
+- Profile: https://github.com/BlackArbsCEO
+- Name: Brian
+- Followers: 550
+- Group: builders
+- Total stars: 2262
+- Best repo: BlackArbsCEO/Adv_Fin_ML_Exercises
 
-- [enarjord/passivbot](https://github.com/enarjord/passivbot) | live-trading | 2185 stars | Python | https://github.com/enarjord/passivbot
-  Trading bot running on Bybit, Bitget, OKX, GateIO, Binance, Kucoin, WEEX and Hyperliquid
-- [enarjord/passivbot_binance_isolated_margin_legacy](https://github.com/enarjord/passivbot_binance_isolated_margin_legacy) | live-trading | 87 stars | Python | https://github.com/enarjord/passivbot_binance_isolated_margin_legacy
-  trading bot running on binance isolated margin
+- [BlackArbsCEO/Adv_Fin_ML_Exercises](https://github.com/BlackArbsCEO/Adv_Fin_ML_Exercises) | learning | 1988 stars | Jupyter Notebook | https://github.com/BlackArbsCEO/Adv_Fin_ML_Exercises
+  Experimental solutions to selected exercises from the book [Advances in Financial Machine Learning by Marcos Lopez De Prado]
+- [BlackArbsCEO/mixture_model_trading_public](https://github.com/BlackArbsCEO/mixture_model_trading_public) | research-ml | 198 stars | Jupyter Notebook | https://github.com/BlackArbsCEO/mixture_model_trading_public
+- [BlackArbsCEO/iex_intraday_equity_downloader_public](https://github.com/BlackArbsCEO/iex_intraday_equity_downloader_public) | market-data | 39 stars | Python | https://github.com/BlackArbsCEO/iex_intraday_equity_downloader_public
+- [BlackArbsCEO/option_skew_project_public](https://github.com/BlackArbsCEO/option_skew_project_public) | research-ml | 37 stars | Jupyter Notebook | https://github.com/BlackArbsCEO/option_skew_project_public
 
 ## whittlem
 
@@ -1020,17 +932,14 @@ senior software engineer @ coinbase
 - Blog: https://whittle.medium.com/membership
 - Bio: https://whittle.medium.com
 - Followers: 191
-- Total stars: 2119
+- Group: builders
+- Total stars: 2103
 - Best repo: whittlem/pycryptobot
 
 - [whittlem/pycryptobot](https://github.com/whittlem/pycryptobot) | live-trading | 2061 stars | Python | https://github.com/whittlem/pycryptobot
   Python Crypto Bot (PyCryptoBot)
 - [whittlem/coinbaseprotracker](https://github.com/whittlem/coinbaseprotracker) | portfolio-risk | 42 stars | Python | https://github.com/whittlem/coinbaseprotracker
   Coinbase Pro Portfolio Tracker
-- [whittlem/trading-ai-lstm](https://github.com/whittlem/trading-ai-lstm) | research-ml | 10 stars | Python | https://github.com/whittlem/trading-ai-lstm
-  Predict stock prices using an AI LSTM model
-- [whittlem/pandas-bt](https://github.com/whittlem/pandas-bt) | backtesting | 6 stars | Python | https://github.com/whittlem/pandas-bt
-  Trading backtesting using Python Pandas
 
 ## Yvictor
 
@@ -1038,30 +947,23 @@ senior software engineer @ coinbase
 - Name: Yvictor
 - Location: Taiwan
 - Followers: 311
-- Total stars: 1952
+- Group: builders
+- Total stars: 1932
 - Best repo: Yvictor/TradingGym
 
 - [Yvictor/TradingGym](https://github.com/Yvictor/TradingGym) | research-ml | 1932 stars | Python | https://github.com/Yvictor/TradingGym
   Trading and Backtesting environment for training reinforcement learning agent or simple rule base algo.
-- [Yvictor/polars_backtest_extension](https://github.com/Yvictor/polars_backtest_extension) | backtesting | 19 stars | Python | https://github.com/Yvictor/polars_backtest_extension
-  Blazingly fast portfolio backtesting for Polars
-- [Yvictor/grid_trade](https://github.com/Yvictor/grid_trade) | research-ml | 1 stars | Python | https://github.com/Yvictor/grid_trade
-  蛛網交易理論驗證與敏感度分析 - Grid trading theory verification
-- [Yvictor/twfeedrs](https://github.com/Yvictor/twfeedrs) | market-data | 0 stars | Rust | https://github.com/Yvictor/twfeedrs
-  tw exchange feed
-- [Yvictor/TickTrace](https://github.com/Yvictor/TickTrace) | market-data | 0 stars | Rust | https://github.com/Yvictor/TickTrace
 
 ## fabston
 
 - Profile: https://github.com/fabston
 - Followers: 0
-- Total stars: 1922
+- Group: builders
+- Total stars: 1918
 - Best repo: fabston/TradingView-Webhook-Bot
 
 - [fabston/TradingView-Webhook-Bot](https://github.com/fabston/TradingView-Webhook-Bot) | tools | 1918 stars | Python | https://github.com/fabston/TradingView-Webhook-Bot
   📊 Send TradingView alerts to Telegram, Discord, Slack, Twitter and Email.
-- [fabston/alfred-crypto-tracker](https://github.com/fabston/alfred-crypto-tracker) | tools | 4 stars | n/a | https://github.com/fabston/alfred-crypto-tracker
-  💸 Quickly check cryptocurrency prices using CoinGecko's API with Alfred.
 
 ## asavinov
 
@@ -1070,6 +972,7 @@ senior software engineer @ coinbase
 - Blog: http://conceptoriented.org
 - Bio: AI • ML • Big/Fast Data • AIoT • Time series • Forecasting • Anomaly detection • Feature engineering • Algo trading
 - Followers: 211
+- Group: builders
 - Total stars: 1905
 - Best repo: asavinov/intelligent-trading-bot
 
@@ -1085,13 +988,12 @@ senior software engineer @ coinbase
 - Blog: guohaoqi@u.nus.edu
 - Bio: Seeking Alpha
 - Followers: 145
+- Group: builders
 - Total stars: 1896
 - Best repo: Barca0412/Introduction-to-Quantitative-Finance
 
 - [Barca0412/Introduction-to-Quantitative-Finance](https://github.com/Barca0412/Introduction-to-Quantitative-Finance) | research-ml | 1896 stars | Python | https://github.com/Barca0412/Introduction-to-Quantitative-Finance
   AI+金融（量化）：1.多因子股票量化框架开源教程 2.学界和业界的经典资料收录 3.AI + 金融的相关工作，包括LLM, Agent, benchmark(evaluation), etc.
-- [Barca0412/QuantumOpt-Explorer](https://github.com/Barca0412/QuantumOpt-Explorer) | tools | 0 stars | Python | https://github.com/Barca0412/QuantumOpt-Explorer
-  Auditable robust calibration benchmark for a heralded photonic CNOT
 
 ## ivopetiz
 
@@ -1101,7 +1003,8 @@ senior software engineer @ coinbase
 - Blog: https://www.linkedin.com/in/ivopetiz/
 - Bio: Sports Quant Dev
 - Followers: 153
-- Total stars: 1896
+- Group: builders
+- Total stars: 1886
 - Best repo: ivopetiz/algotrading
 
 - [ivopetiz/algotrading](https://github.com/ivopetiz/algotrading) | framework | 1722 stars | Python | https://github.com/ivopetiz/algotrading
@@ -1110,8 +1013,6 @@ senior software engineer @ coinbase
   Database for crypto data, supporting several exchanges. Can be used for TA, bots, backtest, realtime trading, etc.
 - [ivopetiz/technical-indicators](https://github.com/ivopetiz/technical-indicators) | indicators | 58 stars | Go | https://github.com/ivopetiz/technical-indicators
   Finance package written in Golang, mainly with TA indicators.
-- [ivopetiz/crypto-exchange-cli](https://github.com/ivopetiz/crypto-exchange-cli) | tools | 10 stars | Python | https://github.com/ivopetiz/crypto-exchange-cli
-  CLI for Crypto Exchanges.
 
 ## avhz
 
@@ -1122,6 +1023,7 @@ senior software engineer @ coinbase
 - Blog: https://avhz.github.io/
 - Bio: Proprietary Trading Data Engineer
 - Followers: 163
+- Group: builders
 - Total stars: 1847
 - Best repo: avhz/RustQuant
 
@@ -1135,6 +1037,7 @@ senior software engineer @ coinbase
 - Location: Munich, Germany
 - Bio: Postdoctoral Researcher in Computational Physics gone rogue and turned into a Data Engineer. Open-Source developer at heart.
 - Followers: 136
+- Group: builders
 - Total stars: 1847
 - Best repo: fmilthaler/FinQuant
 
@@ -1152,12 +1055,12 @@ senior software engineer @ coinbase
 @hawksightco  | systematic defi | creator of fastquant | contributor @flipsidecrypto  
 @huggingface | ai, nlp, mev 
 - Followers: 278
-- Total stars: 1764
+- Group: builders
+- Total stars: 1762
 - Best repo: enzoampil/fastquant
 
 - [enzoampil/fastquant](https://github.com/enzoampil/fastquant) | backtesting | 1762 stars | Jupyter Notebook | https://github.com/enzoampil/fastquant
   fastquant, Backtest and optimize your ML trading strategies with only 3 lines of code!
-- [enzoampil/fastquant-blog](https://github.com/enzoampil/fastquant-blog) | learning | 2 stars | Jupyter Notebook | https://github.com/enzoampil/fastquant-blog
 
 ## c9s
 
@@ -1166,26 +1069,23 @@ senior software engineer @ coinbase
 - Bio: a developer who really loves crafting tools
 
 - Followers: 2775
-- Total stars: 1690
+- Group: builders
+- Total stars: 1681
 - Best repo: c9s/bbgo
 
 - [c9s/bbgo](https://github.com/c9s/bbgo) | live-trading | 1681 stars | Go | https://github.com/c9s/bbgo
   The modern cryptocurrency trading bot framework written in Go.
-- [c9s/binance-go](https://github.com/c9s/binance-go) | tools | 6 stars | Go | https://github.com/c9s/binance-go
-  A simple, auto-generated binance api package for Golang
-- [c9s/binance-backtest-recording](https://github.com/c9s/binance-backtest-recording) | tools | 3 stars | JavaScript | https://github.com/c9s/binance-backtest-recording
 
 ## khscience
 
 - Profile: https://github.com/khscience
 - Followers: 78
-- Total stars: 1677
+- Group: builders
+- Total stars: 1653
 - Best repo: khscience/OSkhQuant
 
 - [khscience/OSkhQuant](https://github.com/khscience/OSkhQuant) | backtesting | 1653 stars | Python | https://github.com/khscience/OSkhQuant
   看海量化回测平台 khQuant 开源版 V2.2：免费开源的 A 股量化回测桌面软件。不用开户、不用装 QMT，BaoStock / Tushare 下载数据到本地 DuckDB，Python 写策略，一键出回测报告。
-- [khscience/khquant-skill](https://github.com/khscience/khquant-skill) | tools | 24 stars | Python | https://github.com/khscience/khquant-skill
-  KhQuant Skill for Claude Code & Cursor - drive backtests, data management, and strategy development with natural language.
 
 ## rodrigo-brito
 
@@ -1196,13 +1096,396 @@ senior software engineer @ coinbase
 - Blog: https://brito.com.br
 - Bio: MSc. Computer Science
 - Followers: 459
-- Total stars: 1647
+- Group: builders
+- Total stars: 1636
 - Best repo: rodrigo-brito/ninjabot
 
 - [rodrigo-brito/ninjabot](https://github.com/rodrigo-brito/ninjabot) | live-trading | 1636 stars | Go | https://github.com/rodrigo-brito/ninjabot
   A fast trading bot platform for cryptocurrency in Go (Binance)
-- [rodrigo-brito/ninjabot-portfolio-balancer](https://github.com/rodrigo-brito/ninjabot-portfolio-balancer) | portfolio-risk | 11 stars | Go | https://github.com/rodrigo-brito/ninjabot-portfolio-balancer
-  Example of a cryptocurrency portfolio balancer with Ninjabot
+
+## huacnlee
+
+- Profile: https://github.com/huacnlee
+- Name: Jason Lee
+- Group: infrastructure
+- Broker: Longbridge
+- Role: broker staff
+- Commits: 347
+- Total stars: 5720
+- Best repo: huacnlee/autocorrect
+
+- [huacnlee/autocorrect](https://github.com/huacnlee/autocorrect) | tools | 1663 stars | Rust | https://github.com/huacnlee/autocorrect
+  A linter and formatter to help you to improve copywriting, correct spaces, words, and punctuations between CJK (Chinese, Japanese, Korean).
+- [huacnlee/rails-settings-cached](https://github.com/huacnlee/rails-settings-cached) | tools | 1124 stars | Ruby | https://github.com/huacnlee/rails-settings-cached
+  Global settings for your Rails application.
+- [huacnlee/rucaptcha](https://github.com/huacnlee/rucaptcha) | tools | 703 stars | Ruby | https://github.com/huacnlee/rucaptcha
+  Captcha Gem for Rails, which generates captcha image by Rust.
+- [huacnlee/init.d](https://github.com/huacnlee/init.d) | tools | 675 stars | n/a | https://github.com/huacnlee/init.d
+  ⚙️ Batch scripts for Rails production environment install on Ubuntu Server.
+- [huacnlee/social-share-button](https://github.com/huacnlee/social-share-button) | tools | 580 stars | CoffeeScript | https://github.com/huacnlee/social-share-button
+  Helper for add social share feature in your Rails app. Twitter, Facebook, Weibo, Douban ...
+- [huacnlee/mediom](https://github.com/huacnlee/mediom) | tools | 353 stars | Go | https://github.com/huacnlee/mediom
+  Forum web application, an example for from Rails to Go (Revel)
+- [huacnlee/omamail](https://github.com/huacnlee/omamail) | tools | 349 stars | QML | https://github.com/huacnlee/omamail
+  Omarchy mail plugin with Gmail, HEY and IMAP supports.
+- [huacnlee/noop](https://github.com/huacnlee/noop) | tools | 273 stars | TypeScript | https://github.com/huacnlee/noop
+
+## rhnvrm
+
+- Profile: https://github.com/rhnvrm
+- Name: Rohan Verma
+- Location: India
+- Group: infrastructure
+- Broker: Zerodha (Kite Connect)
+- Role: broker staff
+- Commits: 42
+- Total stars: 543
+- Best repo: rhnvrm/simples3
+
+- [rhnvrm/simples3](https://github.com/rhnvrm/simples3) | tools | 214 stars | Go | https://github.com/rhnvrm/simples3
+  Simple no frills AWS S3 Golang Library using REST with V4 Signing (without AWS Go SDK)
+- [rhnvrm/linkpage](https://github.com/rhnvrm/linkpage) | tools | 142 stars | Go | https://github.com/rhnvrm/linkpage
+  LinkPage is a FOSS self-hosted alternative to link listing websites such as LinkTree and Campsite.bio
+- [rhnvrm/pi-mesh](https://github.com/rhnvrm/pi-mesh) | tools | 72 stars | TypeScript | https://github.com/rhnvrm/pi-mesh
+  Multi-agent coordination for Pi - presence, messaging, file reservations
+- [rhnvrm/listmonk-mcp](https://github.com/rhnvrm/listmonk-mcp) | tools | 45 stars | Python | https://github.com/rhnvrm/listmonk-mcp
+  MCP (Model Context Protocol) server for Listmonk newsletter management
+- [rhnvrm/SubScribe](https://github.com/rhnvrm/SubScribe) | tools | 28 stars | Python | https://github.com/rhnvrm/SubScribe
+  :video_camera: Convert your video files to images transcribed with their subtitles
+- [rhnvrm/machine-learning-nanodegree](https://github.com/rhnvrm/machine-learning-nanodegree) | learning | 17 stars | HTML | https://github.com/rhnvrm/machine-learning-nanodegree
+  Project Portfolio for Machine Learning Nanodegree by Udacity
+- [rhnvrm/mattermost-cli](https://github.com/rhnvrm/mattermost-cli) | tools | 13 stars | Python | https://github.com/rhnvrm/mattermost-cli
+  Mattermost CLI for humans and agents
+- [rhnvrm/bodhi](https://github.com/rhnvrm/bodhi) | tools | 12 stars | HTML | https://github.com/rhnvrm/bodhi
+  A simple, minimal, personal website theme for Hugo. Demo: https://rhnvrm.github.io/bodhi/
+
+## Vikranth3140
+
+- Profile: https://github.com/Vikranth3140
+- Name: Vikranth Udandarao
+- Location: Delhi, India
+- Group: infrastructure
+- Broker: Upstox
+- Role: outside contributor
+- Commits: 2
+- Total stars: 101
+- Best repo: Vikranth3140/Mental-Health-Support-Chatbot
+
+- [Vikranth3140/Mental-Health-Support-Chatbot](https://github.com/Vikranth3140/Mental-Health-Support-Chatbot) | research-ml | 44 stars | Python | https://github.com/Vikranth3140/Mental-Health-Support-Chatbot
+  A Mental Health Support Chatbot built using Streamlit and OpenAI's GPT-3.5-turbo model. It provides mental health support through a chat interface, offering sentiment analysis, mood tracking, and personalized coping strategies based on user input.
+- [Vikranth3140/Movie-Revenue-Prediction](https://github.com/Vikranth3140/Movie-Revenue-Prediction) | research-ml | 14 stars | TeX | https://github.com/Vikranth3140/Movie-Revenue-Prediction
+  Movie Revenue Prediction System predicts the revenue of a movie with 14 parameters: name, rating, genre, year, released, score, votes, director, writer, star, country, budget, company and runtime using gradient boosting______________________________ Training Accuracy: 91.58%____________ Testing Accuracy: 82.42%.
+- [Vikranth3140/NSE-BSE-Stock-Prices-Automation](https://github.com/Vikranth3140/NSE-BSE-Stock-Prices-Automation) | market-data | 13 stars | JavaScript | https://github.com/Vikranth3140/NSE-BSE-Stock-Prices-Automation
+  Fetch real-time NSE stock prices and financial data in Google Sheets with this script. Get market cap, volume, P/E ratio, and more. Just enter stock symbols without the NSE: prefix, and the script does the rest. Check out the pre-configured sheet and video tutorial linked below!
+- [Vikranth3140/Zoo-Management-System](https://github.com/Vikranth3140/Zoo-Management-System) | tools | 11 stars | Java | https://github.com/Vikranth3140/Zoo-Management-System
+  CSE 201 Advanced Programming Assignment 2 of Indraprastha Institute of Information Technology Delhi
+- [Vikranth3140/Food-Delivery-Time-Prediction](https://github.com/Vikranth3140/Food-Delivery-Time-Prediction) | research-ml | 6 stars | Jupyter Notebook | https://github.com/Vikranth3140/Food-Delivery-Time-Prediction
+  This repository implements a Food Delivery Time Prediction project using machine learning to estimate delivery times based on features like order details, delivery partner data, and environmental factors. It covers data preprocessing, feature engineering, model training, and evaluation for accurate predictions.
+- [Vikranth3140/Campus-Leadership-Opportunities](https://github.com/Vikranth3140/Campus-Leadership-Opportunities) | tools | 5 stars | n/a | https://github.com/Vikranth3140/Campus-Leadership-Opportunities
+  This repository aims to serve as a comprehensive guide for college students aspiring to become campus leaders. Whether you're interested in representing leading tech companies as a campus ambassador or joining vibrant student chapters and clubs, this repository has got you covered!
+- [Vikranth3140/Vehicle-Management-System](https://github.com/Vikranth3140/Vehicle-Management-System) | tools | 4 stars | C++ | https://github.com/Vikranth3140/Vehicle-Management-System
+  A simple console-based Vehicle Management System implemented in C++ using Object-Oriented Programming principles.
+- [Vikranth3140/Taste-Of-API](https://github.com/Vikranth3140/Taste-Of-API) | tools | 4 stars | Dart | https://github.com/Vikranth3140/Taste-Of-API
+  The Flutter Application and website submission for Fork-It Hackathon 2023 conducted by Cosy Labs and ACM IIITD
+
+## alex-feel
+
+- Profile: https://github.com/alex-feel
+- Name: Aleksandr Filippov
+- Location: Limassol, Cyprus
+- Group: infrastructure
+- Broker: cTrader (Spotware)
+- Role: outside contributor
+- Commits: 6
+- Total stars: 49
+- Best repo: alex-feel/claude-code-toolbox
+
+- [alex-feel/claude-code-toolbox](https://github.com/alex-feel/claude-code-toolbox) | tools | 16 stars | Python | https://github.com/alex-feel/claude-code-toolbox
+  Claude Code Toolbox, automated installers and environment configuration framework for Claude Code with one-line setup across Windows, macOS, and Linux.
+- [alex-feel/terraform-cloudflare-zone](https://github.com/alex-feel/terraform-cloudflare-zone) | tools | 12 stars | HCL | https://github.com/alex-feel/terraform-cloudflare-zone
+  Terraform module that creates zone resources in Cloudflare with minimal effort on your part.
+- [alex-feel/st-copy](https://github.com/alex-feel/st-copy) | tools | 9 stars | Python | https://github.com/alex-feel/st-copy
+  A tiny, theme-aware Streamlit component that adds a one-click "copy-to-clipboard" button to your app, perfect for the chat UI, URLs or any other text the user might need to copy.
+- [alex-feel/claude-code-artifacts-public](https://github.com/alex-feel/claude-code-artifacts-public) | tools | 7 stars | Python | https://github.com/alex-feel/claude-code-artifacts-public
+  Reusable Claude Code artifacts, skills, hooks, rules, environment configs, agents, and slash commands, ready to drop into any setup.
+- [alex-feel/ml-prep-and-train](https://github.com/alex-feel/ml-prep-and-train) | research-ml | 2 stars | Python | https://github.com/alex-feel/ml-prep-and-train
+  Collection of Python scripts designed to streamline data analysis, preprocessing, and binary classification modeling.
+- [alex-feel/cxr-draft-auditor](https://github.com/alex-feel/cxr-draft-auditor) | research-ml | 1 stars | Python | https://github.com/alex-feel/cxr-draft-auditor
+  Research/educational chest X-ray draft auditor: image-grounded findings vs draft impression, with a deterministic comparator. NOT a medical device.
+- [alex-feel/hugo-artifacts](https://github.com/alex-feel/hugo-artifacts) | tools | 1 stars | HTML | https://github.com/alex-feel/hugo-artifacts
+  Reusable, style-agnostic Hugo modules, shortcodes, asset & utility modules that ship semantic BEM markup and zero CSS, so they drop into any number of sites and you style them to fit.
+- [alex-feel/st-copy-example](https://github.com/alex-feel/st-copy-example) | tools | 1 stars | Python | https://github.com/alex-feel/st-copy-example
+  This repository contains a tiny Streamlit app that demonstrates how to use the st-copy component.
+
+## jack-arturo
+
+- Profile: https://github.com/jack-arturo
+- Name: Jack Arturo
+- Group: infrastructure
+- Broker: Robinhood
+- Role: outside contributor
+- Commits: 20
+- Total stars: 44
+- Best repo: jack-arturo/edd-appsmith-stats
+
+- [jack-arturo/edd-appsmith-stats](https://github.com/jack-arturo/edd-appsmith-stats) | tools | 18 stars | JavaScript | https://github.com/jack-arturo/edd-appsmith-stats
+  Building real time BI charts for Easy Digital Downloads using Appsmith
+- [jack-arturo/wordpress-helpscout](https://github.com/jack-arturo/wordpress-helpscout) | tools | 17 stars | PHP | https://github.com/jack-arturo/wordpress-helpscout
+  WordPress Dynamic Data for HelpScout. Shows WordPress user information right from your HelpScout interface.
+- [jack-arturo/wpf-woocommerce-lifetime-value](https://github.com/jack-arturo/wpf-woocommerce-lifetime-value) | tools | 3 stars | PHP | https://github.com/jack-arturo/wpf-woocommerce-lifetime-value
+  Allows syncing the customer's lifetime value from WooCommerce to a custom field in your CRM
+- [jack-arturo/wpf-post-types](https://github.com/jack-arturo/wpf-post-types) | tools | 2 stars | PHP | https://github.com/jack-arturo/wpf-post-types
+  Adds a settings page for WP Fusion where access rules can be configured for entire post types
+- [jack-arturo/freescout-analytics](https://github.com/jack-arturo/freescout-analytics) | tools | 1 stars | Python | https://github.com/jack-arturo/freescout-analytics
+  Python script for analyzing and visualizing FreeScout ticket data
+- [jack-arturo/stormlight-short](https://github.com/jack-arturo/stormlight-short) | tools | 1 stars | Python | https://github.com/jack-arturo/stormlight-short
+  Short film project based on the Stormlight Archive series
+- [jack-arturo/FreeFeatureRequests](https://github.com/jack-arturo/FreeFeatureRequests) | tools | 1 stars | PHP | https://github.com/jack-arturo/FreeFeatureRequests
+  Integrates FreeScout with Simple Feature Requests for WordPress
+- [jack-arturo/wp-fusion-wc-debug](https://github.com/jack-arturo/wp-fusion-wc-debug) | tools | 1 stars | PHP | https://github.com/jack-arturo/wp-fusion-wc-debug
+  Additional debug logging for WP Fusion and WooCommerce
+
+## andrewwormald
+
+- Profile: https://github.com/andrewwormald
+- Name: Andrew Wormald
+- Location: London, UK
+- Group: infrastructure
+- Broker: Luno
+- Role: broker staff
+- Commits: 1
+- Total stars: 35
+- Best repo: andrewwormald/Angular-1.5-cli
+
+- [andrewwormald/Angular-1.5-cli](https://github.com/andrewwormald/Angular-1.5-cli) | tools | 21 stars | JavaScript | https://github.com/andrewwormald/Angular-1.5-cli
+  A cli for Angular 1.5. Component generator.
+- [andrewwormald/streamer](https://github.com/andrewwormald/streamer) | tools | 5 stars | Go | https://github.com/andrewwormald/streamer
+  streamer is a Golang package that abstracts the managing of ws/wss connections and provides a simple interface to add new ws clients, messaging them, and listening to them using Go's concurrency tools.
+- [andrewwormald/aergo](https://github.com/andrewwormald/aergo) | tools | 4 stars | Go | https://github.com/andrewwormald/aergo
+  Zero-dependency, pure Go Aeron cluster client. No CGO, no C library, talks to the media driver directly over shared memory.
+- [andrewwormald/syntropy](https://github.com/andrewwormald/syntropy) | tools | 3 stars | Shell | https://github.com/andrewwormald/syntropy
+  syntropy paces agent-authored change to human review bandwidth: turn one large refactor into a chain of small MRs, one open at a time, each shepherded through review and CI before the next.
+- [andrewwormald/workflow](https://github.com/andrewwormald/workflow) | tools | 2 stars | n/a | https://github.com/andrewwormald/workflow
+  A Go distributed workflow framework that supports durable, robust, and idempotent state changes with timeouts, callbacks, scheduled triggers, and await calls. Compatible with Kafka and Reflex out of the box.
+
+## tarricsookdeo
+
+- Profile: https://github.com/tarricsookdeo
+- Name: Tarric Sookdeo
+- Location: New York City
+- Group: infrastructure
+- Broker: Public.com
+- Role: broker staff
+- Commits: 128
+- Total stars: 26
+- Best repo: tarricsookdeo/django-react-auth
+
+- [tarricsookdeo/django-react-auth](https://github.com/tarricsookdeo/django-react-auth) | tools | 22 stars | Python | https://github.com/tarricsookdeo/django-react-auth
+  Authentication system using Django and React
+- [tarricsookdeo/algo-trading-platform](https://github.com/tarricsookdeo/algo-trading-platform) | live-trading | 1 stars | Python | https://github.com/tarricsookdeo/algo-trading-platform
+  Live algorithmic trading platform
+- [tarricsookdeo/publicdotcom-mcp-server](https://github.com/tarricsookdeo/publicdotcom-mcp-server) | live-trading | 1 stars | Python | https://github.com/tarricsookdeo/publicdotcom-mcp-server
+  MCP server for the Public.com Trading API, expose your brokerage account to any MCP-compatible AI client
+- [tarricsookdeo/django-api-keys](https://github.com/tarricsookdeo/django-api-keys) | tools | 1 stars | Python | https://github.com/tarricsookdeo/django-api-keys
+- [tarricsookdeo/cbpro-bot](https://github.com/tarricsookdeo/cbpro-bot) | live-trading | 1 stars | Python | https://github.com/tarricsookdeo/cbpro-bot
+  A Coinbase Pro trading bot
+
+## uladkaminski
+
+- Profile: https://github.com/uladkaminski
+- Name: Uladzislau Kaminski
+- Location: London
+- Group: infrastructure
+- Broker: Revolut X
+- Role: broker staff
+- Commits: 2
+- Total stars: 22
+- Best repo: uladkaminski/pyparseit
+
+- [uladkaminski/pyparseit](https://github.com/uladkaminski/pyparseit) | tools | 19 stars | Python | https://github.com/uladkaminski/pyparseit
+  Python library designed to parse Markdown files and strings to extract code snippets based on specific programming languages.
+- [uladkaminski/local-assistant-gpt](https://github.com/uladkaminski/local-assistant-gpt) | tools | 1 stars | Python | https://github.com/uladkaminski/local-assistant-gpt
+  🎤 The Voice Assistant project enables interaction via voice commands, integrating OpenAI’s ChatGPT and Ollama for processing and responding to queries in audio format. It combines advanced voice recognition and audio playback technologies for a seamless, natural language interface.
+- [uladkaminski/amqp-rpc-sample](https://github.com/uladkaminski/amqp-rpc-sample) | tools | 1 stars | Java | https://github.com/uladkaminski/amqp-rpc-sample
+- [uladkaminski/rockjob](https://github.com/uladkaminski/rockjob) | tools | 1 stars | Java | https://github.com/uladkaminski/rockjob
+  Library for easy job execution
+
+## NitayRabi
+
+- Profile: https://github.com/NitayRabi
+- Name: Nitay Rabinovich
+- Location: Amsterdam
+- Group: infrastructure
+- Broker: Interactive Brokers
+- Role: outside contributor
+- Commits: 171
+- Total stars: 18
+- Best repo: NitayRabi/fitbit-mcp
+
+- [NitayRabi/fitbit-mcp](https://github.com/NitayRabi/fitbit-mcp) | tools | 10 stars | TypeScript | https://github.com/NitayRabi/fitbit-mcp
+- [NitayRabi/redis-cache-manager](https://github.com/NitayRabi/redis-cache-manager) | tools | 5 stars | TypeScript | https://github.com/NitayRabi/redis-cache-manager
+  Create an easy cache helper using Redis pub/sub functionality
+- [NitayRabi/mobilize-gateway](https://github.com/NitayRabi/mobilize-gateway) | tools | 1 stars | JavaScript | https://github.com/NitayRabi/mobilize-gateway
+- [NitayRabi/rg-container](https://github.com/NitayRabi/rg-container) | tools | 1 stars | TypeScript | https://github.com/NitayRabi/rg-container
+- [NitayRabi/express-ts-boiler](https://github.com/NitayRabi/express-ts-boiler) | tools | 1 stars | TypeScript | https://github.com/NitayRabi/express-ts-boiler
+
+## DeanMauro
+
+- Profile: https://github.com/DeanMauro
+- Name: Dean Mauro
+- Location: New York
+- Group: infrastructure
+- Broker: Trade It (formerly Trade Agent)
+- Role: broker staff
+- Commits: 31
+- Total stars: 10
+- Best repo: DeanMauro/conductors
+
+- [DeanMauro/conductors](https://github.com/DeanMauro/conductors) | tools | 6 stars | Java | https://github.com/DeanMauro/conductors
+  Wrappers for the UiPath Orchestrator API in several languages
+- [DeanMauro/Orchestrator-RED](https://github.com/DeanMauro/Orchestrator-RED) | tools | 2 stars | HTML | https://github.com/DeanMauro/Orchestrator-RED
+  A Node-RED wrapper for the UiPath Orchestrator API
+- [DeanMauro/shop-to-stock](https://github.com/DeanMauro/shop-to-stock) | tools | 1 stars | Python | https://github.com/DeanMauro/shop-to-stock
+  Each day buys stock in the companies you've shopped at
+- [DeanMauro/UiPathRED](https://github.com/DeanMauro/UiPathRED) | tools | 1 stars | Batchfile | https://github.com/DeanMauro/UiPathRED
+  NodeRED packaged with UiPath Orchestrator & Dashboard nodes
+
+## allank
+
+- Profile: https://github.com/allank
+- Name: Allan Kent
+- Location: Greyton, South Africa
+- Group: infrastructure
+- Broker: Luno
+- Role: broker staff
+- Commits: 1
+- Total stars: 10
+- Best repo: allank/Jupyter-snippets
+
+- [allank/Jupyter-snippets](https://github.com/allank/Jupyter-snippets) | learning | 5 stars | Jupyter Notebook | https://github.com/allank/Jupyter-snippets
+  Python code snippets explained in Jupyter Notebooks
+- [allank/agent-skills](https://github.com/allank/agent-skills) | tools | 1 stars | Shell | https://github.com/allank/agent-skills
+  Open-source product management and productivity agent skills.
+- [allank/riffle](https://github.com/allank/riffle) | tools | 1 stars | Go | https://github.com/allank/riffle
+  A single-binary CLI that builds and queries a semantic index of a local Markdown vault, primarily aimed at Obsidian vaults and other large note collections.
+- [allank/onnx_test](https://github.com/allank/onnx_test) | research-ml | 1 stars | Go | https://github.com/allank/onnx_test
+  Testing the compatibility of onnx from sklearn to go
+- [allank/docker-nvim](https://github.com/allank/docker-nvim) | tools | 1 stars | Dockerfile | https://github.com/allank/docker-nvim
+  An opinionated docker image for running nvim
+- [allank/monty-python](https://github.com/allank/monty-python) | tools | 1 stars | HTML | https://github.com/allank/monty-python
+
+## lilyDong
+
+- Profile: https://github.com/lilyDong
+- Name: @lilyDong
+- Group: infrastructure
+- Broker: OKX
+- Role: outside contributor
+- Commits: 730
+- Total stars: 8
+- Best repo: lilyDong/Permission
+
+- [lilyDong/Permission](https://github.com/lilyDong/Permission) | tools | 7 stars | Objective-C | https://github.com/lilyDong/Permission
+  video audio and photo permission
+- [lilyDong/DemoProjects](https://github.com/lilyDong/DemoProjects) | tools | 1 stars | Objective-C | https://github.com/lilyDong/DemoProjects
+
+## phoenixy1
+
+- Profile: https://github.com/phoenixy1
+- Name: Alex
+- Location: San Francisco, CA
+- Group: infrastructure
+- Broker: Plaid
+- Role: broker staff
+- Commits: 43
+- Total stars: 6
+- Best repo: phoenixy1/plaid-quickstart-workshop
+
+- [phoenixy1/plaid-quickstart-workshop](https://github.com/phoenixy1/plaid-quickstart-workshop) | learning | 5 stars | JavaScript | https://github.com/phoenixy1/plaid-quickstart-workshop
+  Demonstration repo for the live Plaid quickstart workshop
+- [phoenixy1/hello-world](https://github.com/phoenixy1/hello-world) | tools | 1 stars | n/a | https://github.com/phoenixy1/hello-world
+
+## idsts2670
+
+- Profile: https://github.com/idsts2670
+- Name: Satoshi Ido
+- Location: Chicago, IL
+- Group: infrastructure
+- Broker: Alpaca
+- Role: outside contributor
+- Commits: 145
+- Total stars: 5
+- Best repo: idsts2670/statistical-analysis
+
+- [idsts2670/statistical-analysis](https://github.com/idsts2670/statistical-analysis) | research-ml | 3 stars | HTML | https://github.com/idsts2670/statistical-analysis
+  stuff basically related to stats
+- [idsts2670/claude-tax-filing-IL](https://github.com/idsts2670/claude-tax-filing-IL) | tools | 1 stars | Python | https://github.com/idsts2670/claude-tax-filing-IL
+  Illinois-focused Claude tax-filing skill
+- [idsts2670/kindle-auto-reader](https://github.com/idsts2670/kindle-auto-reader) | tools | 1 stars | JavaScript | https://github.com/idsts2670/kindle-auto-reader
+  Chrome extension (MV3) that automates page capture with keyboard/click/scroll navigation, creates PDFs with optional OCR (Apple Vision/Tesseract). Supports crash recovery, duplicate detection, and i18n.
+
+## echarrod
+
+- Profile: https://github.com/echarrod
+- Name: Ed Harrod
+- Location: London
+- Group: infrastructure
+- Broker: Luno
+- Role: outside contributor
+- Commits: 111
+- Total stars: 5
+- Best repo: echarrod/PatientSymptomChecker
+
+- [echarrod/PatientSymptomChecker](https://github.com/echarrod/PatientSymptomChecker) | research-ml | 3 stars | JavaScript | https://github.com/echarrod/PatientSymptomChecker
+  Symptom Checker chat bot for Facebook Messenger, using Isabel API to retrieve potential diagnoses based on entered symptoms
+- [echarrod/animate-file-history](https://github.com/echarrod/animate-file-history) | tools | 1 stars | Shell | https://github.com/echarrod/animate-file-history
+  Turn any file's git history into an animated GIF. A Claude Code plugin / agent skill.
+- [echarrod/GlobalTerrorismAttacks](https://github.com/echarrod/GlobalTerrorismAttacks) | tools | 1 stars | Jupyter Notebook | https://github.com/echarrod/GlobalTerrorismAttacks
+  Global Terrorism Attacks - predicting the group responsible
+
+## simoncheungbg
+
+- Profile: https://github.com/simoncheungbg
+- Name: @simoncheungbg
+- Group: infrastructure
+- Broker: Bitget
+- Role: outside contributor
+- Commits: 8
+- Total stars: 4
+- Best repo: simoncheungbg/test
+
+- [simoncheungbg/test](https://github.com/simoncheungbg/test) | tools | 4 stars | n/a | https://github.com/simoncheungbg/test
+  test
+
+## Graeme22
+
+- Profile: https://github.com/Graeme22
+- Name: Graeme Holliday
+- Location: Idaho
+- Group: infrastructure
+- Broker: tastytrade
+- Role: outside contributor
+- Commits: 98
+- Total stars: 4
+- Best repo: Graeme22/rlskedge
+
+- [Graeme22/rlskedge](https://github.com/Graeme22/rlskedge) | tools | 2 stars | Julia | https://github.com/Graeme22/rlskedge
+  Reinforcement learning-based, generalizable HPC batch job scheduling.
+- [Graeme22/cminus](https://github.com/Graeme22/cminus) | tools | 2 stars | C++ | https://github.com/Graeme22/cminus
+  Compiler for the C- language. Produces assembly-like code meant to run on a toy virtual machine.
+
+## spotware-git
+
+- Profile: https://github.com/spotware-git
+- Name: @spotware-git
+- Group: infrastructure
+- Broker: cTrader (Spotware)
+- Role: broker staff
+- Commits: 2
+- Total stars: 1
+- Best repo: spotware-git/ctrader-algo-course
+
+- [spotware-git/ctrader-algo-course](https://github.com/spotware-git/ctrader-algo-course) | learning | 1 stars | n/a | https://github.com/spotware-git/ctrader-algo-course
 
 ## Notable org projects
 
