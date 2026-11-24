@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-11-23
+# Ghost Alpha Dossier — 2026-11-24
 
-> 🔴 **Elevated** · SPY ▲ 4.7% · VIX 26.6
+> 🔴 **Elevated** · SPY ▼ 0.8% · VIX 27.0
 
 ---
 
-Fear is palpable with VIX at 26.
+**Regime check:** VIX at 27.
 
 
 ## 🥇 Gold Pick: KO
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 60/100 (A) |
+| **Score** | 82/100 (A) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -22,19 +22,19 @@ Fear is palpable with VIX at 26.
 
 ## 📊 Today's Numbers
 
-- **131 scanner signals** across 6 strategies
+- **137 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▲ 4.7% | **VIX:** 26.6
+- **SPY:** ▼ 0.8% | **VIX:** 27.0
 
 ---
 
 ## 👻 Sam Says
 
-> *"There are old traders and bold traders, but no old bold traders."*
+> *"Made a searching and fearless inventory of our portfolio. And then wished we hadn't."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-23_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-23)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-24_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-24)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
