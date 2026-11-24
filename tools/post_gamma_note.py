@@ -337,6 +337,27 @@ def compose(d, changes=()):
             + how_often
         )
 
+    # The same caveat on the UP road, which the 11-12 down-road change left
+    # unsaid. The up trigger falls brake -> ceiling -> accelerant -> flip, and an
+    # accelerant is the mirror of the put wall: a short-gamma strike SKILL.md says
+    # price speeds UP through, drawn and never scored. On a put-heavy book brake
+    # and ceiling are routinely null, so the IF row leads with it. Reported only,
+    # and it can only make the up road read as a weaker claim.
+    if trig.get("upScored") is False and trig.get("upKind") == "accelerant":
+        um = (d.get("record") or {}).get("upMarker") or {}
+        how_often_up = (
+            f" The up road has quoted a level the record never scores on "
+            f"{um['marker']} of {um['known']} sessions."
+            if um.get("known") and um.get("marker")
+            else ""
+        )
+        lines.append(
+            f"Same caveat on the up road: {trig['up']} is an accelerant, a short-gamma "
+            f"strike. Dealers have to buy into strength there, so the map draws it as a "
+            f"marker of where a move speeds up and the record never scores it as a ceiling."
+            + how_often_up
+        )
+
     # How much of tomorrow's map the record will be able to score, said before
     # the session instead of reported as a blank after it. The note has counted
     # blank sessions since 11-08, but only in hindsight; the number of levels a

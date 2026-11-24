@@ -634,6 +634,27 @@ const record = {
     const scored = known.filter((e) => e.shelfKind === 'shelf' || (e.shelf == null && e.cushion != null));
     return { known: known.length, marker: known.length - scored.length };
   })(),
+  // The mirror of downMarker on the UP road. The up trigger falls
+  // brake -> ceiling -> accelerant -> flip; the accelerant is reported and never
+  // scored, and a level beyond REACH is already null in the entry. Rebuilt from
+  // the stored entry rather than remembered: `beyond` carries the reach-dropped
+  // brake, gate and flip, so the kind the road led with is recoverable for every
+  // entry and none are skipped. Reported only.
+  upMarker: (() => {
+    const pick = (e) => {
+      const b = e.beyond || {};
+      const brakeV = e.brake ?? b.brake, gateV = e.gate ?? b.gate, flipV = e.flip ?? b.flip;
+      if (brakeV != null) return { kind: 'brake', scored: e.brake != null };
+      if (gateV != null) return { kind: 'ceiling', scored: e.gate != null };
+      if (e.accel != null) return { kind: 'accelerant', scored: false };
+      if (flipV != null) return { kind: 'flip', scored: e.flip != null };
+      return { kind: null, scored: false };
+    };
+    if (!gradedAll.length) return null;
+    const picks = gradedAll.map(pick);
+    return { known: picks.length, marker: picks.filter((p) => !p.scored).length,
+             accel: picks.filter((p) => p.kind === 'accelerant').length };
+  })(),
   // The other half of the same question: blanks have all come off books that were
   // deeply negative overall. `netGEX` was never stored on a ledger entry, so this
   // can only count nights from 2026-11-11 forward and is null until there are any.
@@ -965,6 +986,20 @@ const downKind = downLead == null ? null
   : downLead === cushion ? 'cushion'
   : downLead === floor ? 'put wall' : null;
 const downScored = (downKind === 'shelf' || downKind === 'cushion') && inReach(downTrigger);
+
+// The same question on the UP side, which the 11-12 down-road change left
+// unasked. The up trigger falls brake -> ceiling -> accelerant -> flip, and the
+// accelerant is the mirror of the put wall: a SHORT-gamma strike that SKILL.md
+// is explicit price speeds UP through, so the map draws it and the grader never
+// scores it. On a put-heavy book brake and gate are routinely null (see the
+// per-side WALL candidate), so the IF row leads with the accelerant and reads
+// "IF it goes up through 727" as a claim the record cannot test. Reported only:
+// grading reads e.brake / e.gate / e.flip directly and is not touched by this.
+const upKind = upLead == null ? (upTrigger != null ? 'flip' : null)
+  : upLead === brake ? 'brake'
+  : upLead === gate ? 'ceiling'
+  : upLead === accel ? 'accelerant' : null;
+const upScored = (upKind === 'brake' || upKind === 'ceiling' || upKind === 'flip') && inReach(upTrigger);
 
 const sideFilter = (pts_, up) => pts_.filter((w) => w && (up ? w.at > spot : w.at < spot));
 
@@ -1631,6 +1666,10 @@ console.log(`by session: ${record.paired.both} scored by both | map better ${rec
 console.log(`by size: big days (>= 1 typical) ${record.bySize.big.hits}/${record.bySize.big.total} vs $5 ${record.bySize.big.nullHits}/${record.bySize.big.nullTotal} over ${record.bySize.big.sessions} | normal ${record.bySize.normal.hits}/${record.bySize.normal.total} vs $5 ${record.bySize.normal.nullHits}/${record.bySize.normal.nullTotal} over ${record.bySize.normal.sessions}${record.bySize.unsized ? ` | ${record.bySize.unsized} unsized` : ''}`);
 console.log(`by regime: ${Object.entries(record.byRegime).map(([k, v]) => `${k} ${v.hits}/${v.total}`).join(' | ') || 'n/a'}`);
 console.log(`by level: ${Object.entries(record.byLevel).map(([k, v]) => `${k} ${v.hits}/${v.total}`).join(' | ') || 'nothing scored yet'}`);
+console.log(`road markers: up ${upKind || 'none'} ${upScored ? 'scoreable' : 'not scored'}`
+  + (record.upMarker ? ` (${record.upMarker.marker}/${record.upMarker.known} sessions, ${record.upMarker.accel} accelerant)` : '')
+  + ` | down ${downKind || 'none'} ${downScored ? 'scoreable' : 'not scored'}`
+  + (record.downMarker ? ` (${record.downMarker.marker}/${record.downMarker.known} sessions)` : ''));
 {
   const s = scoreableOf(entry), gi = record.goingIn;
   console.log(`scoreable tomorrow: ${s.hard.length} level(s)${s.hard.length ? ` (${s.hard.map((h) => `${h.lvl} ${h.kind}`).join(', ')})` : ''}`
@@ -1672,7 +1711,7 @@ writeFileSync(sidecar, JSON.stringify({
     cond: r.isElse ? `it holds ${r.cond}` : `it goes ${r.cond}`,
     rule: r.rule,
   })),
-  triggers: { up: upTrigger, down: downTrigger, gapUp, gapDown, downKind, downScored,
+  triggers: { up: upTrigger, down: downTrigger, gapUp, gapDown, downKind, downScored, upKind, upScored,
               band: { lo: rangeLo, hi: rangeHi, width: bandWidth } },
   triggerNote,
   // What the grader will be able to check tomorrow, said before the session
