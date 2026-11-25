@@ -35,7 +35,7 @@ A model on its own can only produce text. It can't read your files, hit an API, 
 
 A tool is just a function with a name and a description. "read_file: give it a path, it returns the contents." "run_screener: give it a ticker, it returns the flow data." The model reads your descriptions, decides which one it needs, and calls it. You wire the actual code behind it. The description is doing real work here: a vague description means the model picks the wrong tool, so write it like you're explaining it to a new hire.
 
-This is the difference between a chatbot and an agent. A chatbot talks. An agent talks, then *does*: reads the file, calls the API, writes the result, checks its own work. When Sam pulls live options data before answering, that's a tool call. When nyx edits a file in a repo, tool call.
+This is the difference between a chatbot and an agent. A chatbot talks. An agent talks, then *does*: reads the file, calls the API, writes the result, checks its own work. When Ember pulls live options data before answering, that's a tool call. When nyx edits a file in a repo, tool call.
 
 The thing most people miss: you decide exactly which tools each agent gets. The release-captain can deploy. The design-critic cannot. You scope the tools to the role. That's most of your safety right there.
 

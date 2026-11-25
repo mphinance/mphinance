@@ -1,13 +1,13 @@
-# 🤖 Sam: Discord Prompts Master Guide
+# 🤖 Ember: Discord Prompts Master Guide
 
-Welcome to the official prompt guide for **Sam**, your resident quantitative trading AI. 
+Welcome to the official prompt guide for **Ember**, your resident quantitative trading AI. 
 
-This guide provides tested, copy-paste ready examples of how to interact with Sam to get the most out of his advanced toolchain. Sam has access to real-time stock screening, historical data, deep technicals, institutional options flow (VoPR), and a massive **139-book quantitative trading library**.
+This guide provides tested, copy-paste ready examples of how to interact with Ember to get the most out of his advanced toolchain. Ember has access to real-time stock screening, historical data, deep technicals, institutional options flow (VoPR), and a massive **139-book quantitative trading library**.
 
 ---
 
 ## 📚 1. Tapping the 139-Book Knowledge Base (Behavioral & Strategic)
-Sam has ingested 139 classic trading books (e.g., *Trading in the Zone*, *Naked Forex*, *Options Field Manual*). You can ask him to synthesize trading rules, analyze psychology, or pull specific strategies.
+Ember has ingested 139 classic trading books (e.g., *Trading in the Zone*, *Naked Forex*, *Options Field Manual*). You can ask him to synthesize trading rules, analyze psychology, or pull specific strategies.
 
 **Prompt Examples:**
 > "@Sam I keep revenge trading after taking a loss. Search your 139-book knowledge base for Mark Douglas's advice in 'Trading in the Zone' on how to accept risk, and give me a 3-step checklist to follow before my next trade."
@@ -16,12 +16,12 @@ Sam has ingested 139 classic trading books (e.g., *Trading in the Zone*, *Naked 
 
 > "@Sam What are the top 3 rules for managing risk during high VIX environments? Synthesize the answers strictly from the hedge fund and options manuals in your database."
 
-**What to Expect:** Sam will query the ChromaDB RAG system, pull direct passages from the books, and synthesize a structured, expert-level response without hallucinating.
+**What to Expect:** Ember will query the ChromaDB RAG system, pull direct passages from the books, and synthesize a structured, expert-level response without hallucinating.
 
 ---
 
 ## 🕵️ 2. The Dossier: Discord Chat History
-Sam automatically ingests all chat history from the Discord server. He knows what everyone has traded, bragged about, or panicked over.
+Ember automatically ingests all chat history from the Discord server. He knows what everyone has traded, bragged about, or panicked over.
 
 **Prompt Examples:**
 > "@Sam Query the dossier. What was the general sentiment in the chat about $NVDA right before earnings last quarter? Was everyone overly bullish?"
@@ -30,12 +30,12 @@ Sam automatically ingests all chat history from the Discord server. He knows wha
 
 > "@Sam Has anyone in the server been talking about unusual flow in $PLTR today? Check the history from the last 24 hours."
 
-**What to Expect:** Sam will retrieve recent/historical messages from the database and provide a summary (or a witty roast) based on actual community chatter.
+**What to Expect:** Ember will retrieve recent/historical messages from the database and provide a summary (or a witty roast) based on actual community chatter.
 
 ---
 
 ## 📈 3. Momentum Stock Screening
-Use Sam to instantly run screens across the market to find setups.
+Use Ember to instantly run screens across the market to find setups.
 
 **Prompt Examples:**
 > "@Sam Run a screen for tech stocks that are currently heavily oversold on the daily RSI, but have a high relative volume today. Give me the top 5 tickers."
@@ -49,7 +49,7 @@ Use Sam to instantly run screens across the market to find setups.
 ---
 
 ## 📊 4. Technical Analysis & Charting
-Instead of opening TradingView, ask Sam to calculate the exact technical state of a ticker.
+Instead of opening TradingView, ask Ember to calculate the exact technical state of a ticker.
 
 **Prompt Examples:**
 > "@Sam Give me a full technical breakdown of $TSLA. I want the MACD, the 14-day RSI, the ATR, and tell me if it's trading above its 50-day and 200-day EMAs."
@@ -63,7 +63,7 @@ Instead of opening TradingView, ask Sam to calculate the exact technical state o
 ---
 
 ## 🎯 5. Options, Greeks, and VoPR Engine
-Sam is directly hooked into the proprietary VoPR engine and TraderDaddy institutional flow.
+Ember is directly hooked into the proprietary VoPR engine and TraderDaddy institutional flow.
 
 **Prompt Examples:**
 > "@Sam What is the current VoPR score for $SPX? Break down the call/put delta exposure and tell me where the heaviest dealer gamma walls are located for this Friday's expiration."
@@ -77,7 +77,7 @@ Sam is directly hooked into the proprietary VoPR engine and TraderDaddy institut
 ---
 
 ## 🛠️ 6. Combine & Conquer (Advanced Prompts)
-The true power of Sam comes from combining tools in a single prompt.
+The true power of Ember comes from combining tools in a single prompt.
 
 **Prompt Examples:**
 > "@Sam First, run a screen for the most overbought stocks in the S&P 500. Pick the top result, run a full technical analysis on it to confirm exhaustion, and then check the options chain for the cost of an at-the-money put expiring in 2 weeks."
@@ -88,4 +88,4 @@ The true power of Sam comes from combining tools in a single prompt.
 
 ---
 > [!TIP]
-> **Pro-Tip for Best Results:** Always be specific with timeframes (e.g., "daily chart", "last 6 months") and indicator settings. If you want a table, explicitly ask Sam to "format the results as a markdown table."
+> **Pro-Tip for Best Results:** Always be specific with timeframes (e.g., "daily chart", "last 6 months") and indicator settings. If you want a table, explicitly ask Ember to "format the results as a markdown table."

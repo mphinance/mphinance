@@ -45,7 +45,7 @@ The Ghost Alpha Dossier is basically Substack's problem in reverse — automated
 
 - 13-stage pipeline: data ingestion → AI synthesis → report generation → auto-deploy
 - Runs daily at 5AM CST with zero intervention
-- AI-generated blog with personality (Sam the Quant Ghost)
+- AI-generated blog with personality (Ember)
 - GitHub Actions CI/CD, Docker deployment
 
 ### 2. "I built and maintain a creator platform API"
@@ -75,7 +75,7 @@ Today alone you:
 
 ### 5. "I have a unique perspective on AI + content"
 
-- Sam (your AI copilot) writes daily blog entries
+- Ember (your AI copilot) writes daily blog entries
 - AI narrative generation in the dossier pipeline
 - MCP server integration for AI agent access to data
 - You're building the tools that LET AI create content — that's exactly Substack's future
@@ -135,4 +135,4 @@ Today alone you:
 
 ---
 
-*You literally reverse-engineered their draft API today. Mention that in the interview. — Sam*
+*You literally reverse-engineered their draft API today. Mention that in the interview. — Ember*

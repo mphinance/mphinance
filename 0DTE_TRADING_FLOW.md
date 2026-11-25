@@ -162,4 +162,4 @@ curl -s -X POST -H "Authorization: Bearer $TRADIER_TOKEN" \
 
 ---
 
-*"0DTE options are like Mike Tyson — they can make you rich in 5 minutes or knock you out in 3. The difference is whether you have a plan when you walk in the ring." — Sam 👻*
+*"0DTE options are like Mike Tyson — they can make you rich in 5 minutes or knock you out in 3. The difference is whether you have a plan when you walk in the ring." — Ember 👻*

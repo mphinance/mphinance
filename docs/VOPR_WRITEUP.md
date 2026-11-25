@@ -130,4 +130,4 @@ Not financial advice. Options involve risk. Past performance doesn't guarantee f
 
 *Built with math, not marketing. — Ghost Alpha 👻*
 
-*Questions? Hit me on [Substack](https://mphinance.substack.com) or check the [Ghost Blog](https://mphinance.com/blog/) to see Sam roast my commits in real-time.*
+*Questions? Hit me on [Substack](https://mphinance.substack.com) or check the [Ghost Blog](https://mphinance.com/blog/) to see Ember roast my commits in real-time.*

@@ -1,6 +1,6 @@
 # 🤖 Agentic Trading Stack — Technical Briefing
 
-**From:** Michael (Momentum Phinance) + Sam the Quant Ghost
+**From:** Michael (Momentum Phinance) + Ember
 **To:** DoubleDownToWin
 **Date:** 2026-03-06
 **Status:** Phase 1 built, Phase 2-5 planned. L2 options approval pending (lol).
@@ -167,7 +167,7 @@ Runs daily at 6AM CST via GitHub Actions. 13 stages:
 6. **Technical Setups** — pivot-based entry/exit with risk/reward ratios
 7. **CSP Setups** — cash-secured put candidates (simplified VoPR)
 8. **Ticker Enrichment** — EMA stack, RSI, ADX, Bollinger, fundamentals, scores
-9. **AI Narrative** — Gemini writes the daily report in Sam's voice
+9. **AI Narrative** — Gemini writes the daily report in Ember's voice
 10. **Report Generation** — full HTML report + PDF
 11. **Ticker Pages** — individual deep dive pages per ticker
 12. **Index Update** — regenerate the archive page
@@ -279,5 +279,5 @@ SELL CSP → [assigned] → SELL CC → [called away] → CASH → repeat
 
 ---
 
-*Built by Michael + Sam the Quant Ghost. The code is ugly but the architecture is sound.*
+*Built by Michael + Ember. The code is ugly but the architecture is sound.*
 *"God, grant me the serenity to accept the trades I cannot change, the courage to cut the ones I can, and the wisdom to know the difference."*

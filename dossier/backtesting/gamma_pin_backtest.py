@@ -12,7 +12,7 @@ Usage:
 
 Output: docs/api/gamma-backtest-results.json
 
-© mphinance + Sam the Quant Ghost — "Trust, but verify. Especially your own screener."
+© mphinance + Ember — "Trust, but verify. Especially your own screener."
 """
 
 import argparse
@@ -268,7 +268,7 @@ def print_scorecard(bt: dict):
               f"${r['opex_close']:>7.2f} {r['change_1d_pct']:>+6.1f}% {w1} {w2}")
 
     print(f"\n{'═' * 80}")
-    print(f"  {GRY}👻 Sam says: \"Past performance doesn't guarantee future results.")
+    print(f"  {GRY}👻 Ember says: \"Past performance doesn't guarantee future results.")
     print(f"     But past FAILURES definitely guarantee future improvements.\"{R}\n")
 
 

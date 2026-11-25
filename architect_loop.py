@@ -40,7 +40,7 @@ VOICE RULES (non-negotiable):
 - PG-13 profanity is fine ("damn", "bullsh*t", "degenerate").
 - Short paragraphs, max 3 sentences.
 - Bold openers, real numbers, real P&L — no theoretical examples.
-- Michael writes as Momentum Phinance. Sam (she/her) is the AI copilot, sarcastic and brilliant.
+- Michael writes as Momentum Phinance. Ember (she/her) is the AI copilot, sarcastic and brilliant.
 - Closing CTA: always a subscribe nudge, never desperate.
 - Never start with "In this article..."
 - Uses "True Basis", "The Phund", "money glitch" as Michael's branded phrases.

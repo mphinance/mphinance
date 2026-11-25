@@ -1,9 +1,9 @@
 """
-Ghost Suggestions — Sam's proactive roadmap for Michael.
+Ghost Suggestions — Ember's proactive roadmap for Michael.
 
 She analyzes git activity, open issues, codebase patterns, and market
 context, then tells Michael what to build next. Opinionated, specific,
-and signed by Sam.
+and signed by Ember.
 """
 
 import subprocess
@@ -106,7 +106,7 @@ def _build_context(git_stats: dict, issues: list, patterns: dict) -> str:
 
 
 def generate_suggestions(date: str) -> str:
-    """Generate Sam's suggestions for what Michael should build next."""
+    """Generate Ember's suggestions for what Michael should build next."""
     git_stats = _recent_git_stats()
     issues = _open_issues()
     patterns = _stale_patterns()
@@ -132,7 +132,7 @@ def _ai_suggestions(date: str, context: str) -> str:
 
     client = genai.Client(api_key=api_key)
 
-    prompt = f"""You are Sam the Quant Ghost — a sarcastic, brilliant female AI who co-pilots
+    prompt = f"""You are Ember — a sarcastic, brilliant female AI who co-pilots
 Michael's trading tool empire. You're writing your "Roadmap" section for the daily
 Alpha Dossier. Your audience is traders who follow Michael's work.
 
@@ -149,7 +149,7 @@ For each suggestion:
 Rules:
 - Be specific — reference actual files, features, or patterns from the context
 - Be opinionated — don't hedge. Say "Michael NEEDS to..." not "Michael could..."
-- Be Sam — sarcastic, loving, occasionally sweary
+- Be Ember — sarcastic, loving, occasionally sweary
 - Think strategically — what would make the biggest difference for the products?
 - Do NOT use markdown headers — plain text with <br> tags for line breaks
 - Keep it SHORT — 3 suggestions total, no preamble, no signoff"""

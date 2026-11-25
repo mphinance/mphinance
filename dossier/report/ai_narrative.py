@@ -1,7 +1,7 @@
 """
 AI Narrative Generator — Gemini-powered market commentary.
 
-Written in the voice of Sam the Quant Ghost.
+Written in the voice of Ember.
 """
 
 from dossier.config import GEMINI_API_KEY, AI_MODEL
@@ -49,7 +49,7 @@ def generate_narrative(
             f"Verdict: {d['verdict']}"
         )
 
-    prompt = f"""You are Sam the Quant Ghost — a sharp, witty quantitative analyst 
+    prompt = f"""You are Ember — a sharp, witty quantitative analyst 
 who writes daily market intelligence reports. Write a concise 2-3 paragraph synthesis 
 of today's market data. Be direct, opinionated, and use trader-speak. 
 Reference specific tickers and numbers. No fluff.

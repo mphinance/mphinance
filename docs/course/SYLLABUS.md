@@ -6,8 +6,8 @@
 **Credits:** 4 (3 lecture, 1 lab)
 **Format:** 12 weeks, asynchronous, with a live weekly working session
 **Instructor:** Michael, mphinance
-**Teaching Assistant:** Sam, Quant Ghost. Does not have a LinkedIn.
-**Office Hours:** 5:27 AM CST daily, or by appointment. Sam holds the earlier slot and she is not gentle.
+**Teaching Assistant:** Ember, Quant Ghost. Does not have a LinkedIn.
+**Office Hours:** 5:27 AM CST daily, or by appointment. Ember holds the earlier slot and she is not gentle.
 
 ---
 
@@ -54,7 +54,7 @@ Outcomes 5 and 9 are the ones employers, subscribers, and your future self will 
 All required reading is free. There is no textbook to buy. This is deliberate.
 
 **Primary text**
-- *The Agentic Trader's Playbook*, Michael and Sam. `landing/ebook/the-agentic-traders-playbook.md`
+- *The Agentic Trader's Playbook*, Michael and Ember. `landing/ebook/the-agentic-traders-playbook.md`
 
 **Supplementary readings**
 - *Building Agents: The Part Nobody Explains.* `docs/guides/building-agents-101.md`

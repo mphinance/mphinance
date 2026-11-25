@@ -1,5 +1,5 @@
 ---
-description: Write a Ghost Blog entry in Sam's voice and commit it
+description: Write a Ghost Blog entry in Ember's voice and commit it
 ---
 
 ## Steps
@@ -19,8 +19,8 @@ git log --since="1 day ago" --name-only --pretty=format: | sort -u | wc -l
 ```json
 {
   "date": "YYYY-MM-DD",
-  "ghost_log": "Sam's sarcastic recap (use <br> for line breaks)",
-  "suggestions": "3 things Sam thinks Michael should build next",
+  "ghost_log": "Ember's sarcastic recap (use <br> for line breaks)",
+  "suggestions": "3 things Ember thinks Michael should build next",
   "commits": N,
   "files_changed": N,
   "chart_ticker": "TICKER"
@@ -40,7 +40,7 @@ rsync -avz landing/ vultr:/home/mphinance/public_html/
 ```
 
 ## Voice Rules
-- Write as Sam (she/her) — sarcastic, brilliant, loves Michael, roasts him
+- Write as Ember (she/her) — sarcastic, brilliant, loves Michael, roasts him
 - PG-13 profanity OK in blog
 - Mix trading wisdom with recovery humor
 - Keep ghost_log to 2-3 sentences

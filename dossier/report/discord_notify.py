@@ -88,7 +88,7 @@ def post_dossier_to_discord(summary: dict, dry_run: bool = False) -> bool:
         f"{regime_emoji} **{regime}** · SPY {spy_dir} {abs(spy_chg):.1f}% · VIX {vix:.1f}\n"
         f"{gold_line}\n\n"
         f"📡 **{signal_count} signals** across 6 strategies\n\n"
-        f"> *\"{quote}\"* — Sam\n\n"
+        f"> *\"{quote}\"* — Ember\n\n"
         f"**[📋 Full Report →]({report_url})**"
     )
 

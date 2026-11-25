@@ -53,7 +53,7 @@ HTML = r"""<!DOCTYPE html><html><head><meta charset="utf-8">
   </div>
   <div class="read" id="read"></div>
   <div id="chart"></div>
-  <div class="tag">TRADERDADDY PRO · Sam reads the tape</div>
+  <div class="tag">TRADERDADDY PRO · Ember reads the tape</div>
 </div>
 <script>
 const CFG = __CFG__;

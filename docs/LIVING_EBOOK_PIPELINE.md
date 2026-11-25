@@ -15,7 +15,7 @@ The ebook grows with the platform. Every sprint, blog entry, and lesson learned 
 
 ### How it works
 
-1. Ghost Blog entries (`blog_entries.json`) are Sam's unfiltered dev logs
+1. Ghost Blog entries (`blog_entries.json`) are Ember's unfiltered dev logs
 2. Pipeline stage: **professionalize** — Gemini takes raw blog entries and:
    - Strips the personal snark (keep *some* voice, lose the inside jokes)
    - Extracts actionable technical knowledge
@@ -53,7 +53,7 @@ Wire as Stage 15 in the pipeline (after Substack draft, before summary).
 
 ### Voice Guide for Gemini
 
-> Transform Sam's blog entries into professional but personality-rich book content.
+> Transform Ember's blog entries into professional but personality-rich book content.
 > Keep: technical depth, real talk, lessons-learned honesty, the occasional wit.
 > Remove: f-bombs, ultra-specific commit references, internal debugging chatter.
 > Format: Subheadings, code blocks, "Key Insight" callouts, "Try This" exercises.

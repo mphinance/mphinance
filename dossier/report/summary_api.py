@@ -53,7 +53,7 @@ def generate_summary_api(
     silver_pick = picks[1] if len(picks) > 1 else None
     bronze_pick = picks[2] if len(picks) > 2 else None
 
-    # ── Sam's Quote ──
+    # ── Ember's Quote ──
     try:
         from dossier.report.ghost_quotes import get_daily_quote, format_quote
         quote = get_daily_quote(date)

@@ -1,6 +1,6 @@
 # Skills
 
-Domain playbooks Sam (and any agent) loads on demand, instead of pasting the
+Domain playbooks Ember (and any agent) loads on demand, instead of pasting the
 same context every session. Each skill is a folder with a `SKILL.md` that has
 YAML frontmatter (`name`, `description`) plus the operational meat.
 
@@ -25,7 +25,7 @@ Each skill links back to its full root-level guide as the source of truth.
 
 1. `mkdir .claude/skills/<slug>` and add `SKILL.md`.
 2. Frontmatter `name:` must equal the folder name. Write `description:` as
-   *"<what it does>. Use when <trigger>."* — that's what tells Sam when to load it.
+   *"<what it does>. Use when <trigger>."* — that's what tells Ember when to load it.
 3. Run the linter: `python scripts/check_skills.py`.
 
 ## Important note (borrowed framing)

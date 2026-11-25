@@ -170,7 +170,7 @@ def generate_status_page(pipeline_stats: dict = None):
                 <span class="text-gray-400 truncate">{e['message']}</span>
             </div>"""
     else:
-        errors_html = '<div class="text-[10px] text-gray-600 italic py-4 text-center">No errors recorded. Sam approves. 👻</div>'
+        errors_html = '<div class="text-[10px] text-gray-600 italic py-4 text-center">No errors recorded. Ember approves. 👻</div>'
 
     # ── Build run history dots ──
     history_dots = ""
@@ -455,7 +455,7 @@ def generate_status_page(pipeline_stats: dict = None):
         <!-- ═══ FOOTER ═══ -->
         <div class="text-center py-4 space-y-2">
             <div class="text-[10px] text-gray-600 font-mono">
-                Sam watches everything. The pipeline watches the market. This page watches the pipeline.
+                Ember watches everything. The pipeline watches the market. This page watches the pipeline.
                 <br>It's watchers all the way down. 👻
             </div>
             <div class="text-[9px] text-gray-700 font-mono uppercase tracking-widest">

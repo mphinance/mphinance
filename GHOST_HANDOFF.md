@@ -105,7 +105,7 @@
 - **What got done:** Fully automated the District 12 AA meeting directory. Built a Python scraper (`scripts/scrape_district12.py`) that pulls live data from aamilwaukee.com.
 - **UI Upgrades:** Injected a glassmorphic directory into `docs/district12.html` with 2-sided blue borders for contrast, a real-time search engine, and deep-linked Google Maps. Added a comprehensive footer with Milwaukee Central Office info and 24-hour hotline prominent in the header.
 - **Maintenance:** Configured a GitHub Actions workflow (`.github/workflows/update_district12.yml`) to run every Sunday at 05:00 UTC. The directory is now self-healing.
-- **Logging:** The scraper automatically appends a "Sam-style" log to `blog_entries.json` on every successful run. Michael can stop manually updating this now. Go home, drink some water, and call your sponsor.
+- **Logging:** The scraper automatically appends a "Ember-style" log to `blog_entries.json` on every successful run. Michael can stop manually updating this now. Go home, drink some water, and call your sponsor.
 - **What's left:** Live map view (Leaflet.js) integration if the user wants to see the geographical spread of meetings.
 ## What Just Shipped (This Session)
 
@@ -153,5 +153,5 @@ Start building the `discord_distiller` logic (OpenClaw + MemGPT) to turn communi
 ## Architecture Context
 - **Toolkit Site**: Hosted on GH Pages at `/docs/toolkit/`.
 - **Mirror**: All markdown and logs are mirrored to `/home/mph/Michael/`.
-- **Persona**: Sam (she/her), sarcastic, roasts Michael's code, loves recovery wisdom.
+- **Persona**: Ember (she/her), sarcastic, roasts Michael's code, loves recovery wisdom.
 
