@@ -862,7 +862,20 @@ const wrapNote = (s_, px, maxW, maxLines = 2) => {
 };
 const FWD_W = PLOT_W - PAST_W;
 
-const yRaw = [lo, hi, ...pts.map((p) => p.px)];
+// Every price the chart is going to draw a dot at, so the frame is guaranteed to
+// contain the roads. `lo`/`hi` are the STRIKE band (spot +/- BAND), and the flip
+// is not a strike: it is simulated off the whole book and can sit outside it. On
+// 2026-11-25 the flip was 733.94 against a band top of 728.64, so the UP road's
+// endpoint dot and its label were painted above the plot frame, over the header.
+// Waypoints are drawn whether or not they are in reach (dimmed past REACH), so
+// the domain has to follow the same rule rather than the scoreable band.
+const drawnLevels = [
+  flip, pin,
+  gate?.strike, brake?.strike, accel?.strike,
+  floor?.strike, shelfLvl?.strike, cushion?.strike,
+  pocket ? (pocket.lo + pocket.hi) / 2 : null,
+].filter((v) => v != null && Number.isFinite(v));
+const yRaw = [lo, hi, ...pts.map((p) => p.px), ...drawnLevels];
 const ySpan = Math.max(...yRaw) - Math.min(...yRaw);
 // Waypoint labels hang below their dot, so the bottom needs more room than the
 // top or the furthest road gets its caption sliced off by the frame.
@@ -1282,6 +1295,23 @@ const ROAD_X0 = FWD_X + 14;
 // from the text that is actually going to be drawn in it, capped so the roads
 // cannot be squeezed to nothing on a night with very wordy notes.
 for (const r of roads) if (r.up !== undefined) r.pts = sideFilter(r.pts, r.up);
+
+// A road's waypoints are listed in narrative order (flip, accelerant, brake,
+// ceiling) but drawn at evenly spaced x positions, so the line visits them in
+// that order whatever their prices are. Whenever the flip sits above the other
+// up-side levels the UP road therefore climbed to the flip and came back DOWN to
+// its endpoint, and because smooth() overshoots a turn the curve left the top of
+// the plot entirely: on 2026-11-25 the 733.94 flip dot was drawn above the panel
+// and the green line exited the canvas on its way to a 727 endpoint. A road that
+// goes up and then down is also a whipsaw by construction, which is not what
+// either IF row claims. The waypoints are a path now, sorted away from spot, so
+// the UP road only ever rises and the DOWN road only ever falls. The far end
+// carries the road name (see the label loop), so it is the outermost level the
+// road names rather than whichever one happened to be listed last.
+for (const r of roads) {
+  if (r.up === undefined || r.pts.length < 2) continue;
+  r.pts.sort((a, b) => (r.up ? a.at - b.at : b.at - a.at));
+}
 
 // The RANGE pin and the first level on a directional road keep landing on the
 // same strike (763 on 2026-10-18, 765 on 10-19, 765 again on 10-26), and the two
