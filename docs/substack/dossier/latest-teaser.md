@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-11-24
+# Ghost Alpha Dossier — 2026-11-25
 
-> 🔴 **Elevated** · SPY ▼ 0.8% · VIX 27.0
+> 🔴 **Elevated** · SPY ▼ 0.4% · VIX 27.8
 
 ---
 
-**Regime check:** VIX at 27.
+The VIX at 27.
 
 
 ## 🥇 Gold Pick: KO
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 82/100 (A) |
+| **Score** | 52/100 (A) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -22,24 +22,24 @@
 
 ## 📊 Today's Numbers
 
-- **137 scanner signals** across 6 strategies
+- **148 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 0.8% | **VIX:** 27.0
+- **SPY:** ▼ 0.4% | **VIX:** 27.8
 
 ---
 
-## 👻 Sam Says
+## 👻 Ember Says
 
-> *"Made a searching and fearless inventory of our portfolio. And then wished we hadn't."*
+> *"The best stop loss is the one you set before you need it."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-24_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-24)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-25_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-25)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
 ---
 
-*Ghost Alpha Dossier is generated daily at 5AM CST by a 16-stage pipeline that scans the entire market. Built by Michael. Roasted by Sam.*
+*Ghost Alpha Dossier is generated daily at 5AM CST by a 16-stage pipeline that scans the entire market. Built by Michael. Roasted by Ember.*
 
-*Support Sam's compute: [Ghost Alpha Indicator](https://mphinance.com/ghost-alpha/?utm_source=substack&utm_medium=email&utm_campaign=ghost-alpha) — $8 one-time.*
+*Support Ember's compute: [Ghost Alpha Indicator](https://mphinance.com/ghost-alpha/?utm_source=substack&utm_medium=email&utm_campaign=ghost-alpha) — $8 one-time.*
