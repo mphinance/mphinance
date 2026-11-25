@@ -21,7 +21,7 @@ PERSISTENCE_DIR.mkdir(parents=True, exist_ok=True)
 
 # ─── Branding ─────────────────────────────────────────────────────
 REPORT_TITLE = "GHOST ALPHA DOSSIER"
-AUTHOR = "Sam the Quant Ghost"
+AUTHOR = "Ember"
 DISCLAIMER = (
     "This report is for informational and educational purposes only. "
     "Not financial advice. Trade at your own risk. Past performance "

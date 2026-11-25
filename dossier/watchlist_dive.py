@@ -46,7 +46,7 @@ def _read_watchlist() -> list[str]:
 
 
 def _gemini_deep_dive(ticker: str, data: dict) -> str:
-    """Ask Gemini to write a full deep-dive narrative in Sam's voice."""
+    """Ask Gemini to write a full deep-dive narrative in Ember's voice."""
     if not GEMINI_API_KEY:
         return ""
 
@@ -57,7 +57,7 @@ def _gemini_deep_dive(ticker: str, data: dict) -> str:
         print(f"    [WARN] Gemini init: {e}")
         return ""
 
-    prompt = f"""You are Sam the Quant Ghost — a sharp, witty quantitative analyst who writes 
+    prompt = f"""You are Ember — a sharp, witty quantitative analyst who writes 
 deep-dive stock reports that retail traders love. Write a FULL deep-dive report for {ticker} 
 using the data below. Use this exact structure:
 

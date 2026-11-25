@@ -334,7 +334,7 @@ def main():
     # --section=<slug> files the draft under a publication Section (e.g. data).
     section_slug = next((a.split("=", 1)[1] for a in sys.argv[1:]
                          if a.startswith("--section=")), None)
-    # --prefix=<str> prepends to the title (e.g. "[Data Sam] ") — marks automated posts.
+    # --prefix=<str> prepends to the title (e.g. "[Data Ember] ") — marks automated posts.
     prefix = next((a.split("=", 1)[1] for a in sys.argv[1:]
                    if a.startswith("--prefix=")), "")
     # Voice gate: hard bans (dashes, banned phrases, bad sign-off) block the push.

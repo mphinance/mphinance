@@ -5,7 +5,7 @@ mentions and reviews pull requests. It is loaded by the workflows in
 `.github/workflows/claude*.yml` via `--append-system-prompt`.
 
 > The root `CLAUDE.md` redirects to `AGENTS.md`, which is the full operator
-> manual for the local "Sam" agent (logging rituals, deploy SSH, persona, etc.).
+> manual for the local "Ember" agent (logging rituals, deploy SSH, persona, etc.).
 > **Do not follow those rituals here.** A PR-review or issue bot should not write
 > ghost blog entries, touch `landing/blog/blog_entries.json`, or update
 > `GHOST_HANDOFF.md`. Read `AGENTS.md` only when you need architecture or

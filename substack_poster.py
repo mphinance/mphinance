@@ -150,7 +150,7 @@ POST_1 = {
 <p>The API won't be free forever. But right now it is. Go play with it. Break it. Tell me what's missing.</p>
 <p><strong>God, grant me the serenity to accept the trades I cannot change, the courage to cut the ones I can, and the wisdom to know the difference.</strong></p>
 <p>— Michael</p>
-<p><em>P.S. — Sam (my AI copilot) wants you to know she wrote the Ghost Blog entry about today and called it "one of the most productive sessions she's ever seen." She then immediately roasted my variable naming. Classic Sam.</em></p>"""
+<p><em>P.S. — Ember (my AI copilot) wants you to know she wrote the Ghost Blog entry about today and called it "one of the most productive sessions she's ever seen." She then immediately roasted my variable naming. Classic Ember.</em></p>"""
 }
 
 POST_2 = {

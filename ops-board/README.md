@@ -18,7 +18,7 @@ external host required. (Want a public show-off URL too? Copy this folder into
 | ⚡ **Smart-Money Flow Tape** | Scrolling feed of the biggest sweeps/blocks + pre-earnings flow | `get_unusual_activity`, `get_earnings_flow`, `get_market_stats` |
 | 🎯 **Convergence Radar** | Names multiple screeners (+flow +earnings) agree on, with source badges | `run_screener` (bullish-pullback, momentum, …) |
 | 🧲 **Gamma Pin Map** | Live **SPY candlestick** (KLineChart) with the call/put gamma walls drawn across it, plus SPX/QQQ wall ladders + regime | `get_gex_overview` + Tradier `timesales` |
-| 🪞 **Discipline Mirror** | Put/call sentiment, a rules checklist, and Sam keeping you honest | `get_market_stats` + Sam |
+| 🪞 **Discipline Mirror** | Put/call sentiment, a rules checklist, and Ember keeping you honest | `get_market_stats` + Ember |
 
 Header carries the **gamma regime** chip, **put/call** sentiment, a live **next-event
 countdown** (CPI / NFP / earnings), an ET clock, and a LIVE/CLOSED LED.

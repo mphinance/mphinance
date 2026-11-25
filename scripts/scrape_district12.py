@@ -245,7 +245,7 @@ def update_directory(html_content):
     return True
 
 def log_to_blog(count):
-    """Adds a sarcastic Sam-style entry to the blog log."""
+    """Adds a sarcastic Ember-style entry to the blog log."""
     if not os.path.exists(LOG_FILE):
         print(f"📝 Blog file {LOG_FILE} not found, skipping log.")
         return

@@ -49,7 +49,7 @@ problems faster.
 
 ## Constraints
 
-- Existing-codebase work — read [AGENTS.md](AGENTS.md), follow Sam's voice
+- Existing-codebase work — read [AGENTS.md](AGENTS.md), follow Ember's voice
   on commits, never `git add -A`.
 - Don't break the 5AM CST weekday dossier run — verify before merging.
 - All changes land via PR (current: [#5](https://github.com/mphinance/mphinance/pull/5)).

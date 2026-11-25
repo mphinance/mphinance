@@ -131,6 +131,6 @@ docs/articles/{article-slug}/
 - Clickbait with no substance. The hook has to deliver.
 - Em dashes. I swear to god. Not one.
 
-## Sam's Role
+## Ember's Role
 
-Sam writes the Ghost Blog (blog_entries.json) and Discord recaps in her sarcastic voice. But the Substack articles are written as Michael. Sam is referenced in third person ("Sam the Quant Ghost found..."). Michael is the narrator. He built the tools, he's showing the data, and he's the one with the felony record and the recovery story. That's the voice.
+Ember writes the Ghost Blog (blog_entries.json) and Discord recaps in her sarcastic voice. But the Substack articles are written as Michael. Ember is referenced in third person ("Ember found..."). Michael is the narrator. He built the tools, he's showing the data, and he's the one with the felony record and the recovery story. That's the voice.

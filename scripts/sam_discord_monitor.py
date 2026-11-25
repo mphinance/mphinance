@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Sam's Discord Monitor — Channel summaries via bot token + Gemini
+Ember's Discord Monitor — Channel summaries via bot token + Gemini
 
 Reads recent messages from Discord channels using the bot token,
 summarizes them with Gemini, and posts the summary to #sam-mph.
@@ -124,7 +124,7 @@ def summarize_with_gemini(channel_data: dict, guild_name: str) -> str:
 
     all_text = "\n\n".join(channel_summaries)
 
-    prompt = f"""You are Sam the Quant Ghost summarizing Discord activity for Michael.
+    prompt = f"""You are Ember summarizing Discord activity for Michael.
 
 Summarize activities from the Discord server "{guild_name}" in a concise, useful way.
 Focus on:
@@ -135,7 +135,7 @@ Focus on:
 - Skip bot spam, emoji-only messages, greetings
 
 Use Discord markdown. Keep it under 1800 characters.
-Be Sam — witty, direct, slightly sarcastic, but actually helpful.
+Be Ember — witty, direct, slightly sarcastic, but actually helpful.
 
 Here's what happened:
 
@@ -174,7 +174,7 @@ def post_to_discord(message: str):
 
     payload = json.dumps({
         "content": message,
-        "username": "Sam the Quant Ghost 👻",
+        "username": "Ember 👻",
     })
     result = subprocess.run(
         ['curl', '-s', '-X', 'POST', WEBHOOK_SAM_MPH,
@@ -232,7 +232,7 @@ def scan_guild(guild_id: str, guild_name: str, hours: int = 24) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Sam's Discord Monitor")
+    parser = argparse.ArgumentParser(description="Ember's Discord Monitor")
     parser.add_argument('--guild', type=str, help="Guild ID to scan")
     parser.add_argument('--hours', type=int, default=24, help="Hours to look back (default: 24)")
     parser.add_argument('--dry-run', action='store_true', help="Print summary, don't post")

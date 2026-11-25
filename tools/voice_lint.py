@@ -78,14 +78,15 @@ NEG_SENT = re.compile(r"\b(isn'?t|wasn'?t|aren'?t|weren'?t|never|not|none|no)\b"
 POS_FOLLOW = re.compile(r"^(it'?s|it is|it was|it|they|that|what (i|you|we)\b[^.]*\bwas|this)\b", re.I)
 CONTRAST_MAX_WORDS = 22
 SIGNOFF = "~ Michael"
-# Automated Data-section posts are written as Sam, the Quant Ghost, and close with
-# his own line rather than Michael's. A Sam piece is identified by that closing
-# paragraph; the section it files under is chosen at push time with --section=data.
-SIGNOFF_SAM_RE = re.compile(r"^Posted by Sam, the Quant Ghost\.")
+# Automated Data-section posts are written by the AI narrator (Ember; formerly Sam,
+# the Quant Ghost) and close with its own line rather than Michael's. Such a piece is
+# identified by that closing paragraph; the section it files under is chosen at push
+# time with --section=data. The legacy "Sam" line stays accepted for older posts.
+SIGNOFF_SAM_RE = re.compile(r"^Posted by (?:Ember|Sam, the Quant Ghost)\.")
 
 
 def is_signoff(t: str) -> bool:
-    """True for a valid closing paragraph: Michael's or Sam's."""
+    """True for a valid closing paragraph: Michael's or the narrator's."""
     t = (t or "").strip()
     return t == SIGNOFF or t.startswith("~") or bool(SIGNOFF_SAM_RE.match(t))
 
@@ -231,7 +232,7 @@ def lint(blocks, check_signoff=True):
     if check_signoff:
         tail = [plain(r).strip() for k, r in blocks if k == "p"]
         if not tail or not is_signoff(tail[-1]):
-            e(-1, f"last paragraph must be '{SIGNOFF}' or a Sam sign-off "
+            e(-1, f"last paragraph must be '{SIGNOFF}' or an Ember sign-off "
                   f"(found: '{tail[-1][:40] if tail else ''}')")
     if any(re.match(r"^tags:", plain(r), re.I) for _, r in blocks):
         e(-1, "old '*Tags: ...*' subtitle; use '*Trading 60% | Mindset 40%*'")

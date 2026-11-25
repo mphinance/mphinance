@@ -90,4 +90,4 @@ curl -s -X POST -H "Authorization: Bearer $TRADIER_TOKEN" \
 Full guide: [`0DTE_TRADING_FLOW.md`](../../../0DTE_TRADING_FLOW.md).
 
 *"0DTE options are like Mike Tyson — rich in 5 minutes or knocked out in 3. The
-difference is whether you have a plan when you walk in the ring." — Sam 👻*
+difference is whether you have a plan when you walk in the ring." — Ember 👻*

@@ -53,7 +53,7 @@ mphinance is the **analytical pipeline and content engine** for Ghost Alpha. It 
 
 1. **Daily Alpha Dossier** — 13-stage automated pipeline (market pulse → strategy scanning → ticker enrichment → AI narrative → Substack draft)
 2. **Watchlist Deep Dives** — AI-written (Gemini) full reports per ticker, stored in `docs/ticker/{SYMBOL}/`
-3. **Ghost Blog** — Sam's dev log, landing page content
+3. **Ghost Blog** — Ember's dev log, landing page content
 4. **Widgets** — Embeddable Bloomberg-style HTML widgets pulling from `docs/ticker/{TICKER}/latest.json`
 
 ## Where It Lives
@@ -188,4 +188,4 @@ These are always scanned and enriched, regardless of scanner output.
 ## Key People/Contacts
 
 - **Michael** (<[redacted]>) — the human, trader, builder
-- **Sam the Quant Ghost** (she/her) — AI copilot, writes in sarcastic voice. See `VOICE.md` in mphinance repo.
+- **Ember** (she/her) — AI copilot, writes in sarcastic voice. See `VOICE.md` in mphinance repo.

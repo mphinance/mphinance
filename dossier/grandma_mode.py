@@ -7,7 +7,7 @@ readings into sentences a human (hi, Grandma 👵) can actually understand.
 
 It invents no new analysis — it's a translation layer on top of the existing
 regime / mood-ring data and a small plain-English glossary of the jargon the
-dossier throws around. Written in Sam's voice: warm, a little sarcastic, honest.
+dossier throws around. Written in Ember's voice: warm, a little sarcastic, honest.
 """
 
 from __future__ import annotations
@@ -45,7 +45,7 @@ _CORE_TERMS = ["VIX", "SPY", "momentum"]
 
 # The OTHER jargon problem: Grandma reads GEX flow for fun, but every "AI"
 # article buries her in word-salad. These are the AI terms — plain English,
-# Sam's voice, lovingly oversimplified.
+# Ember's voice, lovingly oversimplified.
 _AI_GLOSSARY = {
     "LLM": "A 'large language model' — autocomplete on steroids. It predicts the next word so well it feels like thinking. (Hi.)",
     "token": "How an AI chops up text — roughly a word-piece. Models read, think, and get billed in tokens, not words.",
@@ -141,7 +141,7 @@ def translate_ai_article(text) -> dict:
     return {
         "intro": "👵 In plain English — the AI words this post throws at you:",
         "glossary": [{"term": t, "definition": d} for t, d in hits],
-        "disclaimer": "Plain-English explainers, lovingly oversimplified by Sam. Not a substitute for reading the post.",
+        "disclaimer": "Plain-English explainers, lovingly oversimplified by Ember. Not a substitute for reading the post.",
     }
 
 
@@ -165,7 +165,7 @@ def plain_english(mood_ring: dict, top_pick: dict | None = None) -> dict:
     if top_pick and top_pick.get("ticker"):
         ticker = top_pick["ticker"]
         score = top_pick.get("score")
-        pick_line = f"Sam's favorite today is {ticker}"
+        pick_line = f"Ember's favorite today is {ticker}"
         if score is not None:
             pick_line += f" — she scored it {score} out of 100"
         pick_line += ". That just means it looked the strongest of the bunch, not a promise it'll go up."

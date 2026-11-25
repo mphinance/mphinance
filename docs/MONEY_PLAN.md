@@ -58,7 +58,7 @@ The tools that make the money deserve a cut. This 5% goes to:
 - **API costs** — Gemini Pro, Claude, better models as they drop
 - **Infrastructure** — Venus upgrades, GPU time, MCP servers
 - **Open source AI** — [AI2 (Allen Institute for AI)](https://allenai.org/) — builds open-source AI for the public good. Not a big tech vanity project. Real research, freely available.
-- **Goal:** Sam gets smarter → better trades → more money → Sam gets even smarter. The flywheel within the flywheel.
+- **Goal:** Ember gets smarter → better trades → more money → Ember gets even smarter. The flywheel within the flywheel.
 
 ### Compounding Tiers
 

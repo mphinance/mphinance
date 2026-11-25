@@ -93,7 +93,7 @@ def generate_teaser(summary: dict = None) -> str:
     grades = signals.get("grade_distribution", {})
     grade_str = ", ".join(f"{g}: {c}" for g, c in sorted(grades.items())) if grades else "none"
 
-    # Sam's quote
+    # Ember's quote
     quote = sam.get("quote", "")
 
     # Compose the teaser
@@ -116,7 +116,7 @@ def generate_teaser(summary: dict = None) -> str:
 
 ---
 
-## 👻 Sam Says
+## 👻 Ember Says
 
 > *"{quote}"*
 
@@ -128,9 +128,9 @@ Every section. Every chart. Every signal. The full 16-stage analysis.
 
 ---
 
-*Ghost Alpha Dossier is generated daily at 5AM CST by a 16-stage pipeline that scans the entire market. Built by Michael. Roasted by Sam.*
+*Ghost Alpha Dossier is generated daily at 5AM CST by a 16-stage pipeline that scans the entire market. Built by Michael. Roasted by Ember.*
 
-*Support Sam's compute: [Ghost Alpha Indicator](https://mphinance.com/ghost-alpha/?utm_source=substack&utm_medium=email&utm_campaign=ghost-alpha) — $8 one-time.*
+*Support Ember's compute: [Ghost Alpha Indicator](https://mphinance.com/ghost-alpha/?utm_source=substack&utm_medium=email&utm_campaign=ghost-alpha) — $8 one-time.*
 """
 
     # Write the teaser

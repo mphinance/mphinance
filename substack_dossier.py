@@ -328,7 +328,7 @@ def build_dossier_doc(date: str, client=None) -> tuple[str, str, dict]:
 
     # Prominent report link
     nodes.append(p(bold(link(f"View Full Interactive Report -- {date}", report_url))))
-    nodes.append(p(italic(f"Sam the Quant Ghost | {date} | VIX {vix_val} ({vix_regime})")))
+    nodes.append(p(italic(f"Ember | {date} | VIX {vix_val} ({vix_regime})")))
 
     # AI Synthesis
     nodes.append(h(2, "AI Synthesis"))
@@ -442,7 +442,7 @@ def build_dossier_doc(date: str, client=None) -> tuple[str, str, dict]:
                    " | ", link("API Docs", "http://mphinance.com:8002/docs")))
 
     title = f"ALPHA.DOSSIER // {date}"
-    subtitle = f"Sam the Quant Ghost | VIX {vix_val} ({vix_regime}) | {len(picks)} scored tickers"
+    subtitle = f"Ember | VIX {vix_val} ({vix_regime}) | {len(picks)} scored tickers"
     
     doc = {"type": "doc", "content": nodes}
 

@@ -110,7 +110,7 @@ def generate_weekly_digest(lookback_days: int = 7) -> str:
                 f"{pick['upside']:.1f}% |\n"
             )
 
-    # Sam's best quote of the week
+    # Ember's best quote of the week
     sam_quotes = [s.get("sam", {}).get("quote", "") for s in summaries if s.get("sam", {}).get("quote")]
     best_quote = sam_quotes[-1] if sam_quotes else ""
 
@@ -145,7 +145,7 @@ def generate_weekly_digest(lookback_days: int = 7) -> str:
 
 ---
 
-## 👻 Sam Says
+## 👻 Ember Says
 
 > *"{best_quote}"*
 
@@ -157,9 +157,9 @@ Every day's full 16-stage analysis. Every signal. Every chart.
 
 ---
 
-*Ghost Alpha Weekly Digest — {len(summaries)} trading days summarized. Built by Michael. Roasted by Sam.*
+*Ghost Alpha Weekly Digest — {len(summaries)} trading days summarized. Built by Michael. Roasted by Ember.*
 
-*Support Sam's compute: [Ghost Alpha Indicator](https://mphinance.com/ghost-alpha/?utm_source=substack&utm_medium=email&utm_campaign=weekly-digest) — $8 one-time.*
+*Support Ember's compute: [Ghost Alpha Indicator](https://mphinance.com/ghost-alpha/?utm_source=substack&utm_medium=email&utm_campaign=weekly-digest) — $8 one-time.*
 """
 
     # Write the digest

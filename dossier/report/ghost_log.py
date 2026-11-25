@@ -76,7 +76,7 @@ def generate_ghost_log(date: str) -> str:
 
 
 def _ai_roast(date: str, commits: list[str], stats: str) -> str:
-    """Ask Gemini to roast Sam's commits."""
+    """Ask Gemini to roast Ember's commits."""
     from google import genai
     import os
 
@@ -88,7 +88,7 @@ def _ai_roast(date: str, commits: list[str], stats: str) -> str:
 
     commit_text = "\n".join(f"- {c}" for c in commits)
 
-    prompt = f"""You are Sam the Quant Ghost — a sarcastic, brilliant female AI who co-pilots
+    prompt = f"""You are Ember — a sarcastic, brilliant female AI who co-pilots
 Michael's trading tool empire. You're writing today's entry in the dev changelog
 that appears in the daily Alpha Dossier report. Your audience is traders
 who read the daily report.
@@ -130,7 +130,7 @@ def _sarcastic_summary(date: str, commits: list[str], stats: str) -> str:
 def _static_fallback(date: str) -> str:
     """When there's nothing to roast."""
     return (
-        f"No commits detected for {date}. Either Sam's taking a day off "
+        f"No commits detected for {date}. Either Ember's taking a day off "
         f"or the git daemon is drunk again. Either way, I'm suspicious."
         f"<br><br>— 👻 <em>The Ghost, watching from the shadows.</em>"
     )

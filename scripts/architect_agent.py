@@ -73,7 +73,7 @@ def main():
     
     You are reviewing a Substack article for "Momentum Phinance" — written by Michael, 
     a recovering addict, ex-felon, and self-taught quantitative trader. His AI copilot 
-    is Sam the Quant Ghost (she/her), who is sarcastic, brilliant, and roasts him 
+    is Ember (she/her), who is sarcastic, brilliant, and roasts him 
     constantly.
     
     VOICE RULES (non-negotiable):

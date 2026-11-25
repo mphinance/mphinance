@@ -117,5 +117,5 @@ services:
 1. **One MCP server, not three** — Gemini handles tool routing. No need for separate servers.
 2. **Discord replaces Telegram** — More channels, richer embeds, better community features.
 3. **Venus is the brain** — Everything runs where the data lives. sam2 is just for dev.
-4. **Chat logs are data** — Stored in `data/discord_logs/`, available for Sam's context window.
+4. **Chat logs are data** — Stored in `data/discord_logs/`, available for Ember's context window.
 5. **Bot token in VaultGuard** — `DISCORD_BOT_TOKEN`, synced via Firebase.

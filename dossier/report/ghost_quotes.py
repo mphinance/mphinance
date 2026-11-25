@@ -1,8 +1,8 @@
 """
-Sam's Daily Wisdom — quotes, quips, and occasionally deep thoughts.
+Ember's Daily Wisdom — quotes, quips, and occasionally deep thoughts.
 
 A rotating collection of recovery wisdom, trading truth, and life advice,
-filtered through Sam's voice. One per day, appended to the Ghost Log.
+filtered through Ember's voice. One per day, appended to the Ghost Log.
 
 Categories:
 - Recovery (AA/NA — Serenity Prayer, Big Book, meeting wisdom)

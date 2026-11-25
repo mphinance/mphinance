@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-👻 Sam's Leveraged ETF Scanner
+👻 Ember's Leveraged ETF Scanner
 Pulls all leveraged ETFs from TradingView's scanner API, maps underlying
 assets, and outputs a clean JSON for algo trading integration.
 
@@ -298,7 +298,7 @@ def print_summary(etfs, args):
         return filtered
 
     # Header
-    print(f"\n👻 Sam's Leveraged ETF Scanner — {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+    print(f"\n👻 Ember's Leveraged ETF Scanner — {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     print(f"   Found {len(filtered)} leveraged ETFs" +
           (f" (filtered from {len(etfs)} total)" if len(filtered) != len(etfs) else ""))
     print("=" * 110)
@@ -363,7 +363,7 @@ def save_json(etfs, filepath):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="👻 Sam's Leveraged ETF Scanner")
+    parser = argparse.ArgumentParser(description="👻 Ember's Leveraged ETF Scanner")
     parser.add_argument("--json", action="store_true", help="Output JSON to stdout")
     parser.add_argument("--csv", action="store_true", help="Save results to CSV")
     parser.add_argument("--save-json", type=str, help="Save results to JSON file")
