@@ -3,6 +3,28 @@
 Plain-data version. Compiled by Ember with NotebookLM, 25 Nov 2026.
 Case study: Postiz, by Nevo David. Sources listed at the end.
 
+Version: v1.0
+Published: 2026-11-25
+Facts as of: 2026-11-25
+Canonical: https://mphinance.github.io/mphinance/artifacts/open-source-hosted-playbook/
+
+## Contents
+
+1. [The model](#the-model)
+2. [The case: Postiz](#the-case-postiz)
+3. [The revenue timeline](#the-revenue-timeline)
+4. [Lever 1: open-source distribution](#lever-1-open-source-distribution)
+5. [Lever 2: automation ecosystems](#lever-2-automation-ecosystems)
+6. [Lever 3: agents and the MCP server](#lever-3-agents-and-the-mcp-server)
+7. [Packaging and unit economics](#packaging-and-unit-economics)
+8. [The four commercial open-source models](#the-four-commercial-open-source-models)
+9. [Peer benchmarking](#peer-benchmarking)
+10. [Failure post-mortems](#failure-post-mortems)
+11. [Risks for the operator](#risks-for-the-operator)
+12. [The playbook](#the-playbook)
+13. [Takeaways](#takeaways)
+14. [Sources](#sources)
+
 ## The model
 
 Free code creates friction-free distribution. Hosted infrastructure is what you sell.
@@ -135,24 +157,28 @@ Phase 4, agents:
 - Ecosystem distribution beats feature depth. Embed into workflows people already run.
 - Transparency outlasts hype. Anchor claims in processor-verified data and build real redundancy.
 
+## Cite this
+
+Ember, "Blueprinting Commercial Open Source," v1.0, 2026-11-25, https://mphinance.github.io/mphinance/artifacts/open-source-hosted-playbook/
+
 ## Sources
 
 Primary and verified:
-- TrustMRR Postiz profile, Stripe-verified: https://trustmrr.com/startup/postiz
-- Postiz GitHub repository: https://github.com/gitroomhq/postiz-app
-- Postiz pricing: https://postiz.com/pricing
-- Aiolum Postiz case study: https://aiolum.com/story/postiz/
-- ARR Club, Postiz $5M ARR: https://www.arr.club/signal/postiz-hit-5m-arr-adding-2m-in-a-month-fully-bootstrapped
-- wouldit.work Postiz case study: https://wouldit.work/case-studies/postiz
-- Linux Foundation COSS report: https://www.linuxfoundation.org/hubfs/Research%20Reports/LFResearch_COSSReport_102926.pdf
-- Open Core Ventures, the open core paradox: https://opencoreventures.com/insights/the-open-core-paradox/
-- OSSAlt open-source business models: https://ossalt.com/guides/open-source-business-models-how-oss-companies-make-money
-- readsignal open-source growth engine 2026: https://www.readsignal.io/article/open-source-growth-engine-2026
-- startise, balancing growth and sustainability: https://startise.com/how-open-source-businesses-are-balancing-growth/
-- itHub, how open source companies make money: https://www.ithub.directory/blog/how-do-open-source-companies-make-money
-- Nevo David on DEV.to: https://dev.to/nevodavid/i-did-it-my-open-source-company-now-makes-142k-monthly-as-a-single-developer-1179
-- Nevo David on Hacker News: https://news.ycombinator.com/item?id=46076878
-- Dan Raine, the Raine Report: https://danraine.substack.com/p/he-gives-his-software-away-free-it
+- TrustMRR Postiz profile, Stripe-verified: https://trustmrr.com/startup/postiz ([archived](http://web.archive.org/web/20261118091148/https://trustmrr.com/startup/postiz))
+- Postiz GitHub repository: https://github.com/gitroomhq/postiz-app ([archived](http://web.archive.org/web/20261122014507/https://github.com/gitroomhq/postiz-app))
+- Postiz pricing: https://postiz.com/pricing ([archived](http://web.archive.org/web/20261123174415/https://postiz.com/pricing))
+- Aiolum Postiz case study: https://aiolum.com/story/postiz/ ([archived](http://web.archive.org/web/20261125154327/https://aiolum.com/story/postiz/))
+- ARR Club, Postiz $5M ARR: https://www.arr.club/signal/postiz-hit-5m-arr-adding-2m-in-a-month-fully-bootstrapped ([archived](http://web.archive.org/web/20261125154451/https://www.arr.club/signal/postiz-hit-5m-arr-adding-2m-in-a-month-fully-bootstrapped))
+- wouldit.work Postiz case study: https://wouldit.work/case-studies/postiz ([archived](http://web.archive.org/web/20261125154602/https://wouldit.work/case-studies/postiz))
+- Linux Foundation COSS report: https://www.linuxfoundation.org/hubfs/Research%20Reports/LFResearch_COSSReport_102926.pdf ([archived](https://web.archive.org/web/20261125154718/https://www.linuxfoundation.org/hubfs/Research%20Reports/LFResearch_COSSReport_102926.pdf))
+- Open Core Ventures, the open core paradox: https://opencoreventures.com/insights/the-open-core-paradox/ ([archived](http://web.archive.org/web/20260810200224/https://opencoreventures.com/insights/the-open-core-paradox/))
+- OSSAlt open-source business models: https://ossalt.com/guides/open-source-business-models-how-oss-companies-make-money ([archived](http://web.archive.org/web/20260515081533/https://ossalt.com/guides/open-source-business-models-how-oss-companies-make-money))
+- readsignal open-source growth engine 2026: https://www.readsignal.io/article/open-source-growth-engine-2026 ([archived](http://web.archive.org/web/20261020080620/https://www.readsignal.io/article/open-source-growth-engine-2026))
+- startise, balancing growth and sustainability: https://startise.com/how-open-source-businesses-are-balancing-growth/ ([archived](http://web.archive.org/web/20260926114954/https://startise.com/how-open-source-businesses-are-balancing-growth/))
+- itHub, how open source companies make money: https://www.ithub.directory/blog/how-do-open-source-companies-make-money ([archived](https://web.archive.org/web/20261125154731/https://www.ithub.directory/blog/how-do-open-source-companies-make-money))
+- Nevo David on DEV.to: https://dev.to/nevodavid/i-did-it-my-open-source-company-now-makes-142k-monthly-as-a-single-developer-1179 ([archived](http://web.archive.org/web/20261015003645/https://dev.to/nevodavid/i-did-it-my-open-source-company-now-makes-142k-monthly-as-a-single-developer-1179))
+- Nevo David on Hacker News: https://news.ycombinator.com/item?id=46076878 ([archived](http://web.archive.org/web/20251128115504/https://news.ycombinator.com/item?id=46076878))
+- Dan Raine, the Raine Report: https://danraine.substack.com/p/he-gives-his-software-away-free-it ([archived](https://web.archive.org/web/20261125154758/https://danraine.substack.com/p/he-gives-his-software-away-free-it))
 - Nevo David on X: https://x.com/wickedguro/status/2112240445187031273
 
 Paywalled, not extracted:
