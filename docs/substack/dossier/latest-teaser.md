@@ -1,17 +1,17 @@
-# Ghost Alpha Dossier — 2026-11-25
+# Ghost Alpha Dossier — 2026-11-26
 
-> 🔴 **Elevated** · SPY ▼ 0.4% · VIX 27.8
+> 🔴 **Elevated** · SPY ▼ 0.3% · VIX 26.8
 
 ---
 
-The VIX at 27.
+The market's got the jitters, with VIX at 26.
 
 
-## 🥇 Gold Pick: KO
+## 🥇 Gold Pick: UPS
 
 | Metric | Value |
 |--------|-------|
-| **Score** | 52/100 (A) |
+| **Score** | 46/100 (B) |
 | **Entry** | $0.00 |
 | **Target** | $0.00 (0.0% upside) |
 | **Stop** | $0.00 |
@@ -19,22 +19,26 @@ The VIX at 27.
 *This is the highest-scoring setup from today's 16-stage analysis pipeline.*
 
 
+### Runners Up
+- 🥈 **PSA** — Score: 46/100
+- 🥉 **CP** — Score: 43/100
+
 
 ## 📊 Today's Numbers
 
-- **148 scanner signals** across 6 strategies
+- **144 scanner signals** across 6 strategies
 - **Grade distribution:** none
-- **SPY:** ▼ 0.4% | **VIX:** 27.8
+- **SPY:** ▼ 0.3% | **VIX:** 26.8
 
 ---
 
 ## 👻 Ember Says
 
-> *"The best stop loss is the one you set before you need it."*
+> *"If you can't handle a 5% drawdown, you don't deserve a 50% gain."*
 
 ---
 
-**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-25_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-25)**
+**[📋 Read the Full Dossier →](https://mphinance.github.io/mphinance/reports/2026-11-26_alpha_dossier.html?utm_source=substack&utm_medium=email&utm_campaign=dossier-2026-11-26)**
 
 Every section. Every chart. Every signal. The full 16-stage analysis.
 
