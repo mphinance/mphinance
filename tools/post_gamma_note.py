@@ -145,7 +145,23 @@ def last_call_line(d):
 def compose(d, changes=()):
     """The caption. Short, factual, no voice."""
     sym = d["symbol"]
-    lines = [f"{sym} next session, from the book as it settled."]
+    # "Next session" is not always the next day. On a holiday eve the map covers
+    # a session two or more days out, and it is worth naming when that is true,
+    # along with an early close: the roads are scaled to a full day's range.
+    nxt = d.get("nextSession")
+    when = ""
+    if nxt and not d.get("nextSessionIsTomorrow", True):
+        dt = datetime.strptime(nxt, "%Y-%m-%d")
+        when = f" ({dt:%A} {_day(nxt)}, the market is closed before it)"
+    elif nxt and d.get("nextSessionShort"):
+        when = f" ({_day(nxt)})"
+    short = ""
+    if d.get("nextSessionShort"):
+        short = (
+            " That session closes early at 13:00 ET, so it has about half the hours "
+            "the typical-day yardstick below is measured over."
+        )
+    lines = [f"{sym} next session{when}, from the book as it settled.{short}"]
 
     # An accuracy number is a claim, and a claim needs a sample. Until the ledger
     # has enough graded sessions this says how many days are on the clock and

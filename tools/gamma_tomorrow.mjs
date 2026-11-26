@@ -320,6 +320,49 @@ if (!allPts.length) throw new Error('history feed returned no usable points');
 const lastTick = allPts[allPts.length - 1].t;
 const sessionClosed = lastSession < todayET || etParts(lastTick).hour >= 16;
 
+// ── which session is "tomorrow" ─────────────────────────────────────────────
+// The map was named off the calendar date of the run, which is only "the next
+// session" when the next day happens to be a trading day. On 2026-11-25 that
+// labelled the map 2026-11-26, which is Thanksgiving and has no session at all,
+// while the book it was drawn from actually applies to Friday the 27th. The
+// grader was already right about this (it steps to the next session present in
+// the price history, not to the next calendar day), so this only ever mislabels
+// what the reader is told. Closures only; the half-day list is the ones that are
+// unambiguous (the day after Thanksgiving, and Christmas Eve when it is a
+// weekday). Past HOLIDAYS_THROUGH the calendar is stale and the fallback is
+// plain weekdays, which is flagged rather than assumed correct.
+const HOLIDAYS_THROUGH = '2027-12-31';
+const MARKET_CLOSED = new Set([
+  '2026-01-01', '2026-01-19', '2026-02-16', '2026-04-03', '2026-05-25',
+  '2026-06-19', '2026-07-03', '2026-09-07', '2026-11-26', '2026-12-25',
+  '2027-01-01', '2027-01-18', '2027-02-15', '2027-03-26', '2027-05-31',
+  '2027-06-18', '2027-07-05', '2027-09-06', '2027-11-25', '2027-12-24',
+]);
+const MARKET_SHORT = new Set(['2026-11-27', '2026-12-24', '2027-11-26']);
+function nextTradingSession(afterISO) {
+  const d = new Date(`${afterISO}T12:00:00Z`);
+  for (let i = 0; i < 10; i++) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    const iso = d.toISOString().slice(0, 10);
+    const dow = d.getUTCDay();
+    if (dow === 0 || dow === 6) continue;
+    if (MARKET_CLOSED.has(iso)) continue;
+    return iso;
+  }
+  return null;
+}
+const nextSession = nextTradingSession(lastSession);
+const nextSessionShort = nextSession ? MARKET_SHORT.has(nextSession) : false;
+const nextSessionIsTomorrow = (() => {
+  const d = new Date(`${lastSession}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return nextSession === d.toISOString().slice(0, 10);
+})();
+const calendarStale = lastSession > HOLIDAYS_THROUGH;
+if (calendarStale) console.log(`WARNING: the market calendar only runs to ${HOLIDAYS_THROUGH}; "${nextSession}" is a plain weekday guess`);
+if (!nextSessionIsTomorrow) console.log(`next session is ${nextSession}${nextSessionShort ? ' (shortened, 13:00 ET close)' : ''}, not the next calendar day`);
+else if (nextSessionShort) console.log(`next session ${nextSession} is shortened (13:00 ET close)`);
+
 // Draw fewer sessions than we measure: the map only references the last one,
 // and three sessions gives the candles almost double the width.
 const SHOW = parseInt(arg('sessions', '3'), 10);
@@ -1252,7 +1295,12 @@ if (report) {
 }
 
 push(`<line x1="${FWD_X}" y1="${PAD_T}" x2="${FWD_X}" y2="${PAD_T + PLOT_H}" stroke="${C.dim}" stroke-opacity="0.45" stroke-dasharray="3 4"/>`);
-push(`<text x="${FWD_X + 12}" y="${PAD_T + 20}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" letter-spacing="2">TOMORROW</text>`);
+// "TOMORROW" is only true when the next session is the next calendar day. On a
+// holiday eve it is not, and the panel used to claim a session that is closed.
+const fwdLabel = nextSessionIsTomorrow
+  ? (nextSessionShort ? `TOMORROW · ${nextSession.slice(5)} HALF DAY` : 'TOMORROW')
+  : `NEXT SESSION · ${nextSession ? nextSession.slice(5) : '?'}${nextSessionShort ? ' HALF DAY' : ''}`;
+push(`<text x="${FWD_X + 12}" y="${PAD_T + 20}" font-family="'JetBrains Mono',monospace" font-size="11" fill="${C.dim}" letter-spacing="2">${esc(fwdLabel)}</text>`);
 if (thinBook) {
   push(`<rect x="${FWD_X + 12}" y="${PAD_T + 56}" width="440" height="24" rx="5" fill="${C.coral}" fill-opacity="0.12" stroke="${C.coral}" stroke-opacity="0.4"/>`);
   push(`<text x="${FWD_X + 22}" y="${PAD_T + 73}" font-family="'JetBrains Mono',monospace" font-size="11.5" fill="${C.coral}">THIN BOOK. these levels carry little size, read them lightly.</text>`);
@@ -1582,7 +1630,10 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" 
 
 // ── render ──────────────────────────────────────────────────────────────────
 mkdirSync(OUT, { recursive: true });
-const stamp = new Date().toISOString().slice(0, 10);
+// Name the file after the session it maps, not after the clock. At 21:00 ET the
+// UTC date is already tomorrow, which made these agree by accident most nights
+// and disagree on every holiday eve.
+const stamp = (sessionClosed && nextSession) ? nextSession : new Date().toISOString().slice(0, 10);
 const png = join(OUT, `${sym.toLowerCase()}_tomorrow_${stamp}.png`);
 const html = `<!doctype html><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -1717,6 +1768,10 @@ writeFileSync(sidecar, JSON.stringify({
   asOf: new Date().toISOString(),
   forSession: sessionClosed ? 'next' : 'intraday-provisional',
   sessionClosed,
+  // The session this map is actually for, off the exchange calendar rather than
+  // off the clock, plus whether it closes early. The note names it when it is
+  // not simply the next calendar day.
+  nextSession, nextSessionShort, nextSessionIsTomorrow, calendarStale,
   spot, flip, pin, expected,
   regime: negGamma ? 'negative gamma' : 'positive gamma',
   netGEX: gex.totalGEX,
