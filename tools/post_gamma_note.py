@@ -439,6 +439,130 @@ def compose(d, changes=()):
     return "\n\n".join(lines)
 
 
+def _cap(s):
+    """Capitalise each sentence start; the chart rows are lower-case fragments."""
+    return re.sub(r"(^|\. )([a-z])", lambda m: m.group(1) + m.group(2).upper(), s.strip())
+
+
+def _join_levels(hard):
+    names = [f"{h['lvl']} {h['kind']}" for h in hard]
+    if len(names) <= 1:
+        return "".join(names)
+    return ", ".join(names[:-1]) + " and " + names[-1]
+
+
+def last_call_short(d):
+    """The previous map's grade in one sentence. Misses stay plain and specific."""
+    lc = d.get("lastCall") or {}
+    if not lc.get("day") or not lc.get("summary"):
+        return None
+    head = f"Last map ({_day(lc['day'])} close): "
+    total = lc.get("total") or 0
+    if total:
+        detail = "; ".join(p.strip() for p in lc["summary"].split("\u00b7") if p.strip())
+        tail = f" {detail[0].upper()}{detail[1:]}." if detail else ""
+        return (
+            f"{head}{lc.get('hits', 0)} of {total} level{'' if total == 1 else 's'} price "
+            f"reached closed on the right side.{tail}"
+        )
+    if lc.get("untested"):
+        return head + "price never reached the levels it named, so there was nothing to score."
+    return head + "every level it named was a marker the map never grades, so there was nothing to score."
+
+
+def compose_short(d, changes=()):
+    """The short note: the session, the three roads, then one honest line on the record.
+
+    Everything the long caption explains at length (history, by-type table, flip
+    demotion, marker caveats, scoreable-history counts) lives on the record page
+    behind RECORD_URL. The long caption is still available with --style long.
+    """
+    sym = d["symbol"]
+    nxt = d.get("nextSession")
+    day = ""
+    if nxt:
+        dt = datetime.strptime(nxt, "%Y-%m-%d")
+        day = f" for {dt:%A} {_day(nxt)}"
+    early = ", early close at 1:00 PM ET" if d.get("nextSessionShort") else ""
+    lines = [
+        f"{sym} map{day}{early}. Spot {d['spot']:.2f}, a typical day is about "
+        f"{d['expected']:.1f} points."
+    ]
+
+    for b in d["branches"]:
+        lead = "Else" if str(b["kind"]).upper() == "ELSE" else "If"
+        lines.append(f"{lead} {b['cond']}: {_cap(b['rule'])}")
+
+    trig = d.get("triggers") or {}
+    if d.get("triggerNote"):
+        if trig.get("gapUp") is not None and trig.get("gapDown") is not None:
+            lines.append(
+                f"Both triggers sit close to spot (up {trig['gapUp']:.2f} away, down "
+                f"{trig['gapDown']:.2f} away, against a typical day of {d['expected']:.1f}), so "
+                f"the middle branch is the narrow one, not the default."
+            )
+        else:
+            lines.append(_cap(d["triggerNote"]))
+
+    sc = d.get("scoreable") or {}
+    hard, soft = sc.get("hard") or [], sc.get("soft") or []
+    if sc:
+        if hard:
+            g = f"Graded tonight: {_join_levels(hard)}."
+            if soft:
+                g += f" The {soft[0]['lvl']} pin counts only if the day grades RANGE."
+            if trig.get("downScored") is False or trig.get("upScored") is False:
+                g += " The other levels above are markers the map reports and never grades."
+        else:
+            g = "No level above is one the record can grade, they are all markers."
+        lines.append(g)
+
+    graded = last_call_short(d)
+    if graded:
+        lines.append(graded)
+
+    rec = d.get("record") or {}
+    if rec.get("publishable"):
+        since = f"Since {_day(rec['restartedOn'])}" if rec.get("restartedOn") else "Since the restart"
+        rl = (
+            f"{since}: {rec['hits']} of {rec['total']} graded levels closed on the right side. "
+            f"Plain $5 round numbers, same days, same rule: {rec.get('nullHits', 0)} of "
+            f"{rec.get('nullTotal', 0)}."
+        )
+        blank = rec.get("blank") or 0
+        if blank:
+            rl += (
+                f" {blank} of {rec['sessions']} sessions scored nothing, so the rate covers "
+                f"{rec['sessions'] - blank}."
+            )
+        paired = rec.get("paired") or {}
+        if paired.get("both"):
+            rl += (
+                f" Session by session the map did better on {paired['mapBetter']}, round "
+                f"numbers on {paired['roundBetter']}, and {paired['tied']} tied."
+            )
+            if paired.get("inNoise"):
+                rl += " That is not an edge yet."
+            else:
+                odds = max(1, round(paired["p"] * 100))
+                rl += f" Chance alone splits that lopsided about {odds} times in 100."
+        lines.append(rl)
+        lines.append("Every session, both grades:")
+        lines.append(RECORD_URL)
+    elif rec.get("sessions"):
+        need = rec.get("minSessions", 10)
+        lines.append(
+            f"{rec['sessions']} of {need} sessions graded under the current rules. "
+            f"No hit rate until there are {need}."
+        )
+
+    if changes:
+        lines.append("What changed in the map:")
+        lines.extend(f"- {c['text']}" for c in changes)
+    lines.append("Where dealers are long gamma they brake, where they are short they chase. Not advice.")
+    return "\n\n".join(lines)
+
+
 def text_node(para):
     """A paragraph that is only a URL goes out as a link; a Note will not autolink it."""
     node = {"type": "text", "text": para}
@@ -524,6 +648,8 @@ def main():
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--force", action="store_true", help="ignore the once-a-day guard")
     ap.add_argument("--no-discord", action="store_true", help="skip sharing link to Discord")
+    ap.add_argument("--style", choices=("short", "long"), default="short",
+                    help="caption style; long is the old 20-paragraph audit caption")
     a = ap.parse_args()
 
     d = json.loads(Path(a.sidecar).read_text())
@@ -541,7 +667,7 @@ def main():
         sys.exit(f"already posted a note today ({today}); use --force to override")
 
     changes = pending_changes()
-    text = compose(d, changes)
+    text = (compose if a.style == "long" else compose_short)(d, changes)
     print("─" * 70)
     print(text)
     print("─" * 70)
