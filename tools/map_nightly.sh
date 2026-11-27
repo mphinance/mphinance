@@ -22,11 +22,14 @@ R="${MAP_REPO:-/home/mph/mphinance}"
 OUT="${MAP_OUT:-$HOME/.hermes/state/map}"
 NODE="${MAP_NODE:-node}"
 FILES="data/gamma_maps/SPY.json data/gamma_maps/CHANGELOG.json data/gamma_maps/IMPROVE.md docs/gamma-record/index.html"
+# The tool also rewrites this tracked scratch backup of the previous ledger. It is never
+# committed; put it back so the tree stays clean (found in the 2026-11-27 dry run).
+SCRATCH="data/gamma_maps/SPY.json.bak"
 
 LOG=$(mktemp)
 trap 'rm -f "$LOG" "$LOG".*' EXIT
 
-revert() { for f in $FILES; do git checkout -q -- "$f" 2>/dev/null || true; done; }
+revert() { for f in $FILES $SCRATCH; do git checkout -q -- "$f" 2>/dev/null || true; done; }
 fail() { echo "MAP NIGHTLY FAILED at: $1"; tail -n 15 "$LOG"; exit "${2:-1}"; }
 
 cd "$R" || fail "cd $R"
@@ -97,6 +100,7 @@ if ! git diff --cached --quiet; then
   fi
 fi
 
+git checkout -q -- "$SCRATCH" 2>/dev/null || true
 bash tools/repo_sync.sh post >>"$LOG" 2>&1 || fail "repo_sync post after posting ($NOTE)" 5
 
 echo "Tomorrow's Map: $NOTE"

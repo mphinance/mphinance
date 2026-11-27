@@ -23,6 +23,7 @@ mk() {  # fresh remote + working clone ($R) + a second clone ($B) that can move 
   cp "$HERE/tools/repo_sync.sh" "$HERE/tools/map_nightly.sh" tools/
   echo '[]' > data/gamma_maps/SPY.json; echo '[]' > data/gamma_maps/CHANGELOG.json
   echo '# improve' > data/gamma_maps/IMPROVE.md; echo '<html/>' > docs/gamma-record/index.html
+  echo 'old ledger backup' > data/gamma_maps/SPY.json.bak
   cat > tools/gamma_tomorrow.mjs <<'EOS'
 #!/usr/bin/env bash
 out=""; while [ $# -gt 0 ]; do [ "$1" = "--out" ] && out="$2"; shift; done
@@ -32,6 +33,7 @@ case "${STUB_TOOL:-ok}" in
 esac
 mkdir -p "$out"; echo '{}' > "$out/spy.json"; head -c 70000 /dev/zero > "$out/spy.png"
 echo "row $(date +%s%N)" >> data/gamma_maps/SPY.json
+echo "bak $(date +%s%N)" >> data/gamma_maps/SPY.json.bak
 echo "record so far: 35 session(s) graded"
 if [ -n "${STUB_REMOTE_MOVES:-}" ]; then
   ( cd "$STUB_B" && git pull -q --ff-only && echo x >> other.txt && git add other.txt && git commit -qm other && git push -q origin HEAD:work )
@@ -75,6 +77,7 @@ has "reports the note" "$OUTPUT" "Tomorrow's Map: posted note 4242"
 has "delivers the chart" "$OUTPUT" "MEDIA:$T/out/spy.png"
 expect "one new commit" "$(( $(commits) - base ))" 1
 expect "pushed (remote == local)" "$(remote_head)" "$(head_of "$R")"
+expect "tree clean, scratch backup put back" "$(clean)" 0
 
 echo "2  holiday: silent skip"
 mk t2; base=$(commits); run env STUB_TOOL=holiday
@@ -103,6 +106,7 @@ mk t5; base=$(commits); run env STUB_POST=already STUB_DRY=already
 expect "exit 0" "$RC" 0
 has "says so" "$OUTPUT" "already posted earlier today"
 expect "commit made" "$(( $(commits) - base ))" 1
+expect "tree clean, scratch backup put back" "$(clean)" 0
 
 echo "6  dry run: nothing posted or committed, tree restored"
 mk t6; base=$(commits); run env MAP_DRY_RUN=1
