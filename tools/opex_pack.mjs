@@ -69,7 +69,7 @@ const cover = `<section class="page cover" style="--bg:url('${img("hero_bg.png")
     <div class="box"><b class="gold">${free ? "FULL PACK" : "FOLLOW LIVE"}</b><br>${free ? `All ${p.stocks.length} names, the live watchlists and every trigger are for paid subs at <a href="https://mphinance.substack.com">mphinance.substack.com</a>` : p.links.map(([l, u]) => `<a href="${u}">${esc(l)}</a>`).join("<br>")}</div>
   </div>
   <div class="roster">${stocks.map((s) => `<span>${s.t}</span>`).join("")}</div>
-  <div class="foot"><span>${esc(p.asof)}</span><span>Not financial advice. ~ Michael</span></div>
+  <div class="foot"><span>${esc(p.asof)}</span><span>Not financial advice.</span></div>
 </section>`;
 
 const page = (s, i) => `<section class="page">
@@ -90,7 +90,7 @@ const page = (s, i) => `<section class="page">
     <div><div class="h red">WATCH</div><ul class="list">${s.watch.map((w) => `<li>${esc(w)}</li>`).join("")}</ul></div>
     <div>${s.dd ? `<div class="h blue">DEEP DIVE</div><div style="font-size:13px;margin-top:6px;line-height:1.5"><a href="${s.dd}">${esc(s.dd.replace("https://www.", ""))}</a></div>` : ""}</div>
   </div>
-  <div class="foot"><span>${esc(p.title)} · ${i + 2} of ${stocks.length + 1} · ${esc(p.asof)}</span><span>Not financial advice. ~ Michael</span></div>
+  <div class="foot"><span>${esc(p.title)} · ${i + 2} of ${stocks.length + 1} · ${esc(p.asof)}</span><span>Not financial advice.</span></div>
 </section>`;
 
 const html = `<html><head><meta charset="utf-8"><style>${css}</style></head><body>${cover}${stocks.map(page).join("")}</body></html>`;

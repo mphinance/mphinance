@@ -194,7 +194,7 @@ exactly `~ Michael`, subtitle is a category mix like `*Trading 80% | Process 20%
 
 Draft the structure, never the voice. Michael rewrites the sentences.
 
-`tools/post_gamma_note.py` also shares the note link and chart to the free community Discord chat after the Substack post and changelog stamp land. It reads `WEBHOOK_FREE_CHAT` from `secrets.env`; if the key is missing it prints one line and skips. `--no-discord` opts out, and `--dry-run` prints the message without sending.
+The poster does not share to Discord (the old webhook step was a silent no-op and was removed 2026-11-27); delivery to a thread is the scheduler's job. `--no-discord` is still accepted and ignored.
 
 ## Known open
 

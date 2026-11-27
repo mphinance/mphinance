@@ -86,7 +86,7 @@ def render(r, blog=False):
     out.append("")
     if r.get("unverified"):
         out += ["## Unverified", "", "> [!muted] **Couldn't confirm these, so no dates or numbers lean on them**", ">"] + [f"> - {u}" for u in r["unverified"]] + [""]
-    out += ["~ Michael", "", "*Not financial advice. Data as of the " + m["price_asof"] + ".*", ""]
+    out += ["*Not financial advice. Data as of the " + m["price_asof"] + ".*", ""]
     if r.get("sources"):
         out += ["**Sources:** " + " · ".join(f'[{s["label"]}]({s["url"]})' if s.get("url") else s["label"] for s in r["sources"]), ""]
     md = "\n".join(out)
@@ -121,8 +121,7 @@ def to_substack(md, r):
             kind = None
             out.append(line)
     body = "\n".join(out)
-    sign = "~ Michael"
-    body = body.replace(sign + "\n", "", 1).rstrip() + "\n\n<!--share-->\n<!--subscribe-->\n\n" + sign + "\n"
+    body = body.rstrip() + "\n\n<!--share-->\n<!--subscribe-->\n"
     head = [f'# {m["title"]}', "", f'*{m.get("subtitle", "Research 60% | Trading 40%")}*', "",
             f'<!--seo-title: {m["title"][:60]}-->', f'<!--seo-desc: {m["description"][:155]}-->', ""]
     return "\n".join(head) + body

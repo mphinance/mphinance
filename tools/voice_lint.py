@@ -180,7 +180,7 @@ def lint(blocks, check_signoff=True):
             if re.search(pat, low):
                 w(i, f"wind-up / announced point /{pat}/")
         if re.search(r"\b(managing partner)\b", low) or re.search(r"[-—]\s*michael\b", low):
-            e(i, "byline/title or dashed sign-off (use '~ Michael')")
+            e(i, "byline/title or dashed sign-off (Michael uses no sign-off at all)")
         if kind == "h":
             continue
         m = CONTRAST_INLINE.search(t)
@@ -230,10 +230,12 @@ def lint(blocks, check_signoff=True):
 
     # subtitle / signature
     if check_signoff:
+        # VOICE.md retired the "~ Michael" sign-off on 2026-11-27: end on the last real
+        # sentence. An Ember "Posted by ..." closer for Data posts is still fine.
         tail = [plain(r).strip() for k, r in blocks if k == "p"]
-        if not tail or not is_signoff(tail[-1]):
-            e(-1, f"last paragraph must be '{SIGNOFF}' or an Ember sign-off "
-                  f"(found: '{tail[-1][:40] if tail else ''}')")
+        last = tail[-1] if tail else ""
+        if last == SIGNOFF or (last.startswith("~") and not SIGNOFF_SAM_RE.match(last)):
+            e(-1, "no sign-off: VOICE.md retired '~ Michael' on 2026-11-27, end on the last real sentence")
     if any(re.match(r"^tags:", plain(r), re.I) for _, r in blocks):
         e(-1, "old '*Tags: ...*' subtitle; use '*Trading 60% | Mindset 40%*'")
     return errs, warns

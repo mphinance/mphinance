@@ -70,7 +70,7 @@ Every Substack article follows this skeleton:
 8. <!--paywall--> (if applicable)
 9. Paid-only deep dive (live data, next trades, insider view)
 10. CTA (subscribe nudge, never desperate)
-11. Signature: exactly `~ Michael` on its own line. Tilde, space, first name. NEVER a last name, NEVER a title ("Managing Partner," "The Phund," "Momentum Phinance"), NEVER a `-` or `—`. See VOICE.md. Directly under it, its own line: `[tradermatrix.pro](https://www.tradermatrix.pro/?ref=MPHINANCE)` (every post, added 2026-11-19).
+11. No sign-off (retired 2026-11-27, see VOICE.md). NEVER a last name or a title. End on the last real sentence, then its own line: `[tradermatrix.pro](https://www.tradermatrix.pro/?ref=MPHINANCE)` (every post, added 2026-11-19).
 12. Sources: link the claim inline where it's made (the number, the date, the ruling), never a `## Sources` dump at the bottom.
 ```
 

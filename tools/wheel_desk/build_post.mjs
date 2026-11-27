@@ -129,7 +129,7 @@ ${passed.map((s) => `<div style="padding:8px 0;border-top:1px solid #30363d"><b>
   L.push('## If assigned', '');
   for (const s of [...free, ...paid]) if (s.assignment) L.push(`- $${s.ticker}: ${s.assignment}`);
   L.push('', '[MICHAEL: optional trade-rule block, only if you are taking one. Sign off the numbers first.]', '');
-  L.push('*Education, not advice. Check the live chain and use limit orders.*', '', '~ Michael', '');
+  L.push('*Education, not advice. Check the live chain and use limit orders.*', '');
   await writeFile(join(ws, 'post.md'), L.join('\n'));
 
   for (const [inp, out] of figs) {
