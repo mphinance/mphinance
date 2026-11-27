@@ -318,7 +318,7 @@ const sessionBars = (day) => allPts.filter((q) => dayKey(q.t) === day).map((q) =
 
 if (!allPts.length) throw new Error('history feed returned no usable points');
 const lastTick = allPts[allPts.length - 1].t;
-const sessionClosed = lastSession < todayET || etParts(lastTick).hour >= 16;
+// sessionClosed is computed below, after the half-day calendar it depends on.
 
 // ── which session is "tomorrow" ─────────────────────────────────────────────
 // The map was named off the calendar date of the run, which is only "the next
@@ -339,6 +339,11 @@ const MARKET_CLOSED = new Set([
   '2027-06-18', '2027-07-05', '2027-09-06', '2027-11-25', '2027-12-24',
 ]);
 const MARKET_SHORT = new Set(['2026-11-27', '2026-12-24', '2027-11-26']);
+// A session is closed once a tick lands at or after its close: 16:00 ET, or 13:00 ET on a
+// half-day. Without the half-day case a 13:00 close read as "still open" until midnight
+// (2026-11-27), so the ledger was not written and the poster refused to post.
+const closeHourET = MARKET_SHORT.has(lastSession) ? 13 : 16;
+const sessionClosed = lastSession < todayET || etParts(lastTick).hour >= closeHourET;
 function nextTradingSession(afterISO) {
   const d = new Date(`${afterISO}T12:00:00Z`);
   for (let i = 0; i < 10; i++) {
