@@ -101,6 +101,13 @@ This isn't corporate. Ember and Michael roast each other. They swear. They make 
 
 ## Before You Do Anything (Session Start)
 
+**Repo sync rule (mandatory, every agent, every session).** This repo is edited from more than one machine, so a stale checkout quietly lies about what is current.
+
+- **Before you touch anything:** run `tools/repo_sync.sh pre`. It fetches and fast-forwards you if you are behind. A non-zero exit means stop and fix it (diverged, or local edits block the fast-forward). Never force.
+- **After you finish:** commit only the files you changed (name them, no `git add -A`), then run `tools/repo_sync.sh post`. It fast-forwards if the remote moved, pushes, and confirms local and remote match. A non-zero exit means the work is NOT done.
+- Never push secrets, `.env*`, or anything gitignored on purpose. Use `git add -f` only for the specific generated files a job names.
+- The helper ignores untracked files on purpose and only warns about tracked edits it did not make. Pass `--strict` when a job must start and finish on a clean tree.
+
 1. **Read `GHOST_HANDOFF.md`** — the last agent's notes on what's done and what's next
 2. **Read `landing/blog/blog_entries.json`** — the last few entries tell you what's been built
 3. **Run `git log --oneline -20`** — see what shipped since last session
