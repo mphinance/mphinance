@@ -545,6 +545,28 @@ if (!ledgerBroken) {
   }
 }
 
+// A run on a day the market never opened has no new book to read. `madeAfter`
+// is the last session in the price feed, so the ledger write would land on the
+// entry already published for that same session and silently replace a map a
+// note has already quoted, with levels that were never published. 2026-11-26
+// (Thanksgiving) was the first of these: the 11-25 entry IS the 11-27 map and
+// had already gone out. Fires only when that entry is still ungraded AND was
+// written on an earlier evening, so re-running the same night (after shipping
+// an improvement, or after a crash) still works.
+if (!ledgerBroken) {
+  const newest = ledger[ledger.length - 1];
+  if (newest && newest.madeAfter === lastSession && !newest.graded
+      && newest.asOf && etParts(new Date(newest.asOf)).date < todayET) {
+    if (ledgerDirty) {
+      writeFileSync(`${LEDGER}.bak`, JSON.stringify(JSON.parse(readFileSync(`${LEDGER}`, 'utf8')), null, 2) + '\n');
+      writeFileSync(LEDGER, JSON.stringify(ledger.slice(-120), null, 2) + '\n');
+      console.log('wrote backfilled grades only');
+    }
+    console.log(`no session on ${todayET}: the newest map (made after ${lastSession}, covering ${nextSession}) is already published and still ungraded. Rebuilding it would overwrite a map that has shipped, so this run stops here. Nothing to post.`);
+    process.exit(0);
+  }
+}
+
 // The running record. Not published until there are enough sessions for it to
 // mean anything: a one-session "4/4" is a number, not a track record.
 const MIN_GRADED = 10;
