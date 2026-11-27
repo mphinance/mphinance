@@ -1,27 +1,19 @@
 # Michael's Voice — Writing Style Guide
 
-> The single source of truth for how Michael's content sounds and signs off.
+> The single source of truth for how Michael's content sounds.
 > If you only read one thing before writing as Michael, read this. Then read SUBSTACK.md for the publishing mechanics.
 
 ---
 
 ## The One Rule That Gets Broken Most
 
-**The sign-off is exactly this, on its own line, nothing else:**
+**No sign-off. Ever.** No signature, no `~ Michael`, no name at the bottom of anything. End on the last real sentence (or the subscribe nudge, if the post has one) and stop. Michael retired the `~ Michael` sign-off on 2026-11-27.
 
-```
-~ Michael
-```
-
-Tilde, space, first name. That is the whole signature.
-
-- **Never** a last name. Not in the signature, not in a byline, not in the subtitle, not in passing, not anywhere a reader can see. First name only, every time.
+- **Never** a last name. Not in a byline, not in the subtitle, not in passing, not anywhere a reader can see. First name only, every time.
 - **Never** a title. No "Managing Partner," no "The Phund," no "Momentum Phinance" stapled to the name.
-- **Never** a dash. Not `-`, not `—`. The tilde is deliberate: it dodges Markdown turning the line into a bullet, and a dash is not his sign-off.
+- **Allowed ending line for Substack posts:** `https://mphinance.com` on its own line (he added it by hand 2026-10-03). Nothing else goes there.
 
-If you are tempted to write `- Michael <last name>, Managing Partner, The Phund`, that is the old, wrong byline from 2025. It is banned. Write `~ Michael`.
-
-**Lineage:** the original was `~MPH`, from the pseudonymous AfterHour days (`-MPH` Dec 2024, `~MPH` from Jan 2025 on). The name came later. The tilde is the constant across both, which is why it's not negotiable. `~ Michael` is the Substack-era form and appears nowhere in the AfterHour corpus, so don't append it to an AfterHour post.
+The 2025 byline `- Michael <last name>, Managing Partner, The Phund` is banned. So are the old `~ Michael` and the older `~MPH`.
 
 ---
 
@@ -221,15 +213,3 @@ He embeds "go read this writer" links to other Substack authors inside posts to 
 > "Earnings are seriously mostly bullshit. They're a suggestion. A narrative."
 > "Everyone's worried AI will ruin our personal relationships. Looking at my own track record, maybe 'human' isn't the gold standard we think it is."
 > "Financial statements aren't the most fun thing to read, so I thought I'd use real revenue to show how companies actually build them."
-
----
-
-## Example Sign-Off
-
-Every piece ends, on its own line:
-
-```
-~ Michael
-```
-
-That's it. That's the whole signature.
